@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { API_BASE_URL } from "../../../../../lib/config";
+import Acord25Form from "./Acord25Form";
 import {
   FileSignature,
   Search,
@@ -67,7 +68,7 @@ function TreeItem({
           onSelect(node.id);
         }}
         className={`
-          w-full flex items-center gap-1.5 px-2 py-[5px] text-[12px] font-medium
+          w-full flex items-center gap-1.5 px-2 py-[2px] text-[11px] font-medium
           transition-all duration-150 cursor-pointer text-left
           ${isSelected
             ? "bg-primary/15 text-primary font-bold"
@@ -199,41 +200,47 @@ export default function EFormsManagerPage() {
       [customer.first_name, customer.last_name].filter(Boolean).join(" ") ||
       "Customer";
 
+    const certNodes: TreeNode[] = [
+      {
+        id: `cert-all`,
+        label: `Certificate, Last 2 year(s)`,
+        type: "folder" as const,
+        children: [
+          {
+            id: `cert-file-1`,
+            label: `CL2581202834 2025 Master Coi, Liability - 25`,
+            type: "file" as const,
+            formType: "Certificates",
+          },
+          {
+            id: `cert-file-2`,
+            label: `CL257201165 MASTER COI, Liability - 25`,
+            type: "file" as const,
+            formType: "Certificates",
+          }
+        ],
+      }
+    ];
+
     const policyNodes: TreeNode[] = policies.map((p) => ({
-      id: `policy-${p.id}`,
-      label: `${p.policyNum} - ${p.type || "Policy"}`,
+      id: `p-${p.id}`,
+      label: `NBS New business ${p.effDate || ""}`,
       type: "folder" as const,
       children: [
         {
-          id: `cert-${p.id}`,
-          label: `Certificate, Last 2 year(s)`,
+          id: `appform-${p.id}`,
+          label: "Commercial Applicant Information",
           type: "folder" as const,
-          children: [],
-        },
-        ...(p.status === "Active"
-          ? [
-              {
-                id: `app-${p.id}`,
-                label: `${p.status} ${p.effDate || ""}`,
-                type: "folder" as const,
-                children: [
-                  {
-                    id: `appform-${p.id}`,
-                    label: "Commercial Applicant Information",
-                    type: "file" as const,
-                    formType: "Applications",
-                  },
-                  {
-                    id: `misc-${p.id}`,
-                    label: `${p.type || "General"} Liability`,
-                    type: "file" as const,
-                    formType: "Applications",
-                  },
-                ],
-              },
-            ]
-          : []),
-      ],
+          children: [
+            {
+              id: `misc-${p.id}`,
+              label: `${p.type || "Miscellaneous Professional"} Liability`,
+              type: "file" as const,
+              formType: "Applications",
+            }
+          ]
+        }
+      ]
     }));
 
     return [
@@ -241,7 +248,7 @@ export default function EFormsManagerPage() {
         id: "root",
         label: `Customer - ${customerName}`,
         type: "folder",
-        children: policyNodes,
+        children: [...certNodes, ...policyNodes],
       },
     ];
   };
@@ -408,10 +415,15 @@ export default function EFormsManagerPage() {
         ))}
       </div>
 
-      {/* ── Delete bar ── */}
-      <div className="bg-secondary/10 border-b border-border-main h-7 px-3 flex items-center shrink-0">
-        <button className="text-[11px] font-semibold text-danger hover:text-danger/80 flex items-center gap-1 cursor-pointer">
-          <Trash2 size={11} />
+      {/* ── Action bar ── */}
+      <div className="bg-secondary/10 border-b border-border-main h-7 px-3 flex items-center gap-3 shrink-0">
+        <button 
+          onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager/new-certificate`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no')}
+          className="text-[11px] font-semibold text-text-main hover:text-primary cursor-pointer"
+        >
+          New
+        </button>
+        <button className="text-[11px] font-semibold text-text-main hover:text-danger cursor-pointer">
           Delete
         </button>
       </div>
@@ -423,34 +435,38 @@ export default function EFormsManagerPage() {
         <div className="w-[340px] shrink-0 border-r border-border-main bg-white flex flex-col">
 
           {/* Customer field */}
-          <div className="flex items-center gap-2 px-3 py-2 border-b border-border-main">
-            <label className="text-[11px] font-bold text-text-muted shrink-0 w-16">Customer:</label>
+          <div className="flex items-center gap-2 px-2 py-1 border-b border-border-main">
+            <label className="text-[10px] font-bold text-text-muted shrink-0 w-14">Customer:</label>
             <div className="flex-1 flex items-center gap-1.5">
               <input
                 type="text"
                 value={customerName}
                 readOnly
-                className="flex-1 text-[12px] font-semibold text-text-main bg-secondary/20 border border-border-main rounded px-2 py-1.5 outline-none"
+                className="flex-1 text-[11px] font-semibold text-text-main bg-secondary/20 border border-border-main rounded px-1.5 py-0.5 outline-none"
               />
-              <button className="text-[11px] font-bold text-primary hover:underline cursor-pointer">
-                <Search size={13} />
+              <button className="text-[10px] font-bold text-primary hover:underline cursor-pointer">
+                <Search size={12} />
               </button>
             </div>
           </div>
 
           {/* Policy # dropdown */}
-          <div className="flex items-center gap-2 px-3 py-2 border-b border-border-main">
-            <label className="text-[11px] font-bold text-text-muted shrink-0 w-16">Policy #:</label>
+          <div className="flex items-center gap-2 px-2 py-1 border-b border-border-main">
+            <label className="text-[10px] font-bold text-text-muted shrink-0 w-14">Policy #:</label>
             <select
               value={selectedPolicy}
               onChange={(e) => setSelectedPolicy(e.target.value)}
-              className="flex-1 text-[11px] font-semibold text-text-main bg-white border border-border-main rounded px-2 py-1.5 outline-none focus:border-primary cursor-pointer"
+              className="flex-1 text-[10px] font-semibold text-text-main bg-white border border-border-main rounded px-1.5 py-0.5 outline-none focus:border-primary cursor-pointer truncate"
+              title={selectedPolicy}
             >
-              {policies.map((p) => (
-                <option key={p.id} value={p.policyNum}>
-                  {p.policyNum}, {p.effDate || "N/A"}, {p.expDate || "N/A"}, {p.type || ""}
-                </option>
-              ))}
+              {policies.map((p) => {
+                const statusFlag = p.status === "Active" ? "A" : "E";
+                return (
+                  <option key={p.id} value={p.policyNum}>
+                    {p.policyNum}, {p.effDate || "N/A"}, {p.expDate || "N/A"}, {p.type || ""}, P, {statusFlag}
+                  </option>
+                );
+              })}
               {policies.length === 0 && (
                 <option value="">No policies found</option>
               )}
@@ -458,16 +474,17 @@ export default function EFormsManagerPage() {
           </div>
 
           {/* Eff Date dropdown */}
-          <div className="flex items-center gap-2 px-3 py-2 border-b border-border-main">
-            <label className="text-[11px] font-bold text-text-muted shrink-0 w-16">Eff Date:</label>
+          <div className="flex items-center gap-2 px-2 py-1 border-b border-border-main">
+            <label className="text-[10px] font-bold text-text-muted shrink-0 w-14">Eff Date:</label>
             <select
               value={selectedEffDate}
               onChange={(e) => setSelectedEffDate(e.target.value)}
-              className="flex-1 text-[11px] font-semibold text-text-main bg-white border border-border-main rounded px-2 py-1.5 outline-none focus:border-primary cursor-pointer"
+              className="flex-1 text-[10px] font-semibold text-text-main bg-white border border-border-main rounded px-1.5 py-0.5 outline-none focus:border-primary cursor-pointer truncate"
+              title={selectedEffDate}
             >
               {policies.map((p) => (
                 <option key={p.id} value={`${p.effDate}, ${p.status}, ${p.type}`}>
-                  {p.effDate || "N/A"}, {p.status || "N/A"}, {p.term || "N/A"}, {p.expDate || "N/A"}
+                  {p.effDate || "N/A"}, New business, NBS, {p.effDate || "N/A"}
                 </option>
               ))}
               {policies.length === 0 && (
@@ -500,19 +517,23 @@ export default function EFormsManagerPage() {
         </div>
 
         {/* ── Right Panel: Form preview area ── */}
-        <div className="flex-1 flex flex-col bg-secondary/10 overflow-hidden">
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center space-y-3 p-8">
-              <div className="h-16 w-16 rounded-2xl bg-white border border-border-main shadow-inner flex items-center justify-center mx-auto">
-                <FileSignature size={28} className="text-primary/30" />
+        <div className="flex-1 flex flex-col bg-gray-200 overflow-auto relative">
+          {selectedNode?.startsWith("cert-file") ? (
+            <Acord25Form customer={customer} policies={policies} />
+          ) : (
+            <div className="flex-1 flex items-center justify-center min-h-full">
+              <div className="text-center space-y-3 p-8">
+                <div className="h-16 w-16 rounded-2xl bg-white border border-border-main shadow-inner flex items-center justify-center mx-auto">
+                  <FileSignature size={28} className="text-primary/30" />
+                </div>
+                <p className="text-sm font-bold text-text-main">eForms Preview</p>
+                <p className="text-xs text-slate-400 max-w-xs mx-auto">
+                  Select a form from the tree on the left to preview it here. 
+                  Forms can be filled out, printed, and submitted electronically.
+                </p>
               </div>
-              <p className="text-sm font-bold text-text-main">eForms Preview</p>
-              <p className="text-xs text-slate-400 max-w-xs mx-auto">
-                Select a form from the tree on the left to preview it here. 
-                Forms can be filled out, printed, and submitted electronically.
-              </p>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

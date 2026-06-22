@@ -35,11 +35,11 @@ export default function SidebarSection({
         onClick={onToggle}
         className={`
           w-full flex items-center gap-2 px-3 py-[9px]
-          text-[11.5px] font-extrabold uppercase tracking-[0.12em]
+          text-[11px] font-bold uppercase tracking-wider
           transition-all duration-200 cursor-pointer select-none
           ${isExpanded
-            ? "bg-[#4A3B32] text-[#F0E5D8] shadow-sm"
-            : "bg-[#5C4A3E] text-[#D4C4B5] hover:bg-[#4A3B32] hover:text-[#F0E5D8]"
+            ? "text-text-main"
+            : "text-text-muted hover:text-text-main"
           }
         `}
       >
@@ -56,7 +56,7 @@ export default function SidebarSection({
           <Icon
             size={14}
             className={`shrink-0 ${
-              isExpanded ? "text-[#E6D9CC]" : "text-[#A99585]"
+              isExpanded ? "text-primary" : "text-text-muted"
             }`}
           />
         )}
@@ -73,7 +73,7 @@ export default function SidebarSection({
           opacity: isExpanded ? 1 : 0,
         }}
       >
-        <div ref={contentRef} className="py-0.5 bg-white">
+        <div ref={contentRef} className="py-0.5 bg-bg-base/50">
           {children}
         </div>
       </div>

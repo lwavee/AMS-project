@@ -9,12 +9,12 @@ import {
   Printer
 } from "lucide-react";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 export default function BusinessAutoPage() {
   const params = useParams();
   const customerId = params?.id as string;
   const policyId = params?.policyId as string;
-
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
   // -- COVERED AUTO SYMBOLS STATE --
   const [symbols, setSymbols] = useState<Record<string, Record<string, boolean>>>({

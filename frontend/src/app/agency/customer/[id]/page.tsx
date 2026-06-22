@@ -42,9 +42,9 @@ import {
 
 // ─── Theme classes (consistent with project) ────────────────────────────────
 const cardCls = "bg-white/80 backdrop-blur-xl border border-border-main rounded-[20px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-0.5 relative overflow-hidden group";
-const sectionTitleCls = "text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2";
-const fieldLabelCls = "text-[10px] font-bold text-slate-400 uppercase tracking-widest";
-const fieldValueCls = "text-[13px] font-semibold text-text-main mt-0.5";
+const sectionTitleCls = "text-xs font-black text-text-muted/70 uppercase tracking-[0.2em] mb-4 flex items-center gap-2";
+const fieldLabelCls = "text-[11px] font-extrabold text-text-muted uppercase tracking-widest";
+const fieldValueCls = "text-sm font-semibold text-text-main mt-0.5";
 const emptyStateCls = "flex flex-col items-center justify-center py-20 text-center";
 
 
@@ -54,8 +54,8 @@ function InfoField({ label, value, icon: Icon }: { label: string; value?: string
     <div className="flex flex-col gap-0.5">
       <span className={fieldLabelCls}>{label}</span>
       <div className="flex items-center gap-1.5 mt-0.5">
-        {Icon && <Icon size={11} className="text-slate-400 shrink-0" />}
-        <span className={`${fieldValueCls} ${!value ? "text-slate-300 italic" : ""}`}>
+        {Icon && <Icon size={11} className="text-text-muted shrink-0" />}
+        <span className={`${fieldValueCls} ${!value ? "text-text-muted/50 italic" : ""}`}>
           {value || "—"}
         </span>
       </div>
@@ -111,7 +111,7 @@ function EmptyState({ icon: Icon, title, subtitle, actionLabel, onAction }: {
         <Icon size={24} className="text-primary/60 relative z-10" />
       </div>
       <p className="font-bold text-[15px] text-text-main px-4">{title}</p>
-      <p className="text-[13px] text-slate-500 mt-1.5 max-w-xs">{subtitle}</p>
+      <p className="text-[13px] text-text-muted mt-1.5 max-w-xs">{subtitle}</p>
       {actionLabel && onAction && (
         <button
           onClick={onAction}
@@ -132,11 +132,11 @@ function FieldRow({ label, value, link }: { label: string; value?: string | null
   if (!value) return null;
   return (
     <div className="flex items-start gap-0 py-[3px] border-b border-border-main/30 last:border-0">
-      <span className="text-[11px] font-bold text-slate-500 shrink-0 w-36">{label}:</span>
+      <span className="text-[11px] font-extrabold text-text-muted shrink-0 w-36">{label}:</span>
       {link ? (
-        <a href={`mailto:${value}`} className="text-[11px] font-semibold text-primary hover:underline truncate">{value}</a>
+        <a href={`mailto:${value}`} className="text-xs font-bold text-primary hover:underline truncate">{value}</a>
       ) : (
-        <span className="text-[11px] font-semibold text-text-main">{value}</span>
+        <span className="text-xs font-bold text-text-main">{value}</span>
       )}
     </div>
   );
@@ -158,7 +158,7 @@ function MiniTable({ title, columns, rows, addLabel }: {
           {title}
         </span>
         {addLabel && (
-          <button className="h-7 px-3 flex items-center gap-1 bg-white border border-border-main rounded-lg text-xs font-semibold text-slate-500 hover:text-primary hover:border-primary/40 transition-all cursor-pointer">
+          <button className="h-7 px-3 flex items-center gap-1 bg-white border border-border-main rounded-lg text-xs font-bold text-text-muted hover:text-primary hover:border-primary/40 transition-all cursor-pointer">
             <Plus size={12} />
             {addLabel}
           </button>
@@ -176,7 +176,7 @@ function MiniTable({ title, columns, rows, addLabel }: {
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="text-center text-slate-400 italic table-body">No records found</td>
+                <td colSpan={columns.length} className="text-center text-text-muted/60 italic table-body">No records found</td>
               </tr>
             ) : (
               rows.map((row, i) => (
@@ -220,7 +220,7 @@ function OverviewTab({ c }: { c: any }) {
               {c.dba && <FieldRow label="DBA" value={c.dba} />}
             </div>
             <div className="mt-2 space-y-0">
-              {c.address && <div className="py-[3px] border-b border-border-main/30"><span className="text-[11px] font-bold text-slate-500 block">Address:</span><span className="text-[11px] text-text-main font-semibold">{c.address}{c.address2 ? `, ${c.address2}` : ""}</span><br /><span className="text-[11px] text-text-main">{[c.city, c.state, c.zip].filter(Boolean).join(", ")}</span></div>}
+              {c.address && <div className="py-[3px] border-b border-border-main/30"><span className="text-[11px] font-extrabold text-text-muted block">Address:</span><span className="text-xs text-text-main font-bold">{c.address}{c.address2 ? `, ${c.address2}` : ""}</span><br /><span className="text-xs text-text-main font-medium">{[c.city, c.state, c.zip].filter(Boolean).join(", ")}</span></div>}
               <FieldRow label="Business" value={c.phone_business} />
               <FieldRow label="Cell" value={c.cell} />
               <FieldRow label="Phone" value={c.phone} />
@@ -342,9 +342,9 @@ function TbarBtn({ icon: Icon, label, primary, onClick }: { icon?: any; label: s
   return (
     <button
       onClick={onClick}
-      className={`h-7 px-2.5 flex items-center gap-1 text-[11px] font-bold rounded-lg border transition-all cursor-pointer ${primary
+      className={`h-7 px-2.5 flex items-center gap-1 text-xs font-bold rounded-lg border transition-all cursor-pointer ${primary
         ? "bg-gradient-to-r from-primary to-primary/90 text-white border-transparent hover:shadow-md hover:shadow-primary/30 shadow-sm shadow-primary/20 hover:-translate-y-px"
-        : "bg-white/80 backdrop-blur-sm text-slate-600 border-border-main hover:bg-white hover:text-primary hover:shadow-sm hover:border-primary/30"
+        : "bg-white/80 backdrop-blur-sm text-text-main border-border-main hover:bg-white hover:text-primary hover:shadow-sm hover:border-primary/30"
         }`}>
       {Icon && <Icon size={12} />}
       {label}
@@ -356,9 +356,9 @@ function PolicySummaryView({ selectedPolicy, customer }: { selectedPolicy: any, 
   if (!selectedPolicy) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-20 opacity-60">
-        <Shield size={32} className="text-slate-300 mb-3" />
-        <span className="text-xs font-bold text-slate-500">No Policy Selected</span>
-        <span className="text-[10px] text-slate-400 mt-1 max-w-[200px] text-center">Select a policy from the table to view its summary details</span>
+        <Shield size={32} className="text-border-main mb-3" />
+        <span className="text-sm font-extrabold text-text-muted">No Policy Selected</span>
+        <span className="text-[11px] text-text-muted mt-1 max-w-[200px] text-center">Select a policy from the table to view its summary details</span>
       </div>
     );
   }
@@ -433,19 +433,19 @@ function EditDocumentPopup({
       <div className="bg-white rounded-2xl shadow-2xl w-[420px] border border-border-main overflow-hidden">
         <div className="px-5 py-4 border-b border-border-main bg-secondary/30 flex justify-between items-center">
           <h3 className="font-extrabold text-text-main text-sm">Edit Document (EDP)</h3>
-          <button onClick={onCancel} className="text-slate-400 hover:text-text-main cursor-pointer">
+          <button onClick={onCancel} className="text-text-muted/60 hover:text-text-main cursor-pointer">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
           </button>
         </div>
         <div className="p-5 space-y-4">
           <div>
-            <label className="block text-[11px] font-bold text-slate-500 mb-1">File Name</label>
+            <label className="block text-xs font-extrabold text-text-muted mb-1">File Name</label>
             <div className="text-xs font-semibold text-text-main bg-secondary/50 px-3 py-2 rounded-lg truncate border border-border-main/50 shadow-inner">
               {file.name}
             </div>
           </div>
           <div>
-            <label className="block text-[11px] font-bold text-slate-500 mb-1">Action</label>
+            <label className="block text-xs font-extrabold text-text-muted mb-1">Action</label>
             <select
               value={details.action}
               onChange={(e) => setDetails({ ...details, action: e.target.value })}
@@ -458,7 +458,7 @@ function EditDocumentPopup({
             </select>
           </div>
           <div>
-            <label className="block text-[11px] font-bold text-slate-500 mb-1">Description</label>
+            <label className="block text-xs font-extrabold text-text-muted mb-1">Description</label>
             <input
               type="text"
               value={details.description}
@@ -468,7 +468,7 @@ function EditDocumentPopup({
             />
           </div>
           <div>
-            <label className="block text-[11px] font-bold text-slate-500 mb-1">Ref #</label>
+            <label className="block text-xs font-extrabold text-text-muted mb-1">Ref #</label>
             <input
               type="text"
               value={details.refNum}
@@ -479,8 +479,8 @@ function EditDocumentPopup({
           </div>
         </div>
         <div className="px-5 py-4 border-t border-border-main bg-secondary/10 flex justify-end gap-2">
-          <button onClick={onCancel} className="px-4 py-2 text-[11px] font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-200/50 rounded-xl transition-colors cursor-pointer">Cancel</button>
-          <button onClick={onSave} className="px-5 py-2 text-[11px] font-bold text-white bg-gradient-to-r from-primary to-primary/80 hover:-translate-y-0.5 rounded-xl shadow-md shadow-primary/30 hover:shadow-primary/40 transition-all duration-300 cursor-pointer">Save Document</button>
+          <button onClick={onCancel} className="px-4 py-2 text-xs font-bold text-text-main/70 hover:text-text-main hover:bg-secondary/50 rounded-xl transition-colors cursor-pointer">Cancel</button>
+          <button onClick={onSave} className="px-5 py-2 text-xs font-bold text-white bg-gradient-to-r from-primary to-primary/80 hover:-translate-y-0.5 rounded-xl shadow-md shadow-primary/30 hover:shadow-primary/40 transition-all duration-300 cursor-pointer">Save Document</button>
         </div>
       </div>
     </div>
@@ -737,9 +737,9 @@ function PoliciesTab({ customerId, customer }: { customerId: string, customer?: 
                   <tr>
                     <td colSpan={cols.length + 1} className="py-20 text-center table-body">
                       <div className="flex flex-col items-center gap-2">
-                        <Shield size={28} className="text-slate-200" />
-                        <p className="font-bold text-slate-400">No Policies Found</p>
-                        <p className="text-slate-300">Click <strong>+ New Policy</strong> to add a policy for this customer.</p>
+                        <Shield size={28} className="text-border-main/50" />
+                        <p className="font-extrabold text-text-muted">No Policies Found</p>
+                        <p className="text-[11px] text-text-muted/60">Click <strong>+ New Policy</strong> to add a policy for this customer.</p>
                       </div>
                     </td>
                   </tr>
@@ -762,10 +762,10 @@ function PoliciesTab({ customerId, customer }: { customerId: string, customer?: 
                           </span>
                         </td>
                         <td className="table-body font-bold text-success border-r border-border-main/20">{p.status}</td>
-                        <td className="table-body text-slate-500 border-r border-border-main/20">{p.term}</td>
-                        <td className="table-body text-slate-500 border-r border-border-main/20">{p.type}</td>
-                        <td className="table-body text-slate-500 font-semibold border-r border-border-main/20">{p.company}</td>
-                        <td className="table-body text-slate-500">{p.description}</td>
+                        <td className="table-body text-text-main border-r border-border-main/20">{p.term}</td>
+                        <td className="table-body text-text-main border-r border-border-main/20">{p.type}</td>
+                        <td className="table-body text-text-main font-bold border-r border-border-main/20">{p.company}</td>
+                        <td className="table-body text-text-main">{p.description}</td>
                       </tr>
                     );
                   })
@@ -774,7 +774,7 @@ function PoliciesTab({ customerId, customer }: { customerId: string, customer?: 
             </table>
           </div>
           {/* Policies Footer */}
-          <div className="px-4 py-2 border-t border-border-main bg-secondary/20 text-[10px] text-slate-400 font-semibold shrink-0">
+          <div className="px-4 py-2 border-t border-border-main bg-secondary/20 text-[11px] text-text-muted font-bold shrink-0">
             Displaying record(s) {policies.length > 0 ? `1 - ${policies.length} of ${policies.length}` : "0 - 0 of 0"}
           </div>
         </div>
@@ -826,21 +826,21 @@ function PoliciesTab({ customerId, customer }: { customerId: string, customer?: 
                   <tbody>
                     {documents.length === 0 ? (
                       <tr>
-                        <td colSpan={8} className="text-center py-20 text-xs text-slate-500 italic table-body">
+                        <td colSpan={8} className="text-center py-20 text-xs text-text-muted italic table-body">
                           <span className="block mb-1">No documents found.</span>
-                          <span className="text-[10px] text-slate-400">Drag and drop a file here to open the <strong>Edit Document Popup</strong>.</span>
+                          <span className="text-[11px] text-text-muted/60">Drag and drop a file here to open the <strong>Edit Document Popup</strong>.</span>
                         </td>
                       </tr>
                     ) : (
                       documents.map((doc) => (
                         <tr key={doc.id} className="hover:bg-secondary/40">
                           <td className="table-body text-center border-r border-border-main/20"><input type="checkbox" className="cursor-pointer" /></td>
-                          <td className="table-body text-center border-r border-border-main/20 text-slate-400">📎</td>
+                          <td className="table-body text-center border-r border-border-main/20 text-text-muted/60">📎</td>
                           <td className="table-body text-center border-r border-border-main/20">
                             <FileText size={12} className="inline-block text-primary" />
                           </td>
                           <td className="table-body border-r border-border-main/20">{doc.action}</td>
-                          <td 
+                          <td
                             className="table-body border-r border-border-main/20 text-blue-600 font-bold cursor-pointer hover:underline truncate max-w-[150px]"
                             onClick={() => {
                               if (doc.url) {
@@ -861,7 +861,7 @@ function PoliciesTab({ customerId, customer }: { customerId: string, customer?: 
                 </table>
               </div>
               {/* Documents Footer */}
-              <div className="px-3 py-2 border-t border-border-main bg-secondary/20 text-[10px] text-slate-400 font-semibold shrink-0 mt-auto text-right">
+              <div className="px-3 py-2 border-t border-border-main bg-secondary/20 text-[11px] text-text-muted font-bold shrink-0 mt-auto text-right">
                 Displaying record(s) {documents.length > 0 ? `1 - ${documents.length} of ${documents.length}` : "0 - 0 of 0"}
               </div>
               {/* EDP Modal */}
@@ -920,7 +920,7 @@ function PoliciesTab({ customerId, customer }: { customerId: string, customer?: 
 
                         return (
                           <tr key={act.id} className="hover:bg-secondary/40">
-                            <td className="table-body text-center border-r border-border-main/20 text-slate-400">📎</td>
+                            <td className="table-body text-center border-r border-border-main/20 text-text-muted/60">📎</td>
                             <td className="table-body text-blue-600 font-semibold cursor-pointer hover:underline border-r border-border-main/20">{act.date}</td>
                             <td className="table-body border-r border-border-main/20">{act.action}</td>
                             <td className="table-body border-r border-border-main/20 truncate max-w-[120px]">{act.description}</td>
@@ -933,13 +933,13 @@ function PoliciesTab({ customerId, customer }: { customerId: string, customer?: 
                       })
                     ) : (
                       <tr>
-                        <td colSpan={8} className="text-center py-20 text-xs text-slate-500 italic table-body">No activities found</td>
+                        <td colSpan={8} className="text-center py-20 text-xs text-text-muted italic table-body">No activities found</td>
                       </tr>
                     )}
                   </tbody>
                 </table>
               </div>
-              <div className="px-3 py-2 border-t border-border-main bg-secondary/20 text-[10px] text-slate-400 font-semibold shrink-0 mt-auto text-right">
+              <div className="px-3 py-2 border-t border-border-main bg-secondary/20 text-[11px] text-text-muted font-bold shrink-0 mt-auto text-right">
                 Displaying record(s) {selectedPolicyId ? `1 - ${activities.length} of ${activities.length}` : "0 - 0 of 0"}
               </div>
             </div>
@@ -1034,9 +1034,9 @@ function ActivitiesTab({ customerId }: { customerId: string }) {
               <tr>
                 <td colSpan={cols.length + 1} className="py-20 text-center table-body">
                   <div className="flex flex-col items-center gap-2">
-                    <Activity size={28} className="text-slate-200" />
-                    <p className="font-bold text-slate-400">No Activities Found</p>
-                    <p className="text-slate-300">Click <strong>+ New Activity</strong> to log an activity for this customer.</p>
+                    <Activity size={28} className="text-border-main/50" />
+                    <p className="font-extrabold text-text-muted">No Activities Found</p>
+                    <p className="text-[11px] text-text-muted/60">Click <strong>+ New Activity</strong> to log an activity for this customer.</p>
                   </div>
                 </td>
               </tr>
@@ -1062,7 +1062,7 @@ function ActivitiesTab({ customerId }: { customerId: string }) {
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-2 border-t border-border-main bg-secondary/20 text-[10px] text-slate-400 font-semibold">
+      <div className="px-4 py-2 border-t border-border-main bg-secondary/20 text-[11px] text-text-muted font-bold">
         Displaying record(s) {activities.length > 0 ? `1 - ${activities.length} of ${activities.length}` : "0 - 0 of 0"}
       </div>
     </div>
@@ -1519,19 +1519,7 @@ export default function CustomerProfilePage() {
         </div>
       </header>
 
-      {/* ── Sub-breadcrumb band ── */}
-      <div className="bg-white border-b border-border-main h-9 flex items-center justify-between px-6 shrink-0">
-        <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-          <span>Customer</span>
-          <span className="text-slate-300">/</span>
-          <span className="text-primary">{displayName}</span>
-          <span className="text-slate-300">/</span>
-          <span className="capitalize">{activeTab}</span>
-        </div>
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-          {customer.division || "Gamaty Insurance Agency"}
-        </span>
-      </div>
+      {/* ── Sub-breadcrumb band (Removed for cleaner dashboard layout) ── */}
 
       {/* ── Main body ── */}
       <div className="flex flex-1 overflow-hidden">
@@ -1540,44 +1528,46 @@ export default function CustomerProfilePage() {
         <CustomerSidebar activeTab={activeTab} setActiveTab={setActiveTab} customerId={customerId as string} />
 
         {/* ── Main Content ── */}
-        <main className="flex-1 flex flex-col overflow-hidden bg-bg-base">
+        <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-bg-base p-4 lg:p-6 gap-4">
 
-          {/* ─ Content Title Bar (AMS360-style: name + active tab, sticky) ─ */}
-          <div className="bg-white border-b border-border-main px-5 py-3 flex items-center justify-between shrink-0 shadow-sm">
-            <div className="flex items-center gap-3 min-w-0">
-              <h1 className="font-extrabold text-sm text-text-main tracking-tight truncate">
-                {displayName}
-              </h1>
-              <span className="text-slate-300 text-xs shrink-0">—</span>
-              <span className="text-xs font-bold text-primary capitalize shrink-0">
-                {NAV_ITEMS.find(n => n.id === activeTab)?.label}
-              </span>
+          {/* ─ Modern Floating Customer Info Card ─ */}
+          <div className="bg-white border border-border-main rounded-2xl px-6 py-5 shrink-0 shadow-sm">
+            <div className="flex items-center justify-between mb-4 pb-4 border-b border-border-main/50">
+              <div className="flex items-center gap-3 min-w-0">
+                <h1 className="font-bold text-lg text-text-main tracking-tight truncate">
+                  {displayName}
+                </h1>
+                <span className="text-border-main text-sm shrink-0">—</span>
+                <span className="text-sm font-bold text-primary capitalize shrink-0">
+                  {NAV_ITEMS.find(n => n.id === activeTab)?.label}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider hidden sm:block">
+                  {customer.division || "Gamaty Insurance Agency"}
+                </span>
+                {/* <button
+                  onClick={fetchCustomer}
+                  className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary text-xs font-bold rounded-xl transition-all cursor-pointer uppercase tracking-wide"
+                >
+                  <Activity size={12} />
+                  Refresh
+                </button> */}
+              </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={fetchCustomer}
-                className="h-7 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-slate-500 hover:text-primary text-[10px] font-bold rounded-xl transition-all cursor-pointer uppercase tracking-wide"
-              >
-                <Activity size={11} />
-                Refresh
-              </button>
-            </div>
-          </div>
 
-          {/* ─ Always-Visible Customer Info Summary Strip (AMS360-style) ─ */}
-          <div className="bg-white border-b-2 border-border-main px-5 py-3.5 shrink-0">
             <div className="flex items-start gap-8 flex-wrap">
 
               {/* Address block */}
               <div className="space-y-0.5 min-w-[160px]">
                 {(customer.address || customer.city) && (
                   <div className="flex items-start gap-1.5">
-                    <MapPin size={11} className="text-primary mt-0.5 shrink-0" />
+                    <MapPin size={12} className="text-primary mt-0.5 shrink-0" />
                     <div>
                       {customer.address && <p className="text-xs font-semibold text-text-main leading-snug">{customer.address}</p>}
-                      {customer.address2 && <p className="text-xs text-slate-500 leading-snug">{customer.address2}</p>}
+                      {customer.address2 && <p className="text-xs text-text-muted leading-snug">{customer.address2}</p>}
                       {(customer.city || customer.state || customer.zip) && (
-                        <p className="text-xs text-slate-500 leading-snug">
+                        <p className="text-xs text-text-muted leading-snug">
                           {[customer.city, customer.state, customer.zip].filter(Boolean).join(", ")}
                         </p>
                       )}
@@ -1593,26 +1583,26 @@ export default function CustomerProfilePage() {
               <div className="space-y-1">
                 {customer.phone && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide w-16 shrink-0">Primary:</span>
+                    <span className="text-[11px] font-extrabold text-text-muted uppercase tracking-wide w-16 shrink-0">Primary:</span>
                     <span className="text-xs font-semibold text-text-main font-mono">{customer.phone}</span>
                   </div>
                 )}
                 {customer.phone_business && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide w-16 shrink-0">Business:</span>
+                    <span className="text-[11px] font-extrabold text-text-muted uppercase tracking-wide w-16 shrink-0">Business:</span>
                     <span className="text-xs font-semibold text-text-main font-mono">{customer.phone_business}</span>
                   </div>
                 )}
                 {customer.cell && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide w-16 shrink-0">Cell:</span>
+                    <span className="text-[11px] font-extrabold text-text-muted uppercase tracking-wide w-16 shrink-0">Cell:</span>
                     <span className="text-xs font-semibold text-text-main font-mono">{customer.cell}</span>
                   </div>
                 )}
                 {!customer.phone && !customer.phone_business && !customer.cell && (
                   <div className="flex items-center gap-1.5">
-                    <Phone size={11} className="text-slate-300" />
-                    <span className="text-xs text-slate-300 italic">No phone on record</span>
+                    <Phone size={12} className="text-text-muted/50" />
+                    <span className="text-xs text-text-muted/50 italic">No phone on record</span>
                   </div>
                 )}
               </div>
@@ -1624,26 +1614,26 @@ export default function CustomerProfilePage() {
               <div className="space-y-1">
                 {customer.email && (
                   <div className="flex items-center gap-1.5">
-                    <Mail size={11} className="text-primary shrink-0" />
+                    <Mail size={12} className="text-primary shrink-0" />
                     <a href={`mailto:${customer.email}`} className="text-xs font-semibold text-primary hover:underline truncate max-w-[200px]">{customer.email}</a>
                   </div>
                 )}
                 {customer.email2 && (
                   <div className="flex items-center gap-1.5">
-                    <Mail size={11} className="text-slate-400 shrink-0" />
-                    <a href={`mailto:${customer.email2}`} className="text-xs font-semibold text-slate-500 hover:underline truncate max-w-[200px]">{customer.email2}</a>
+                    <Mail size={12} className="text-text-muted shrink-0" />
+                    <a href={`mailto:${customer.email2}`} className="text-xs font-semibold text-text-muted hover:underline truncate max-w-[200px]">{customer.email2}</a>
                   </div>
                 )}
                 {customer.web && (
                   <div className="flex items-center gap-1.5">
-                    <Globe size={11} className="text-slate-400 shrink-0" />
-                    <a href={customer.web} target="_blank" rel="noreferrer" className="text-xs font-semibold text-slate-500 hover:underline truncate max-w-[200px]">{customer.web}</a>
+                    <Globe size={12} className="text-text-muted shrink-0" />
+                    <a href={customer.web} target="_blank" rel="noreferrer" className="text-xs font-semibold text-text-muted hover:underline truncate max-w-[200px]">{customer.web}</a>
                   </div>
                 )}
                 {!customer.email && !customer.web && (
                   <div className="flex items-center gap-1.5">
-                    <Mail size={11} className="text-slate-300" />
-                    <span className="text-xs text-slate-300 italic">No email on record</span>
+                    <Mail size={12} className="text-text-muted/50" />
+                    <span className="text-xs text-text-muted/50 italic">No email on record</span>
                   </div>
                 )}
               </div>
@@ -1655,16 +1645,16 @@ export default function CustomerProfilePage() {
               <div className="space-y-1 hidden lg:block">
                 {customer.primary_exec && (
                   <div className="flex items-center gap-1.5">
-                    <User size={11} className="text-primary shrink-0" />
-                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide">Exec:</span>
+                    <User size={12} className="text-primary shrink-0" />
+                    <span className="text-[11px] font-extrabold text-text-muted uppercase tracking-wide">Exec:</span>
                     <span className="text-xs font-semibold text-text-main">{customer.primary_exec}</span>
                   </div>
                 )}
                 {customer.created_date && (
                   <div className="flex items-center gap-1.5">
-                    <Calendar size={11} className="text-slate-400 shrink-0" />
-                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide">Since:</span>
-                    <span className="text-xs font-semibold text-slate-500">{customer.created_date}</span>
+                    <Calendar size={12} className="text-text-muted shrink-0" />
+                    <span className="text-[11px] font-extrabold text-text-muted uppercase tracking-wide">Since:</span>
+                    <span className="text-xs font-semibold text-text-muted">{customer.created_date}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-1.5 pt-0.5">
@@ -1677,7 +1667,7 @@ export default function CustomerProfilePage() {
           </div>
 
           {/* ─ Scrollable Tab Content ─ */}
-          <div className="flex-1 overflow-y-auto p-5">
+          <div className="flex-1 overflow-y-auto min-h-0">
             {activeTab === "overview" && <OverviewTab c={customer} />}
             {activeTab === "policies" && <PoliciesTab customerId={customerId as string} customer={customer} />}
             {activeTab === "activities" && <ActivitiesTab customerId={customerId as string} />}

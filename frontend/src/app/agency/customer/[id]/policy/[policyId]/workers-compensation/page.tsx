@@ -17,16 +17,15 @@ const US_STATES = [
   "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
 ];
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 export default function WorkersCompPage() {
   const params = useParams();
   const customerId = params?.id as string;
   const policyId = params?.policyId as string;
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-
   const [mode, setMode] = useState<"view" | "add" | "edit">("view");
   const [selectedIdx, setSelectedIdx] = useState<number | null>(0);
-  const [isInitialPart2Load, setIsInitialPart2Load] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   const [statesList, setStatesList] = useState([
@@ -110,14 +109,12 @@ export default function WorkersCompPage() {
         })
         .then(data => {
           if (data) setPart2(prev => ({ ...prev, ...data }));
-          setIsInitialPart2Load(false);
         })
         .catch(err => {
           console.error("Failed to load part 2", err);
-          setIsInitialPart2Load(false);
         });
     }
-  }, [customerId, policyId, API_BASE_URL]);
+  }, [customerId, policyId]);
 
   const handlePart2Change = (field: string, val: string | boolean) => {
     setPart2(prev => ({ ...prev, [field]: val }));

@@ -31,6 +31,7 @@ interface CustomerTableProps {
   setSelectedRowIds: React.Dispatch<React.SetStateAction<RowSelectionState>>;
   onRowClick?: (customer: Customer) => void;
   onRefresh?: () => void;
+  inactiveColor?: string;
 }
 
 export default function CustomerTable({
@@ -39,6 +40,7 @@ export default function CustomerTable({
   setSelectedRowIds,
   onRowClick,
   onRefresh,
+  inactiveColor,
 }: CustomerTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
@@ -80,7 +82,7 @@ export default function CustomerTable({
       {
         accessorKey: "id",
         header: "#",
-        cell: (info) => <span className="text-slate-400 font-bold">{info.getValue() as string}</span>,
+        cell: (info) => <span className="text-text-main font-bold">{info.getValue() as string}</span>,
         size: 40,
       },
       // Match Code
@@ -89,7 +91,7 @@ export default function CustomerTable({
         header: ({ column }) => (
           <button
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="flex items-center gap-1 font-bold text-slate-500 hover:text-primary transition-colors outline-none w-full text-left uppercase tracking-wider text-[10px]"
+            className="flex items-center gap-1 font-bold text-text-main hover:text-primary transition-colors outline-none w-full text-left uppercase tracking-wider text-[10px]"
           >
             <span>Match</span>
             {column.getIsSorted() === "asc" ? (
@@ -97,11 +99,11 @@ export default function CustomerTable({
             ) : column.getIsSorted() === "desc" ? (
               <ArrowDown size={11} className="text-primary" />
             ) : (
-              <ArrowUpDown size={11} className="text-slate-300" />
+              <ArrowUpDown size={11} className="text-text-muted/50" />
             )}
           </button>
         ),
-        cell: (info) => <span className="font-mono text-slate-600 font-bold">{info.getValue() as string}</span>,
+        cell: (info) => <span className="font-mono text-text-main font-bold">{info.getValue() as string}</span>,
         size: 90,
       },
       // Customer Name
@@ -110,7 +112,7 @@ export default function CustomerTable({
         header: ({ column }) => (
           <button
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="flex items-center gap-1 font-bold text-slate-500 hover:text-primary transition-colors outline-none w-full text-left uppercase tracking-wider text-[10px]"
+            className="flex items-center gap-1 font-bold text-text-main hover:text-primary transition-colors outline-none w-full text-left uppercase tracking-wider text-[10px]"
           >
             <span>Name</span>
             {column.getIsSorted() === "asc" ? (
@@ -118,7 +120,7 @@ export default function CustomerTable({
             ) : column.getIsSorted() === "desc" ? (
               <ArrowDown size={11} className="text-primary" />
             ) : (
-              <ArrowUpDown size={11} className="text-slate-300" />
+              <ArrowUpDown size={11} className="text-text-muted/50" />
             )}
           </button>
         ),
@@ -142,50 +144,50 @@ export default function CustomerTable({
       // Address
       {
         accessorKey: "address",
-        header: () => <span className="uppercase tracking-wider text-[10px] text-slate-500 font-bold">Address</span>,
-        cell: (info) => <span className="text-slate-600 truncate">{info.getValue() as string}</span>,
+        header: () => <span className="uppercase tracking-wider text-[10px] text-text-main font-bold">Address</span>,
+        cell: (info) => <span className="text-text-main truncate">{info.getValue() as string}</span>,
         size: 140,
       },
       // City
       {
         accessorKey: "city",
-        header: () => <span className="uppercase tracking-wider text-[10px] text-slate-500 font-bold">City</span>,
-        cell: (info) => <span className="text-slate-600 truncate">{info.getValue() as string}</span>,
+        header: () => <span className="uppercase tracking-wider text-[10px] text-text-main font-bold">City</span>,
+        cell: (info) => <span className="text-text-main truncate">{info.getValue() as string}</span>,
         size: 100,
       },
       // State
       {
         accessorKey: "state",
-        header: () => <span className="uppercase tracking-wider text-[10px] text-slate-500 font-bold">St</span>,
+        header: () => <span className="uppercase tracking-wider text-[10px] text-text-main font-bold">St</span>,
         cell: (info) => <span className="text-text-main font-bold">{info.getValue() as string}</span>,
         size: 45,
       },
       // Zip
       {
         accessorKey: "zip",
-        header: () => <span className="uppercase tracking-wider text-[10px] text-slate-500 font-bold">Zip</span>,
-        cell: (info) => <span className="text-slate-500 font-mono">{info.getValue() as string}</span>,
+        header: () => <span className="uppercase tracking-wider text-[10px] text-text-main font-bold">Zip</span>,
+        cell: (info) => <span className="text-text-main font-mono">{info.getValue() as string}</span>,
         size: 55,
       },
       // Phone
       {
         accessorKey: "phone",
-        header: () => <span className="uppercase tracking-wider text-[10px] text-slate-500 font-bold">Phone</span>,
-        cell: (info) => <span className="text-slate-700 font-semibold font-mono">{info.getValue() as string}</span>,
+        header: () => <span className="uppercase tracking-wider text-[10px] text-text-main font-bold">Phone</span>,
+        cell: (info) => <span className="text-text-main font-semibold font-mono">{info.getValue() as string}</span>,
         size: 110,
       },
       // Executive
       {
         accessorKey: "primaryExec",
-        header: () => <span className="uppercase tracking-wider text-[10px] text-slate-500 font-bold">Exec</span>,
-        cell: (info) => <span className="text-slate-600 truncate">{info.getValue() as string}</span>,
+        header: () => <span className="uppercase tracking-wider text-[10px] text-text-main font-bold">Exec</span>,
+        cell: (info) => <span className="text-text-main truncate">{info.getValue() as string}</span>,
         size: 120,
       },
       // Primary Type
       {
         accessorKey: "type",
-        header: () => <span className="uppercase tracking-wider text-[10px] text-slate-500 font-bold">Type</span>,
-        cell: (info) => <span className="text-slate-500 font-medium">{info.getValue() as string}</span>,
+        header: () => <span className="uppercase tracking-wider text-[10px] text-text-main font-bold">Type</span>,
+        cell: (info) => <span className="text-text-main font-medium">{info.getValue() as string}</span>,
         size: 90,
       },
     ],
@@ -246,9 +248,14 @@ export default function CustomerTable({
                       if (onRowClick) onRowClick(row.original);
                       row.toggleSelected(!isSelected);
                     }}
+                    style={
+                      row.original.status === "Inactive" && inactiveColor
+                        ? { backgroundColor: inactiveColor, color: "#1a1a1a" }
+                        : {}
+                    }
                     className={`transition-all cursor-pointer ${
                       isSelected
-                        ? "bg-primary/10 text-slate-900 font-semibold"
+                        ? "bg-primary/10 text-text-main font-semibold"
                         : "odd:bg-white even:bg-secondary/10"
                     }`}
                   >
@@ -262,7 +269,7 @@ export default function CustomerTable({
               })
             ) : (
               <tr className="bg-white">
-                <td colSpan={columns.length} className="text-center py-20 text-slate-400 font-medium table-body">
+                <td colSpan={columns.length} className="text-center py-20 text-text-main/70 font-medium table-body">
                   No customer records found matching the criteria.
                 </td>
               </tr>

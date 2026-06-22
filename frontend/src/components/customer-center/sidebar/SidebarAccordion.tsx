@@ -385,15 +385,17 @@ export default function SidebarAccordion({
     ];
 
     return (
-      <aside className="sidebar-accordion sidebar-accordion--collapsed w-12 bg-[#5C4A3E] flex flex-col shrink-0 h-full relative z-20 shadow-[2px_0_12px_rgb(0,0,0,0.08)]">
+      <aside className="sidebar-accordion sidebar-accordion--collapsed w-12 bg-bg-base border-r border-border-main flex flex-col shrink-0 h-full relative z-20">
         {/* Expand button */}
-        <button
-          onClick={handleCollapse}
-          className="h-9 flex items-center justify-center text-[#D4C4B5] hover:text-white hover:bg-[#4A3B32] transition-colors cursor-pointer"
-          title="Expand Sidebar"
-        >
-          <PanelLeftOpen size={15} />
-        </button>
+        <div className="h-12 flex items-center justify-center shrink-0 pt-3 pb-1">
+          <button
+            onClick={handleCollapse}
+            className="h-7 w-7 flex items-center justify-center text-text-muted hover:text-text-main hover:bg-secondary rounded-md transition-colors cursor-pointer"
+            title="Expand Sidebar"
+          >
+            <ChevronRight size={16} strokeWidth={2.5} />
+          </button>
+        </div>
 
         {/* Section icon buttons */}
         <div className="flex-1 flex flex-col py-1 gap-0.5">
@@ -412,8 +414,8 @@ export default function SidebarAccordion({
               }}
               title={label}
               className={`h-10 flex items-center justify-center transition-all cursor-pointer ${expandedSections[key]
-                  ? "text-white bg-[#4A3B32]"
-                  : "text-[#A99585] hover:text-[#E6D9CC] hover:bg-[#4A3B32]/60"
+                  ? "text-primary bg-secondary"
+                  : "text-text-muted hover:text-text-main hover:bg-secondary/50"
                 }`}
             >
               <Icon size={16} />
@@ -437,7 +439,7 @@ export default function SidebarAccordion({
       {/* ── Mobile toggle button ── */}
       <button
         onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="fixed bottom-4 left-4 z-50 lg:hidden h-10 w-10 rounded-xl bg-[#4A3B32] text-white shadow-lg flex items-center justify-center hover:bg-[#3E2C20] transition-colors cursor-pointer"
+        className="fixed bottom-4 left-4 z-50 lg:hidden h-10 w-10 rounded-xl bg-white border border-border-main text-text-main shadow-lg flex items-center justify-center hover:bg-secondary transition-colors cursor-pointer"
         title="Toggle Menu"
       >
         {isMobileOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
@@ -447,8 +449,8 @@ export default function SidebarAccordion({
       <aside
         className={`
           sidebar-accordion
-          bg-white border-r border-border-main flex flex-col shrink-0
-          h-full relative z-30 shadow-[2px_0_12px_rgb(0,0,0,0.04)]
+          bg-bg-base border-r border-border-main flex flex-col shrink-0
+          h-full relative z-30
           transition-all duration-300
 
           /* Desktop: always visible */
@@ -460,17 +462,17 @@ export default function SidebarAccordion({
           ${isMobileOpen ? "max-lg:translate-x-0" : "max-lg:-translate-x-full"}
         `}
       >
-        {/* Collapse button header */}
-        <div className="h-9 flex items-center justify-between px-3 bg-[#4A3B32] shrink-0">
-          <span className="text-[10px] font-extrabold text-[#D4C4B5] uppercase tracking-[0.15em]">
+        {/* Collapse button container */}
+        <div className="h-12 flex items-center justify-between px-3 shrink-0 pt-3 pb-1">
+          <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider pl-1">
             Customer
           </span>
           <button
             onClick={handleCollapse}
-            className="h-6 w-6 flex items-center justify-center text-[#A99585] hover:text-white rounded transition-colors cursor-pointer"
+            className="h-7 w-7 flex items-center justify-center text-text-muted hover:text-text-main hover:bg-secondary rounded-md transition-colors cursor-pointer"
             title="Collapse Sidebar"
           >
-            <PanelLeftClose size={14} />
+            <ChevronLeft size={16} strokeWidth={2.5} />
           </button>
         </div>
 
@@ -480,14 +482,19 @@ export default function SidebarAccordion({
         </div>
 
         {/* Bottom branding */}
-        <div className="shrink-0 border-t border-border-main bg-secondary/30 px-3 py-2 text-center">
-          <div className="flex items-center justify-center gap-1.5">
-            <div className="h-4 w-4 rounded-full bg-primary text-white flex items-center justify-center text-[9px] font-extrabold">
-              S
+        <div className="shrink-0 p-3 mt-auto">
+          <div className="bg-secondary/50 rounded-xl p-3 border border-border-main/50 text-center">
+            <div className="space-y-1">
+              <div className="flex items-center justify-center gap-1.5">
+                <div className="h-4.5 w-4.5 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-extrabold">
+                  S
+                </div>
+                <span className="text-xs font-bold text-text-main uppercase tracking-widest">
+                  Sterling Box
+                </span>
+              </div>
+              <p className="text-[10px] text-text-muted font-medium">v1.0.0 Stable</p>
             </div>
-            <span className="text-[10px] font-bold text-text-main uppercase tracking-widest">
-              Sterling
-            </span>
           </div>
         </div>
       </aside>

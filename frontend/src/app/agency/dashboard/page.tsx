@@ -5,7 +5,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Modal from "../../../components/Modal";
 import Sidebar from "../../../components/Sidebar";
-import SearchBar from "../../../components/SearchBar";
+import SearchBar, { AdvancedFilterState, defaultFilterState } from "../../../components/SearchBar";
 import CustomerToolbar from "../../../components/CustomerToolbar";
 import CustomerTable from "../../../components/CustomerTable";
 import Header from "../../../components/Header";
@@ -38,10 +38,7 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Search & Filtering State
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchType, setSearchType] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [typeFilter, setTypeFilter] = useState("All");
+  const [filterState, setFilterState] = useState<AdvancedFilterState>(defaultFilterState);
 
   // Modals state
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
@@ -131,35 +128,27 @@ export default function Page() {
   const filteredCustomers = useMemo(() => {
     return customers.filter((customer) => {
       // 1. Filter by Status
-      if (statusFilter !== "All" && customer.status !== statusFilter) {
+      if (filterState.statusFilter !== "All" && customer.status !== filterState.statusFilter) {
         return false;
       }
 
-      // 2. Filter by Type
-      if (typeFilter !== "All" && customer.type !== typeFilter) {
-        return false;
-      }
-
-      // 3. Filter by Search Query
-      if (!searchQuery.trim()) {
+      // 2. Filter by Search Query
+      if (!filterState.searchQuery.trim()) {
         return true;
       }
 
-      const query = searchQuery.toLowerCase();
+      const query = filterState.searchQuery.toLowerCase();
 
-      switch (searchType) {
-        case "name":
+      switch (filterState.searchBy) {
+        case "Name":
           return customer.name.toLowerCase().includes(query);
-        case "matchCode":
-          return customer.matchCode.toLowerCase().includes(query);
-        case "phone":
-          return customer.phone.toLowerCase().includes(query);
-        case "city":
-          return (
-            customer.city.toLowerCase().includes(query) ||
-            customer.state.toLowerCase().includes(query)
-          );
-        case "all":
+        case "Email":
+          return customer.email ? customer.email.toLowerCase().includes(query) : false;
+        case "Policy #":
+        case "Account #":
+        case "Claim #":
+          return customer.matchCode.toLowerCase().includes(query); // Mocking these to matchCode for now
+        case "More":
         default:
           return (
             customer.name.toLowerCase().includes(query) ||
@@ -172,7 +161,7 @@ export default function Page() {
           );
       }
     });
-  }, [customers, searchQuery, searchType, statusFilter, typeFilter]);
+  }, [customers, filterState]);
 
   // Toolbar Handlers
   const handleNewCustomerClick = () => {
@@ -224,10 +213,7 @@ export default function Page() {
   const handleRefresh = () => {
     fetchCustomers();
     setSelectedRowIds({});
-    setSearchQuery("");
-    setSearchType("all");
-    setStatusFilter("All");
-    setTypeFilter("All");
+    setFilterState(defaultFilterState);
   };
 
   const handleExport = () => {
@@ -376,14 +362,8 @@ export default function Page() {
 
             {/* Searchbar Component */}
             <SearchBar
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              searchType={searchType}
-              setSearchType={setSearchType}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              typeFilter={typeFilter}
-              setTypeFilter={setTypeFilter}
+              filters={filterState}
+              setFilters={setFilterState}
               totalCount={filteredCustomers.length}
             />
 
@@ -407,6 +387,7 @@ export default function Page() {
                 setSelectedRowIds={setSelectedRowIds}
                 onRowClick={(customer) => { }}
                 onRefresh={handleRefresh}
+                inactiveColor={filterState.inactiveColor}
               />
             </div>
 

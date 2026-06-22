@@ -30,20 +30,20 @@ export default function SidebarItem({
       }}
       title={disabled ? `${label} — Coming Soon` : label}
       className={`
-        sidebar-accordion-item
-        w-full text-left flex items-center gap-2 px-4 py-[7px] text-[12.5px] font-semibold
+        sidebar-item
+        w-full text-left flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl mx-2 !w-[calc(100%-16px)]
         transition-all duration-200 cursor-pointer relative group
         ${isActive
-          ? "bg-primary/10 text-primary font-bold border-l-[3px] border-primary pl-[13px]"
+          ? "bg-secondary text-primary"
           : disabled
             ? "text-text-muted/50 cursor-not-allowed hover:bg-transparent"
-            : "text-text-main/80 hover:bg-secondary/60 hover:text-primary border-l-[3px] border-transparent pl-[13px] hover:border-primary/30"
+            : "text-text-muted hover:bg-secondary/50 hover:text-text-main"
         }
       `}
     >
       {Icon && (
         <Icon
-          size={13}
+          size={18}
           className={`shrink-0 transition-colors duration-200 ${
             isActive
               ? "text-primary"
@@ -61,7 +61,7 @@ export default function SidebarItem({
         />
       )}
       {disabled && (
-        <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted/40 bg-secondary/60 px-1.5 py-0.5 rounded shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="text-[10px] font-extrabold uppercase tracking-wider text-text-muted/40 bg-secondary/60 px-1.5 py-0.5 rounded shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
           Soon
         </span>
       )}
