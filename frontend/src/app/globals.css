@@ -1,0 +1,222 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+:root {
+  --background: #FAF8F5;
+  --foreground: #3E2C20;
+  --muted: #826F60;
+  --border: #E6D9CC;
+}
+
+@theme inline {
+  --color-primary: #795C46;
+  --color-secondary: #F0E5D8;
+  --color-bg-base: #FAF8F5;
+  --color-text-main: #3E2C20;
+  --color-text-muted: #826F60;
+  --color-border-main: #E6D9CC;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+html,
+body {
+  background: #FAF8F5 !important;
+  color: #3E2C20;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+/* Centralized Typography Scale and Designs */
+.page-title,
+h1.page-title {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  letter-spacing: -0.01em !important;
+  color: #3E2C20 !important;
+}
+
+.section-title,
+h2.section-title {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0.05em !important;
+  color: #3E2C20 !important;
+  text-transform: uppercase !important;
+}
+
+.card-title,
+h3.card-title {
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  color: #3E2C20 !important;
+}
+
+.table-header,
+th.table-header {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  color: #826F60 !important;
+  text-align: left;
+}
+
+.table-body,
+td.table-body,
+tr.table-body {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #4A3B32 !important;
+}
+
+.sidebar-item,
+button.sidebar-item {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.btn-text,
+.button-text,
+button.btn-text {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.status-badge,
+span.status-badge {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+/* Global Premium Table Design */
+.premium-table {
+  border-collapse: collapse !important;
+  width: 100%;
+}
+
+.premium-table th {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  color: #826F60 !important;
+  padding: 14px 18px !important;
+  background-color: #FAF8F5 !important;
+  border-bottom: 1px solid #E6D9CC !important;
+  text-align: left;
+}
+
+.premium-table td {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #4A3B32 !important;
+  padding: 14px 18px !important;
+  border-bottom: 1px solid #F0E5D8 !important;
+  height: 52px !important;
+}
+
+.premium-table tr {
+  transition: background-color 0.15s ease-in-out !important;
+}
+
+.premium-table tr:not(.selected-row):hover {
+  background-color: #FAF8F5 !important;
+}
+
+.premium-table tr.selected-row,
+.premium-table tr.selected-row:hover {
+  background-color: #F0E5D8 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   AMS360-Style Accordion Sidebar
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Sidebar container */
+.sidebar-accordion {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+/* Section header hover feedback */
+.sidebar-accordion-section {
+  border-bottom: 1px solid rgba(74, 59, 50, 0.12);
+}
+
+.sidebar-accordion-section:last-child {
+  border-bottom: none;
+}
+
+/* Item hover micro-animation */
+.sidebar-accordion-item {
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+.sidebar-accordion-item:hover:not([disabled]) {
+  padding-left: 18px !important;
+}
+
+/* Accordion content expand/collapse */
+.accordion-content {
+  will-change: max-height, opacity;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.25s ease;
+}
+
+/* Collapsed sidebar */
+.sidebar-accordion--collapsed {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Coming Soon toast notification */
+.ams-coming-soon-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: linear-gradient(135deg, #4A3B32 0%, #5C4A3E 100%);
+  color: #F0E5D8;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  box-shadow: 0 8px 32px rgba(74, 59, 50, 0.3), 0 0 0 1px rgba(255,255,255,0.05) inset;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+}
+
+.ams-coming-soon-toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Scrollbar styling for sidebar */
+.sidebar-accordion::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-accordion::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-accordion::-webkit-scrollbar-thumb {
+  background: rgba(121, 92, 70, 0.15);
+  border-radius: 4px;
+}
+
+.sidebar-accordion::-webkit-scrollbar-thumb:hover {
+  background: rgba(121, 92, 70, 0.3);
+}

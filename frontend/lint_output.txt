@@ -1,0 +1,89 @@
+
+> frontend@0.1.0 lint
+> eslint
+
+
+/home/avee/Desktop/ams project/frontend/src/app/page.tsx
+   12:3    warning  'Users' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   13:3    warning  'X' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+   14:3    warning  'FileText' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+   15:3    warning  'Mail' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+   16:3    warning  'Phone' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   17:3    warning  'MapPin' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+   18:3    warning  'Calendar' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+   19:3    warning  'User' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+   20:3    warning  'FolderOpen' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+   54:39   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+   70:5    error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/avee/Desktop/ams project/frontend/src/app/page.tsx:70:5
+  68 |
+  69 |   useEffect(() => {
+> 70 |     fetchCustomers();
+     |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  71 |   }, []);
+  72 |
+  73 |   // Temp form states  react-hooks/set-state-in-effect
+  365:28   warning  'customer' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  425:99   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  436:101  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+
+/home/avee/Desktop/ams project/frontend/src/components/CustomerTable.tsx
+  186:17  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+/home/avee/Desktop/ams project/frontend/src/components/CustomerTable.tsx:186:17
+  184 |   );
+  185 |
+> 186 |   const table = useReactTable({
+      |                 ^^^^^^^^^^^^^ TanStack Table's `useReactTable()` API returns functions that cannot be memoized safely
+  187 |     data,
+  188 |     columns,
+  189 |     state: {  react-hooks/incompatible-library
+
+/home/avee/Desktop/ams project/frontend/src/components/CustomerToolbar.tsx
+  5:3  warning  'Plus' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/avee/Desktop/ams project/frontend/src/components/Modal.tsx
+  10:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/avee/Desktop/ams project/frontend/src/components/Modal.tsx:10:9
+   8 |
+   9 |     useEffect(() => {
+> 10 |         setMounted(true);
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  11 |         return () => setMounted(false);
+  12 |     }, []);
+  13 |  react-hooks/set-state-in-effect
+
+/home/avee/Desktop/ams project/frontend/src/components/SearchBar.tsx
+   4:18  warning  'ChevronDown' is defined but never used  @typescript-eslint/no-unused-vars
+   4:31  warning  'ChevronUp' is defined but never used    @typescript-eslint/no-unused-vars
+   4:42  warning  'Sliders' is defined but never used      @typescript-eslint/no-unused-vars
+  27:3   warning  'totalCount' is defined but never used   @typescript-eslint/no-unused-vars
+
+/home/avee/Desktop/ams project/frontend/src/components/Sidebar.tsx
+   5:3  warning  'Users' is defined but never used       @typescript-eslint/no-unused-vars
+  10:3  warning  'FileText' is defined but never used    @typescript-eslint/no-unused-vars
+  11:3  warning  'HelpCircle' is defined but never used  @typescript-eslint/no-unused-vars
+  12:3  warning  'Plus' is defined but never used        @typescript-eslint/no-unused-vars
+
+✖ 25 problems (5 errors, 20 warnings)
+
+npm ERR! Lifecycle script `lint` failed with error: 
+npm ERR! Error: command failed 
+npm ERR!   in workspace: frontend@0.1.0 
+npm ERR!   at location: /home/avee/Desktop/ams project/frontend 
