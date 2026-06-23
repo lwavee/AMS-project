@@ -30,126 +30,85 @@ export default function NewApplicationFormPage() {
   }, [customerId]);
 
   return (
-    <div className="flex flex-col h-screen bg-[#f0f0f0] font-sans overflow-hidden select-none">
+    <div className="flex flex-col h-screen bg-bg-base font-sans overflow-hidden select-none">
       
-      {/* ── Menu Bar ── */}
-      <div className="bg-[#f0f0f0] flex items-center gap-4 px-2 py-1 border-b border-white shadow-sm shrink-0">
-        {["File", "Edit", "eForms", "View", "Operation", "Toolbox", "Help"].map((item) => (
-          <span key={item} className="text-[11px] text-text-main hover:bg-slate-200 px-1.5 py-0.5 rounded cursor-pointer select-none">
-            {item}
-          </span>
-        ))}
-      </div>
-
-      {/* ── Toolbar ── */}
-      <div className="bg-[#f0f0f0] border-b border-border-main px-2 py-1 flex items-center gap-1 shrink-0">
-        <button className="p-1 hover:bg-slate-200 rounded border border-transparent hover:border-slate-300">
-          <Save size={14} className="text-slate-700" />
-        </button>
-        <button className="p-1 hover:bg-slate-200 rounded border border-transparent hover:border-slate-300">
-          <Copy size={14} className="text-slate-700" />
-        </button>
-        <div className="w-px h-4 bg-slate-300 mx-1" />
-        <button className="p-1 hover:bg-slate-200 rounded border border-transparent hover:border-slate-300">
-          <Paperclip size={14} className="text-slate-700" />
-        </button>
-        <button className="p-1 hover:bg-slate-200 rounded border border-transparent hover:border-slate-300">
-          <Printer size={14} className="text-slate-700" />
-        </button>
-        <div className="w-px h-4 bg-slate-300 mx-1" />
-        <button className="p-1 hover:bg-slate-200 rounded border border-transparent hover:border-slate-300">
-          <Plus size={14} className="text-slate-700" />
-        </button>
-        <button className="p-1 hover:bg-slate-200 rounded border border-transparent hover:border-slate-300">
-          <Minus size={14} className="text-slate-700" />
-        </button>
-        <div className="w-px h-4 bg-slate-300 mx-1" />
-        <button className="p-1 hover:bg-slate-200 rounded border border-transparent hover:border-slate-300">
-          <ChevronLeft size={14} className="text-slate-700" />
-        </button>
-        <button className="p-1 hover:bg-slate-200 rounded border border-transparent hover:border-slate-300">
-          <ChevronRight size={14} className="text-slate-700" />
-        </button>
-        <div className="w-px h-4 bg-slate-300 mx-1" />
-        <button className="p-1 hover:bg-slate-200 rounded border border-transparent hover:border-slate-300">
-          <Play size={14} className="text-green-600 fill-current" />
-        </button>
-      </div>
-
-      {/* ── Form Header ── */}
-      <div className="bg-[#fcd281] px-3 py-1 flex justify-between items-center shrink-0 border-b border-[#e1b764]">
-        <h2 className="text-[13px] font-bold text-slate-900">Create Applications (Integrated)</h2>
-        <div className="flex items-center gap-1">
-          <button className="text-[10px] font-semibold bg-slate-300 hover:bg-slate-400 text-slate-800 px-2 py-[2px] rounded border border-slate-400 cursor-pointer shadow-sm">Create</button>
-          <button onClick={() => window.close()} className="text-[10px] font-semibold bg-[#fcd281] hover:bg-[#e1b764] text-slate-800 px-2 py-[2px] rounded border border-[#e1b764] cursor-pointer shadow-sm">Cancel</button>
+      {/* ── Modern Form Header ── */}
+      <div className="bg-white border-b border-border-main px-6 py-4 flex justify-between items-center shrink-0 shadow-sm z-10">
+        <div>
+          <h2 className="text-base font-extrabold text-text-main tracking-tight">Create Applications (Integrated)</h2>
+          <p className="text-[11px] font-semibold text-text-muted mt-0.5">Policy #EGL0013969 • Eff: 2/3/2026 to 2/3/2027</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">
+            <Save size={13} />
+            <span>Save</span>
+          </button>
+          <button className="h-8 px-4 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20">
+            Create
+          </button>
+          <div className="h-5 w-px bg-border-main mx-1"></div>
+          <button onClick={() => window.close()} className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-red-50 text-text-muted hover:text-red-600 font-bold text-xs rounded-xl transition-all cursor-pointer">
+            Cancel
+          </button>
         </div>
       </div>
 
       {/* ── Main Form Content ── */}
-      <div className="flex-1 overflow-y-auto p-2 flex flex-col bg-[#f0f0f0]">
+      <div className="flex-1 overflow-y-auto p-6 flex flex-col custom-scrollbar">
         
-        <p className="text-[11px] text-slate-800 mb-4 font-medium leading-tight max-w-[800px]">
+        <p className="text-[13px] text-text-muted mb-6 font-medium max-w-[800px] leading-relaxed">
           Select which of the following Policy, Line of Business Applications, and Forms you would like automatically generated for this Policy and Transaction. System will default to the newest version of Application if a non-supported version exists. Changing the Default Application or Version will not update the Line of Business section on the Policy.
         </p>
         
-        <div className="flex items-center gap-6 mb-2">
-          <label className="flex items-center gap-1.5 text-[11px] text-slate-800">
-            <input type="checkbox" className="opacity-60" disabled /> Policy Information
+        <div className="flex items-center justify-between mb-4">
+          <label className="flex items-center gap-2 text-[13px] font-semibold text-text-main cursor-pointer opacity-60">
+            <input type="checkbox" className="accent-primary w-4 h-4" disabled /> Policy Information
           </label>
           <div className="flex gap-2">
-            <button className="text-[11px] bg-[#f0f0f0] hover:bg-slate-200 border border-slate-400 px-3 py-[2px] rounded-sm">Select All</button>
-            <button className="text-[11px] bg-[#f0f0f0] hover:bg-slate-200 border border-slate-400 px-3 py-[2px] rounded-sm">Clear All</button>
+            <button className="text-[12px] font-bold border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary rounded-xl px-4 py-1.5 transition-all">Select All</button>
+            <button className="text-[12px] font-bold border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary rounded-xl px-4 py-1.5 transition-all">Clear All</button>
           </div>
         </div>
 
-        {/* ── Data Grid ── */}
-        <div className="border border-slate-400 bg-white flex-1 overflow-auto flex flex-col max-w-[1200px]">
-          
-          {/* Grid Header */}
-          <div className="grid grid-cols-[60px_300px_1fr_100px] bg-[#f0f0f0] border-b border-slate-400 text-[11px] font-semibold text-slate-800 sticky top-0">
-            <div className="border-r border-slate-400 p-1 flex items-center justify-center">Select</div>
-            <div className="border-r border-slate-400 p-1 flex items-center">Line Of Business</div>
-            <div className="border-r border-slate-400 p-1 flex items-center">Default Application</div>
-            <div className="p-1 flex items-center">Version</div>
-          </div>
+        {/* ── Modern Data Grid ── */}
+        <div className="bg-white border border-border-main rounded-2xl shadow-sm flex-1 flex flex-col overflow-hidden">
+          <div className="overflow-auto flex-1">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-secondary/30 border-b border-border-main text-[11px] font-bold text-text-muted uppercase tracking-widest sticky top-0 z-10">
+                <tr>
+                  <th className="px-4 py-3 w-[60px] text-center border-r border-border-main/50">Select</th>
+                  <th className="px-4 py-3 w-[300px] border-r border-border-main/50">Line Of Business</th>
+                  <th className="px-4 py-3 border-r border-border-main/50">Default Application</th>
+                  <th className="px-4 py-3 w-[100px]">Version</th>
+                </tr>
+              </thead>
+              <tbody className="text-[13px] font-semibold text-text-main divide-y divide-border-main/50">
+                
+                {/* Row 1 (Selected) */}
+                <tr className="hover:bg-secondary/20 transition-colors bg-secondary/10">
+                  <td className="px-4 py-3 text-center border-r border-border-main/50">
+                    <input type="checkbox" className="accent-primary w-4 h-4" defaultChecked />
+                  </td>
+                  <td className="px-4 py-3 border-r border-border-main/50 text-text-muted"></td>
+                  <td className="px-4 py-3 border-r border-border-main/50">Commercial Insurance Application</td>
+                  <td className="px-4 py-3 text-text-muted">03/2016</td>
+                </tr>
 
-          {/* Row 1 (Selected) */}
-          <div className="grid grid-cols-[60px_300px_1fr_100px] border-b border-slate-300 text-[11px] text-slate-800 bg-[#0078d7] text-white">
-            <div className="border-r border-slate-300 p-1 flex items-center justify-center relative">
-              <span className="absolute left-1 text-[8px]">▶</span>
-              <input type="checkbox" className="bg-white" />
-            </div>
-            <div className="border-r border-slate-300 p-1 flex items-center"></div>
-            <div className="border-r border-slate-300 p-1 flex items-center">Commercial Insurance Application</div>
-            <div className="p-1 flex items-center">03/2016</div>
-          </div>
+                {/* Row 2 */}
+                <tr className="hover:bg-secondary/20 transition-colors">
+                  <td className="px-4 py-3 text-center border-r border-border-main/50">
+                    <input type="checkbox" className="accent-primary w-4 h-4" />
+                  </td>
+                  <td className="px-4 py-3 border-r border-border-main/50">Miscellaneous Professional Liability - Pollution Liability</td>
+                  <td className="px-4 py-3 border-r border-border-main/50">Commercial General Liability Section</td>
+                  <td className="px-4 py-3 text-text-muted">09/2016</td>
+                </tr>
 
-          {/* Row 2 */}
-          <div className="grid grid-cols-[60px_300px_1fr_100px] border-b border-slate-300 text-[11px] text-slate-800">
-            <div className="border-r border-slate-300 p-1 flex items-center justify-center">
-              <input type="checkbox" />
-            </div>
-            <div className="border-r border-slate-300 p-1 flex items-center">Miscellaneous Professional Liability - Pollution Liability</div>
-            <div className="border-r border-slate-300 p-1 flex items-center">Commercial General Liability Section</div>
-            <div className="p-1 flex items-center">09/2016</div>
+              </tbody>
+            </table>
           </div>
-
-          {/* Empty Space filler */}
-          <div className="flex-1 bg-white"></div>
         </div>
 
-      </div>
-
-      {/* ── Status Bar ── */}
-      <div className="bg-[#f0f0f0] border-t border-slate-300 h-6 px-4 flex items-center justify-between shrink-0">
-        <span className="text-[10px] text-slate-600">Create</span>
-        <div className="flex items-center gap-4">
-          <span className="text-[10px] text-slate-600">
-            {customer?.division || "Gamaty Insurance Agency LLC"}
-          </span>
-          <div className="w-px h-3 bg-slate-300" />
-          <span className="text-[10px] font-bold text-slate-700">AOR</span>
-        </div>
       </div>
     </div>
   );

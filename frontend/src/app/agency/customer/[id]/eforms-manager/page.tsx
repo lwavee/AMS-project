@@ -5,6 +5,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { API_BASE_URL } from "../../../../../lib/config";
 import Acord25Form from "../../../../../services/pdf/Acord25Form";
+import Header from "../../../../../components/Header";
+import RightDrawer from "../../../../../components/RightDrawer";
 import {
   FileSignature,
   Search,
@@ -18,6 +20,17 @@ import {
   ArrowLeft,
   Loader2,
   AlertTriangle,
+  Save,
+  Copy,
+  Paperclip,
+  Printer,
+  Plus,
+  Minus,
+  Edit3,
+  Download,
+  UploadCloud,
+  FilePlus,
+  Activity,
 } from "lucide-react";
 
 // ─── Tab definitions matching AMS360 eForms Manager ──────────────────────────
@@ -68,31 +81,31 @@ function TreeItem({
           onSelect(node.id);
         }}
         className={`
-          w-full flex items-center gap-1.5 px-2 py-[2px] text-[11px] font-medium
-          transition-all duration-150 cursor-pointer text-left
+          w-full flex items-center gap-2 px-2 py-1.5 text-[13px] font-medium rounded-lg
+          transition-all duration-150 cursor-pointer text-left my-0.5
           ${isSelected
-            ? "bg-primary/15 text-primary font-bold"
-            : "text-text-main hover:bg-secondary/50"
+            ? "bg-secondary text-primary font-bold"
+            : "text-black hover:bg-secondary/50 hover:text-primary"
           }
         `}
-        style={{ paddingLeft: `${12 + depth * 16}px` }}
+        style={{ paddingLeft: `${8 + depth * 16}px` }}
       >
         {isFolder ? (
           expanded ? (
             <>
-              <ChevronDown size={12} className="shrink-0 text-primary/60" />
-              <FolderOpen size={14} className="shrink-0 text-primary" />
+              <ChevronDown size={14} className="shrink-0 text-primary/60" />
+              <FolderOpen size={16} className="shrink-0 text-primary fill-primary/20" />
             </>
           ) : (
             <>
-              <ChevronRight size={12} className="shrink-0 text-text-muted/60" />
-              <FolderClosed size={14} className="shrink-0 text-text-muted" />
+              <ChevronRight size={14} className="shrink-0 text-text-muted/60" />
+              <FolderClosed size={16} className="shrink-0 text-text-muted" />
             </>
           )
         ) : (
           <>
-            <span className="w-[12px] shrink-0" />
-            <FileText size={14} className="shrink-0 text-text-muted/60" />
+            <span className="w-[14px] shrink-0" />
+            <FileText size={16} className="shrink-0 text-text-muted/60" />
           </>
         )}
         <span className="truncate">{node.label}</span>
@@ -131,6 +144,7 @@ export default function EFormsManagerPage() {
   const [selectedPolicy, setSelectedPolicy] = useState<string>("");
   const [selectedEffDate, setSelectedEffDate] = useState<string>("");
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // ── Fetch customer and policies ──
   const fetchData = useCallback(async () => {
@@ -347,226 +361,318 @@ export default function EFormsManagerPage() {
     [customer.first_name, customer.last_name].filter(Boolean).join(" ") ||
     "Unknown";
 
+  const renderActionButtons = () => {
+    switch (activeTab) {
+      case "All Forms":
+        return (
+          <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-red-50 text-text-muted hover:text-red-600 font-bold text-xs rounded-xl transition-all cursor-pointer">
+            <Trash2 size={13} />
+            Delete
+          </button>
+        );
+      case "Applications":
+      case "Loss Notices":
+        return (
+          <>
+            <button
+              onClick={() => {
+                if (activeTab === "Applications") {
+                  window.open(`/agency/customer/${customerId}/eforms-manager/new-application`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no');
+                }
+              }}
+              className="h-8 px-4 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20"
+            >
+              <Plus size={14} /> New
+            </button>
+            <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-red-50 text-text-muted hover:text-red-600 font-bold text-xs rounded-xl transition-all cursor-pointer">
+              <Trash2 size={13} /> Delete
+            </button>
+          </>
+        );
+      case "AutoId Cards":
+      case "Cancellations":
+        return (
+          <>
+            <button
+              onClick={() => {
+                if (activeTab === "AutoId Cards") {
+                  window.open(`/agency/customer/${customerId}/eforms-manager/new-autoid`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no');
+                }
+              }}
+              className="h-8 px-4 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20"
+            >
+              <Plus size={14} /> New
+            </button>
+            <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">
+              New & Email
+            </button>
+            <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">
+              New & Print
+            </button>
+            <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-red-50 text-text-muted hover:text-red-600 font-bold text-xs rounded-xl transition-all cursor-pointer">
+              <Trash2 size={13} /> Delete
+            </button>
+          </>
+        );
+      case "Binders":
+        return (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button
+              onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager/new-binder`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no')}
+              className="h-8 px-3.5 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20"
+            >
+              <Plus size={14} /> New
+            </button>
+            <button className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"><Copy size={13} /> Copy</button>
+            <button className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">Cancel</button>
+            <button className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">Extend</button>
+            <button className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">Replaced by Policy</button>
+            <button className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">Update</button>
+            <button className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">Replace</button>
+            <button className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">Interests</button>
+            <button className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-red-50 text-text-muted hover:text-red-600 font-bold text-xs rounded-xl transition-all cursor-pointer"><Trash2 size={13} /> Delete</button>
+          </div>
+        );
+      case "Certificates":
+        return (
+          <>
+            <button
+              onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager/new-certificate`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no')}
+              className="h-8 px-4 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20"
+            >
+              <Plus size={14} /> New Cert Liab
+            </button>
+            <button
+              onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager/new-certificate`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no')}
+              className="h-8 px-4 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20"
+            >
+              <Plus size={14} /> New Cert Prop
+            </button>
+            <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-red-50 text-text-muted hover:text-red-600 font-bold text-xs rounded-xl transition-all cursor-pointer"><Trash2 size={13} /> Delete</button>
+          </>
+        );
+      case "EPI":
+        return (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button className="h-8 px-4 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20"><Plus size={14} /> New</button>
+            <button className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"><Copy size={13} /> Copy</button>
+            <button className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">Update</button>
+            <button className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">Replace</button>
+            <button className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">Interests</button>
+            <button className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">Distribute EPI</button>
+            <button className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-red-50 text-text-muted hover:text-red-600 font-bold text-xs rounded-xl transition-all cursor-pointer"><Trash2 size={13} /> Delete</button>
+          </div>
+        );
+      case "Change Requests":
+        return (
+          <>
+            <button className="h-8 px-4 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20"><Plus size={14} /> New</button>
+            <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"><Copy size={13} /> Copy</button>
+            <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-red-50 text-text-muted hover:text-red-600 font-bold text-xs rounded-xl transition-all cursor-pointer"><Trash2 size={13} /> Delete</button>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
   // ─── Main Render ───────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-screen bg-bg-base font-sans select-none overflow-hidden">
 
-      {/* ── Title Bar ── */}
-      <div className="bg-white border-b border-border-main h-11 px-4 flex items-center gap-3 shrink-0 shadow-sm">
-        <FileSignature size={16} className="text-primary shrink-0" />
-        <span className="text-[13px] font-bold text-text-main truncate">
-          eForms - {customerName}
-          {selectedPolicy && ` - Policy #${selectedPolicy}`}
-          {policies.length > 0 && policies[0].effDate && ` Eff date ${policies[0].effDate}`}
-          {policies.length > 0 && policies[0].expDate && ` to ${policies[0].expDate}`}
-        </span>
-      </div>
+      {/* ── Modern Shared Top Header ── */}
+      <Header onToggleDrawer={() => setDrawerOpen(true)} />
+      <RightDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
-      {/* ── Menu Bar (AMS360 style) ── */}
-      <div className="bg-secondary/40 border-b border-border-main h-8 px-3 flex items-center gap-4 shrink-0">
-        {["File", "Edit", "eForms", "View", "Operation", "Toolbox", "Help"].map((menu) => (
+      {/* ── Main Content Area ── */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-bg-base p-4 lg:p-6 gap-4">
+
+        {/* Top Breadcrumb/Back */}
+        {/* <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-widest text-text-muted px-2 shrink-0">
           <button
-            key={menu}
-            className="text-[11px] font-semibold text-text-main hover:text-primary hover:underline cursor-pointer transition-colors"
+            onClick={() => router.push(`/agency/customer/${customerId}`)}
+            className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-pointer group"
           >
-            {menu}
+            <ArrowLeft size={13} strokeWidth={2.5} className="group-hover:-translate-x-0.5 transition-transform" />
+            Back to Customer
           </button>
-        ))}
-      </div>
+          <ChevronRight size={11} className="text-border-main" />
+          <span className="text-text-main truncate">eForms Manager</span>
+        </div> */}
 
-      {/* ── Toolbar ── */}
-      <div className="bg-secondary/20 border-b border-border-main h-9 px-3 flex items-center gap-1.5 shrink-0">
-        {[
-          { icon: "💾", title: "Save" },
-          { icon: "📋", title: "Copy" },
-          { icon: "📎", title: "Attach" },
-          { icon: "🖨️", title: "Print" },
-          { icon: "➕", title: "Add" },
-          { icon: "➖", title: "Remove" },
-          { icon: "◀", title: "Previous" },
-          { icon: "▶", title: "Next" },
-        ].map((btn, i) => (
-          <button
-            key={i}
-            title={btn.title}
-            className="h-7 w-7 flex items-center justify-center text-sm border border-border-main rounded bg-white hover:bg-secondary/50 transition-colors cursor-pointer"
-          >
-            {btn.icon}
-          </button>
-        ))}
-      </div>
+        {/* ─ Modern Floating eForms Card ─ */}
+        <div className="bg-white border border-border-main rounded-2xl flex flex-col flex-1 shrink-0 shadow-sm overflow-hidden min-h-0">
 
-      {/* ── Category Tabs ── */}
-      <div className="bg-white border-b border-border-main px-2 flex items-center gap-0 shrink-0 overflow-x-auto">
-        {EFORM_TABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`
-              px-3 py-2 text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer border-b-2
-              ${activeTab === tab
-                ? "text-primary border-primary bg-primary/5"
-                : "text-text-muted border-transparent hover:text-primary hover:border-primary/30 hover:bg-secondary/30"
-              }
-            `}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+          {/* Header Action Bar */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 py-4 border-b border-border-main/50 gap-4 shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <FileSignature size={20} className="text-primary" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="font-extrabold text-lg text-text-main tracking-tight truncate flex items-center gap-2">
+                  {customerName}
+                  <span className="text-border-main text-sm font-normal hidden sm:inline">—</span>
+                  <span className="text-sm font-bold text-primary hidden sm:inline">eForms Manager</span>
+                </h1>
+                <p className="text-[11px] font-semibold text-text-muted mt-0.5 truncate">
+                  {policies.length > 0 && policies[0].effDate ? `Policy #${policies[0].policyNum} | Effective: ${policies[0].effDate}` : "No Active Policies"}
+                </p>
+              </div>
+            </div>
 
-      {/* ── Action bar ── */}
-      <div className="bg-secondary/10 border-b border-border-main h-7 px-3 flex items-center gap-3 shrink-0 overflow-x-auto">
-        <button 
-          onClick={() => {
-            let path = "new-certificate";
-            if (activeTab === "Applications") path = "new-application";
-            if (activeTab === "Binders") path = "new-binder";
-            window.open(`/agency/customer/${customerId}/eforms-manager/${path}`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no');
-          }}
-          className="text-[11px] font-semibold text-text-main hover:text-primary cursor-pointer whitespace-nowrap"
-        >
-          New
-        </button>
-        {activeTab === "AutoId Cards" && (
-          <>
-            <button className="text-[11px] font-semibold text-text-main hover:text-primary cursor-pointer whitespace-nowrap">New & Email</button>
-            <button className="text-[11px] font-semibold text-text-main hover:text-primary cursor-pointer whitespace-nowrap">New & Print</button>
-          </>
-        )}
-        {activeTab === "Binders" && (
-          <>
-            {["Copy", "Cancel", "Extend", "Replaced By Policy", "Update", "Replace", "Interests"].map(btn => (
-              <button key={btn} className="text-[11px] font-semibold text-text-main hover:text-primary cursor-pointer whitespace-nowrap">
-                {btn}
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">
+                <Save size={13} />
+                <span className="hidden lg:inline">Save</span>
+              </button>
+              <button className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">
+                <Printer size={13} />
+                <span className="hidden lg:inline">Print</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Category Tabs */}
+          <div className="px-6 py-3 flex items-center gap-2 overflow-x-auto shrink-0 custom-scrollbar">
+            {EFORM_TABS.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`
+                  h-8 px-4 flex items-center justify-center text-[12px] whitespace-nowrap transition-all cursor-pointer rounded-xl
+                  ${activeTab === tab
+                    ? "bg-secondary text-primary font-bold"
+                    : "text-text-muted hover:text-text-main hover:bg-secondary/50 font-semibold"
+                  }
+                `}
+              >
+                {tab}
               </button>
             ))}
-          </>
-        )}
-        <button className="text-[11px] font-semibold text-text-main hover:text-danger cursor-pointer whitespace-nowrap">
-          Delete
-        </button>
-      </div>
-
-      {/* ── Main Content ── */}
-      <div className="flex flex-1 overflow-hidden">
-
-        {/* ── Left Panel: Customer/Policy selectors + Tree ── */}
-        <div className="w-[340px] shrink-0 border-r border-border-main bg-white flex flex-col">
-
-          {/* Customer field */}
-          <div className="flex items-center gap-2 px-2 py-1 border-b border-border-main">
-            <label className="text-[10px] font-bold text-text-muted shrink-0 w-14">Customer:</label>
-            <div className="flex-1 flex items-center gap-1.5">
-              <input
-                type="text"
-                value={customerName}
-                readOnly
-                className="flex-1 text-[11px] font-semibold text-text-main bg-secondary/20 border border-border-main rounded px-1.5 py-0.5 outline-none"
-              />
-              <button className="text-[10px] font-bold text-primary hover:underline cursor-pointer">
-                <Search size={12} />
-              </button>
-            </div>
           </div>
 
-          {/* Policy # dropdown */}
-          <div className="flex items-center gap-2 px-2 py-1 border-b border-border-main">
-            <label className="text-[10px] font-bold text-text-muted shrink-0 w-14">Policy #:</label>
-            <select
-              value={selectedPolicy}
-              onChange={(e) => setSelectedPolicy(e.target.value)}
-              className="flex-1 text-[10px] font-semibold text-text-main bg-white border border-border-main rounded px-1.5 py-0.5 outline-none focus:border-primary cursor-pointer truncate"
-              title={selectedPolicy}
-            >
-              {policies.map((p) => {
-                const statusFlag = p.status === "Active" ? "A" : "E";
-                return (
-                  <option key={p.id} value={p.policyNum}>
-                    {p.policyNum}, {p.effDate || "N/A"}, {p.expDate || "N/A"}, {p.type || ""}, P, {statusFlag}
-                  </option>
-                );
-              })}
-              {policies.length === 0 && (
-                <option value="">No policies found</option>
-              )}
-            </select>
+          {/* Contextual Action Bar */}
+          <div className="px-6 py-2.5 border-y border-border-main flex items-center gap-2 overflow-x-auto shrink-0 custom-scrollbar bg-slate-50/50">
+            {renderActionButtons()}
           </div>
 
-          {/* Eff Date dropdown */}
-          <div className="flex items-center gap-2 px-2 py-1 border-b border-border-main">
-            <label className="text-[10px] font-bold text-text-muted shrink-0 w-14">Eff Date:</label>
-            <select
-              value={selectedEffDate}
-              onChange={(e) => setSelectedEffDate(e.target.value)}
-              className="flex-1 text-[10px] font-semibold text-text-main bg-white border border-border-main rounded px-1.5 py-0.5 outline-none focus:border-primary cursor-pointer truncate"
-              title={selectedEffDate}
-            >
-              {policies.map((p) => (
-                <option key={p.id} value={`${p.effDate}, ${p.status}, ${p.type}`}>
-                  {p.effDate || "N/A"}, New business, NBS, {p.effDate || "N/A"}
-                </option>
-              ))}
-              {policies.length === 0 && (
-                <option value="">N/A</option>
-              )}
-            </select>
-          </div>
+          {/* ── Main Content Split ── */}
+          <div className="flex flex-1 min-h-0 overflow-hidden">
 
-          {/* Tree View */}
-          <div className="flex-1 overflow-y-auto border-t border-border-main bg-white">
-            {displayTree.length > 0 ? (
-              displayTree.map((node) => (
-                <TreeItem
-                  key={node.id}
-                  node={node}
-                  selected={selectedNode}
-                  onSelect={setSelectedNode}
-                />
-              ))
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center p-6">
-                <FileText size={24} className="text-slate-200 mb-2" />
-                <p className="text-xs font-bold text-slate-400">No forms found</p>
-                <p className="text-[10px] text-slate-300 mt-1">
-                  No eForms available for this filter.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+            {/* ── Left Panel: Customer/Policy selectors + Tree ── */}
+            <div className="w-[340px] shrink-0 border-r border-border-main bg-white flex flex-col h-full">
 
-        {/* ── Right Panel: Form preview area ── */}
-        <div className="flex-1 flex flex-col bg-gray-200 overflow-auto relative">
-          {selectedNode?.startsWith("cert-file") ? (
-            <Acord25Form customer={customer} policies={policies} />
-          ) : (
-            <div className="flex-1 flex items-center justify-center min-h-full">
-              <div className="text-center space-y-3 p-8">
-                <div className="h-16 w-16 rounded-2xl bg-white border border-border-main shadow-inner flex items-center justify-center mx-auto">
-                  <FileSignature size={28} className="text-primary/30" />
+              {/* Filters Section */}
+              <div className="p-4 flex flex-col gap-3 border-b border-border-main bg-white">
+
+                {/* Customer field */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Customer</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={customerName}
+                      readOnly
+                      className="flex-1 text-[13px] font-semibold text-text-main bg-bg-base border border-border-main rounded-xl px-3 py-2 outline-none"
+                    />
+                    <button className="h-9 w-9 rounded-xl bg-secondary flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors cursor-pointer shrink-0">
+                      <Search size={14} />
+                    </button>
+                  </div>
                 </div>
-                <p className="text-sm font-bold text-text-main">eForms Preview</p>
-                <p className="text-xs text-slate-400 max-w-xs mx-auto">
-                  Select a form from the tree on the left to preview it here. 
-                  Forms can be filled out, printed, and submitted electronically.
-                </p>
+
+                {/* Policy # dropdown */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Policy #</label>
+                  <select
+                    value={selectedPolicy}
+                    onChange={(e) => setSelectedPolicy(e.target.value)}
+                    className="w-full text-[13px] font-semibold text-text-main bg-white border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 cursor-pointer truncate appearance-none"
+                    title={selectedPolicy}
+                  >
+                    {policies.map((p) => {
+                      const statusFlag = p.status === "Active" ? "A" : "E";
+                      return (
+                        <option key={p.id} value={p.policyNum}>
+                          {p.policyNum} | {p.type || "Policy"} ({statusFlag})
+                        </option>
+                      );
+                    })}
+                    {policies.length === 0 && (
+                      <option value="">No policies found</option>
+                    )}
+                  </select>
+                </div>
+
+                {/* Eff Date dropdown */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Effective Date</label>
+                  <select
+                    value={selectedEffDate}
+                    onChange={(e) => setSelectedEffDate(e.target.value)}
+                    className="w-full text-[13px] font-semibold text-text-main bg-white border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 cursor-pointer truncate appearance-none"
+                    title={selectedEffDate}
+                  >
+                    {policies.map((p) => (
+                      <option key={p.id} value={`${p.effDate}, ${p.status}, ${p.type}`}>
+                        {p.effDate || "N/A"} - NBS
+                      </option>
+                    ))}
+                    {policies.length === 0 && (
+                      <option value="">N/A</option>
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              {/* Tree View */}
+              <div className="flex-1 overflow-y-auto bg-white p-2">
+                {displayTree.length > 0 ? (
+                  displayTree.map((node) => (
+                    <TreeItem
+                      key={node.id}
+                      node={node}
+                      selected={selectedNode}
+                      onSelect={setSelectedNode}
+                    />
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-center p-6">
+                    <FileText size={24} className="text-slate-200 mb-2" />
+                    <p className="text-xs font-bold text-slate-400">No forms found</p>
+                    <p className="text-[10px] text-slate-300 mt-1">
+                      No eForms available for this filter.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* ── Status Bar ── */}
-      <div className="bg-secondary/30 border-t border-border-main h-7 px-4 flex items-center justify-between shrink-0">
-        <span className="text-[10px] font-semibold text-text-muted">View</span>
-        <div className="flex items-center gap-4">
-          <span className="text-[10px] font-semibold text-text-muted">
-            {customer.division || "Gamaty Insurance Agency LLC"}
-          </span>
-          <span className="text-[10px] font-bold text-primary">AOR</span>
+            {/* ── Right Panel: Form preview area ── */}
+            <div className="flex-1 flex flex-col bg-slate-50/50 overflow-auto relative">
+              {selectedNode?.startsWith("cert-file") ? (
+                <Acord25Form customer={customer} policies={policies} />
+              ) : (
+                <div className="flex-1 flex items-center justify-center min-h-full">
+                  <div className="text-center space-y-4 p-8">
+                    <div className="h-20 w-20 rounded-3xl bg-white border border-border-main shadow-sm flex items-center justify-center mx-auto transition-transform hover:scale-105">
+                      <FileSignature size={32} className="text-primary/40" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-text-main tracking-tight">eForms Preview</h3>
+                      <p className="text-[13px] text-text-muted max-w-[260px] mx-auto mt-1.5 leading-relaxed">
+                        Select a form from the tree on the left to preview it here. Forms can be filled out, printed, and submitted electronically.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

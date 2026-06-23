@@ -1,4 +1,3 @@
-/* eslint-disable */
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -18,11 +17,7 @@ import {
   Edit3,
   UserPlus,
   Upload,
-  FileText,
   FilePlus,
-  FileCheck,
-  FilePen,
-  FileWarning,
   ClipboardList,
   BookOpen,
   FolderOpen,
@@ -31,9 +26,6 @@ import {
   FileSpreadsheet,
   ChevronLeft,
   ChevronRight,
-  PanelLeftClose,
-  PanelLeftOpen,
-  ExternalLink,
   Car,
   FileBox,
   Ban,
@@ -75,33 +67,33 @@ export default function SidebarAccordion({
   customerId,
 }: SidebarAccordionProps) {
   const router = useRouter();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const collapsed = localStorage.getItem(COLLAPSED_KEY);
+        if (collapsed) return JSON.parse(collapsed);
+      } catch {}
+    }
+    return false;
+  });
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   // Expanded sections state — default: Views open
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    views: true,
-    actions: false,
-    eforms: false,
-    quickReports: false,
-    accounting: false,
-  });
-
-  // Load persisted state
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setExpandedSections(JSON.parse(stored));
-      }
-      const collapsed = localStorage.getItem(COLLAPSED_KEY);
-      if (collapsed) {
-        setIsCollapsed(JSON.parse(collapsed));
-      }
-    } catch {
-      // ignore
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) return JSON.parse(stored);
+      } catch {}
     }
-  }, []);
+    return {
+      views: true,
+      actions: false,
+      eforms: false,
+      quickReports: false,
+      accounting: false,
+    };
+  });
 
   // Persist sections state
   const persistSections = useCallback((next: Record<string, boolean>) => {
@@ -135,9 +127,12 @@ export default function SidebarAccordion({
   useEffect(() => {
     const viewTabs = ["overview", "policies", "activities", "claims", "notes"];
     if (viewTabs.includes(activeTab) && !expandedSections.views) {
-      persistSections({ ...expandedSections, views: true });
+      const timer = setTimeout(() => {
+        persistSections({ ...expandedSections, views: true });
+      }, 0);
+      return () => clearTimeout(timer);
     }
-  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeTab, expandedSections, persistSections]);
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
