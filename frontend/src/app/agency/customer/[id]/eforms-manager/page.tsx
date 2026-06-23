@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { API_BASE_URL } from "../../../../../lib/config";
-import Acord25Form from "./Acord25Form";
+import Acord25Form from "../../../../../services/pdf/Acord25Form";
 import {
   FileSignature,
   Search,
@@ -416,14 +416,34 @@ export default function EFormsManagerPage() {
       </div>
 
       {/* ── Action bar ── */}
-      <div className="bg-secondary/10 border-b border-border-main h-7 px-3 flex items-center gap-3 shrink-0">
+      <div className="bg-secondary/10 border-b border-border-main h-7 px-3 flex items-center gap-3 shrink-0 overflow-x-auto">
         <button 
-          onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager/new-certificate`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no')}
-          className="text-[11px] font-semibold text-text-main hover:text-primary cursor-pointer"
+          onClick={() => {
+            let path = "new-certificate";
+            if (activeTab === "Applications") path = "new-application";
+            if (activeTab === "Binders") path = "new-binder";
+            window.open(`/agency/customer/${customerId}/eforms-manager/${path}`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no');
+          }}
+          className="text-[11px] font-semibold text-text-main hover:text-primary cursor-pointer whitespace-nowrap"
         >
           New
         </button>
-        <button className="text-[11px] font-semibold text-text-main hover:text-danger cursor-pointer">
+        {activeTab === "AutoId Cards" && (
+          <>
+            <button className="text-[11px] font-semibold text-text-main hover:text-primary cursor-pointer whitespace-nowrap">New & Email</button>
+            <button className="text-[11px] font-semibold text-text-main hover:text-primary cursor-pointer whitespace-nowrap">New & Print</button>
+          </>
+        )}
+        {activeTab === "Binders" && (
+          <>
+            {["Copy", "Cancel", "Extend", "Replaced By Policy", "Update", "Replace", "Interests"].map(btn => (
+              <button key={btn} className="text-[11px] font-semibold text-text-main hover:text-primary cursor-pointer whitespace-nowrap">
+                {btn}
+              </button>
+            ))}
+          </>
+        )}
+        <button className="text-[11px] font-semibold text-text-main hover:text-danger cursor-pointer whitespace-nowrap">
           Delete
         </button>
       </div>
