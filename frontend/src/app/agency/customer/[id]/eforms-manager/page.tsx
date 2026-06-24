@@ -390,7 +390,6 @@ export default function EFormsManagerPage() {
           </>
         );
       case "AutoId Cards":
-      case "Cancellations":
         return (
           <>
             <button
@@ -467,6 +466,19 @@ export default function EFormsManagerPage() {
         return (
           <>
             <button className="h-8 px-4 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20"><Plus size={14} /> New</button>
+            <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"><Copy size={13} /> Copy</button>
+            <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-red-50 text-text-muted hover:text-red-600 font-bold text-xs rounded-xl transition-all cursor-pointer"><Trash2 size={13} /> Delete</button>
+          </>
+        );
+      case "Cancellations":
+        return (
+          <>
+            <button
+              onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager/new-cancellation`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no')}
+              className="h-8 px-4 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20"
+            >
+              <Plus size={14} /> New
+            </button>
             <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"><Copy size={13} /> Copy</button>
             <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-red-50 text-text-muted hover:text-red-600 font-bold text-xs rounded-xl transition-all cursor-pointer"><Trash2 size={13} /> Delete</button>
           </>
