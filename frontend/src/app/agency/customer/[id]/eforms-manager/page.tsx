@@ -378,6 +378,8 @@ export default function EFormsManagerPage() {
               onClick={() => {
                 if (activeTab === "Applications") {
                   window.open(`/agency/customer/${customerId}/eforms-manager/new-application`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no');
+                } else if (activeTab === "Loss Notices") {
+                  window.open(`/agency/customer/${customerId}/eforms-manager/new-loss-notice`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no');
                 }
               }}
               className="h-8 px-4 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20"
@@ -442,7 +444,7 @@ export default function EFormsManagerPage() {
               <Plus size={14} /> New Cert Liab
             </button>
             <button
-              onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager/new-certificate`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no')}
+              onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager/new-cert-prop`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no')}
               className="h-8 px-4 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20"
             >
               <Plus size={14} /> New Cert Prop
@@ -453,7 +455,12 @@ export default function EFormsManagerPage() {
       case "EPI":
         return (
           <div className="flex items-center gap-1.5 flex-wrap">
-            <button className="h-8 px-4 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20"><Plus size={14} /> New</button>
+            <button
+              onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager/new-epi`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no')}
+              className="h-8 px-4 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20"
+            >
+              <Plus size={14} /> New
+            </button>
             <button className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"><Copy size={13} /> Copy</button>
             <button className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">Update</button>
             <button className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">Replace</button>
@@ -465,7 +472,12 @@ export default function EFormsManagerPage() {
       case "Change Requests":
         return (
           <>
-            <button className="h-8 px-4 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20"><Plus size={14} /> New</button>
+            <button
+              onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager/new-change-request`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no')}
+              className="h-8 px-4 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20"
+            >
+              <Plus size={14} /> New
+            </button>
             <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"><Copy size={13} /> Copy</button>
             <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-red-50 text-text-muted hover:text-red-600 font-bold text-xs rounded-xl transition-all cursor-pointer"><Trash2 size={13} /> Delete</button>
           </>
@@ -479,8 +491,18 @@ export default function EFormsManagerPage() {
             >
               <Plus size={14} /> New
             </button>
-            <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"><Copy size={13} /> Copy</button>
-            <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-red-50 text-text-muted hover:text-red-600 font-bold text-xs rounded-xl transition-all cursor-pointer"><Trash2 size={13} /> Delete</button>
+            <button
+              onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager/new-email`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no')}
+              className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
+            >
+              New & Email
+            </button>
+            <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">
+              New & Print
+            </button>
+            <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-red-50 text-text-muted hover:text-red-600 font-bold text-xs rounded-xl transition-all cursor-pointer">
+              <Trash2 size={13} /> Delete
+            </button>
           </>
         );
       default:
