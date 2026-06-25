@@ -165,6 +165,11 @@ class Agency(Base):
     name         = Column(String, index=True, nullable=False)
     email        = Column(String, unique=True, index=True, nullable=False)
     user_id      = Column(String, unique=True, index=True, nullable=True)
+    address      = Column(String, nullable=True)
+    city         = Column(String, nullable=True)
+    state        = Column(String, nullable=True)
+    zip          = Column(String, nullable=True)
+    phone        = Column(String, nullable=True)
     created_date = Column(Date, default=date.today)
 
     agents = relationship("Agent", back_populates="agency", cascade="all, delete-orphan")
@@ -380,3 +385,15 @@ class CustomerDocument(Base):
     author = Column(String)
 
     customer = relationship("Customer", backref="documents")
+
+class MasterCertificate(Base):
+    __tablename__ = "master_certificates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    customer_id = Column(Integer, ForeignKey("customers.id", ondelete="CASCADE"), nullable=False, index=True)
+    description = Column(String)
+    form_type = Column(String)
+    form_data = Column(JSON, nullable=True)
+    created_date = Column(Date, default=date.today)
+
+    customer = relationship("Customer", backref="master_certificates")

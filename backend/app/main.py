@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from app.core.config import settings
 from app.database.connection import test_connection, engine, Base
 from app.api.v1.router import api_router
-from app.modules.customer.model import Customer, Policy, Agency, Agent  # noqa: F401 — ensures tables are registered
+from app.modules.customer.model import Customer, Policy, Agency, Agent, MasterCertificate  # noqa: F401 — ensures tables are registered
 from sqlalchemy import text
 import os
 from contextlib import asynccontextmanager

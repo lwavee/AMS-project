@@ -481,3 +481,19 @@ class CustomerDocument(CustomerDocumentBase):
 
     class Config:
         from_attributes = True
+
+class MasterCertificateBase(BaseModel):
+    description: Optional[str] = None
+    form_type: Optional[str] = None
+    form_data: Optional[Any] = None
+
+class MasterCertificateCreate(MasterCertificateBase):
+    pass
+
+class MasterCertificateResponse(MasterCertificateBase):
+    id: int
+    customer_id: int
+    created_date: date
+
+    class Config:
+        from_attributes = True

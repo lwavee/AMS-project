@@ -12,6 +12,8 @@ export default function NewCertificateFormPage() {
   const [policies, setPolicies] = useState<any[]>([]);
   const [selectedDefaultText, setSelectedDefaultText] = useState("");
   const [descriptionOfOperations, setDescriptionOfOperations] = useState("");
+  const [rowSelections, setRowSelections] = useState<{ [key: number]: string }>({});
+  const [description, setDescription] = useState("");
 
   useEffect(() => {
     document.title = `eForms - Policy #EGL0013969 Eff date 2/3/2026 to 2/3/2027`;
@@ -59,7 +61,34 @@ export default function NewCertificateFormPage() {
             <Save size={13} />
             <span>Save</span>
           </button>
-          <button className="h-8 px-4 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20">
+          <button onClick={async () => {
+              try {
+                const token = localStorage.getItem("token");
+                const res = await fetch(`http://localhost:8000/api/customers/${customerId}/certificates`, {
+                  method: 'POST',
+                  headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                  },
+                  body: JSON.stringify({
+                    description: description || "my frist master",
+                    form_type: "Certificates",
+                    form_data: {
+                      rowSelections,
+                      descriptionOfOperations
+                    }
+                  })
+                });
+                const newCert = await res.json();
+                if (window.opener) {
+                  window.opener.postMessage({ type: 'CREATE_CERTIFICATE', payload: { id: newCert.id, name: newCert.description } }, '*');
+                }
+                window.close();
+              } catch(e) {
+                console.error("Failed to save master", e);
+              }
+            }}
+            className="h-8 px-4 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20">
             Create
           </button>
           <div className="h-5 w-px bg-border-main mx-1"></div>
@@ -103,7 +132,12 @@ export default function NewCertificateFormPage() {
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-semibold text-text-main">Description:</label>
-                  <input type="text" className="w-full text-[13px] font-semibold text-text-main bg-white border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20" />
+                  <input 
+                    type="text" 
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full text-[13px] font-semibold text-text-main bg-white border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20" 
+                  />
                 </div>
               </div>
 
@@ -138,12 +172,17 @@ export default function NewCertificateFormPage() {
                   { label: "Other" }
               ].map((row, i) => {
                 const hasPolicies = policies.length > 0;
+                const isSelected = !!rowSelections[i];
                 return (
                 <div key={i} className="grid grid-cols-[140px_1fr_90px] gap-x-3 gap-y-2 mt-2 items-center">
                   <label className="text-[12px] font-semibold text-text-main">{row.label}:</label>
-                  <select className={`w-full text-[12px] font-semibold border rounded-xl px-2 py-1.5 outline-none truncate cursor-pointer appearance-none ${hasPolicies ? 'border-border-main bg-white focus:border-primary focus:ring-1 focus:ring-primary/20' : 'border-transparent bg-secondary/50 text-text-muted cursor-not-allowed'}`} disabled={!hasPolicies}>
+                  <select 
+                    value={rowSelections[i] || ""}
+                    onChange={(e) => setRowSelections({...rowSelections, [i]: e.target.value})}
+                    className={`w-full text-[12px] font-semibold border rounded-xl px-2 py-1.5 outline-none truncate cursor-pointer appearance-none ${hasPolicies ? 'border-border-main bg-white focus:border-primary focus:ring-1 focus:ring-primary/20' : 'border-transparent bg-secondary/50 text-text-muted cursor-not-allowed'}`} disabled={!hasPolicies}
+                  >
                     {!hasPolicies ? (
-                      <option>No policies available</option>
+                      <option value="">No policies available</option>
                     ) : (
                       <option value="">Select policy...</option>
                     )}
@@ -158,7 +197,12 @@ export default function NewCertificateFormPage() {
                       );
                     })}
                   </select>
-                  <input type="text" defaultValue={hasPolicies && policies[0].term ? policies[0].term.split(" - ")[0] : ""} className={`w-full text-[12px] font-semibold border rounded-xl px-2 py-1.5 outline-none text-center ${hasPolicies ? 'border-border-main bg-white focus:border-primary focus:ring-1 focus:ring-primary/20' : 'border-transparent bg-secondary/50 text-text-muted cursor-not-allowed'}`} disabled={!hasPolicies} />
+                  <input 
+                    type="date" 
+                    lang="en-US"
+                    className={`w-full text-[12px] font-semibold border rounded-xl px-2 py-1.5 outline-none text-center ${isSelected ? 'border-border-main bg-white focus:border-primary focus:ring-1 focus:ring-primary/20 cursor-pointer' : 'border-transparent bg-secondary/50 text-text-muted cursor-not-allowed opacity-50'}`} 
+                    disabled={!isSelected} 
+                  />
                 </div>
               )})}
             </div>
@@ -236,6 +280,15 @@ export default function NewCertificateFormPage() {
               <h3 className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Authorized Representative Signature</h3>
               <select className="w-full text-[13px] font-semibold text-text-main bg-bg-base border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 appearance-none cursor-pointer">
                 <option>Select signature...</option>
+                <option>General Liability</option>
+                <option>Automobile</option>
+                <option>Cargo</option>
+                <option>Trailer Interchange</option>
+                <option>Work Comp/Emp Liability</option>
+                <option>Garage Liability</option>
+                <option>Garage Keepers Liability</option>
+                <option>Umbrella/Excess Liability</option>
+                <option>Other</option>
               </select>
               
               <div className="flex gap-4 mt-3">

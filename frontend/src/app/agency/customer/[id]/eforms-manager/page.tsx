@@ -145,6 +145,7 @@ export default function EFormsManagerPage() {
   const [selectedEffDate, setSelectedEffDate] = useState<string>("");
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [createdCertificates, setCreatedCertificates] = useState<any[]>([]);
 
   // ── Fetch customer and policies ──
   const fetchData = useCallback(async () => {
@@ -157,11 +158,14 @@ export default function EFormsManagerPage() {
         return;
       }
 
-      const [custRes, polRes] = await Promise.all([
+      const [custRes, polRes, certRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/customers/${customerId}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch(`${API_BASE_URL}/api/customers/${customerId}/policies`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${API_BASE_URL}/api/customers/${customerId}/certificates`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -194,6 +198,18 @@ export default function EFormsManagerPage() {
           );
         }
       }
+
+      if (certRes.ok) {
+        const certData = await certRes.json();
+        const formattedCerts = certData.map((c: any) => ({
+          id: `cert-file-master-${c.id}`,
+          label: c.description || "my frist master",
+          type: "folder" as const,
+          formType: "Certificates",
+          children: [] // No documents available yet
+        }));
+        setCreatedCertificates(formattedCerts);
+      }
     } catch (err: any) {
       setError(err.message || "Failed to load data");
     } finally {
@@ -204,6 +220,25 @@ export default function EFormsManagerPage() {
   useEffect(() => {
     if (customerId) fetchData();
   }, [customerId, fetchData]);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'CREATE_CERTIFICATE') {
+        const newCert = {
+          id: `cert-file-master-${event.data.payload.id}`,
+          label: event.data.payload.name || "my frist master",
+          type: "folder" as const,
+          formType: "Certificates",
+          children: [] // No documents available yet
+        };
+        setCreatedCertificates(prev => [...prev, newCert]);
+        setActiveTab("Certificates");
+        setSelectedNode(newCert.id);
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
 
   // ── Build tree data from customer + policies ──
   const buildTree = (): TreeNode[] => {
@@ -220,18 +255,7 @@ export default function EFormsManagerPage() {
         label: `Certificate, Last 2 year(s)`,
         type: "folder" as const,
         children: [
-          {
-            id: `cert-file-1`,
-            label: `CL2581202834 2025 Master Coi, Liability - 25`,
-            type: "file" as const,
-            formType: "Certificates",
-          },
-          {
-            id: `cert-file-2`,
-            label: `CL257201165 MASTER COI, Liability - 25`,
-            type: "file" as const,
-            formType: "Certificates",
-          }
+          ...createdCertificates
         ],
       }
     ];
@@ -290,7 +314,7 @@ export default function EFormsManagerPage() {
       return items
         .map((node) => {
           if (node.type === "file") {
-            return node.formType?.includes(filterType) ? node : null;
+            return node.formType?.includes(filterType) || activeTab === "All Forms" ? node : null;
           }
           if (node.children) {
             const filtered = filterNodes(node.children);
@@ -298,7 +322,11 @@ export default function EFormsManagerPage() {
               return { ...node, children: filtered };
             }
           }
-          // Keep folder structure even if empty for context
+          // Keep empty folders if they explicitly match the formType (like Master Certificates)
+          if (node.type === "folder" && (node.formType?.includes(filterType) || activeTab === "All Forms")) {
+            return { ...node, children: [] };
+          }
+          // Keep root folder even if empty for context
           if (node.type === "folder" && node.id === "root") {
             return { ...node, children: [] };
           }
@@ -686,7 +714,9 @@ export default function EFormsManagerPage() {
 
             {/* ── Right Panel: Form preview area ── */}
             <div className="flex-1 flex flex-col bg-slate-50/50 overflow-auto relative">
-              {selectedNode?.startsWith("cert-file") ? (
+              {selectedNode?.startsWith("cert-file-master-") ? (
+                <iframe src="/acord-form.html" className="w-full h-full border-none bg-white" />
+              ) : selectedNode?.startsWith("cert-file") ? (
                 <Acord25Form customer={customer} policies={policies} />
               ) : (
                 <div className="flex-1 flex items-center justify-center min-h-full">

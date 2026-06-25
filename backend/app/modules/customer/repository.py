@@ -254,3 +254,20 @@ def create_customer_document(db: Session, customer_id: int, data: dict):
     db.commit()
     db.refresh(db_doc)
     return db_doc
+
+
+def get_master_certificates_by_customer_id(db: Session, customer_id: int) -> list:
+    from app.modules.customer.model import MasterCertificate
+    return db.query(MasterCertificate).filter(MasterCertificate.customer_id == customer_id).order_by(MasterCertificate.id.desc()).all()
+
+
+def create_master_certificate(db: Session, customer_id: int, data: dict):
+    from app.modules.customer.model import MasterCertificate
+    valid_keys = {c.name for c in MasterCertificate.__table__.columns}
+    clean_data = {k: v for k, v in data.items() if k in valid_keys}
+    clean_data["customer_id"] = customer_id
+    db_cert = MasterCertificate(**clean_data)
+    db.add(db_cert)
+    db.commit()
+    db.refresh(db_cert)
+    return db_cert

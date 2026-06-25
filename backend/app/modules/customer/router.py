@@ -291,3 +291,15 @@ async def create_customer_document(
     }
     
     return customer_service.create_customer_document(db, customer_id, doc_data)
+
+@router.get("/{customer_id}/certificates", response_model=List[schema.MasterCertificateResponse])
+def list_master_certificates(
+    customer_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)
+):
+    return customer_service.list_master_certificates(db, customer_id)
+
+@router.post("/{customer_id}/certificates", response_model=schema.MasterCertificateResponse, status_code=status.HTTP_201_CREATED)
+def create_master_certificate(
+    customer_id: int, cert: schema.MasterCertificateCreate, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)
+):
+    return customer_service.create_master_certificate(db, customer_id, cert.model_dump())

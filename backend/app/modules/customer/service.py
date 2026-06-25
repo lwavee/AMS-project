@@ -412,3 +412,25 @@ def create_customer_document(db: Session, customer_id: int, data: dict):
         traceback.print_exc()
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+def list_master_certificates(db: Session, customer_id: int) -> list:
+    get_customer(db, customer_id)
+    try:
+        certs = repo.get_master_certificates_by_customer_id(db, customer_id)
+        logger.info(f"list_master_certificates: found {len(certs)} certificates for customer ID {customer_id}")
+        return certs
+    except Exception as e:
+        logger.error(f"list_master_certificates failed: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching master certificates")
+
+def create_master_certificate(db: Session, customer_id: int, data: dict):
+    get_customer(db, customer_id)
+    try:
+        cert = repo.create_master_certificate(db, customer_id, data)
+        logger.info(f"create_master_certificate: created Certificate (ID {cert.id}) for customer ID {customer_id}")
+        return cert
+    except Exception as e:
+        logger.error(f"create_master_certificate failed: {e}")
+        traceback.print_exc()
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
