@@ -9,14 +9,17 @@ export default function NewCertificateFormPage() {
   const params = useParams();
   const customerId = params?.id as string;
   const [customer, setCustomer] = useState<any>(null);
+  const [policies, setPolicies] = useState<any[]>([]);
+  const [selectedDefaultText, setSelectedDefaultText] = useState("");
+  const [descriptionOfOperations, setDescriptionOfOperations] = useState("");
 
   useEffect(() => {
     document.title = `eForms - Policy #EGL0013969 Eff date 2/3/2026 to 2/3/2027`;
     
     // Fetch basic customer info to populate
-    const fetchCust = async () => {
+    const fetchData = async () => {
       const token = localStorage.getItem("token");
-      if (token) {
+      if (token && customerId) {
         try {
           const res = await fetch(`http://localhost:8000/api/customers/${customerId}`, {
             headers: { Authorization: `Bearer ${token}` }
@@ -25,10 +28,17 @@ export default function NewCertificateFormPage() {
             const data = await res.json();
             setCustomer(data);
           }
+          const polRes = await fetch(`http://localhost:8000/api/customers/${customerId}/policies`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (polRes.ok) {
+            const polData = await polRes.json();
+            setPolicies(polData);
+          }
         } catch (e) {}
       }
     };
-    if (customerId) fetchCust();
+    fetchData();
   }, [customerId]);
 
   const customerName = customer 
@@ -71,8 +81,13 @@ export default function NewCertificateFormPage() {
               <h3 className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Form Selection Filters</h3>
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-semibold text-text-main">Form:</label>
-                <select className="w-full text-[13px] font-semibold text-text-main bg-bg-base border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 appearance-none cursor-pointer">
-                  <option>Certificate of Liability Insurance, 25, 12/2025</option>
+                <select defaultValue="12/2025" className="w-full text-[13px] font-semibold text-text-main bg-bg-base border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 appearance-none cursor-pointer">
+                  <option value="12/2025">Certificate of Liability Insurance, 25, 12/2025</option>
+                  <option value="03/2016">Certificate of Liability Insurance, 25, 03/2016</option>
+                  <option value="30/2016">Certificate of Garage Insurance, 30, 03/2016</option>
+                  <option value="22/2016">Intermodal Interchange Certificate of Insurance, 22, 03/2016</option>
+                  <option value="22/04/2012">Intermodal Interchange Certificate of Insurance, 22, 04/2012</option>
+
                 </select>
               </div>
 
@@ -112,24 +127,40 @@ export default function NewCertificateFormPage() {
                 <span className="text-[11px] font-semibold text-text-muted uppercase tracking-widest text-center leading-tight">Get detail<br/>based on:</span>
               </div>
               {[
-                { label: "General Liability", val1: "EGL0013969, 2/3/2", val2: "6/22/2026" },
-                { label: "Automobile" },
-                { label: "Cargo" },
-                { label: "Trailer Interchange" },
-                { label: "Work Comp/Emp Liability" },
-                { label: "Garage Liability" },
-                { label: "Garage Keepers Liability" },
-                { label: "Umbrella/Excess Liability" },
-                { label: "Other" }
-              ].map((row, i) => (
+                  { label: "General Liability" },
+                  { label: "Automobile" },
+                  { label: "Cargo" }, 
+                  { label: "Trailer Interchange" },
+                  { label: "Work Comp/Emp Liability" },
+                  { label: "Garage Liability" },
+                  { label: "Garage Keepers Liability" },
+                  { label: "Umbrella/Excess Liability" },
+                  { label: "Other" }
+              ].map((row, i) => {
+                const hasPolicies = policies.length > 0;
+                return (
                 <div key={i} className="grid grid-cols-[140px_1fr_90px] gap-x-3 gap-y-2 mt-2 items-center">
                   <label className="text-[12px] font-semibold text-text-main">{row.label}:</label>
-                  <select className={`w-full text-[12px] font-semibold border rounded-xl px-2 py-1.5 outline-none truncate cursor-pointer appearance-none ${row.val1 ? 'border-border-main bg-white focus:border-primary focus:ring-1 focus:ring-primary/20' : 'border-transparent bg-secondary/50 text-text-muted cursor-not-allowed'}`} disabled={!row.val1}>
-                    {row.val1 && <option>{row.val1}</option>}
+                  <select className={`w-full text-[12px] font-semibold border rounded-xl px-2 py-1.5 outline-none truncate cursor-pointer appearance-none ${hasPolicies ? 'border-border-main bg-white focus:border-primary focus:ring-1 focus:ring-primary/20' : 'border-transparent bg-secondary/50 text-text-muted cursor-not-allowed'}`} disabled={!hasPolicies}>
+                    {!hasPolicies ? (
+                      <option>No policies available</option>
+                    ) : (
+                      <option value="">Select policy...</option>
+                    )}
+                    {policies.map((p, idx) => {
+                      const termSplit = p.term ? p.term.split(" - ") : [];
+                      const effDate = termSplit[0] || "";
+                      const expDate = termSplit[1] || "";
+                      return (
+                        <option key={idx} value={p.policy_num}>
+                          {p.policy_num}{effDate ? `, ${effDate}` : ""}{expDate ? `, ${expDate}` : ""}{p.type ? `, ${p.type}` : ""}
+                        </option>
+                      );
+                    })}
                   </select>
-                  <input type="text" defaultValue={row.val2 || ""} className={`w-full text-[12px] font-semibold border rounded-xl px-2 py-1.5 outline-none text-center ${row.val2 ? 'border-border-main bg-white focus:border-primary focus:ring-1 focus:ring-primary/20' : 'border-transparent bg-secondary/50 text-text-muted cursor-not-allowed'}`} disabled={!row.val2} />
+                  <input type="text" defaultValue={hasPolicies && policies[0].term ? policies[0].term.split(" - ")[0] : ""} className={`w-full text-[12px] font-semibold border rounded-xl px-2 py-1.5 outline-none text-center ${hasPolicies ? 'border-border-main bg-white focus:border-primary focus:ring-1 focus:ring-primary/20' : 'border-transparent bg-secondary/50 text-text-muted cursor-not-allowed'}`} disabled={!hasPolicies} />
                 </div>
-              ))}
+              )})}
             </div>
           </div>
 
@@ -152,16 +183,41 @@ export default function NewCertificateFormPage() {
               
               <div className="flex gap-3 mb-4 items-center">
                 <label className="text-[13px] font-semibold text-text-main shrink-0">Default Text:</label>
-                <select className="flex-1 text-[13px] font-semibold text-primary bg-primary/5 border border-primary/20 rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 appearance-none cursor-pointer">
+                <select 
+                  value={selectedDefaultText}
+                  onChange={(e) => setSelectedDefaultText(e.target.value)}
+                  className="flex-1 text-[13px] font-semibold text-primary bg-primary/5 border border-primary/20 rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 appearance-none cursor-pointer"
+                >
                   <option value="">Select a default text to plug...</option>
+                  <option value="AI">AI</option>
+                  <option value="Verification of Insurance">Verification of Insurance</option>
                 </select>
                 <div className="flex gap-2">
-                  <button className="text-[12px] font-bold border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary rounded-xl px-3 py-2 transition-all">Insert</button>
-                  <button className="text-[12px] font-bold border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary rounded-xl px-3 py-2 transition-all">Replace</button>
+                  <button 
+                    onClick={() => {
+                      if (!selectedDefaultText) return;
+                      const textToAdd = selectedDefaultText === "AI" 
+                        ? "Certificate Holder is listed as Additional Insured. ( Subject to all policy terms, exclusions and conditions )"
+                        : "Verification of Insurance Coverage ( Subject to all policy terms, exclusions and conditions )";
+                      setDescriptionOfOperations(prev => prev ? prev + "\n" + textToAdd : textToAdd);
+                    }}
+                    className="text-[12px] font-bold border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary rounded-xl px-3 py-2 transition-all cursor-pointer">Append</button>
+                  <button 
+                    onClick={() => {
+                      if (!selectedDefaultText) return;
+                      const textToAdd = selectedDefaultText === "AI" 
+                        ? "Certificate Holder is listed as Additional Insured. ( Subject to all policy terms, exclusions and conditions )"
+                        : "Verification of Insurance Coverage ( Subject to all policy terms, exclusions and conditions )";
+                      setDescriptionOfOperations(textToAdd);
+                    }}
+                    className="text-[12px] font-bold border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary rounded-xl px-3 py-2 transition-all cursor-pointer">Replace</button>
                 </div>
               </div>
               
-              <textarea className="flex-1 w-full border border-border-main bg-bg-base rounded-xl p-3 text-[13px] font-semibold text-text-main outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 resize-none"></textarea>
+              <textarea 
+                value={descriptionOfOperations}
+                onChange={(e) => setDescriptionOfOperations(e.target.value)}
+                className="flex-1 w-full border border-border-main bg-bg-base rounded-xl p-3 text-[13px] font-semibold text-text-main outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 resize-none"></textarea>
             </div>
 
             {/* Note/Message */}
