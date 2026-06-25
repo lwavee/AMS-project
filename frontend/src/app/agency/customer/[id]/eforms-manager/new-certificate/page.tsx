@@ -3,6 +3,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { API_BASE_URL } from "@/lib/config";
 import { Save, Copy, Paperclip, Printer, Plus, Minus, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function NewCertificateFormPage() {
@@ -23,14 +24,14 @@ export default function NewCertificateFormPage() {
       const token = localStorage.getItem("token");
       if (token && customerId) {
         try {
-          const res = await fetch(`http://localhost:8000/api/customers/${customerId}`, {
+          const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (res.ok) {
             const data = await res.json();
             setCustomer(data);
           }
-          const polRes = await fetch(`http://localhost:8000/api/customers/${customerId}/policies`, {
+          const polRes = await fetch(`${API_BASE_URL}/api/customers/${customerId}/policies`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (polRes.ok) {
@@ -64,7 +65,7 @@ export default function NewCertificateFormPage() {
           <button onClick={async () => {
               try {
                 const token = localStorage.getItem("token");
-                const res = await fetch(`http://localhost:8000/api/customers/${customerId}/certificates`, {
+                const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/certificates`, {
                   method: 'POST',
                   headers: { 
                     'Content-Type': 'application/json',

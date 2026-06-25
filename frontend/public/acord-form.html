@@ -124,20 +124,20 @@
         <table class="contact-table no-border-top no-border-left no-border-right">
           <tr>
             <td colspan="2" class="no-border-top no-border-left no-border-right">
-              <span class="label">CONTACT<br>NAME:</span> &nbsp;&nbsp;&nbsp; Ben Solender
+              <span class="label">CONTACT<br>NAME:</span> &nbsp;&nbsp;&nbsp; <span id="contact-name">Ben Solender</span>
             </td>
           </tr>
           <tr>
             <td class="no-border-left" style="width: 50%;">
-              <span class="label">PHONE<br>(A/C, No, Ext):</span> &nbsp;&nbsp;&nbsp; (310) 492-2007
+              <span class="label">PHONE<br>(A/C, No, Ext):</span> &nbsp;&nbsp;&nbsp; <span id="contact-phone">(310) 492-2007</span>
             </td>
             <td class="no-border-right" style="width: 50%;">
-              <span class="label">FAX<br>(A/C, No):</span> 
+              <span class="label">FAX<br>(A/C, No):</span> &nbsp;&nbsp;&nbsp; <span id="contact-fax"></span>
             </td>
           </tr>
           <tr>
             <td colspan="2" class="no-border-left no-border-right">
-              <span class="label">E-MAIL<br>ADDRESS:</span> &nbsp;&nbsp;&nbsp; ben@capcoinsurance.com
+              <span class="label">E-MAIL<br>ADDRESS:</span> &nbsp;&nbsp;&nbsp; <span id="contact-email">ben@capcoinsurance.com</span>
             </td>
           </tr>
         </table>
@@ -337,5 +337,35 @@
     </div>
     
   </div>
+  <script>
+    window.addEventListener('DOMContentLoaded', async () => {
+      const params = new URLSearchParams(window.location.search);
+      const customerId = params.get('customerId');
+      if (!customerId) return;
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/api/customers/${customerId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const customer = await response.json();
+          if (customer && customer.contact_person) {
+            const contact = customer.contact_person;
+            if (contact.name) document.getElementById('contact-name').innerText = contact.name;
+            if (contact.phone) document.getElementById('contact-phone').innerText = contact.phone;
+            if (contact.email) document.getElementById('contact-email').innerText = contact.email;
+            if (contact.fax) document.getElementById('contact-fax').innerText = contact.fax;
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load dynamic contact details:", err);
+      }
+    });
+  </script>
 </body>
 </html>
+

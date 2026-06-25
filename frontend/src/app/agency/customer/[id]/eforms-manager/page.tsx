@@ -543,7 +543,7 @@ export default function EFormsManagerPage() {
     <div className="flex flex-col h-screen bg-bg-base font-sans select-none overflow-hidden">
 
       {/* ── Modern Shared Top Header ── */}
-      <Header onToggleDrawer={() => setDrawerOpen(true)} />
+      {/* <Header onToggleDrawer={() => setDrawerOpen(true)} /> */}
       <RightDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       {/* ── Main Content Area ── */}
@@ -560,7 +560,7 @@ export default function EFormsManagerPage() {
           </button>
           <ChevronRight size={11} className="text-border-main" />
           <span className="text-text-main truncate">eForms Manager</span>
-        </div> */}
+        </div> */}  
 
         {/* ─ Modern Floating eForms Card ─ */}
         <div className="bg-white border border-border-main rounded-2xl flex flex-col flex-1 shrink-0 shadow-sm overflow-hidden min-h-0">
@@ -715,7 +715,7 @@ export default function EFormsManagerPage() {
             {/* ── Right Panel: Form preview area ── */}
             <div className="flex-1 flex flex-col bg-slate-50/50 overflow-auto relative">
               {selectedNode?.startsWith("cert-file-master-") ? (
-                <iframe src="/acord-form.html" className="w-full h-full border-none bg-white" />
+                <iframe src={`/acord-form.html?customerId=${customerId}`} className="w-full h-full border-none bg-white" />
               ) : selectedNode?.startsWith("cert-file") ? (
                 <Acord25Form customer={customer} policies={policies} />
               ) : (

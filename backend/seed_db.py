@@ -127,7 +127,7 @@ def seed():
                 phone="408-555-0199",
                 email="info@acme.com",
                 status="Active",
-                primary_exec="Capco Agent",
+                primary_exec="Solender, Ben",
                 customer_type="Customer"
             )
             c2 = Customer(

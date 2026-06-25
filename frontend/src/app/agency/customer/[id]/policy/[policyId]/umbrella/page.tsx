@@ -1,13 +1,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { API_BASE_URL } from "@/lib/config";
 import { FileText, Shield, Save, Printer } from "lucide-react";
 
 export default function UmbrellaPage() {
   const params = useParams();
   const customerId = params?.id as string;
   const policyId = params?.policyId as string;
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  
 
   const [covMode, setCovMode] = useState<"view" | "add" | "edit">("view");
   const [selectedIdx, setSelectedIdx] = useState<number | null>(0);

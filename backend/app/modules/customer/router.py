@@ -14,6 +14,7 @@ Endpoints:
 from fastapi import APIRouter, Depends, Response, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List
+from starlette.concurrency import run_in_threadpool
 
 from app.database.connection import get_db
 from app.modules.auth.deps import get_current_user
@@ -274,8 +275,8 @@ async def create_customer_document(
     file_name = file.filename or "document"
     ext = file_name.split('.')[-1].upper() if '.' in file_name else ""
     
-    # Upload to B2
-    b2_result = upload_file_to_b2(content, f"customer_{customer_id}_{file_name}")
+    # Upload to B2 in a thread pool to avoid blocking the event loop
+    b2_result = await run_in_threadpool(upload_file_to_b2, content, f"customer_{customer_id}_{file_name}")
     
     # Create DB record
     doc_data = {

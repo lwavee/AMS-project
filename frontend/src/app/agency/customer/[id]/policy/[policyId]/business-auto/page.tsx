@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { API_BASE_URL } from "@/lib/config";
 import {
   Car,
   ShieldAlert,
@@ -9,7 +10,7 @@ import {
   Printer
 } from "lucide-react";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 
 export default function BusinessAutoPage() {
   const params = useParams();

@@ -17,11 +17,52 @@ from app.modules.customer import repository as repo
 logger = logging.getLogger(__name__)
 
 
+def get_contact_person_for_customer(db: Session, customer: Customer) -> dict:
+    from app.modules.customer.model import Agent, Agency
+    
+    # Try to find the agent by name matching primary_exec or executive
+    agent_name = customer.primary_exec or customer.executive
+    agent = None
+    if agent_name:
+        agent = db.query(Agent).filter(Agent.name == agent_name).first()
+        if not agent:
+            # Try to resolve reverse name format e.g. "Solender, Ben" to "Ben Solender"
+            if ',' in agent_name:
+                parts = [p.strip() for p in agent_name.split(',')]
+                if len(parts) >= 2:
+                    alt_name = f"{parts[1]} {parts[0]}"
+                    agent = db.query(Agent).filter(Agent.name == alt_name).first()
+    
+    # Fallback to the first agent if not found
+    if not agent:
+        agent = db.query(Agent).first()
+        
+    if not agent:
+        return {
+            "name": "Ben Solender",
+            "phone": "(310) 492-2007",
+            "email": "ben@capcoinsurance.com",
+            "fax": "(310) 525-5292"
+        }
+        
+    # Get the agency details
+    agency = db.query(Agency).filter(Agency.id == agent.agency_id).first()
+    
+    return {
+        "name": agent.name,
+        "phone": agency.phone if (agency and agency.phone) else "(310) 492-2007",
+        "email": agent.email,
+        "fax": agency.fax if (agency and agency.fax) else "(310) 525-5292"
+    }
+
+
 def list_customers(db: Session) -> list[Customer]:
     """Fetch all customers. Returns empty list on error."""
     try:
         customers = repo.get_all(db)
         logger.info(f"list_customers: found {len(customers)} records")
+        for customer in customers:
+            customer.contact_person = get_contact_person_for_customer(db, customer)
         return customers
     except Exception as e:
         logger.error(f"list_customers failed: {e}")
@@ -35,6 +76,7 @@ def get_customer(db: Session, customer_id: int) -> Customer:
         logger.warning(f"get_customer: ID {customer_id} not found")
         raise HTTPException(status_code=404, detail="Customer not found")
     logger.info(f"get_customer: fetched {customer.name} (ID {customer_id})")
+    customer.contact_person = get_contact_person_for_customer(db, customer)
     return customer
 
 
@@ -51,10 +93,9 @@ def create_customer(db: Session, data: dict) -> Customer:
 
     try:
         customer = repo.create(db, data)
-        total = repo.count_all(db)
         logger.info(
             f"create_customer: created '{customer.name}' (ID {customer.id}) "
-            f"at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | total={total}"
+            f"at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         )
         return customer
     except Exception as e:
@@ -100,10 +141,8 @@ def delete_customer(db: Session, customer_id: int) -> str:
     name = str(customer.name)
     try:
         repo.delete(db, customer)
-        total = repo.count_all(db)
         logger.info(
-            f"delete_customer: deleted '{name}' (ID {customer_id}) "
-            f"| remaining={total}"
+            f"delete_customer: deleted '{name}' (ID {customer_id})"
         )
         return name
     except Exception as e:
@@ -146,15 +185,16 @@ def create_policy(db: Session, customer_id: int, data: dict) -> Policy:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def ensure_policy_belongs_to_customer(db: Session, customer_id: int, policy_id: int) -> Policy:
+    policy = repo.get_policy_for_customer_by_id(db, customer_id, policy_id)
+    if not policy:
+        raise HTTPException(status_code=404, detail="Policy not found")
+    return policy
+
+
 def update_policy(db: Session, customer_id: int, policy_id: int, data: dict) -> Policy:
     """Update an existing policy for a customer."""
-    # Validate customer exists first
-    get_customer(db, customer_id)
-    
-    policy = repo.get_policy_by_id(db, policy_id)
-    if not policy or policy.customer_id != customer_id:
-        raise HTTPException(status_code=404, detail="Policy not found")
-        
+    policy = ensure_policy_belongs_to_customer(db, customer_id, policy_id)
     try:
         updated = repo.update_policy(db, policy, data)
         logger.info(f"update_policy: updated Policy '{updated.policy_num}' (ID {policy_id}) for customer ID {customer_id}")
@@ -236,16 +276,12 @@ def delete_customer_note(db: Session, customer_id: int, note_id: int) -> None:
         raise HTTPException(status_code=500, detail=str(e))
 
 def get_gl_coverages(db: Session, customer_id: int, policy_id: int) -> list:
-    get_customer(db, customer_id)
-    policy = repo.get_policy_by_id(db, policy_id)
-    if not policy or policy.customer_id != customer_id:
-        raise HTTPException(status_code=404, detail="Policy not found")
+    ensure_policy_belongs_to_customer(db, customer_id, policy_id)
     return repo.get_gl_coverages(db, policy_id)
 
 def replace_gl_coverages(db: Session, customer_id: int, policy_id: int, coverages: list) -> list:
-    get_customer(db, customer_id)
-    policy = db.query(repo.Policy).with_for_update().filter(repo.Policy.id == policy_id).first()
-    if not policy or policy.customer_id != customer_id:
+    policy = db.query(repo.Policy).with_for_update().filter(repo.Policy.id == policy_id, repo.Policy.customer_id == customer_id).first()
+    if not policy:
         raise HTTPException(status_code=404, detail="Policy not found")
     try:
         return repo.replace_gl_coverages(db, policy_id, coverages)
@@ -255,17 +291,11 @@ def replace_gl_coverages(db: Session, customer_id: int, policy_id: int, coverage
         raise HTTPException(status_code=500, detail=str(e))
 
 def get_gl_info(db: Session, customer_id: int, policy_id: int):
-    get_customer(db, customer_id)
-    policy = repo.get_policy_by_id(db, policy_id)
-    if not policy or policy.customer_id != customer_id:
-        raise HTTPException(status_code=404, detail="Policy not found")
+    ensure_policy_belongs_to_customer(db, customer_id, policy_id)
     return repo.get_gl_info(db, policy_id)
 
 def replace_gl_info(db: Session, customer_id: int, policy_id: int, info: dict):
-    get_customer(db, customer_id)
-    policy = repo.get_policy_by_id(db, policy_id)
-    if not policy or policy.customer_id != customer_id:
-        raise HTTPException(status_code=404, detail="Policy not found")
+    ensure_policy_belongs_to_customer(db, customer_id, policy_id)
     try:
         return repo.replace_gl_info(db, policy_id, info)
     except Exception as e:
@@ -274,16 +304,12 @@ def replace_gl_info(db: Session, customer_id: int, policy_id: int, info: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 def get_ba_coverages(db: Session, customer_id: int, policy_id: int) -> list:
-    get_customer(db, customer_id)
-    policy = repo.get_policy_by_id(db, policy_id)
-    if not policy or policy.customer_id != customer_id:
-        raise HTTPException(status_code=404, detail="Policy not found")
+    ensure_policy_belongs_to_customer(db, customer_id, policy_id)
     return repo.get_ba_coverages(db, policy_id)
 
 def replace_ba_coverages(db: Session, customer_id: int, policy_id: int, coverages: list) -> list:
-    get_customer(db, customer_id)
-    policy = db.query(repo.Policy).with_for_update().filter(repo.Policy.id == policy_id).first()
-    if not policy or policy.customer_id != customer_id:
+    policy = db.query(repo.Policy).with_for_update().filter(repo.Policy.id == policy_id, repo.Policy.customer_id == customer_id).first()
+    if not policy:
         raise HTTPException(status_code=404, detail="Policy not found")
     try:
         return repo.replace_ba_coverages(db, policy_id, coverages)
@@ -293,16 +319,12 @@ def replace_ba_coverages(db: Session, customer_id: int, policy_id: int, coverage
         raise HTTPException(status_code=500, detail=str(e))
 
 def get_wc_coverages(db: Session, customer_id: int, policy_id: int) -> list:
-    get_customer(db, customer_id)
-    policy = repo.get_policy_by_id(db, policy_id)
-    if not policy or policy.customer_id != customer_id:
-        raise HTTPException(status_code=404, detail="Policy not found")
+    ensure_policy_belongs_to_customer(db, customer_id, policy_id)
     return repo.get_wc_coverages(db, policy_id)
 
 def replace_wc_coverages(db: Session, customer_id: int, policy_id: int, coverages: list) -> list:
-    get_customer(db, customer_id)
-    policy = db.query(repo.Policy).with_for_update().filter(repo.Policy.id == policy_id).first()
-    if not policy or policy.customer_id != customer_id:
+    policy = db.query(repo.Policy).with_for_update().filter(repo.Policy.id == policy_id, repo.Policy.customer_id == customer_id).first()
+    if not policy:
         raise HTTPException(status_code=404, detail="Policy not found")
     try:
         return repo.replace_wc_coverages(db, policy_id, coverages)
@@ -313,17 +335,11 @@ def replace_wc_coverages(db: Session, customer_id: int, policy_id: int, coverage
 
 
 def get_ba_symbols(db: Session, customer_id: int, policy_id: int):
-    get_customer(db, customer_id)
-    policy = repo.get_policy_by_id(db, policy_id)
-    if not policy or policy.customer_id != customer_id:
-        raise HTTPException(status_code=404, detail="Policy not found")
+    ensure_policy_belongs_to_customer(db, customer_id, policy_id)
     return repo.get_ba_symbols(db, policy_id)
 
 def replace_ba_symbols(db: Session, customer_id: int, policy_id: int, symbols: dict):
-    get_customer(db, customer_id)
-    policy = repo.get_policy_by_id(db, policy_id)
-    if not policy or policy.customer_id != customer_id:
-        raise HTTPException(status_code=404, detail="Policy not found")
+    ensure_policy_belongs_to_customer(db, customer_id, policy_id)
     try:
         return repo.replace_ba_symbols(db, policy_id, symbols)
     except Exception as e:
@@ -332,17 +348,11 @@ def replace_ba_symbols(db: Session, customer_id: int, policy_id: int, symbols: d
         raise HTTPException(status_code=500, detail=str(e))
 
 def get_wc_part2(db: Session, customer_id: int, policy_id: int):
-    get_customer(db, customer_id)
-    policy = repo.get_policy_by_id(db, policy_id)
-    if not policy or policy.customer_id != customer_id:
-        raise HTTPException(status_code=404, detail="Policy not found")
+    ensure_policy_belongs_to_customer(db, customer_id, policy_id)
     return repo.get_wc_part2(db, policy_id)
 
 def replace_wc_part2(db: Session, customer_id: int, policy_id: int, part2: dict):
-    get_customer(db, customer_id)
-    policy = repo.get_policy_by_id(db, policy_id)
-    if not policy or policy.customer_id != customer_id:
-        raise HTTPException(status_code=404, detail="Policy not found")
+    ensure_policy_belongs_to_customer(db, customer_id, policy_id)
     try:
         return repo.replace_wc_part2(db, policy_id, part2)
     except Exception as e:
@@ -351,16 +361,12 @@ def replace_wc_part2(db: Session, customer_id: int, policy_id: int, part2: dict)
         raise HTTPException(status_code=500, detail=str(e))
 
 def get_umbrella_coverages(db: Session, customer_id: int, policy_id: int) -> list:
-    get_customer(db, customer_id)
-    policy = repo.get_policy_by_id(db, policy_id)
-    if not policy or policy.customer_id != customer_id:
-        raise HTTPException(status_code=404, detail="Policy not found")
+    ensure_policy_belongs_to_customer(db, customer_id, policy_id)
     return repo.get_umbrella_coverages(db, policy_id)
 
 def replace_umbrella_coverages(db: Session, customer_id: int, policy_id: int, coverages: list) -> list:
-    get_customer(db, customer_id)
-    policy = db.query(repo.Policy).with_for_update().filter(repo.Policy.id == policy_id).first()
-    if not policy or policy.customer_id != customer_id:
+    policy = db.query(repo.Policy).with_for_update().filter(repo.Policy.id == policy_id, repo.Policy.customer_id == customer_id).first()
+    if not policy:
         raise HTTPException(status_code=404, detail="Policy not found")
     try:
         return repo.replace_umbrella_coverages(db, policy_id, coverages)
@@ -370,17 +376,11 @@ def replace_umbrella_coverages(db: Session, customer_id: int, policy_id: int, co
         raise HTTPException(status_code=500, detail=str(e))
 
 def get_umbrella_info(db: Session, customer_id: int, policy_id: int):
-    get_customer(db, customer_id)
-    policy = repo.get_policy_by_id(db, policy_id)
-    if not policy or policy.customer_id != customer_id:
-        raise HTTPException(status_code=404, detail="Policy not found")
+    ensure_policy_belongs_to_customer(db, customer_id, policy_id)
     return repo.get_umbrella_info(db, policy_id)
 
 def replace_umbrella_info(db: Session, customer_id: int, policy_id: int, info: dict):
-    get_customer(db, customer_id)
-    policy = repo.get_policy_by_id(db, policy_id)
-    if not policy or policy.customer_id != customer_id:
-        raise HTTPException(status_code=404, detail="Policy not found")
+    ensure_policy_belongs_to_customer(db, customer_id, policy_id)
     try:
         return repo.replace_umbrella_info(db, policy_id, info)
     except Exception as e:

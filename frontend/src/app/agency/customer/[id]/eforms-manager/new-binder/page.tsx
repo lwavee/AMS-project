@@ -1,6 +1,7 @@
 /* eslint-disable */
 "use client";
 import React, { useEffect, useState } from "react";
+import { API_BASE_URL } from "@/lib/config";
 import { useParams } from "next/navigation";
 import { Save, Copy, Paperclip, Printer, Plus, Minus, ChevronLeft, ChevronRight, Play } from "lucide-react";
 
@@ -16,7 +17,7 @@ export default function NewBinderFormPage() {
       const token = localStorage.getItem("token");
       if (token && customerId) {
         try {
-          const res = await fetch(`http://localhost:8000/api/customers/${customerId}`, {
+          const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (res.ok) {

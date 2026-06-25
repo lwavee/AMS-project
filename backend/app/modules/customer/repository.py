@@ -85,6 +85,11 @@ def get_policy_by_id(db: Session, policy_id: int) -> Policy | None:
     return db.query(Policy).filter(Policy.id == policy_id).first()
 
 
+def get_policy_for_customer_by_id(db: Session, customer_id: int, policy_id: int) -> Policy | None:
+    """Return a policy by ID only if it belongs to the given customer."""
+    return db.query(Policy).filter(Policy.id == policy_id, Policy.customer_id == customer_id).first()
+
+
 def update_policy(db: Session, db_policy: Policy, data: dict) -> Policy:
     """Apply a partial update to an existing policy row."""
     valid_keys = {c.name for c in Policy.__table__.columns}

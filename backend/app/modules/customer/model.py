@@ -170,6 +170,7 @@ class Agency(Base):
     state        = Column(String, nullable=True)
     zip          = Column(String, nullable=True)
     phone        = Column(String, nullable=True)
+    fax          = Column(String, nullable=True)
     created_date = Column(Date, default=date.today)
 
     agents = relationship("Agent", back_populates="agency", cascade="all, delete-orphan")

@@ -18,6 +18,8 @@ else:
     engine = create_engine(
         settings.DATABASE_URL,
         pool_pre_ping=True,           # Test connection health before use
+        pool_size=10,                 # Keep a ready pool for production workloads
+        max_overflow=20,              # Allow bursts without waiting too long
         pool_timeout=10,              # Max wait to get a connection from pool
         pool_recycle=1800,            # Recycle connections every 30 min
         connect_args={

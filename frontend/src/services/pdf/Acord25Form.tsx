@@ -72,21 +72,21 @@ export default function Acord25Form({ customer, policies }: Acord25FormProps) {
           <div className="border-b border-black">
             <div className="flex border-b border-black p-1">
               <div className="w-[50px] font-bold text-[8px]">CONTACT<br/>NAME:</div>
-              <div className="flex-1">Jake Weiner</div>
+              <div className="flex-1">{customer?.contact_person?.name || "Jake Weiner"}</div>
             </div>
             <div className="flex border-b border-black p-1">
               <div className="flex-1 flex">
                 <span className="font-bold text-[8px] mr-1">PHONE<br/>(A/C, No, Ext):</span>
-                <span>(310) 492-2007</span>
+                <span>{customer?.contact_person?.phone || "(310) 492-2007"}</span>
               </div>
               <div className="flex-1 flex border-l border-black pl-1">
                 <span className="font-bold text-[8px] mr-1">FAX<br/>(A/C, No):</span>
-                <span>(310) 525-5292</span>
+                <span>{customer?.contact_person?.fax || "(310) 525-5292"}</span>
               </div>
             </div>
             <div className="flex p-1">
               <div className="font-bold text-[8px] mr-1">E-MAIL<br/>ADDRESS:</div>
-              <div className="flex-1">Jake@capcoinsurance.com</div>
+              <div className="flex-1">{customer?.contact_person?.email || "Jake@capcoinsurance.com"}</div>
             </div>
           </div>
 

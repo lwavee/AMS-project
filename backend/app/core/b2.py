@@ -3,21 +3,34 @@ import uuid
 from b2sdk.v2 import InMemoryAccountInfo, B2Api
 from fastapi import HTTPException
 
+_b2_api = None
+_b2_bucket_name = None
+
+
 def get_b2_api():
+    global _b2_api, _b2_bucket_name
+    if _b2_api is not None:
+        return _b2_api
+
     info = InMemoryAccountInfo()
     b2_api = B2Api(info)
     
     application_key_id = os.getenv("B2_KEY_ID")
     application_key = os.getenv("B2_APPLICATION_KEY")
-    
-    if not application_key_id or not application_key:
+    bucket_name = os.getenv("B2_BUCKET_NAME")
+    _b2_bucket_name = bucket_name
+
+    if not application_key_id or not application_key or not bucket_name:
+        _b2_api = None
         return None
         
     try:
         b2_api.authorize_account("production", application_key_id, application_key)
-        return b2_api
+        _b2_api = b2_api
+        return _b2_api
     except Exception as e:
         print(f"Error authorizing B2 account: {e}")
+        _b2_api = None
         return None
 
 def upload_file_to_b2(file_bytes: bytes, file_name: str) -> dict:

@@ -178,12 +178,20 @@ class CustomerUpdate(BaseModel):
     known_since_year: Optional[str] = None
     notation: Optional[str] = None
 
+class ContactPerson(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    fax: Optional[str] = None
+
 class Customer(CustomerBase):
     id: int
     created_date: date
+    contact_person: Optional[ContactPerson] = None
 
     class Config:
         from_attributes = True
+
 
 
 class PolicyBase(BaseModel):
