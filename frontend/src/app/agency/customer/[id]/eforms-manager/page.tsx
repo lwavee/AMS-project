@@ -1,7 +1,7 @@
 /* eslint-disable */
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { API_BASE_URL } from "../../../../../lib/config";
 import Acord25Form from "../../../../../services/pdf/Acord25Form";
@@ -31,6 +31,7 @@ import {
   UploadCloud,
   FilePlus,
   Activity,
+  MoreHorizontal,
 } from "lucide-react";
 
 // ─── Tab definitions matching AMS360 eForms Manager ──────────────────────────
@@ -63,53 +64,123 @@ function TreeItem({
   depth = 0,
   selected,
   onSelect,
+  onAddEditHolder,
 }: {
   node: TreeNode;
   depth?: number;
   selected: string | null;
   onSelect: (id: string) => void;
+  onAddEditHolder?: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState(depth === 0);
   const isFolder = node.type === "folder";
   const isSelected = selected === node.id;
+  
+  // Menu logic
+  const [menuOpen, setMenuOpen] = useState(false);
+  const isMaster = node.id.startsWith("cert-file-master-");
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    
+    if (menuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuOpen]);
 
   return (
     <div>
-      <button
-        onClick={() => {
-          if (isFolder) setExpanded(!expanded);
-          onSelect(node.id);
-        }}
-        className={`
-          w-full flex items-center gap-2 px-2 py-1.5 text-[13px] font-medium rounded-lg
-          transition-all duration-150 cursor-pointer text-left my-0.5
-          ${isSelected
-            ? "bg-secondary text-primary font-bold"
-            : "text-black hover:bg-secondary/50 hover:text-primary"
-          }
-        `}
-        style={{ paddingLeft: `${8 + depth * 16}px` }}
-      >
-        {isFolder ? (
-          expanded ? (
-            <>
-              <ChevronDown size={14} className="shrink-0 text-primary/60" />
-              <FolderOpen size={16} className="shrink-0 text-primary fill-primary/20" />
-            </>
-          ) : (
-            <>
-              <ChevronRight size={14} className="shrink-0 text-text-muted/60" />
-              <FolderClosed size={16} className="shrink-0 text-text-muted" />
-            </>
-          )
-        ) : (
-          <>
-            <span className="w-[14px] shrink-0" />
-            <FileText size={16} className="shrink-0 text-text-muted/60" />
-          </>
+      <div className="relative group" ref={menuRef}>
+        <div
+          className={`
+            w-full flex items-center justify-between gap-2 px-2 py-1.5 text-[13px] font-medium rounded-lg
+            transition-all duration-150 text-left my-0.5
+            ${isSelected
+              ? "bg-secondary text-primary font-bold"
+              : "text-black hover:bg-secondary/50 hover:text-primary"
+            }
+          `}
+          style={{ paddingLeft: `${8 + depth * 16}px` }}
+        >
+          <div 
+            className="flex flex-1 items-center gap-2 truncate cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isFolder) setExpanded(!expanded);
+              onSelect(node.id);
+            }}
+          >
+            {isFolder ? (
+              expanded ? (
+                <>
+                  <ChevronDown size={14} className="shrink-0 text-primary/60" />
+                  <FolderOpen size={16} className="shrink-0 text-primary fill-primary/20" />
+                </>
+              ) : (
+                <>
+                  <ChevronRight size={14} className="shrink-0 text-text-muted/60" />
+                  <FolderClosed size={16} className="shrink-0 text-text-muted" />
+                </>
+              )
+            ) : (
+              <>
+                <span className="w-[14px] shrink-0" />
+                <FileText size={16} className="shrink-0 text-text-muted/60" />
+              </>
+            )}
+            <span className="truncate">{node.label}</span>
+          </div>
+          
+          {isMaster && (
+            <button 
+              className={`p-1 rounded-md hover:bg-slate-300 ${menuOpen ? 'bg-slate-300' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setMenuOpen(!menuOpen);
+              }}
+            >
+              <MoreHorizontal size={14} className="text-slate-500" />
+            </button>
+          )}
+        </div>
+        
+        {isMaster && menuOpen && (
+          <div 
+            className="absolute z-50 right-4 top-8 bg-white border border-slate-200 shadow-xl rounded-md py-1 w-48 text-xs font-medium text-slate-700"
+          >
+            <button 
+              className="w-full text-left px-3 py-1.5 hover:bg-slate-100"
+              onClick={() => {
+                setMenuOpen(false);
+                if (onAddEditHolder) onAddEditHolder(node.id);
+              }}
+            >
+              Add/Edit Holder
+            </button>
+            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Copy</button>
+            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Renew</button>
+            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Replace Master Cert</button>
+            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Update Master Cert</button>
+            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Distribute Certificates</button>
+            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Attachments</button>
+            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100 text-red-600">Delete</button>
+            <div className="h-px bg-slate-200 my-1"></div>
+            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Expand Node</button>
+            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Expand All</button>
+            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Collapse</button>
+            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Collapse All</button>
+          </div>
         )}
-        <span className="truncate">{node.label}</span>
-      </button>
+      </div>
       {isFolder && expanded && node.children && (
         <div>
           {node.children.map((child) => (
@@ -119,6 +190,7 @@ function TreeItem({
               depth={depth + 1}
               selected={selected}
               onSelect={onSelect}
+              onAddEditHolder={onAddEditHolder}
             />
           ))}
         </div>
@@ -698,6 +770,13 @@ export default function EFormsManagerPage() {
                       node={node}
                       selected={selectedNode}
                       onSelect={setSelectedNode}
+                      onAddEditHolder={(id) => {
+                        window.open(
+                          `/agency/customer/${customerId}/eforms-manager/add-edit-holder?certId=${id}`,
+                          '_blank',
+                          'width=1050,height=800,menubar=no,toolbar=no'
+                        );
+                      }}
                     />
                   ))
                 ) : (
