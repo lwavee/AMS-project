@@ -111,11 +111,11 @@
         <div class="box insured no-border-bottom">
           <div class="box-label">INSURED</div>
           <div style="padding-left: 50px;">
-            RS Remodeling Services, LLC<br>
-            1860 Southwest 36th Terrace<br><br>
+            <span id="insured-name">RS Remodeling Services, LLC</span><br>
+            <span id="insured-address">1860 Southwest 36th Terrace</span><br><br>
             <div style="display: flex; justify-content: space-between; padding-right: 30px;">
-                <span>Fort Lauderdale</span>
-                <span>FL 33312</span>
+                <span id="insured-city">Fort Lauderdale</span>
+                <span id="insured-state-zip">FL 33312</span>
             </div>
           </div>
         </div>
@@ -132,7 +132,7 @@
               <span class="label">PHONE<br>(A/C, No, Ext):</span> &nbsp;&nbsp;&nbsp; <span id="contact-phone">(310) 492-2007</span>
             </td>
             <td class="no-border-right" style="width: 50%;">
-              <span class="label">FAX<br>(A/C, No):</span> &nbsp;&nbsp;&nbsp; <span id="contact-fax"></span>
+              <span class="label">FAX<br>(A/C, No):</span> &nbsp;&nbsp;&nbsp; <span id=""></span>
             </td>
           </tr>
           <tr>
@@ -146,12 +146,12 @@
             <th class="no-border-left">INSURER(S) AFFORDING COVERAGE</th>
             <th class="no-border-right center">NAIC #</th>
           </tr>
-          <tr><td class="no-border-left"><span class="label">INSURER A :</span> SiriusPoint Specialty Insurance Corporation</td><td class="no-border-right center">16820</td></tr>
-          <tr><td class="no-border-left"><span class="label">INSURER B :</span></td><td class="no-border-right center"></td></tr>
-          <tr><td class="no-border-left"><span class="label">INSURER C :</span></td><td class="no-border-right center"></td></tr>
-          <tr><td class="no-border-left"><span class="label">INSURER D :</span></td><td class="no-border-right center"></td></tr>
-          <tr><td class="no-border-left"><span class="label">INSURER E :</span></td><td class="no-border-right center"></td></tr>
-          <tr><td class="no-border-left no-border-bottom"><span class="label">INSURER F :</span></td><td class="no-border-right no-border-bottom center"></td></tr>
+          <tr><td class="no-border-left"><span class="label">INSURER A :</span> <span id="insurer-a-name"></span></td><td class="no-border-right center" id="insurer-a-naic"></td></tr>
+          <tr><td class="no-border-left"><span class="label">INSURER B :</span> <span id="insurer-b-name"></span></td><td class="no-border-right center" id="insurer-b-naic"></td></tr>
+          <tr><td class="no-border-left"><span class="label">INSURER C :</span> <span id="insurer-c-name"></span></td><td class="no-border-right center" id="insurer-c-naic"></td></tr>
+          <tr><td class="no-border-left"><span class="label">INSURER D :</span> <span id="insurer-d-name"></span></td><td class="no-border-right center" id="insurer-d-naic"></td></tr>
+          <tr><td class="no-border-left"><span class="label">INSURER E :</span> <span id="insurer-e-name"></span></td><td class="no-border-right center" id="insurer-e-naic"></td></tr>
+          <tr><td class="no-border-left no-border-bottom"><span class="label">INSURER F :</span> <span id="insurer-f-name"></span></td><td class="no-border-right no-border-bottom center" id="insurer-f-naic"></td></tr>
         </table>
       </div>
     </div>
@@ -338,31 +338,357 @@
     
   </div>
   <script>
+    // NAIC lookup — mirrors naicData.ts; keys are lowercase writing-company / parent-company names
+    const NAIC_LOOKUP = {
+      // Progressive
+      'progressive insurance, insurance company, pro': '24260',
+      'progressive casualty insurance company': '24260',
+      'progressive casualty': '24260',
+      'progressive': '24260',
+      'progressive direct insurance company': '16322',
+      // Travelers
+      'travelers insurance company, insurance company, trv': '25658',
+      'travelers indemnity company': '25658',
+      'travelers indemnity': '25658',
+      'travelers': '25658',
+      'standard fire insurance (id), insurance company, stf': '19070',
+      // Hartford
+      'hartford insurance group, insurance company, hig': '19682',
+      'hartford underwriters insurance company': '19682',
+      'hartford underwriters': '19682',
+      'hartford fire insurance company': '19682',
+      'hartford': '19682',
+      // Liberty Mutual 
+      'liberty mutual agency corporation, insurance company, lrm': '23043',
+      'liberty mutual fire insurance company': '23043',
+      'liberty mutual fire': '23043',
+      'liberty mutual': '23043',
+      // Chubb / ACE
+      'chubb and son, inc., insurance company, chb': '20281',
+      'chubb group': '20281',
+      'chubb': '20281',
+      'ace american insurance company, writing company, atl011': '22667',
+      'ace american insurance company': '22667',
+      // Allstate
+      'allstate, insurance company, all': '19232',
+      'allstate insurance company': '19232',
+      'allstate': '19232',
+      // State Farm
+      'state farm': '25177',
+      // Nationwide
+      'nationwide exclusive, insurance company, nat': '23787',
+      'nationwide': '23787',
+      'allied/nationwide insurance company, insurance company, ali': '20109',
+      // CNA
+      'cna, insurance company, cna': '20443',
+      'continental casualty company, insurance company, cnc': '20443',
+      'continental casualty company': '20443',
+      'cna': '20443',
+      // Markel
+      'markel american insurance company, insurance company, mkl': '38970',
+      'markel': '38970',
+      // Zurich
+      'zurich insurance company**additional setups required': '16535',
+      'zurich': '16535',
+      // Scottsdale
+      'scottsdale insurance company, insurance company, sct': '41297',
+      'scottsdale insurance company': '41297',
+      'scottsdale': '41297',
+      // U.S. Specialty
+      'u.s. specialty insurance company, insurance company, usp': '29599',
+      'us specialty insurance company': '29599',
+      'us specialty': '29599',
+      // SiriusPoint
+      'siriuspoint specialty insurance corporation': '16820',
+      'siriuspoint': '16820',
+      // Kemper
+      'kemper, insurance company, kem': '39071',
+      'kemper': '39071',
+      // Philadelphia
+      'philadelphia ins co., insurance company, phi': '18058',
+      'philadelphia insurance': '18058',
+      'philadelphia': '18058',
+      // Everest
+      'everest national insurance company, insurance company, evr': '10120',
+      'everest national': '10120',
+      // RLI
+      'rli corporation, insurance company, rli': '13056',
+      'rli': '13056',
+      // Evanston
+      'evanston insurance company, insurance company, eva': '35378',
+      'evanston': '35378',
+      // Nautilus
+      'nautilus insurance company, insurance company, nti': '17370',
+      'nautilus': '17370',
+      // AmTrust
+      'amtrust financial services, inc., insurance company, amt': '10267',
+      'amtrust': '10267',
+      // Employers
+      'employers holdings grp, insurance company, ehg': '21458',
+      'employers insurance': '21458',
+      'employers': '21458',
+      // Great American
+      'great american, insurance company, gre': '16691',
+      'great american': '16691',
+      // Hudson
+      'hudson insurance company, insurance company, hud': '41238',
+      'hudson': '41238',
+      // SAIF
+      'saif corp, insurance company, sai': '22195',
+      'saif': '22195',
+      // Safeco
+      'safeco insurance company, insurance company, saf': '24740',
+      'safeco': '24740',
+      // Mercury
+      'mercury insurance group, insurance company, mer': '11544',
+      'mercury': '11544',
+      // Tokio Marine
+      'tokio marine management, inc., insurance company, tok': '41297',
+      'tokio marine': '41297',
+      // Berkley
+      'berkley mid-atlantic group**additional setups required': '32603',
+      'berkley': '32603',
+      // Arch
+      'arch ins grp, insurance company, arc': '11150',
+      'arch': '11150',
+      // Sentinel
+      'sentinel insurance company, ltd, insurance company, snt': '11000',
+      'sentinel': '11000',
+      // Next Insurance
+      'next insurance us company, insurance company, nxt': '15622',
+      'next insurance': '15622',
+      // Guard / AmGuard
+      'guard insurance, insurance company, itg': '42390',
+      'amguard insurance company': '42390',
+      'amguard': '42390',
+      // Pacific Specialty
+      'pacific specialty insurance company, insurance company, pac': '37850',
+      'pacific specialty': '37850',
+      // Geico
+      'geico': '22055',
+      // Skyward
+      'skyward specialty insurance, insurance company, sky': '13640',
+      'skyward specialty': '13640',
+      // Western Surety
+      'western surety company, insurance company, wsc': '13188',
+      'western surety': '13188',
+      // Texas Mutual
+      'texas mutual insurance, insurance company, tex': '22945',
+      'texas mutual': '22945',
+      // Valley Forge
+      'valley forge insurance, insurance company, vfo': '20508',
+      'valley forge': '20508',
+      // USLI
+      'usli investment corporation, insurance company, usl': '25257',
+      'usli': '25257',
+      // Hippo
+      'hippo insurance company, insurance company, hip': '17558',
+      'hippo': '17558',
+      // Coterie
+      'coterie insurance agency llc, insurance company, cot': '15551',
+      'coterie': '15551',
+      // Axis
+      'axis insurance company, writing company, acr001': '37273',
+      'axis insurance company': '37273',
+      'axis': '37273',
+      // Safeway
+      'safeway insurance company, insurance company, sic': '17842',
+      'safeway insurance company': '17842',
+      'safeway': '17842',
+      // Dairyland
+      'dairyland insurance, insurance company, dai': '21164',
+      'dairyland': '21164',
+      // Bristol West
+      'bristol west holdings inc, insurance company, bwa': '5922',
+      'bristol west': '5922',
+      // National General / GMAC
+      'national general (formerly gmac), insurance company, int': '23728',
+      'national general': '23728',
+      // Drive Insurance
+      'drive insurance company, insurance company, drv': '24260',
+      'drive insurance': '24260',
+      // Canopius
+      'canopius us insurance, inc., insurance company, cui': '16535',
+      'canopius': '16535',
+      // Atain
+      'atain insurance companies, insurance company, ata': '29033',
+      'atain': '29033',
+      // Trisura
+      'trisura specialty insurance company, insurance company, tri': '15622',
+      'trisura': '15622',
+      // Technology Insurance
+      'technology insurance co., insurance company, tch': '42376',
+      'technology insurance': '42376',
+      // Northfield
+      'northfield insurance company, insurance company, nor': '19917',
+      'northfield': '19917',
+      // Suretec
+      'suretec insurance co., insurance company, stc': '34703',
+      'suretec': '34703',
+      // Prime Insurance
+      'prime insurance company, insurance company, pco': '12537',
+      'prime insurance': '12537',
+      // Access Insurance
+      'access insurance company, insurance company, acs': '20559',
+      'access insurance': '20559',
+      // Anchor General
+      'anchor general insurance agency, inc., insurance company, anc': '41475',
+      'anchor general': '41475',
+      // Aspire General
+      'aspire general insurance, insurance company, asp': '16624',
+      'aspire general': '16624',
+      // Capitol Insurance Group
+      'capital insurance group (cig), insurance company, cig': '23389',
+      'capital insurance group': '23389',
+      // First Comp
+      'first comp, insurance company, fco': '10472',
+      'first comp': '10472',
+      // Harco National
+      'harco national insurance company, insurance company, hrc': '26433',
+      'harco national': '26433',
+    };
+
+    // extractCarrierName: strips AMS360-style suffixes from a company string
+    // e.g. "Safeway Insurance Company, Insurance Company, SIC" → "Safeway Insurance Company"
+    function extractCarrierName(raw) {
+      if (!raw) return '';
+      let s = raw.trim();
+      // Strip ", Insurance Company, CODE" suffix
+      const ic = s.indexOf(', Insurance Company,');
+      if (ic > 0) return s.slice(0, ic).trim();
+      // Strip ", Writing Company, CODE" suffix
+      const wc = s.indexOf(', Writing Company,');
+      if (wc > 0) return s.slice(0, wc).trim();
+      // Strip trailing " , CODE" (e.g. "Safeway Insurance Company, SIC")
+      const lastComma = s.lastIndexOf(',');
+      if (lastComma > 0) {
+        const suffix = s.slice(lastComma + 1).trim();
+        // If the suffix is 2-5 uppercase chars (a company code), strip it
+        if (/^[A-Z0-9]{2,6}$/.test(suffix)) return s.slice(0, lastComma).trim();
+      }
+      return s;
+    }
+
+    function getNaic(companyName) {
+      if (!companyName) return '';
+      // Try the raw value first (exact then partial)
+      const raw = companyName.trim().toLowerCase();
+      if (NAIC_LOOKUP[raw]) return NAIC_LOOKUP[raw];
+      for (const [name, naic] of Object.entries(NAIC_LOOKUP)) {
+        if (raw.includes(name) || name.includes(raw)) return naic;
+      }
+      // Also try after stripping AMS360 suffix from the input
+      const cleaned = extractCarrierName(companyName).toLowerCase();
+      if (cleaned !== raw) {
+        if (NAIC_LOOKUP[cleaned]) return NAIC_LOOKUP[cleaned];
+        for (const [name, naic] of Object.entries(NAIC_LOOKUP)) {
+          if (cleaned.includes(name) || name.includes(cleaned)) return naic;
+        }
+      }
+      return '';
+    }
+
     window.addEventListener('DOMContentLoaded', async () => {
       const params = new URLSearchParams(window.location.search);
       const customerId = params.get('customerId');
-      if (!customerId) return;
+      console.log('[ACORD] customerId:', customerId);
+      if (!customerId) { console.warn('[ACORD] No customerId in URL'); return; }
+
       const token = localStorage.getItem("token");
-      if (!token) return;
+      console.log('[ACORD] token present:', !!token);
+      if (!token) { console.warn('[ACORD] No auth token in localStorage'); return; }
+
+      const letters = ['a', 'b', 'c', 'd', 'e', 'f'];
+
+
 
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/customers/${customerId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+        // ── 1. Fetch customer details ─────────────────────────────────────
+        const custResponse = await fetch(`http://127.0.0.1:8000/api/customers/${customerId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (response.ok) {
-          const customer = await response.json();
-          if (customer && customer.contact_person) {
-            const contact = customer.contact_person;
-            if (contact.name) document.getElementById('contact-name').innerText = contact.name;
-            if (contact.phone) document.getElementById('contact-phone').innerText = contact.phone;
-            if (contact.email) document.getElementById('contact-email').innerText = contact.email;
-            if (contact.fax) document.getElementById('contact-fax').innerText = contact.fax;
+        console.log('[ACORD] customer status:', custResponse.status);
+        if (custResponse.ok) {
+          const customer = await custResponse.json();
+          if (customer) {
+            if (customer.name) document.getElementById('insured-name').innerText = customer.name;
+            if (customer.address) document.getElementById('insured-address').innerText = customer.address;
+            if (customer.city) document.getElementById('insured-city').innerText = customer.city;
+
+            const stateZip = [];
+            if (customer.state) stateZip.push(customer.state);
+            if (customer.zip) stateZip.push(customer.zip);
+            if (stateZip.length > 0) {
+              document.getElementById('insured-state-zip').innerText = stateZip.join(' ');
+            }
+
+            if (customer.contact_person) {
+              const contact = customer.contact_person;
+              if (contact.name) document.getElementById('contact-name').innerText = contact.name;
+              if (contact.phone) document.getElementById('contact-phone').innerText = contact.phone;
+              if (contact.email) document.getElementById('contact-email').innerText = contact.email;
+              if (contact.fax) document.getElementById('contact-fax').innerText = contact.fax;
+            }
           }
         }
+
+        // ── 2. Fetch policies → populate INSURER A-F ─────────────────────
+        const polResponse = await fetch(`http://127.0.0.1:8000/api/customers/${customerId}/policies`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        console.log('[ACORD] policies status:', polResponse.status);
+
+        if (polResponse.ok) {
+          const policies = await polResponse.json();
+          console.log('[ACORD] policies count:', policies.length);
+          console.log('[ACORD] policies raw:', JSON.stringify(policies.map(p => ({
+            id: p.id,
+            company: p.company,
+            parent_company: p.parent_company,
+            writing_company: p.writing_company
+          }))));
+
+          // Collect unique carrier names:
+          // Priority: writing_company → parent_company → company
+          const seen = new Set();
+          const carriers = [];
+          for (const p of policies) {
+            // Pick the best available name, clean it up
+            const raw = p.writing_company || p.parent_company || p.company || '';
+            const carrier = extractCarrierName(raw);
+            console.log(`[ACORD] policy ${p.id}: raw="${raw}" → carrier="${carrier}"`);
+            if (carrier && !seen.has(carrier.toLowerCase())) {
+              seen.add(carrier.toLowerCase());
+              carriers.push(carrier);
+              if (carriers.length === 6) break;
+            }
+          }
+
+          console.log('[ACORD] carriers resolved:', carriers);
+
+          // Populate INSURER rows A-F
+          letters.forEach((letter, idx) => {
+            const nameEl = document.getElementById(`insurer-${letter}-name`);
+            const naicEl = document.getElementById(`insurer-${letter}-naic`);
+            if (nameEl && naicEl) {
+              if (carriers[idx]) {
+                nameEl.innerText = carriers[idx];
+                const naic = getNaic(carriers[idx]);
+                naicEl.innerText = naic;
+                console.log(`[ACORD] INSURER ${letter.toUpperCase()}: "${carriers[idx]}" NAIC=${naic}`);
+              } else {
+                nameEl.innerText = '';
+                naicEl.innerText = '';
+              }
+            } else {
+              console.warn(`[ACORD] Element insurer-${letter}-name or insurer-${letter}-naic not found`);
+            }
+          });
+        } else {
+          console.error('[ACORD] Policies fetch failed:', polResponse.status, await polResponse.text());
+        }
       } catch (err) {
-        console.error("Failed to load dynamic contact details:", err);
+        console.error("[ACORD] Failed to load dynamic form details:", err);
       }
     });
   </script>

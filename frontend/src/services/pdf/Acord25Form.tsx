@@ -13,7 +13,7 @@ export default function Acord25Form({ customer, policies }: Acord25FormProps) {
     : "KH Interiors, Inc.";
 
   const customerAddress = customer
-    ? `${customer.street || '15009 SE 94th Ave.'}\n${customer.city || 'Clackamas'}, ${customer.state || 'OR'} ${customer.zip_code || '97015'}`
+    ? `${customer.address || customer.street || '15009 SE 94th Ave.'}\n${customer.city || 'Clackamas'}, ${customer.state || 'OR'} ${customer.zip || customer.zip_code || '97015'}`
     : "15009 SE 94th Ave.\nClackamas, OR 97015";
 
   // Mock some limits and insurers for the visual
