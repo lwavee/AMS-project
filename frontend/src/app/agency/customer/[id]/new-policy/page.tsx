@@ -265,6 +265,20 @@ export default function NewPolicyPage() {
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Sync writing company when parent company or company type changes
+  useEffect(() => {
+    if (companyType === "Insurance") {
+      const companies = INSURANCE_WRITING_COMPANIES[parentCompany];
+      if (companies && companies.length > 0) {
+        setWritingCompany(companies[0]);
+      } else {
+        setWritingCompany(parentCompany);
+      }
+    } else {
+      setWritingCompany("Progressive Casualty");
+    }
+  }, [parentCompany, companyType]);
+
   // Fetch Customer details to prefill fields
   useEffect(() => {
     if (!customerId) return;

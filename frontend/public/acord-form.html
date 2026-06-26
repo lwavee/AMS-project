@@ -132,7 +132,7 @@
               <span class="label">PHONE<br>(A/C, No, Ext):</span> &nbsp;&nbsp;&nbsp; <span id="contact-phone">(310) 492-2007</span>
             </td>
             <td class="no-border-right" style="width: 50%;">
-              <span class="label">FAX<br>(A/C, No):</span> &nbsp;&nbsp;&nbsp; <span id=""></span>
+              <span class="label">FAX<br>(A/C, No):</span> &nbsp;&nbsp;&nbsp; <span id="contact-fax"></span>
             </td>
           </tr>
           <tr>
@@ -624,10 +624,14 @@
 
             if (customer.contact_person) {
               const contact = customer.contact_person;
-              if (contact.name) document.getElementById('contact-name').innerText = contact.name;
-              if (contact.phone) document.getElementById('contact-phone').innerText = contact.phone;
-              if (contact.email) document.getElementById('contact-email').innerText = contact.email;
-              if (contact.fax) document.getElementById('contact-fax').innerText = contact.fax;
+              const nameEl = document.getElementById('contact-name');
+              const phoneEl = document.getElementById('contact-phone');
+              const emailEl = document.getElementById('contact-email');
+              const faxEl = document.getElementById('contact-fax');
+              if (contact.name && nameEl) nameEl.innerText = contact.name;
+              if (contact.phone && phoneEl) phoneEl.innerText = contact.phone;
+              if (contact.email && emailEl) emailEl.innerText = contact.email;
+              if (contact.fax && faxEl) faxEl.innerText = contact.fax;
             }
           }
         }
