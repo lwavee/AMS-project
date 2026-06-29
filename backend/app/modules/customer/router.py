@@ -304,3 +304,67 @@ def create_master_certificate(
     customer_id: int, cert: schema.MasterCertificateCreate, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)
 ):
     return customer_service.create_master_certificate(db, customer_id, cert.model_dump())
+
+
+# ── Certificate Holders ────────────────────────────────────────────────────────
+
+@router.get(
+    "/{customer_id}/certificates/{certificate_id}/holders",
+    response_model=List[schema.CertificateHolderResponse],
+)
+def list_certificate_holders(
+    customer_id: int,
+    certificate_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    return customer_service.list_certificate_holders(db, customer_id, certificate_id)
+
+
+@router.post(
+    "/{customer_id}/certificates/{certificate_id}/holders",
+    response_model=schema.CertificateHolderResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_certificate_holder(
+    customer_id: int,
+    certificate_id: int,
+    holder: schema.CertificateHolderCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    return customer_service.create_certificate_holder(
+        db, customer_id, certificate_id, holder.model_dump()
+    )
+
+
+@router.put(
+    "/{customer_id}/certificates/{certificate_id}/holders/{holder_id}",
+    response_model=schema.CertificateHolderResponse,
+)
+def update_certificate_holder(
+    customer_id: int,
+    certificate_id: int,
+    holder_id: int,
+    holder: schema.CertificateHolderCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    return customer_service.update_certificate_holder(
+        db, customer_id, holder_id, holder.model_dump(exclude_unset=True)
+    )
+
+
+@router.delete(
+    "/{customer_id}/certificates/{certificate_id}/holders/{holder_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_certificate_holder(
+    customer_id: int,
+    certificate_id: int,
+    holder_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    customer_service.delete_certificate_holder(db, customer_id, holder_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

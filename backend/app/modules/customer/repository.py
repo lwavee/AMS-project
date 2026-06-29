@@ -276,3 +276,51 @@ def create_master_certificate(db: Session, customer_id: int, data: dict):
     db.commit()
     db.refresh(db_cert)
     return db_cert
+
+
+# ── Certificate Holders ─────────────────────────────────────────────────────────
+
+def get_holders_by_certificate_id(db: Session, certificate_id: int) -> list:
+    from app.modules.customer.model import CertificateHolder
+    return db.query(CertificateHolder).filter(
+        CertificateHolder.certificate_id == certificate_id
+    ).order_by(CertificateHolder.id.asc()).all()
+
+
+def create_certificate_holder(db: Session, customer_id: int, certificate_id: int, data: dict):
+    from app.modules.customer.model import CertificateHolder
+    from datetime import datetime
+    valid_keys = {c.name for c in CertificateHolder.__table__.columns}
+    clean_data = {k: v for k, v in data.items() if k in valid_keys}
+    clean_data["customer_id"] = customer_id
+    clean_data["certificate_id"] = certificate_id
+    if "created_at" not in clean_data or not clean_data.get("created_at"):
+        clean_data["created_at"] = datetime.now().strftime("%m/%d/%Y %I:%M %p")
+    db_holder = CertificateHolder(**clean_data)
+    db.add(db_holder)
+    db.commit()
+    db.refresh(db_holder)
+    return db_holder
+
+
+def update_certificate_holder(db: Session, holder_id: int, data: dict):
+    from app.modules.customer.model import CertificateHolder
+    db_holder = db.query(CertificateHolder).filter(CertificateHolder.id == holder_id).first()
+    if not db_holder:
+        return None
+    for k, v in data.items():
+        if hasattr(db_holder, k):
+            setattr(db_holder, k, v)
+    db.commit()
+    db.refresh(db_holder)
+    return db_holder
+
+
+def delete_certificate_holder(db: Session, holder_id: int) -> bool:
+    from app.modules.customer.model import CertificateHolder
+    db_holder = db.query(CertificateHolder).filter(CertificateHolder.id == holder_id).first()
+    if not db_holder:
+        return False
+    db.delete(db_holder)
+    db.commit()
+    return True

@@ -56,6 +56,22 @@ interface TreeNode {
   type: "folder" | "file";
   children?: TreeNode[];
   formType?: string;
+  certNumber?: string;  // formatted display number e.g. "202605"
+  certDbId?: string;    // raw numeric DB id e.g. "5"
+  holderData?: {
+    name: string;
+    address: string;
+    address2: string;
+    city: string;
+    state: string;
+    zip: string;
+    desc_of_ops: string;
+    issue_date: string;
+    written_notice_days: number;
+    dbId: number;
+    additional_insured?: Record<string, string>;
+    waiver_subrogation?: Record<string, string>;
+  };
 }
 
 // ─── Tree View Component ─────────────────────────────────────────────────────
@@ -273,13 +289,58 @@ export default function EFormsManagerPage() {
 
       if (certRes.ok) {
         const certData = await certRes.json();
-        const formattedCerts = certData.map((c: any) => ({
-          id: `cert-file-master-${c.id}`,
-          label: c.description || "my frist master",
-          type: "folder" as const,
-          formType: "Certificates",
-          children: [] // No documents available yet
-        }));
+        const year = new Date().getFullYear();
+        // Fetch holders for each certificate in parallel
+        const formattedCerts = await Promise.all(
+          certData.map(async (c: any) => {
+            const certDbId = String(c.id);
+            const certNumber = `${year}${certDbId.padStart(2, '0')}`;
+            // Fetch holders for this cert
+            let holderChildren: TreeNode[] = [];
+            try {
+              const hRes = await fetch(
+                `http://127.0.0.1:8000/api/customers/${customerId}/certificates/${certDbId}/holders`,
+                { headers: { Authorization: `Bearer ${token}` } }
+              );
+              if (hRes.ok) {
+                const holders = await hRes.json();
+                holderChildren = holders.map((h: any) => ({
+                  id: `holder-${h.id}`,
+                  label: [
+                    h.name,
+                    h.address,
+                    [h.city, h.state, h.zip].filter(Boolean).join(', ')
+                  ].filter(Boolean).join(', '),
+                  type: "file" as const,
+                  formType: "Certificates",
+                  holderData: {
+                    name: h.name || '',
+                    address: h.address || '',
+                    address2: h.address2 || '',
+                    city: h.city || '',
+                    state: h.state || '',
+                    zip: h.zip || '',
+                    desc_of_ops: h.desc_of_ops || '',
+                    issue_date: h.issue_date || '',
+                    written_notice_days: h.written_notice_days ?? 10,
+                    dbId: h.id,
+                    additional_insured: h.additional_insured || {},
+                    waiver_subrogation: h.waiver_subrogation || {},
+                  },
+                }));
+              }
+            } catch (_) {}
+            return {
+              id: `cert-file-master-${c.id}`,
+              label: c.description || certNumber,
+              type: "folder" as const,
+              formType: "Certificates",
+              certNumber,
+              certDbId,
+              children: holderChildren,
+            };
+          })
+        );
         setCreatedCertificates(formattedCerts);
       }
     } catch (err: any) {
@@ -296,12 +357,17 @@ export default function EFormsManagerPage() {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'CREATE_CERTIFICATE') {
+        const dbId = String(event.data.payload.id);
+        const year = new Date().getFullYear();
+        const certNumber = `${year}${dbId.padStart(2, '0')}`;
         const newCert = {
-          id: `cert-file-master-${event.data.payload.id}`,
-          label: event.data.payload.name || "my frist master",
+          id: `cert-file-master-${dbId}`,
+          label: event.data.payload.name || certNumber,
           type: "folder" as const,
           formType: "Certificates",
-          children: [] // No documents available yet
+          certNumber,
+          certDbId: dbId,
+          children: []
         };
         setCreatedCertificates(prev => [...prev, newCert]);
         setActiveTab("Certificates");
@@ -771,8 +837,22 @@ export default function EFormsManagerPage() {
                       selected={selectedNode}
                       onSelect={setSelectedNode}
                       onAddEditHolder={(id) => {
+                        // Find the node to get its certNumber and certDbId
+                        const findNode = (nodes: TreeNode[]): TreeNode | null => {
+                          for (const n of nodes) {
+                            if (n.id === id) return n;
+                            if (n.children) {
+                              const found = findNode(n.children);
+                              if (found) return found;
+                            }
+                          }
+                          return null;
+                        };
+                        const node = findNode(displayTree);
+                        const certNum = node?.certNumber || id;
+                        const dbId = node?.certDbId || id.replace("cert-file-master-", "");
                         window.open(
-                          `/agency/customer/${customerId}/eforms-manager/add-edit-holder?certId=${id}`,
+                          `/agency/customer/${customerId}/eforms-manager/add-edit-holder?certId=${certNum}&certDbId=${dbId}`,
                           '_blank',
                           'width=1050,height=800,menubar=no,toolbar=no'
                         );
@@ -793,25 +873,74 @@ export default function EFormsManagerPage() {
 
             {/* ── Right Panel: Form preview area ── */}
             <div className="flex-1 flex flex-col bg-slate-50/50 overflow-auto relative">
-              {selectedNode?.startsWith("cert-file-master-") ? (
-                <iframe src={`/acord-form.html?customerId=${customerId}`} className="w-full h-full border-none bg-white" />
-              ) : selectedNode?.startsWith("cert-file") ? (
-                <Acord25Form customer={customer} policies={policies} />
-              ) : (
-                <div className="flex-1 flex items-center justify-center min-h-full">
-                  <div className="text-center space-y-4 p-8">
-                    <div className="h-20 w-20 rounded-3xl bg-white border border-border-main shadow-sm flex items-center justify-center mx-auto transition-transform hover:scale-105">
-                      <FileSignature size={32} className="text-primary/40" />
+              {(() => {
+                // Find if the selected node is a holder node by searching the tree
+                const findNodeById = (nodes: TreeNode[], id: string): TreeNode | null => {
+                  for (const n of nodes) {
+                    if (n.id === id) return n;
+                    if (n.children) {
+                      const found = findNodeById(n.children, id);
+                      if (found) return found;
+                    }
+                  }
+                  return null;
+                };
+                const selected = selectedNode ? findNodeById(treeData, selectedNode) : null;
+                const isHolderNode = selected?.holderData != null;
+                const isMasterNode = selectedNode?.startsWith("cert-file-master-");
+
+                if (isHolderNode && selected?.holderData) {
+                  const h = selected.holderData;
+                  // Find parent certificate node to get its description
+                  const parentCert = createdCertificates.find(c => 
+                    c.children && c.children.some((child: any) => child.id === selectedNode)
+                  );
+                  const masterDesc = parentCert?.label || '';
+                  const params = new URLSearchParams({
+                    customerId: customerId || '',
+                    holderName: h.name,
+                    holderAddress: h.address,
+                    holderAddress2: h.address2,
+                    holderCity: h.city,
+                    holderState: h.state,
+                    holderZip: h.zip,
+                    holderDesc: h.desc_of_ops,
+                    holderIssueDate: h.issue_date,
+                    holderNoticeDays: String(h.written_notice_days),
+                    masterDesc: masterDesc,
+                    additionalInsured: JSON.stringify(h.additional_insured || {}),
+                    waiverSubrogation: JSON.stringify(h.waiver_subrogation || {}),
+                  });
+                  return <iframe src={`/acord-form.html?${params.toString()}`} className="w-full h-full border-none bg-white" />;
+                } else if (isMasterNode) {
+                  // Find the certificate description
+                  const selectedCert = createdCertificates.find(c => c.id === selectedNode);
+                  const masterDesc = selectedCert?.label || '';
+                  const params = new URLSearchParams({
+                    customerId: customerId || '',
+                    masterDesc: masterDesc,
+                  });
+                  return <iframe src={`/acord-form.html?${params.toString()}`} className="w-full h-full border-none bg-white" />;
+                } else if (selectedNode?.startsWith("cert-file")) {
+                  return <Acord25Form customer={customer} policies={policies} />;
+                } else {
+                  return (
+                    <div className="flex-1 flex items-center justify-center min-h-full">
+                      <div className="text-center space-y-4 p-8">
+                        <div className="h-20 w-20 rounded-3xl bg-white border border-border-main shadow-sm flex items-center justify-center mx-auto transition-transform hover:scale-105">
+                          <FileSignature size={32} className="text-primary/40" />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-extrabold text-text-main tracking-tight">eForms Preview</h3>
+                          <p className="text-[13px] text-text-muted max-w-[260px] mx-auto mt-1.5 leading-relaxed">
+                            Select a certificate holder from the tree to preview the ACORD form with holder details.
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-base font-extrabold text-text-main tracking-tight">eForms Preview</h3>
-                      <p className="text-[13px] text-text-muted max-w-[260px] mx-auto mt-1.5 leading-relaxed">
-                        Select a form from the tree on the left to preview it here. Forms can be filled out, printed, and submitted electronically.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+                  );
+                }
+              })()}
             </div>
           </div>
         </div>

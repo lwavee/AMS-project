@@ -505,3 +505,43 @@ class MasterCertificateResponse(MasterCertificateBase):
 
     class Config:
         from_attributes = True
+
+
+# ── Certificate Holders ────────────────────────────────────────────────────────
+
+class CertificateHolderCreate(BaseModel):
+    name: str
+    contact: Optional[str] = None
+    address: Optional[str] = None
+    address2: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip: Optional[str] = None
+    email: Optional[str] = None
+    fax: Optional[str] = None
+    fax_ext: Optional[str] = None
+    issue_date: Optional[str] = None
+    written_notice_days: Optional[int] = 10
+    desc_of_ops: Optional[str] = None
+    same_as_master: Optional[bool] = True
+    note: Optional[str] = None
+    print_note: Optional[bool] = True
+    job_type: Optional[str] = None
+    job_num: Optional[str] = None
+    project_end_date: Optional[str] = None
+    licensed: Optional[bool] = False
+    bonded: Optional[bool] = False
+    write_to_list: Optional[bool] = False
+    distribution_method: Optional[str] = None
+    name_selection: Optional[str] = None
+    additional_insured: Optional[Any] = None
+    waiver_subrogation: Optional[Any] = None
+
+class CertificateHolderResponse(CertificateHolderCreate):
+    id: int
+    certificate_id: int
+    customer_id: int
+    created_at: Optional[str] = None
+
+    class Config:
+        from_attributes = True

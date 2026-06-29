@@ -1,121 +1,373 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ACORD Certificate of Liability Insurance</title>
-<style>
-  body {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 10px;
-    background-color: transparent;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-  }
-  .page {
-    background: white;
-    width: 850px;
-    padding: 20px 30px;
-    box-shadow: none;
-    color: black;
-  }
-  * { box-sizing: border-box; }
-  table { width: 100%; border-collapse: collapse; }
-  th, td { border: 1px solid black; padding: 2px 4px; vertical-align: top; }
-  .no-border { border: none !important; }
-  .no-border-bottom { border-bottom: none !important; }
-  .no-border-top { border-top: none !important; }
-  .no-border-left { border-left: none !important; }
-  .no-border-right { border-right: none !important; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ACORD Certificate of Liability Insurance</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10px;
+      background-color: transparent;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+    }
 
-  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; }
-  .logo { font-size: 28px; letter-spacing: 2px; color: #333; margin-top: -5px;}
-  .title { font-size: 18px; font-weight: bold; text-align: center; flex-grow: 1; padding-top: 15px;}
-  .date-box { border: 2px solid black; text-align: center; width: 120px; font-weight: bold; font-size: 12px; }
-  .date-box .date-title { font-size: 8px; border-bottom: 1px solid black; padding: 2px; font-weight: normal;}
-  
-  .disclaimer { border: 2px solid black; padding: 4px; font-size: 9px; text-align: justify; margin-bottom: 5px; line-height: 1.2; font-weight: bold;}
-  
-  .top-grid { display: grid; grid-template-columns: 1fr 1fr; border: 2px solid black; border-bottom: none;}
-  .left-col { border-right: 1px solid black; }
-  .box { border-bottom: 1px solid black; padding: 2px 4px; }
-  .box.producer { height: 100px; }
-  .box.insured { height: 100px; }
-  .box-label { font-size: 8px; font-weight: bold; margin-bottom: 2px; }
-  
-  .contact-table { width: 100%; border-collapse: collapse; }
-  .contact-table td { border: 1px solid black; padding: 2px 4px; height: 20px;}
-  .contact-table .label { font-size: 7px; font-weight: bold; }
-  
-  .insurer-table { width: 100%; border-collapse: collapse; }
-  .insurer-table th { font-size: 8px; font-weight: bold; background: #eee; text-align: left; padding-top: 4px; padding-bottom: 4px;}
-  .insurer-table td { height: 17px; border: 1px solid black; font-size: 9px; }
+    .page {
+      background: white;
+      width: 850px;
+      padding: 20px 30px;
+      box-shadow: none;
+      color: black;
+    }
 
-  .coverages-header-row { display: flex; border: 2px solid black; border-bottom: none; background: #eee; padding: 2px 4px; font-weight: bold; font-size: 9px;}
-  .coverages-header-row div { margin-right: 20px; }
-  .coverages-disclaimer { border: 2px solid black; border-top: none; border-bottom: none; padding: 4px; font-size: 8px; text-align: justify; line-height: 1.1;}
-  
-  .cov-table { border: 2px solid black; }
-  .cov-table th { font-size: 8px; text-align: center; background: #eee; padding: 4px; }
-  .cov-table td { font-size: 9px; padding: 2px 4px; }
-  .center { text-align: center; }
-  .bold { font-weight: bold; }
-  .checkbox { display: inline-block; width: 12px; height: 12px; border: 1px solid black; text-align: center; line-height: 10px; margin-right: 4px; vertical-align: middle; background: white;}
-  .checkbox.checked::after { content: 'X'; font-size: 10px; font-weight: bold;}
-  
-  .desc-box { border: 2px solid black; padding: 4px; min-height: 80px; margin-top: 5px; font-size: 10px;}
-  
-  .footer-grid { display: grid; grid-template-columns: 1fr 1fr; border: 2px solid black; margin-top: 5px; }
-  .cert-holder { border-right: 1px solid black; padding: 4px; height: 150px; }
-  .cancellation { padding: 4px; display: flex; flex-direction: column;}
-  .cancellation-text { font-size: 9px; font-weight: bold; margin-top: 10px; text-align: justify; line-height: 1.2;}
-  .signature-area { margin-top: auto; border-top: 1px solid black; padding-top: 2px; font-size: 8px; font-weight: bold; position: relative;}
-  .signature-img { font-family: cursive; font-size: 24px; font-weight: normal; position: absolute; right: 50px; bottom: 5px; color: #888;}
-  
-  .limits-table { border: none !important; width: 100%; margin: 0; padding: 0;}
-  .limits-table td { border: none; border-bottom: 1px solid black; padding: 2px; font-size: 9px;}
-  .limits-table td:last-child { text-align: right; }
-  .limits-table tr:last-child td { border-bottom: none; }
-</style>
+    * {
+      box-sizing: border-box;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      border: 1px solid black;
+      padding: 2px 4px;
+      vertical-align: top;
+    }
+
+    .no-border {
+      border: none !important;
+    }
+
+    .no-border-bottom {
+      border-bottom: none !important;
+    }
+
+    .no-border-top {
+      border-top: none !important;
+    }
+
+    .no-border-left {
+      border-left: none !important;
+    }
+
+    .no-border-right {
+      border-right: none !important;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 8px;
+      height: 50px;
+    }
+
+    .logo {
+      margin-bottom: -5px;
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+      flex-grow: 1;
+      padding-bottom: 2px;
+      letter-spacing: 0.5px;
+    }
+
+    .date-box {
+      border: 2px solid black;
+      text-align: center;
+      width: 120px;
+      font-weight: bold;
+      font-size: 12px;
+      margin-bottom: -2px;
+    }
+
+    .date-box .date-title {
+      font-size: 8px;
+      border-bottom: 1px solid black;
+      padding: 2px;
+      font-weight: normal;
+    }
+
+    .disclaimer {
+      border: 2px solid black;
+      padding: 4px;
+      font-size: 9px;
+      text-align: justify;
+      margin-bottom: 5px;
+      line-height: 1.2;
+      font-weight: bold;
+    }
+
+    .disclaimer hr {
+      border: none;
+      border-top: 1px solid black;
+      margin: 4px -4px;
+    }
+
+    .top-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 2px solid black;
+      border-bottom: none;
+    }
+
+    .left-col {
+      border-right: 1px solid black;
+    }
+
+    .box {
+      border-bottom: 1px solid black;
+      padding: 2px 4px;
+    }
+
+    .box.producer {
+      height: 100px;
+    }
+
+    .box.insured {
+      height: 100px;
+    }
+
+    .box-label {
+      font-size: 8px;
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+
+    .contact-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .contact-table td {
+      border: 1px solid black;
+      padding: 2px 4px;
+      height: 20px;
+    }
+
+    .contact-table .label {
+      font-size: 7px;
+      font-weight: bold;
+    }
+
+    .insurer-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .insurer-table th {
+      font-size: 8px;
+      font-weight: bold;
+      background: #eee;
+      text-align: left;
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+
+    .insurer-table td {
+      height: 17px;
+      border: 1px solid black;
+      font-size: 9px;
+    }
+
+    .coverages-header-row {
+      display: flex;
+      border: 2px solid black;
+      border-bottom: none;
+      background: #eee;
+      padding: 2px 4px;
+      font-weight: bold;
+      font-size: 9px;
+    }
+
+    .coverages-header-row div {
+      margin-right: 20px;
+    }
+
+    .coverages-disclaimer {
+      border: 2px solid black;
+      border-top: none;
+      border-bottom: none;
+      padding: 4px;
+      font-size: 8px;
+      text-align: justify;
+      line-height: 1.1;
+    }
+
+    .cov-table {
+      border: 2px solid black;
+    }
+
+    .cov-table th {
+      font-size: 8px;
+      text-align: center;
+      background: #eee;
+      padding: 4px;
+    }
+
+    .cov-table td {
+      font-size: 9px;
+      padding: 2px 4px;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    .bold {
+      font-weight: bold;
+    }
+
+    .checkbox {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 1px solid black;
+      text-align: center;
+      line-height: 10px;
+      margin-right: 4px;
+      vertical-align: middle;
+      background: white;
+    }
+
+    .checkbox.checked::after {
+      content: 'X';
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .desc-box {
+      border: 2px solid black;
+      padding: 4px;
+      min-height: 80px;
+      margin-top: 5px;
+      font-size: 10px;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 2px solid black;
+      margin-top: 5px;
+    }
+
+    .cert-holder {
+      border-right: 1px solid black;
+      padding: 4px;
+      height: 150px;
+    }
+
+    .cancellation {
+      padding: 4px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cancellation-text {
+      font-size: 9px;
+      font-weight: bold;
+      margin-top: 10px;
+      text-align: justify;
+      line-height: 1.2;
+    }
+
+    .signature-area {
+      margin-top: auto;
+      border-top: 1px solid black;
+      padding-top: 2px;
+      font-size: 8px;
+      font-weight: bold;
+      position: relative;
+    }
+
+    .signature-img {
+      font-family: cursive;
+      font-size: 24px;
+      font-weight: normal;
+      position: absolute;
+      right: 50px;
+      bottom: 5px;
+      color: #888;
+    }
+
+    .limits-table {
+      border: none !important;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    .limits-table td {
+      border: none;
+      border-bottom: 1px solid black;
+      padding: 2px;
+      font-size: 9px;
+    }
+
+    .limits-table td:last-child {
+      text-align: right;
+    }
+
+    .limits-table tr:last-child td {
+      border-bottom: none;
+    }
+  </style>
 </head>
+
 <body>
   <div class="page">
     <div class="header">
-      <div class="logo">ACORD<sup style="font-size:12px">&reg;</sup></div>
+      <div class="logo">
+        <img src="/logoacord.png" alt="ACORD Logo" style="height: 38px; width: auto; object-fit: contain;" />
+      </div>
       <div class="title">CERTIFICATE OF LIABILITY INSURANCE</div>
       <div class="date-box">
         <div class="date-title">DATE (MM/DD/YYYY)</div>
         <div style="padding: 4px;">06/23/2026</div>
       </div>
     </div>
-    
+
     <div class="disclaimer">
-      THIS CERTIFICATE IS ISSUED AS A MATTER OF INFORMATION ONLY AND CONFERS NO RIGHTS UPON THE CERTIFICATE HOLDER. THIS CERTIFICATE DOES NOT AFFIRMATIVELY OR NEGATIVELY AMEND, EXTEND OR ALTER THE COVERAGE AFFORDED BY THE POLICIES BELOW. THIS CERTIFICATE OF INSURANCE DOES NOT CONSTITUTE A CONTRACT BETWEEN THE ISSUING INSURER(S), AUTHORIZED REPRESENTATIVE OR PRODUCER, AND THE CERTIFICATE HOLDER.<br><br>
-      IMPORTANT: If the certificate holder is an ADDITIONAL INSURED, the policy(ies) must have ADDITIONAL INSURED provisions or be endorsed. If SUBROGATION IS WAIVED, subject to the terms and conditions of the policy, certain policies may require an endorsement. A statement on this certificate does not confer rights to the certificate holder in lieu of such endorsement(s).
+      THIS CERTIFICATE IS ISSUED AS A MATTER OF INFORMATION ONLY AND CONFERS NO RIGHTS UPON THE CERTIFICATE HOLDER. THIS
+      CERTIFICATE DOES NOT AFFIRMATIVELY OR NEGATIVELY AMEND, EXTEND OR ALTER THE COVERAGE AFFORDED BY THE POLICIES
+      BELOW. THIS CERTIFICATE OF INSURANCE DOES NOT CONSTITUTE A CONTRACT BETWEEN THE ISSUING INSURER(S), AUTHORIZED
+      REPRESENTATIVE OR PRODUCER, AND THE CERTIFICATE HOLDER.<br><br>
+      <hr>
+      IMPORTANT: If the certificate holder is an ADDITIONAL INSURED, the policy(ies) must have ADDITIONAL INSURED
+      provisions or be endorsed. If SUBROGATION IS WAIVED, subject to the terms and conditions of the policy, certain
+      policies may require an endorsement. A statement on this certificate does not confer rights to the certificate
+      holder in lieu of such endorsement(s).
     </div>
-    
+
     <div class="top-grid">
       <div class="left-col">
         <div class="box producer">
           <div class="box-label">PRODUCER</div>
-          Gamaty Insurance Agency LLC<br>
-          5455 Wilshire Blvd<br>
-          Suite 1816<br>
+          <span id="producer-name">Gamaty Insurance Agency LLC</span><br>
+          <span id="producer-address">5455 Wilshire Blvd</span><br>
+          <span id="producer-address2">Suite 1816</span><br>
           <div style="display: flex; justify-content: space-between; padding-right: 30px;">
-            <span>Los Angeles</span>
-            <span>CA 90036</span>
+            <span id="producer-city">Los Angeles</span>
+            <span id="producer-state-zip">CA 90036</span>
           </div>
         </div>
         <div class="box insured no-border-bottom">
           <div class="box-label">INSURED</div>
           <div style="padding-left: 50px;">
-            <span id="insured-name">RS Remodeling Services, LLC</span><br>
+            <span id="insured-name"></span><br>
             <span id="insured-address">1860 Southwest 36th Terrace</span><br><br>
             <div style="display: flex; justify-content: space-between; padding-right: 30px;">
-                <span id="insured-city">Fort Lauderdale</span>
-                <span id="insured-state-zip">FL 33312</span>
+              <span id="insured-city">Fort Lauderdale</span>
+              <span id="insured-state-zip">FL 33312</span>
             </div>
           </div>
         </div>
@@ -129,7 +381,8 @@
           </tr>
           <tr>
             <td class="no-border-left" style="width: 50%;">
-              <span class="label">PHONE<br>(A/C, No, Ext):</span> &nbsp;&nbsp;&nbsp; <span id="contact-phone">(310) 492-2007</span>
+              <span class="label">PHONE<br>(A/C, No, Ext):</span> &nbsp;&nbsp;&nbsp; <span id="contact-phone">(310)
+                492-2007</span>
             </td>
             <td class="no-border-right" style="width: 50%;">
               <span class="label">FAX<br>(A/C, No):</span> &nbsp;&nbsp;&nbsp; <span id="contact-fax"></span>
@@ -137,7 +390,8 @@
           </tr>
           <tr>
             <td colspan="2" class="no-border-left no-border-right">
-              <span class="label">E-MAIL<br>ADDRESS:</span> &nbsp;&nbsp;&nbsp; <span id="contact-email">ben@capcoinsurance.com</span>
+              <span class="label">E-MAIL<br>ADDRESS:</span> &nbsp;&nbsp;&nbsp; <span
+                id="contact-email">ben@capcoinsurance.com</span>
             </td>
           </tr>
         </table>
@@ -146,25 +400,49 @@
             <th class="no-border-left">INSURER(S) AFFORDING COVERAGE</th>
             <th class="no-border-right center">NAIC #</th>
           </tr>
-          <tr><td class="no-border-left"><span class="label">INSURER A :</span> <span id="insurer-a-name"></span></td><td class="no-border-right center" id="insurer-a-naic"></td></tr>
-          <tr><td class="no-border-left"><span class="label">INSURER B :</span> <span id="insurer-b-name"></span></td><td class="no-border-right center" id="insurer-b-naic"></td></tr>
-          <tr><td class="no-border-left"><span class="label">INSURER C :</span> <span id="insurer-c-name"></span></td><td class="no-border-right center" id="insurer-c-naic"></td></tr>
-          <tr><td class="no-border-left"><span class="label">INSURER D :</span> <span id="insurer-d-name"></span></td><td class="no-border-right center" id="insurer-d-naic"></td></tr>
-          <tr><td class="no-border-left"><span class="label">INSURER E :</span> <span id="insurer-e-name"></span></td><td class="no-border-right center" id="insurer-e-naic"></td></tr>
-          <tr><td class="no-border-left no-border-bottom"><span class="label">INSURER F :</span> <span id="insurer-f-name"></span></td><td class="no-border-right no-border-bottom center" id="insurer-f-naic"></td></tr>
+          <tr>
+            <td class="no-border-left"><span class="label">INSURER A :</span> <span id="insurer-a-name"></span></td>
+            <td class="no-border-right center" id="insurer-a-naic"></td>
+          </tr>
+          <tr>
+            <td class="no-border-left"><span class="label">INSURER B :</span> <span id="insurer-b-name"></span></td>
+            <td class="no-border-right center" id="insurer-b-naic"></td>
+          </tr>
+          <tr>
+            <td class="no-border-left"><span class="label">INSURER C :</span> <span id="insurer-c-name"></span></td>
+            <td class="no-border-right center" id="insurer-c-naic"></td>
+          </tr>
+          <tr>
+            <td class="no-border-left"><span class="label">INSURER D :</span> <span id="insurer-d-name"></span></td>
+            <td class="no-border-right center" id="insurer-d-naic"></td>
+          </tr>
+          <tr>
+            <td class="no-border-left"><span class="label">INSURER E :</span> <span id="insurer-e-name"></span></td>
+            <td class="no-border-right center" id="insurer-e-naic"></td>
+          </tr>
+          <tr>
+            <td class="no-border-left no-border-bottom"><span class="label">INSURER F :</span> <span
+                id="insurer-f-name"></span></td>
+            <td class="no-border-right no-border-bottom center" id="insurer-f-naic"></td>
+          </tr>
         </table>
       </div>
     </div>
-    
+
     <div class="coverages-header-row">
       <div style="flex: 1;">COVERAGES</div>
       <div style="flex: 1;">CERTIFICATE NUMBER: <span style="font-weight:normal">CL2661008877</span></div>
       <div style="flex: 1;">REVISION NUMBER:</div>
     </div>
     <div class="coverages-disclaimer">
-      THIS IS TO CERTIFY THAT THE POLICIES OF INSURANCE LISTED BELOW HAVE BEEN ISSUED TO THE INSURED NAMED ABOVE FOR THE POLICY PERIOD INDICATED. NOTWITHSTANDING ANY REQUIREMENT, TERM OR CONDITION OF ANY CONTRACT OR OTHER DOCUMENT WITH RESPECT TO WHICH THIS CERTIFICATE MAY BE ISSUED OR MAY PERTAIN, THE INSURANCE AFFORDED BY THE POLICIES DESCRIBED HEREIN IS SUBJECT TO ALL THE TERMS, EXCLUSIONS AND CONDITIONS OF SUCH POLICIES. LIMITS SHOWN MAY HAVE BEEN REDUCED BY PAID CLAIMS. LIMITS SHOWN ARE INCLUSIVE OF AMOUNTS REQUESTED BY THE CERTIFICATE HOLDER AND MAY NOT REFLECT POLICY LIMIT AMOUNTS IN EXCESS OF THOSE REQUESTED. *Not Applicable In WY
+      THIS IS TO CERTIFY THAT THE POLICIES OF INSURANCE LISTED BELOW HAVE BEEN ISSUED TO THE INSURED NAMED ABOVE FOR THE
+      POLICY PERIOD INDICATED. NOTWITHSTANDING ANY REQUIREMENT, TERM OR CONDITION OF ANY CONTRACT OR OTHER DOCUMENT WITH
+      RESPECT TO WHICH THIS CERTIFICATE MAY BE ISSUED OR MAY PERTAIN, THE INSURANCE AFFORDED BY THE POLICIES DESCRIBED
+      HEREIN IS SUBJECT TO ALL THE TERMS, EXCLUSIONS AND CONDITIONS OF SUCH POLICIES. LIMITS SHOWN MAY HAVE BEEN REDUCED
+      BY PAID CLAIMS. LIMITS SHOWN ARE INCLUSIVE OF AMOUNTS REQUESTED BY THE CERTIFICATE HOLDER AND MAY NOT REFLECT
+      POLICY LIMIT AMOUNTS IN EXCESS OF THOSE REQUESTED. *Not Applicable In WY
     </div>
-    
+
     <table class="cov-table no-border-top">
       <tr>
         <th style="width: 30px;">INSR<br>LTR</th>
@@ -182,15 +460,18 @@
         <td>
           <div class="checkbox checked"></div> COMMERCIAL GENERAL LIABILITY<br>
           <div style="margin-top: 4px;">
-            &nbsp;&nbsp;&nbsp;&nbsp;<div class="checkbox checked"></div> CLAIMS-MADE &nbsp;&nbsp;&nbsp; <div class="checkbox"></div> OCCUR
+            &nbsp;&nbsp;&nbsp;&nbsp;<div class="checkbox checked"></div> CLAIMS-MADE &nbsp;&nbsp;&nbsp; <div
+              class="checkbox"></div> OCCUR
           </div>
           <br><br><br>
           GEN'L AGGREGATE LIMIT APPLIES PER:<br>
           <div style="margin-top: 4px;">
-              <div class="checkbox checked"></div> POLICY &nbsp;&nbsp; <div class="checkbox"></div> PRO-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;JECT &nbsp;&nbsp; <div class="checkbox"></div> LOC<br>
+            <div class="checkbox checked"></div> POLICY &nbsp;&nbsp; <div class="checkbox"></div>
+            PRO-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;JECT
+            &nbsp;&nbsp; <div class="checkbox"></div> LOC<br>
           </div>
           <div style="margin-top: 4px;">
-              <div class="checkbox"></div> OTHER:
+            <div class="checkbox"></div> OTHER:
           </div>
         </td>
         <td></td>
@@ -200,13 +481,34 @@
         <td class="center" style="vertical-align: middle;">06/29/2027</td>
         <td style="padding: 0;">
           <table class="limits-table">
-            <tr><td>EACH OCCURRENCE</td><td>$ 1,000,000</td></tr>
-            <tr><td>DAMAGE TO RENTED<br>PREMISES (Ea occurrence)</td><td>$ 50,000</td></tr>
-            <tr><td>MED EXP (Any one person)</td><td>$ 5,000</td></tr>
-            <tr><td>PERSONAL & ADV INJURY</td><td>$ 1,000,000</td></tr>
-            <tr><td>GENERAL AGGREGATE</td><td>$ 1,000,000</td></tr>
-            <tr><td>PRODUCTS - COMP/OP AGG</td><td>$ 1,000,000</td></tr>
-            <tr><td>&nbsp;</td><td>$</td></tr>
+            <tr>
+              <td>EACH OCCURRENCE</td>
+              <td>$ 1,000,000</td>
+            </tr>
+            <tr>
+              <td>DAMAGE TO RENTED<br>PREMISES (Ea occurrence)</td>
+              <td>$ 50,000</td>
+            </tr>
+            <tr>
+              <td>MED EXP (Any one person)</td>
+              <td>$ 5,000</td>
+            </tr>
+            <tr>
+              <td>PERSONAL & ADV INJURY</td>
+              <td>$ 1,000,000</td>
+            </tr>
+            <tr>
+              <td>GENERAL AGGREGATE</td>
+              <td>$ 1,000,000</td>
+            </tr>
+            <tr>
+              <td>PRODUCTS - COMP/OP AGG</td>
+              <td>$ 1,000,000</td>
+            </tr>
+            <tr>
+              <td>&nbsp;</td>
+              <td>$</td>
+            </tr>
           </table>
         </td>
       </tr>
@@ -232,11 +534,26 @@
         <td></td>
         <td style="padding: 0;">
           <table class="limits-table">
-            <tr><td>COMBINED SINGLE LIMIT<br>(Ea accident)</td><td>$</td></tr>
-            <tr><td>BODILY INJURY (Per person)</td><td>$</td></tr>
-            <tr><td>BODILY INJURY (Per accident)</td><td>$</td></tr>
-            <tr><td>PROPERTY DAMAGE<br>(Per accident)</td><td>$</td></tr>
-            <tr><td>&nbsp;</td><td>$</td></tr>
+            <tr>
+              <td>COMBINED SINGLE LIMIT<br>(Ea accident)</td>
+              <td>$</td>
+            </tr>
+            <tr>
+              <td>BODILY INJURY (Per person)</td>
+              <td>$</td>
+            </tr>
+            <tr>
+              <td>BODILY INJURY (Per accident)</td>
+              <td>$</td>
+            </tr>
+            <tr>
+              <td>PROPERTY DAMAGE<br>(Per accident)</td>
+              <td>$</td>
+            </tr>
+            <tr>
+              <td>&nbsp;</td>
+              <td>$</td>
+            </tr>
           </table>
         </td>
       </tr>
@@ -245,7 +562,8 @@
         <td></td>
         <td>
           <div class="checkbox"></div> UMBRELLA LIAB &nbsp;&nbsp;&nbsp; <div class="checkbox"></div> OCCUR<br>
-          <div class="checkbox"></div> EXCESS LIAB &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <div class="checkbox"></div> CLAIMS-MADE<br>
+          <div class="checkbox"></div> EXCESS LIAB &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <div class="checkbox">
+          </div> CLAIMS-MADE<br>
           <hr style="margin: 4px 0; border: 0; border-top: 1px solid black;">
           <div class="checkbox"></div> DED &nbsp;&nbsp;&nbsp; <div class="checkbox"></div> RETENTION $
         </td>
@@ -256,9 +574,18 @@
         <td></td>
         <td style="padding: 0;">
           <table class="limits-table">
-            <tr><td>EACH OCCURRENCE</td><td>$</td></tr>
-            <tr><td>AGGREGATE</td><td>$</td></tr>
-            <tr><td>&nbsp;</td><td>$</td></tr>
+            <tr>
+              <td>EACH OCCURRENCE</td>
+              <td>$</td>
+            </tr>
+            <tr>
+              <td>AGGREGATE</td>
+              <td>$</td>
+            </tr>
+            <tr>
+              <td>&nbsp;</td>
+              <td>$</td>
+            </tr>
           </table>
         </td>
       </tr>
@@ -269,8 +596,8 @@
           WORKERS COMPENSATION<br>AND EMPLOYERS' LIABILITY<br>
           <div style="float: right; margin-top: -10px; font-weight: bold; margin-right: 5px;">Y / N</div><br>
           <div style="font-size: 8px;">ANY PROPRIETOR/PARTNER/EXECUTIVE<br>
-          OFFICER/MEMBER EXCLUDED?<br>
-          (Mandatory in NH)<br></div>
+            OFFICER/MEMBER EXCLUDED?<br>
+            (Mandatory in NH)<br></div>
           <div style="float: right; margin-top: -20px;">
             <div class="checkbox"></div> &nbsp;&nbsp;N/A
           </div>
@@ -285,41 +612,54 @@
           <table class="limits-table">
             <tr>
               <td style="border-right: 1px solid black;">
-                <div class="checkbox" style="margin-left: 20px;"></div> PER<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;STATUTE
+                <div class="checkbox" style="margin-left: 20px;"></div>
+                PER<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;STATUTE
               </td>
               <td colspan="2">
                 <div class="checkbox"></div> OTH-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ER
               </td>
             </tr>
-            <tr><td colspan="2">E.L. EACH ACCIDENT</td><td>$</td></tr>
-            <tr><td colspan="2">E.L. DISEASE - EA EMPLOYEE</td><td>$</td></tr>
-            <tr><td colspan="2">E.L. DISEASE - POLICY LIMIT</td><td>$</td></tr>
+            <tr>
+              <td colspan="2">E.L. EACH ACCIDENT</td>
+              <td>$</td>
+            </tr>
+            <tr>
+              <td colspan="2">E.L. DISEASE - EA EMPLOYEE</td>
+              <td>$</td>
+            </tr>
+            <tr>
+              <td colspan="2">E.L. DISEASE - POLICY LIMIT</td>
+              <td>$</td>
+            </tr>
           </table>
         </td>
       </tr>
     </table>
-    
-    <div class="desc-box">
-      <div class="box-label">DESCRIPTION OF OPERATIONS / LOCATIONS / VEHICLES (ACORD 101, Additional Remarks Schedule, may be attached if more space is required)</div>
-      Verification of Insurance Coverage ( Subject to all policy terms, exclusions and conditions )
+
+    <div class="desc-box" id="desc-box-content">
+      <div class="box-label">DESCRIPTION OF OPERATIONS / LOCATIONS / VEHICLES (ACORD 101, Additional Remarks Schedule,
+        may be attached if more space is required)</div>
+      <div id="desc-ops-text">Verification of Insurance Coverage ( Subject to all policy terms, exclusions and
+        conditions )</div>
     </div>
-    
+
     <div class="footer-grid">
       <div class="cert-holder">
         <div class="box-label" style="font-size: 9px; margin-bottom: 15px;">CERTIFICATE HOLDER</div>
-        <div style="padding-left: 50px;">
-            Oakridge Homeowners Association<br>
-            3401 SW 51st Court<br><br><br><br>
-            <div style="display: flex; justify-content: space-between; padding-right: 30px;">
-                <span>Hollywood</span>
-                <span>FL 33312</span>
-            </div>
+        <div style="padding-left: 50px;" id="cert-holder-details">
+          Oakridge Homeowners Association<br>
+          3401 SW 51st Court<br><br><br><br>
+          <div style="display: flex; justify-content: space-between; padding-right: 30px;">
+            <span>Hollywood</span>
+            <span>FL 33312</span>
+          </div>
         </div>
       </div>
       <div class="cancellation">
         <div class="box-label" style="font-size: 9px;">CANCELLATION</div>
         <div class="cancellation-text">
-          SHOULD ANY OF THE ABOVE DESCRIBED POLICIES BE CANCELLED BEFORE THE EXPIRATION DATE THEREOF, NOTICE WILL BE DELIVERED IN ACCORDANCE WITH THE POLICY PROVISIONS.
+          SHOULD ANY OF THE ABOVE DESCRIBED POLICIES BE CANCELLED BEFORE THE EXPIRATION DATE THEREOF, NOTICE WILL BE
+          DELIVERED IN ACCORDANCE WITH THE POLICY PROVISIONS.
         </div>
         <div class="signature-area">
           AUTHORIZED REPRESENTATIVE
@@ -327,7 +667,7 @@
         </div>
       </div>
     </div>
-    
+
     <div style="display: flex; justify-content: space-between; font-size: 9px; font-weight: bold; margin-top: 5px;">
       <div>ACORD 25 (2025/12)</div>
       <div>&copy; 1988-2025 ACORD CORPORATION. All rights reserved.</div>
@@ -335,7 +675,7 @@
     <div style="text-align: center; font-size: 9px; font-weight: bold; margin-top: 2px;">
       The ACORD name and logo are registered marks of ACORD
     </div>
-    
+
   </div>
   <script>
     // NAIC lookup — mirrors naicData.ts; keys are lowercase writing-company / parent-company names
@@ -691,11 +1031,107 @@
         } else {
           console.error('[ACORD] Policies fetch failed:', polResponse.status, await polResponse.text());
         }
+
+        // ── 3. Populate Certificate Holder & Description of Operations ──
+        const holderName = params.get('holderName');
+        const holderAddress = params.get('holderAddress') || '';
+        const holderAddress2 = params.get('holderAddress2') || '';
+        const holderCity = params.get('holderCity') || '';
+        const holderState = params.get('holderState') || '';
+        const holderZip = params.get('holderZip') || '';
+        const holderDesc = params.get('holderDesc');
+        const holderNoticeDays = params.get('holderNoticeDays');
+
+        // Populate Holder Info
+        const holderEl = document.getElementById('cert-holder-details');
+        if (holderEl) {
+          if (holderName) {
+            let addrHtml = `<strong>${holderName}</strong><br>`;
+            if (holderAddress) addrHtml += `${holderAddress}<br>`;
+            if (holderAddress2) addrHtml += `${holderAddress2}<br>`;
+            addrHtml += `<div style="display: flex; justify-content: space-between; padding-right: 30px; margin-top: 10px;">
+              <span>${holderCity}</span>
+              <span>${holderState} ${holderZip}</span>
+            </div>`;
+            holderEl.innerHTML = addrHtml;
+          } else {
+            // Master certificate preview: clear details in holder box
+            holderEl.innerHTML = `
+              <div style="color: #bbb; font-style: italic; padding-top: 20px;">
+                
+              </div>
+            `;
+          }
+        }
+
+        // Populate Description of Operations
+        const descOpsEl = document.getElementById('desc-ops-text');
+        const masterDesc = params.get('masterDesc');
+
+        if (descOpsEl) {
+          if (holderName) {
+            // Clicked on a Holder node
+            if (holderDesc) {
+              descOpsEl.innerText = holderDesc;
+            } else if (masterDesc) {
+              descOpsEl.innerText = masterDesc;
+            } else {
+              descOpsEl.innerText = "Verification of Insurance Coverage ( Subject to all policy terms, exclusions and conditions )";
+            }
+          } else {
+            // Clicked on the Master Certificate node directly
+            if (masterDesc) {
+              descOpsEl.innerText = masterDesc;
+            } else {
+              descOpsEl.innerText = "Verification of Insurance Coverage ( Subject to all policy terms, exclusions and conditions )";
+            }
+          }
+        }
+
+        // ── 4. Toggle ADDL INSD / SUBR WVD checkboxes based on holder attributes ──
+        try {
+          const rawAi = params.get('additionalInsured');
+          const rawWs = params.get('waiverSubrogation');
+          if (rawAi) {
+            const ai = JSON.parse(rawAi); 
+            const checkMap = {
+              'General Liability': 'gl-ai',
+              'Automobile Liability': 'auto-ai',
+              'Umbrella/Excess Liability': 'umbrella-ai',
+            };
+            Object.entries(checkMap).forEach(([type, elementId]) => {
+              const el = document.getElementById(elementId);
+              if (el) {
+                if (ai[type] === 'Y') el.classList.add('checked');
+                else el.classList.remove('checked');
+              }
+            });
+          }
+          if (rawWs) {
+            const ws = JSON.parse(rawWs);
+            const checkMap = {
+              'General Liability': 'gl-ws',
+              'Automobile Liability': 'auto-ws',
+              'Umbrella/Excess Liability': 'umbrella-ws',
+              'Work Comp': 'wc-ws',
+            };
+            Object.entries(checkMap).forEach(([type, elementId]) => {
+              const el = document.getElementById(elementId);
+              if (el) {
+                if (ws[type] === 'Y') el.classList.add('checked');
+                else el.classList.remove('checked');
+              }
+            });
+          }
+        } catch (e) {
+          console.error('[ACORD] Checkbox toggle parsing error:', e);
+        }
+
       } catch (err) {
         console.error("[ACORD] Failed to load dynamic form details:", err);
       }
     });
   </script>
 </body>
-</html>
 
+</html>

@@ -398,3 +398,42 @@ class MasterCertificate(Base):
     created_date = Column(Date, default=date.today)
 
     customer = relationship("Customer", backref="master_certificates")
+    holders = relationship("CertificateHolder", back_populates="certificate", cascade="all, delete-orphan")
+
+
+class CertificateHolder(Base):
+    __tablename__ = "certificate_holders"
+
+    id                  = Column(Integer, primary_key=True, index=True)
+    certificate_id      = Column(Integer, ForeignKey("master_certificates.id", ondelete="CASCADE"), nullable=False, index=True)
+    customer_id         = Column(Integer, ForeignKey("customers.id", ondelete="CASCADE"), nullable=False, index=True)
+    name                = Column(String, nullable=False)
+    contact             = Column(String, nullable=True)
+    address             = Column(String, nullable=True)
+    address2            = Column(String, nullable=True)
+    city                = Column(String, nullable=True)
+    state               = Column(String, nullable=True)
+    zip                 = Column(String, nullable=True)
+    email               = Column(String, nullable=True)
+    fax                 = Column(String, nullable=True)
+    fax_ext             = Column(String, nullable=True)
+    issue_date          = Column(String, nullable=True)
+    written_notice_days = Column(Integer, default=10)
+    desc_of_ops         = Column(Text, nullable=True)
+    same_as_master      = Column(Boolean, default=True)
+    note                = Column(Text, nullable=True)
+    print_note          = Column(Boolean, default=True)
+    job_type            = Column(String, nullable=True)
+    job_num             = Column(String, nullable=True)
+    project_end_date    = Column(String, nullable=True)
+    licensed            = Column(Boolean, default=False)
+    bonded              = Column(Boolean, default=False)
+    write_to_list       = Column(Boolean, default=False)
+    distribution_method = Column(String, nullable=True)
+    name_selection      = Column(String, nullable=True)
+    additional_insured  = Column(JSON, nullable=True)   # {type: Y/N}
+    waiver_subrogation  = Column(JSON, nullable=True)   # {type: Y/N}
+    created_at          = Column(String, nullable=True)
+
+    certificate = relationship("MasterCertificate", back_populates="holders")
+    customer    = relationship("Customer", backref="certificate_holders")

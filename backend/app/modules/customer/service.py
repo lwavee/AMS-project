@@ -434,3 +434,55 @@ def create_master_certificate(db: Session, customer_id: int, data: dict):
         traceback.print_exc()
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Certificate Holders ────────────────────────────────────────────────────────
+
+def list_certificate_holders(db: Session, customer_id: int, certificate_id: int) -> list:
+    get_customer(db, customer_id)
+    try:
+        holders = repo.get_holders_by_certificate_id(db, certificate_id)
+        logger.info(f"list_certificate_holders: found {len(holders)} for cert ID {certificate_id}")
+        return holders
+    except Exception as e:
+        logger.error(f"list_certificate_holders failed: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching certificate holders")
+
+
+def create_certificate_holder(db: Session, customer_id: int, certificate_id: int, data: dict):
+    get_customer(db, customer_id)
+    if not data.get("name"):
+        raise HTTPException(status_code=422, detail="Holder name is required")
+    try:
+        holder = repo.create_certificate_holder(db, customer_id, certificate_id, data)
+        logger.info(f"create_certificate_holder: created Holder (ID {holder.id})")
+        return holder
+    except Exception as e:
+        logger.error(f"create_certificate_holder failed: {e}")
+        traceback.print_exc()
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def update_certificate_holder(db: Session, customer_id: int, holder_id: int, data: dict):
+    get_customer(db, customer_id)
+    try:
+        holder = repo.update_certificate_holder(db, holder_id, data)
+        if not holder:
+            raise HTTPException(status_code=404, detail="Certificate holder not found")
+        logger.info(f"update_certificate_holder: updated Holder ID {holder_id}")
+        return holder
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"update_certificate_holder failed: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def delete_certificate_holder(db: Session, customer_id: int, holder_id: int):
+    get_customer(db, customer_id)
+    deleted = repo.delete_certificate_holder(db, holder_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Certificate holder not found")
+    logger.info(f"delete_certificate_holder: deleted Holder ID {holder_id}")
