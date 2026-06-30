@@ -398,6 +398,13 @@ def list_customer_documents(db: Session, customer_id: int) -> list:
         logger.error(f"list_customer_documents failed: {e}")
         raise HTTPException(status_code=500, detail="Error fetching customer documents")
 
+def get_customer_document(db: Session, customer_id: int, doc_id: int):
+    get_customer(db, customer_id)
+    doc = repo.get_customer_document(db, customer_id, doc_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return doc
+
 def create_customer_document(db: Session, customer_id: int, data: dict):
     get_customer(db, customer_id)
     if not data.get("file_name"):

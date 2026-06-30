@@ -246,6 +246,14 @@ def get_documents_by_customer_id(db: Session, customer_id: int) -> list:
     return db.query(CustomerDocument).filter(CustomerDocument.customer_id == customer_id).order_by(CustomerDocument.id.desc()).all()
 
 
+def get_customer_document(db: Session, customer_id: int, doc_id: int):
+    from app.modules.customer.model import CustomerDocument
+    return db.query(CustomerDocument).filter(
+        CustomerDocument.customer_id == customer_id,
+        CustomerDocument.id == doc_id
+    ).first()
+
+
 def create_customer_document(db: Session, customer_id: int, data: dict):
     from app.modules.customer.model import CustomerDocument
     from datetime import datetime

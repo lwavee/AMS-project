@@ -260,6 +260,68 @@ def list_customer_documents(
 ):
     return customer_service.list_customer_documents(db, customer_id)
 
+from fastapi.responses import RedirectResponse
+
+@router.get("/{customer_id}/documents/{doc_id}/download")
+def download_customer_document(
+    customer_id: int, 
+    doc_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(get_current_user)
+):
+    doc = customer_service.get_customer_document(db, customer_id, doc_id)
+    if not doc:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Document not found")
+        
+    url = doc.url
+    if "backblazeb2.com" in url:
+        from app.core.b2 import get_b2_api, _b2_bucket_name
+        b2_api = get_b2_api()
+        if b2_api and _b2_bucket_name:
+            try:
+                bucket = b2_api.get_bucket_by_name(_b2_bucket_name)
+                b2_file_name = f"customer_{customer_id}_{doc.file_name}"
+                auth_token = bucket.get_download_authorization(file_name_prefix=b2_file_name, valid_duration_in_seconds=86400)
+                url = f"{doc.url}?Authorization={auth_token}"
+            except Exception as e:
+                print(f"Error generating B2 authorization: {e}")
+                
+    # Proxy the download to bypass CORS
+    import requests
+    from fastapi.responses import StreamingResponse
+    
+    try:
+        # If it's a relative local URL, resolve it to the local server
+        if url.startswith("/"):
+            # For local files, we can just return a FileResponse
+            from fastapi.responses import FileResponse
+            import os
+            local_path = url.lstrip("/")
+            if os.path.exists(local_path):
+                return FileResponse(local_path, filename=doc.file_name)
+            raise HTTPException(status_code=404, detail="Local file not found")
+            
+        # For B2, fetch the file from B2 and stream it back to the client
+        # This keeps the request within the same origin from the client's perspective
+        req_headers = {}
+        r = requests.get(url, headers=req_headers, stream=True)
+        r.raise_for_status()
+        
+        # Determine content type, default to octet-stream
+        content_type = r.headers.get("content-type", "application/octet-stream")
+        
+        return StreamingResponse(
+            r.iter_content(chunk_size=8192),
+            media_type=content_type,
+            headers={
+                "Content-Disposition": f'inline; filename="{doc.file_name}"'
+            }
+        )
+    except Exception as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=f"Failed to stream document: {str(e)}")
+
 @router.post("/{customer_id}/documents", response_model=schema.CustomerDocument, status_code=status.HTTP_201_CREATED)
 async def create_customer_document(
     customer_id: int,

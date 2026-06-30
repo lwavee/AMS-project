@@ -260,11 +260,14 @@ function TreeItem({
 }
 
 function AuthenticatedDocumentPreview({ url, fileName }: { url: string; fileName: string }) {
-  const [objectUrl, setObjectUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const isExternal = url.startsWith('http') && !url.includes(API_BASE_URL.replace(/^https?:\/\//, ''));
+  const [objectUrl, setObjectUrl] = useState<string | null>(isExternal ? url : null);
+  const [loading, setLoading] = useState(!isExternal);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isExternal) return;
+    
     let active = true;
     let objUrl: string | null = null;
     const fetchDoc = async () => {
@@ -272,7 +275,8 @@ function AuthenticatedDocumentPreview({ url, fileName }: { url: string; fileName
         setLoading(true);
         setError(null);
         const token = localStorage.getItem("token");
-        const res = await fetch(url, {
+        // Only add authorization header if it's our own API to avoid CORS preflight failures on external storage
+        const res = await fetch(url.startsWith('/') ? `${API_BASE_URL}${url}` : url, {
           headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
         if (!res.ok) {
@@ -297,7 +301,7 @@ function AuthenticatedDocumentPreview({ url, fileName }: { url: string; fileName
       active = false;
       if (objUrl) URL.revokeObjectURL(objUrl);
     };
-  }, [url]);
+  }, [url, isExternal]);
 
   if (loading) {
     return (
@@ -319,10 +323,10 @@ function AuthenticatedDocumentPreview({ url, fileName }: { url: string; fileName
     );
   }
 
-  const urlLower = url.toLowerCase();
-  if (urlLower.endsWith('.pdf')) {
-    return <iframe src={objectUrl!} className="w-full h-full border-none bg-white" />;
-  } else if (urlLower.match(/\.(jpeg|jpg|gif|png)$/)) {
+  const ext = fileName.toLowerCase().split('.').pop() || '';
+  if (ext === 'pdf') {
+    return <iframe src={`${objectUrl!}#view=FitH&toolbar=0&navpanes=0`} className="w-full h-full border-none bg-white" />;
+  } else if (['jpeg', 'jpg', 'gif', 'png'].includes(ext)) {
     return (
       <div className="flex-1 flex items-center justify-center p-4 bg-slate-100">
         <img src={objectUrl!} alt={fileName} className="max-w-full max-h-full object-contain shadow-md" />
@@ -1260,8 +1264,8 @@ export default function EFormsManagerPage() {
                   return <Acord25Form customer={customer} policies={policies} />;
                 } else if (selectedNode?.startsWith("doc-") && selected) {
                   const docData = selected.documentData;
-                  if (docData && docData.url) {
-                    return <AuthenticatedDocumentPreview url={docData.url} fileName={docData.file_name} />;
+                  if (docData && docData.id) {
+                    return <AuthenticatedDocumentPreview url={`/api/customers/${customerId}/documents/${docData.id}/download`} fileName={docData.file_name} />;
                   }
                 } else {
                   return (
