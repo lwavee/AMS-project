@@ -306,12 +306,32 @@ def create_master_certificate(
     return customer_service.create_master_certificate(db, customer_id, cert.model_dump())
 
 
+@router.get("/{customer_id}/certificates/{certificate_id}", response_model=schema.MasterCertificateResponse)
+def get_master_certificate(
+    customer_id: int, certificate_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)
+):
+    return customer_service.get_master_certificate(db, customer_id, certificate_id)
+
+@router.put("/{customer_id}/certificates/{certificate_id}", response_model=schema.MasterCertificateResponse)
+def update_master_certificate(
+    customer_id: int, certificate_id: int, cert: schema.MasterCertificateCreate, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)
+):
+    return customer_service.update_master_certificate(db, customer_id, certificate_id, cert.model_dump(exclude_unset=True))
+
+@router.delete("/{customer_id}/certificates/{certificate_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_master_certificate(
+    customer_id: int, certificate_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)
+):
+    customer_service.delete_master_certificate(db, customer_id, certificate_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 # ── Certificate Holders ────────────────────────────────────────────────────────
 
 @router.get(
     "/{customer_id}/certificates/{certificate_id}/holders",
     response_model=List[schema.CertificateHolderResponse],
-)
+) 
 def list_certificate_holders(
     customer_id: int,
     certificate_id: int,

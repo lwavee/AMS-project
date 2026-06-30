@@ -2,13 +2,17 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import React, { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { API_BASE_URL } from "@/lib/config";
 import { Save, Copy, Paperclip, Printer, Plus, Minus, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function NewCertificateFormPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const customerId = params?.id as string;
+  const certDbId = searchParams.get("certDbId");
+  const isEdit = !!certDbId;
+
   const [customer, setCustomer] = useState<any>(null);
   const [policies, setPolicies] = useState<any[]>([]);
   const [selectedDefaultText, setSelectedDefaultText] = useState("");
@@ -38,11 +42,25 @@ export default function NewCertificateFormPage() {
             const polData = await polRes.json();
             setPolicies(polData);
           }
+          
+          if (isEdit) {
+            const certRes = await fetch(`${API_BASE_URL}/api/customers/${customerId}/certificates/${certDbId}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (certRes.ok) {
+              const certData = await certRes.json();
+              setDescription(certData.description || "");
+              if (certData.form_data) {
+                if (certData.form_data.rowSelections) setRowSelections(certData.form_data.rowSelections);
+                if (certData.form_data.descriptionOfOperations) setDescriptionOfOperations(certData.form_data.descriptionOfOperations);
+              }
+            }
+          }
         } catch (e) {}
       }
     };
     fetchData();
-  }, [customerId]);
+  }, [customerId, certDbId, isEdit]);
 
   const customerName = customer 
     ? (customer.name || [customer.first_name, customer.last_name].filter(Boolean).join(" "))
@@ -54,7 +72,7 @@ export default function NewCertificateFormPage() {
       {/* ── Modern Form Header ── */}
       <div className="bg-white border-b border-border-main px-6 py-4 flex justify-between items-center shrink-0 shadow-sm z-10">
         <div>
-          <h2 className="text-base font-extrabold text-text-main tracking-tight">New Certificate of Liability</h2>
+          <h2 className="text-base font-extrabold text-text-main tracking-tight">{isEdit ? "Update Certificate of Liability" : "New Certificate of Liability"}</h2>
           <p className="text-[11px] font-semibold text-text-muted mt-0.5">Policy #EGL0013969 • Eff: 2/3/2026 to 2/3/2027</p>
         </div>
         <div className="flex items-center gap-2">
@@ -65,8 +83,12 @@ export default function NewCertificateFormPage() {
           <button onClick={async () => {
               try {
                 const token = localStorage.getItem("token");
-                const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/certificates`, {
-                  method: 'POST',
+                const url = isEdit 
+                  ? `${API_BASE_URL}/api/customers/${customerId}/certificates/${certDbId}`
+                  : `${API_BASE_URL}/api/customers/${customerId}/certificates`;
+                const method = isEdit ? 'PUT' : 'POST';
+                const res = await fetch(url, {
+                  method,
                   headers: { 
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}` 
@@ -82,7 +104,7 @@ export default function NewCertificateFormPage() {
                 });
                 const newCert = await res.json();
                 if (window.opener) {
-                  window.opener.postMessage({ type: 'CREATE_CERTIFICATE', payload: { id: newCert.id, name: newCert.description } }, '*');
+                  window.opener.postMessage({ type: isEdit ? 'UPDATE_CERTIFICATE' : 'CREATE_CERTIFICATE', payload: { id: newCert.id, name: newCert.description } }, '*');
                 }
                 window.close();
               } catch(e) {
@@ -90,7 +112,7 @@ export default function NewCertificateFormPage() {
               }
             }}
             className="h-8 px-4 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20">
-            Create
+            {isEdit ? "Update" : "Create"}
           </button>
           <div className="h-5 w-px bg-border-main mx-1"></div>
           <button onClick={() => window.close()} className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-red-50 text-text-muted hover:text-red-600 font-bold text-xs rounded-xl transition-all cursor-pointer">

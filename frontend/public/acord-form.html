@@ -85,32 +85,45 @@
       border: 2px solid black;
       text-align: center;
       width: 120px;
-      font-weight: bold;
-      font-size: 12px;
+      /* font-weight: bold; */
+      font-size: 11px;
       margin-bottom: -2px;
     }
 
     .date-box .date-title {
-      font-size: 8px;
-      border-bottom: 1px solid black;
+      font-size: 10px;
+      /* border-bottom: 1px solid black; */
       padding: 2px;
       font-weight: normal;
+      background: #f7f6f6;
+    }
+
+    .date-box .date-value {
+      padding: 2px;
     }
 
     .disclaimer {
-      border: 2px solid black;
-      padding: 4px;
-      font-size: 9px;
-      text-align: justify;
-      margin-bottom: 5px;
+      border-top: 2px solid black;
+      border-left: 2px solid black;
+      border-right: 2px solid black;
+      /* padding: 2px; */
+      font-size: 11px;
+      /* text-align: justify; */
+      /* margin-bottom: 5px; */
       line-height: 1.2;
       font-weight: bold;
     }
 
+    .disclaimer-text {
+      padding-top: 2px;
+      padding-left: 8px;
+      padding-right: 25px;
+    }
+
     .disclaimer hr {
       border: none;
-      border-top: 1px solid black;
-      margin: 4px -4px;
+      border-top: 1.5px solid black;
+      margin: 2px -2px;
     }
 
     .top-grid {
@@ -120,21 +133,27 @@
       border-bottom: none;
     }
 
-    .left-col {
-      border-right: 1px solid black;
+    .right-col {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     }
 
     .box {
-      border-bottom: 1px solid black;
+      /* border-bottom: 1px solid black; */
       padding: 2px 4px;
     }
 
-    .box.producer {
+    /* .box.producer {
       height: 100px;
     }
 
     .box.insured {
       height: 100px;
+    } */
+
+    .producer-box {
+      line-height: 1.5;
     }
 
     .box-label {
@@ -150,40 +169,48 @@
 
     .contact-table td {
       border: 1px solid black;
-      padding: 2px 4px;
-      height: 20px;
+      padding: 0px 4px;
+      vertical-align: top;
+      line-height: 0.1;
     }
 
     .contact-table .label {
       font-size: 7px;
       font-weight: bold;
+      line-height: 1.1;
     }
 
     .insurer-table {
       width: 100%;
       border-collapse: collapse;
+      flex: 1;
+    }
+
+    .insurer-table .label {
+      font-weight: bold;
+      text-align: end;
+      vertical-align: bottom;
     }
 
     .insurer-table th {
       font-size: 8px;
       font-weight: bold;
-      background: #eee;
-      text-align: left;
+      background: #f7f6f6;
+      text-align: center;
       padding-top: 4px;
-      padding-bottom: 4px;
+      padding-bottom: 1px;
     }
 
     .insurer-table td {
-      height: 17px;
+      height: 8px;
       border: 1px solid black;
-      font-size: 9px;
+      font-size: 7px;
     }
 
     .coverages-header-row {
       display: flex;
-      border: 2px solid black;
-      border-bottom: none;
-      background: #eee;
+      border-top: 2px solid black;
+      background: #f7f6f6;
       padding: 2px 4px;
       font-weight: bold;
       font-size: 9px;
@@ -195,12 +222,12 @@
 
     .coverages-disclaimer {
       border: 2px solid black;
-      border-top: none;
       border-bottom: none;
       padding: 4px;
-      font-size: 8px;
-      text-align: justify;
-      line-height: 1.1;
+      padding-right: 30px;
+      font-size: 9px;
+      word-spacing: 1px;
+      line-height: 1.2;
     }
 
     .cov-table {
@@ -210,8 +237,42 @@
     .cov-table th {
       font-size: 8px;
       text-align: center;
-      background: #eee;
-      padding: 4px;
+      background: #f7f6f6;
+      vertical-align: bottom;
+      /* padding: 4px; */
+    }
+
+    .limits-table {
+      width: 100%;
+      height: 100%;
+      border-collapse: collapse;
+    }
+
+    .limits-table td {
+      border-bottom: 1px solid black;
+      font-size: 8px;
+      padding: 1px 4px;
+      vertical-align: middle;
+    }
+
+    .limits-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .limits-table .limit-desc {
+      border-right: 1px solid black;
+      width: 55%;
+    }
+
+    .limits-table .limit-curr {
+      width: 10px;
+      padding-right: 2px;
+      background: #f7f6f6;
+    }
+
+    .limits-table .limit-val {
+      text-align: right;
+      background: #f7f6f6;
     }
 
     .cov-table td {
@@ -332,38 +393,44 @@
       <div class="title">CERTIFICATE OF LIABILITY INSURANCE</div>
       <div class="date-box">
         <div class="date-title">DATE (MM/DD/YYYY)</div>
-        <div style="padding: 4px;">06/23/2026</div>
+        <div class="date-value">06/23/2026</div>
       </div>
     </div>
 
     <div class="disclaimer">
-      THIS CERTIFICATE IS ISSUED AS A MATTER OF INFORMATION ONLY AND CONFERS NO RIGHTS UPON THE CERTIFICATE HOLDER. THIS
-      CERTIFICATE DOES NOT AFFIRMATIVELY OR NEGATIVELY AMEND, EXTEND OR ALTER THE COVERAGE AFFORDED BY THE POLICIES
-      BELOW. THIS CERTIFICATE OF INSURANCE DOES NOT CONSTITUTE A CONTRACT BETWEEN THE ISSUING INSURER(S), AUTHORIZED
-      REPRESENTATIVE OR PRODUCER, AND THE CERTIFICATE HOLDER.<br><br>
+      <div class="disclaimer-text">
+        THIS CERTIFICATE IS ISSUED AS A MATTER OF INFORMATION ONLY AND CONFERS NO RIGHTS UPON THE CERTIFICATE HOLDER.
+        THIS
+        CERTIFICATE DOES NOT AFFIRMATIVELY OR NEGATIVELY AMEND, EXTEND OR ALTER THE COVERAGE AFFORDED BY THE POLICIES
+        BELOW. THIS CERTIFICATE OF INSURANCE DOES NOT CONSTITUTE A CONTRACT BETWEEN THE ISSUING INSURER(S), AUTHORIZED
+        REPRESENTATIVE OR PRODUCER, AND THE CERTIFICATE HOLDER.</div>
       <hr>
-      IMPORTANT: If the certificate holder is an ADDITIONAL INSURED, the policy(ies) must have ADDITIONAL INSURED
-      provisions or be endorsed. If SUBROGATION IS WAIVED, subject to the terms and conditions of the policy, certain
-      policies may require an endorsement. A statement on this certificate does not confer rights to the certificate
-      holder in lieu of such endorsement(s).
+      <div class="disclaimer-text">
+        IMPORTANT: If the certificate holder is an ADDITIONAL INSURED, the policy(ies) must have ADDITIONAL INSURED
+        provisions or be endorsed. If SUBROGATION IS WAIVED, subject to the terms and conditions of the policy, certain
+        policies may require an endorsement. A statement on this certificate does not confer rights to the certificate
+        holder in lieu of such endorsement(s).
+      </div>
     </div>
 
     <div class="top-grid">
       <div class="left-col">
-        <div class="box producer">
+        <div class="box producer producer-box">
           <div class="box-label">PRODUCER</div>
-          <span id="producer-name">Gamaty Insurance Agency LLC</span><br>
-          <span id="producer-address">5455 Wilshire Blvd</span><br>
-          <span id="producer-address2">Suite 1816</span><br>
-          <div style="display: flex; justify-content: space-between; padding-right: 30px;">
-            <span id="producer-city">Los Angeles</span>
-            <span id="producer-state-zip">CA 90036</span>
+          <div style="padding-left: 5px;">
+            <span id="producer-name">Gamaty Insurance Agency LLC</span><br>
+            <span id="producer-address">5455 Wilshire Blvd</span><br>
+            <span id="producer-address2">Suite 1816</span><br>
+            <div style="display: flex; justify-content: space-between; padding-right: 30px;">
+              <span id="producer-city">Los Angeles</span>
+              <span id="producer-state-zip">CA 90036</span>
+            </div>
           </div>
         </div>
         <div class="box insured no-border-bottom">
           <div class="box-label">INSURED</div>
           <div style="padding-left: 50px;">
-            <span id="insured-name"></span><br>
+            <span id="insured-name">RS Remodeling Services, LLC</span><br>
             <span id="insured-address">1860 Southwest 36th Terrace</span><br><br>
             <div style="display: flex; justify-content: space-between; padding-right: 30px;">
               <span id="insured-city">Fort Lauderdale</span>
@@ -376,7 +443,8 @@
         <table class="contact-table no-border-top no-border-left no-border-right">
           <tr>
             <td colspan="2" class="no-border-top no-border-left no-border-right">
-              <span class="label">CONTACT<br>NAME:</span> &nbsp;&nbsp;&nbsp; <span id="contact-name">Ben Solender</span>
+              <span class="label">CONTACT<br>NAME:</span> &nbsp;&nbsp;&nbsp;&nbsp; <span id="contact-name">Ben
+                Solender</span>
             </td>
           </tr>
           <tr>
@@ -440,15 +508,15 @@
       RESPECT TO WHICH THIS CERTIFICATE MAY BE ISSUED OR MAY PERTAIN, THE INSURANCE AFFORDED BY THE POLICIES DESCRIBED
       HEREIN IS SUBJECT TO ALL THE TERMS, EXCLUSIONS AND CONDITIONS OF SUCH POLICIES. LIMITS SHOWN MAY HAVE BEEN REDUCED
       BY PAID CLAIMS. LIMITS SHOWN ARE INCLUSIVE OF AMOUNTS REQUESTED BY THE CERTIFICATE HOLDER AND MAY NOT REFLECT
-      POLICY LIMIT AMOUNTS IN EXCESS OF THOSE REQUESTED. *Not Applicable In WY
+      POLICY LIMIT AMOUNTS IN EXCESS OF THOSE REQUESTED. <b>*Not Applicable In WY</b>
     </div>
 
     <table class="cov-table no-border-top">
       <tr>
-        <th style="width: 30px;">INSR<br>LTR</th>
+        <th style="width: 20px;">INSR<br>LTR</th>
         <th>TYPE OF INSURANCE</th>
-        <th style="width: 35px;">ADDL<br>INSD</th>
-        <th style="width: 35px;">SUBR<br>WVD</th>
+        <th style="width: 30px;">ADDL<br>INSD</th>
+        <th style="width: 30px;">SUBR<br>WVD</th>
         <th>POLICY NUMBER</th>
         <th style="width: 65px;">POLICY EFF<br>(MM/DD/YYYY)</th>
         <th style="width: 65px;">POLICY EXP<br>(MM/DD/YYYY)</th>
@@ -457,21 +525,58 @@
       <!-- Row 1 CGL -->
       <tr>
         <td class="center" style="vertical-align: middle;">A</td>
-        <td>
-          <div class="checkbox checked"></div> COMMERCIAL GENERAL LIABILITY<br>
-          <div style="margin-top: 4px;">
-            &nbsp;&nbsp;&nbsp;&nbsp;<div class="checkbox checked"></div> CLAIMS-MADE &nbsp;&nbsp;&nbsp; <div
-              class="checkbox"></div> OCCUR
+        <td style="padding: 0; vertical-align: top;">
+          <div style="display: flex;">
+            <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
+              <div
+                style="height: 14px; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">
+                X</div>
+              <div
+                style="height: 14px; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box;">
+              </div>
+              <div
+                style="height: 14px; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box;">
+              </div>
+              <div
+                style="height: 14px; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box;">
+              </div>
+              <div style="height: 14px; box-sizing: border-box;"></div>
+            </div>
+            <div style="flex: 1; padding: 0 0 0 4px; display: flex; flex-direction: column;">
+              <div
+                style="height: 14px; box-sizing: border-box; font-size: 8px; font-weight: bold; line-height: 14px;">
+                COMMERCIAL GENERAL LIABILITY</div>
+              <div style="height: 14px; box-sizing: border-box; display: flex; align-items: center; font-size: 7px;">
+                <div class="checkbox checked"
+                  style="margin-left: -4px; margin-top: -1px; border-left: none; width: 14px; height: 15px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;">
+                </div> <span style="margin-left: 2px;">CLAIMS-MADE</span>
+                <div class="checkbox" style="margin-left: 12px;"></div> <span style="margin-left: 2px;">OCCUR</span>
+              </div>
+              <div
+                style="height: 14px; box-sizing: border-box; border-bottom: 1px solid black; margin-left: 4px; margin-right: 6px;">
+              </div>
+              <div style="height: 14px; box-sizing: border-box;"></div>
+              <div style="height: 14px; box-sizing: border-box;"></div>
+            </div>
           </div>
-          <br><br><br>
-          GEN'L AGGREGATE LIMIT APPLIES PER:<br>
-          <div style="margin-top: 4px;">
-            <div class="checkbox checked"></div> POLICY &nbsp;&nbsp; <div class="checkbox"></div>
-            PRO-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;JECT
-            &nbsp;&nbsp; <div class="checkbox"></div> LOC<br>
-          </div>
-          <div style="margin-top: 4px;">
-            <div class="checkbox"></div> OTHER:
+          <div style="padding: 2px 4px 2px 2px; font-size: 7px; line-height: 1.2;">
+            <div style="margin-bottom: 2px;">GEN'L AGGREGATE LIMIT APPLIES PER:</div>
+            <div style="display: flex; align-items: center;">
+              <div
+                style="width: 14px; height: 14px; border: 1px solid black; border-left: none; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; margin-left: -2px;">
+                X</div>
+              <span style="margin-left: 4px;">POLICY</span>
+              <div class="checkbox" style="margin-left: 8px;"></div>
+              <span style="margin-left: 2px; font-size: 6px; line-height: 1;">PRO-<br>JECT</span>
+              <div class="checkbox" style="margin-left: 8px;"></div>
+              <span style="margin-left: 2px;">LOC</span>
+            </div>
+            <div style="display: flex; align-items: center;">
+              <div
+                style="width: 14px; height: 14px; border: 1px solid black; border-top: none; border-left: none; box-sizing: border-box; margin-left: -2px;">
+              </div>
+              <span style="margin-left: 4px;">OTHER:</span>
+            </div>
           </div>
         </td>
         <td></td>
@@ -482,32 +587,32 @@
         <td style="padding: 0;">
           <table class="limits-table">
             <tr>
-              <td>EACH OCCURRENCE</td>
-              <td>$ 1,000,000</td>
+              <td class="limit-desc">EACH OCCURRENCE</td>
+              <td class="limit-curr">$</td><td class="limit-val">1,000,000</td>
             </tr>
             <tr>
-              <td>DAMAGE TO RENTED<br>PREMISES (Ea occurrence)</td>
-              <td>$ 50,000</td>
+              <td class="limit-desc">DAMAGE TO RENTED<br>PREMISES (Ea occurrence)</td>
+              <td class="limit-curr">$</td><td class="limit-val">50,000</td>
             </tr>
             <tr>
-              <td>MED EXP (Any one person)</td>
-              <td>$ 5,000</td>
+              <td class="limit-desc">MED EXP (Any one person)</td>
+              <td class="limit-curr">$</td><td class="limit-val">5,000</td>
             </tr>
             <tr>
-              <td>PERSONAL & ADV INJURY</td>
-              <td>$ 1,000,000</td>
+              <td class="limit-desc">PERSONAL & ADV INJURY</td>
+              <td class="limit-curr">$</td><td class="limit-val">1,000,000</td>
             </tr>
             <tr>
-              <td>GENERAL AGGREGATE</td>
-              <td>$ 1,000,000</td>
+              <td class="limit-desc">GENERAL AGGREGATE</td>
+              <td class="limit-curr">$</td><td class="limit-val">1,000,000</td>
             </tr>
             <tr>
-              <td>PRODUCTS - COMP/OP AGG</td>
-              <td>$ 1,000,000</td>
+              <td class="limit-desc">PRODUCTS - COMP/OP AGG</td>
+              <td class="limit-curr">$</td><td class="limit-val">1,000,000</td>
             </tr>
             <tr>
-              <td>&nbsp;</td>
-              <td>$</td>
+              <td class="limit-desc">&nbsp;</td>
+              <td class="limit-curr">$</td><td class="limit-val"></td>
             </tr>
           </table>
         </td>
@@ -1093,7 +1198,7 @@
           const rawAi = params.get('additionalInsured');
           const rawWs = params.get('waiverSubrogation');
           if (rawAi) {
-            const ai = JSON.parse(rawAi); 
+            const ai = JSON.parse(rawAi);
             const checkMap = {
               'General Liability': 'gl-ai',
               'Automobile Liability': 'auto-ai',

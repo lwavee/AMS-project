@@ -436,6 +436,35 @@ def create_master_certificate(db: Session, customer_id: int, data: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def get_master_certificate(db: Session, customer_id: int, certificate_id: int):
+    get_customer(db, customer_id)
+    cert = repo.get_master_certificate(db, certificate_id)
+    if not cert or cert.customer_id != customer_id:
+        raise HTTPException(status_code=404, detail="Master certificate not found")
+    return cert
+
+def update_master_certificate(db: Session, customer_id: int, certificate_id: int, data: dict):
+    get_master_certificate(db, customer_id, certificate_id)
+    try:
+        cert = repo.update_master_certificate(db, certificate_id, data)
+        logger.info(f"update_master_certificate: updated Certificate ID {certificate_id}")
+        return cert
+    except Exception as e:
+        logger.error(f"update_master_certificate failed: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+def delete_master_certificate(db: Session, customer_id: int, certificate_id: int):
+    get_master_certificate(db, customer_id, certificate_id)
+    try:
+        repo.delete_master_certificate(db, certificate_id)
+        logger.info(f"delete_master_certificate: deleted Certificate ID {certificate_id}")
+    except Exception as e:
+        logger.error(f"delete_master_certificate failed: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ── Certificate Holders ────────────────────────────────────────────────────────
 
 def list_certificate_holders(db: Session, customer_id: int, certificate_id: int) -> list:

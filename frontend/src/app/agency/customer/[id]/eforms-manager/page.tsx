@@ -58,6 +58,7 @@ interface TreeNode {
   formType?: string;
   certNumber?: string;  // formatted display number e.g. "202605"
   certDbId?: string;    // raw numeric DB id e.g. "5"
+  documentData?: any;
   holderData?: {
     name: string;
     address: string;
@@ -81,12 +82,20 @@ function TreeItem({
   selected,
   onSelect,
   onAddEditHolder,
+  onCopyMaster,
+  onDeleteMaster,
+  onUpdateMaster,
+  onOpenAttachments,
 }: {
   node: TreeNode;
   depth?: number;
   selected: string | null;
   onSelect: (id: string) => void;
   onAddEditHolder?: (id: string) => void;
+  onCopyMaster?: (id: string) => void;
+  onDeleteMaster?: (id: string) => void;
+  onUpdateMaster?: (id: string) => void;
+  onOpenAttachments?: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState(depth === 0);
   const isFolder = node.type === "folder";
@@ -182,18 +191,49 @@ function TreeItem({
             >
               Add/Edit Holder
             </button>
-            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Copy</button>
+            <button 
+              className="w-full text-left px-3 py-1.5 hover:bg-slate-100"
+              onClick={() => {
+                setMenuOpen(false);
+                if (onCopyMaster) onCopyMaster(node.id);
+              }}
+            >
+              Copy
+            </button>
             <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Renew</button>
-            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Replace Master Cert</button>
-            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Update Master Cert</button>
-            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Distribute Certificates</button>
-            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Attachments</button>
-            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100 text-red-600">Delete</button>
+            <button 
+              className="w-full text-left px-3 py-1.5 hover:bg-slate-100"
+              onClick={() => {
+                setMenuOpen(false);
+                if (onUpdateMaster) onUpdateMaster(node.id);
+              }}
+            >
+              Update Master Cert
+            </button>
+            <button 
+              className="w-full text-left px-3 py-1.5 hover:bg-slate-100"
+              onClick={() => {
+                setMenuOpen(false);
+                if (onOpenAttachments) onOpenAttachments(node.id);
+              }}
+            >
+              Attachments
+            </button>
+            <button 
+              className="w-full text-left px-3 py-1.5 hover:bg-slate-100 text-red-600"
+              onClick={() => {
+                setMenuOpen(false);
+                if (onDeleteMaster) onDeleteMaster(node.id);
+              }}
+            >
+              Delete
+            </button>
             <div className="h-px bg-slate-200 my-1"></div>
+           {/*
             <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Expand Node</button>
             <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Expand All</button>
             <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Collapse</button>
-            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Collapse All</button>
+            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Collapse All</button>*/}
           </div>
         )}
       </div>
@@ -207,12 +247,105 @@ function TreeItem({
               selected={selected}
               onSelect={onSelect}
               onAddEditHolder={onAddEditHolder}
+              onCopyMaster={onCopyMaster}
+              onDeleteMaster={onDeleteMaster}
+              onUpdateMaster={onUpdateMaster}
+              onOpenAttachments={onOpenAttachments}
             />
           ))}
         </div>
       )}
     </div>
   );
+}
+
+function AuthenticatedDocumentPreview({ url, fileName }: { url: string; fileName: string }) {
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    let objUrl: string | null = null;
+    const fetchDoc = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const token = localStorage.getItem("token");
+        const res = await fetch(url, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (!res.ok) {
+          if (res.status === 401) throw new Error("Unauthorized access. Please log in again.");
+          throw new Error(`Failed to load document (Status: ${res.status})`);
+        }
+        const blob = await res.blob();
+        objUrl = URL.createObjectURL(blob);
+        if (active) {
+          setObjectUrl(objUrl);
+          setLoading(false);
+        }
+      } catch (err: any) {
+        if (active) {
+          setError(err.message);
+          setLoading(false);
+        }
+      }
+    };
+    fetchDoc();
+    return () => {
+      active = false;
+      if (objUrl) URL.revokeObjectURL(objUrl);
+    };
+  }, [url]);
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8 min-h-full bg-slate-50/50">
+        <Loader2 className="animate-spin text-primary" size={28} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8 min-h-full bg-slate-50/50 text-center">
+        <div className="flex flex-col items-center gap-3">
+          <AlertTriangle size={28} className="text-danger" />
+          <p className="font-bold text-sm text-text-main">Failed to Load Preview</p>
+          <p className="text-xs text-slate-400 max-w-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const urlLower = url.toLowerCase();
+  if (urlLower.endsWith('.pdf')) {
+    return <iframe src={objectUrl!} className="w-full h-full border-none bg-white" />;
+  } else if (urlLower.match(/\.(jpeg|jpg|gif|png)$/)) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-4 bg-slate-100">
+        <img src={objectUrl!} alt={fileName} className="max-w-full max-h-full object-contain shadow-md" />
+      </div>
+    );
+  } else {
+    return (
+      <div className="flex-1 flex items-center justify-center min-h-full bg-slate-50/50">
+        <div className="text-center space-y-4 p-8">
+          <div className="h-20 w-20 rounded-3xl bg-white border border-border-main shadow-sm flex items-center justify-center mx-auto">
+            <FileSignature size={32} className="text-primary/40" />
+          </div>
+          <div>
+            <h3 className="text-base font-extrabold text-text-main tracking-tight">{fileName}</h3>
+            <p className="text-[13px] text-text-muted mt-1.5">No preview available for this file type.</p>
+            <a href={objectUrl!} download={fileName} className="inline-block mt-4 px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 transition-all">
+              Download File
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -235,6 +368,36 @@ export default function EFormsManagerPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [createdCertificates, setCreatedCertificates] = useState<any[]>([]);
 
+  // ── Attachment Modal State ──
+  const [attachmentModalOpen, setAttachmentModalOpen] = useState(false);
+  const [attachmentContextNode, setAttachmentContextNode] = useState<string | null>(null);
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [attachmentDescription, setAttachmentDescription] = useState("");
+  const [attachmentCategory, setAttachmentCategory] = useState("Master");
+  const [isUploading, setIsUploading] = useState(false);
+
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setAttachmentFile(e.dataTransfer.files[0]);
+      setAttachmentContextNode("");
+      setAttachmentCategory("Master");
+      setAttachmentModalOpen(true);
+    }
+  };
+
+
   // ── Fetch customer and policies ──
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -246,7 +409,7 @@ export default function EFormsManagerPage() {
         return;
       }
 
-      const [custRes, polRes, certRes] = await Promise.all([
+      const [custRes, polRes, certRes, docRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/customers/${customerId}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
@@ -254,6 +417,9 @@ export default function EFormsManagerPage() {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch(`${API_BASE_URL}/api/customers/${customerId}/certificates`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${API_BASE_URL}/api/customers/${customerId}/documents`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -287,6 +453,11 @@ export default function EFormsManagerPage() {
         }
       }
 
+      let allDocuments: any[] = [];
+      if (docRes && docRes.ok) {
+        allDocuments = await docRes.json();
+      }
+
       if (certRes.ok) {
         const certData = await certRes.json();
         const year = new Date().getFullYear();
@@ -304,40 +475,63 @@ export default function EFormsManagerPage() {
               );
               if (hRes.ok) {
                 const holders = await hRes.json();
-                holderChildren = holders.map((h: any) => ({
-                  id: `holder-${h.id}`,
-                  label: [
-                    h.name,
-                    h.address,
-                    [h.city, h.state, h.zip].filter(Boolean).join(', ')
-                  ].filter(Boolean).join(', '),
-                  type: "file" as const,
-                  formType: "Certificates",
-                  holderData: {
-                    name: h.name || '',
-                    address: h.address || '',
-                    address2: h.address2 || '',
-                    city: h.city || '',
-                    state: h.state || '',
-                    zip: h.zip || '',
-                    desc_of_ops: h.desc_of_ops || '',
-                    issue_date: h.issue_date || '',
-                    written_notice_days: h.written_notice_days ?? 10,
-                    dbId: h.id,
-                    additional_insured: h.additional_insured || {},
-                    waiver_subrogation: h.waiver_subrogation || {},
-                  },
-                }));
+                holderChildren = holders.map((h: any) => {
+                  const hId = `holder-${h.id}`;
+                  const hDocs = allDocuments.filter(d => d.ref_num === hId);
+                  const hChildren: TreeNode[] = hDocs.map(d => ({
+                    id: `doc-${d.id}`,
+                    label: d.file_name,
+                    type: "file",
+                    documentData: d,
+                    formType: "Certificates"
+                  }));
+
+                  return {
+                    id: hId,
+                    label: [
+                      h.name,
+                      h.address,
+                      [h.city, h.state, h.zip].filter(Boolean).join(', ')
+                    ].filter(Boolean).join(', '),
+                    type: hChildren.length > 0 ? "folder" : "file",
+                    children: hChildren.length > 0 ? hChildren : undefined,
+                    formType: "Certificates",
+                    holderData: {
+                      name: h.name || '',
+                      address: h.address || '',
+                      address2: h.address2 || '',
+                      city: h.city || '',
+                      state: h.state || '',
+                      zip: h.zip || '',
+                      desc_of_ops: h.desc_of_ops || '',
+                      issue_date: h.issue_date || '',
+                      written_notice_days: h.written_notice_days ?? 10,
+                      dbId: h.id,
+                      additional_insured: h.additional_insured || {},
+                      waiver_subrogation: h.waiver_subrogation || {},
+                    },
+                  };
+                });
               }
             } catch (_) {}
+            const certNodeId = `cert-file-master-${c.id}`;
+            const certDocs = allDocuments.filter(d => d.ref_num === certNodeId);
+            const docChildren: TreeNode[] = certDocs.map(d => ({
+              id: `doc-${d.id}`,
+              label: d.file_name,
+              type: "file",
+              documentData: d,
+              formType: "Certificates"
+            }));
+
             return {
-              id: `cert-file-master-${c.id}`,
+              id: certNodeId,
               label: c.description || certNumber,
               type: "folder" as const,
               formType: "Certificates",
               certNumber,
               certDbId,
-              children: holderChildren,
+              children: [...holderChildren, ...docChildren],
             };
           })
         );
@@ -349,6 +543,134 @@ export default function EFormsManagerPage() {
       setLoading(false);
     }
   }, [customerId, router]);
+
+  const handleCopyMaster = async (nodeId: string) => {
+    const certDbId = nodeId.replace("cert-file-master-", "");
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/certificates`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to fetch certificates");
+      const certs = await res.json();
+      const certToCopy = certs.find((c: any) => String(c.id) === certDbId);
+      
+      if (!certToCopy) {
+        alert("Certificate not found");
+        return;
+      }
+      
+      const newCertData = {
+        description: certToCopy.description ? `${certToCopy.description} (Copy)` : "Copy of Certificate",
+        form_type: certToCopy.form_type,
+        form_data: certToCopy.form_data
+      };
+      
+      const createRes = await fetch(`${API_BASE_URL}/api/customers/${customerId}/certificates`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(newCertData)
+      });
+      
+      if (!createRes.ok) throw new Error("Failed to create copy");
+      const createdCert = await createRes.json();
+      const newCertDbId = createdCert.id;
+      
+      
+      // Holders copy logic removed
+      
+      
+      await fetchData();
+    } catch (err) {
+      console.error(err);
+      alert("Error copying certificate");
+    }
+  };
+
+  const handleDeleteMaster = async (nodeId: string) => {
+    if (!confirm("Are you sure you want to delete this master certificate?")) return;
+    const certDbId = nodeId.replace("cert-file-master-", "");
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/certificates/${certDbId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to delete certificate");
+      
+      await fetchData();
+      if (selectedNode === nodeId) {
+        setSelectedNode(null);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting certificate");
+    }
+  };
+
+  const handleUpdateMaster = (nodeId: string) => {
+    const certDbId = nodeId.replace("cert-file-master-", "");
+    window.open(
+      `/agency/customer/${customerId}/eforms-manager/new-certificate?certDbId=${certDbId}`,
+      '_blank',
+      'width=1050,height=800,menubar=no,toolbar=no'
+    );
+  };
+
+  const handleOpenAttachments = (nodeId: string) => {
+    setAttachmentContextNode(nodeId);
+    setAttachmentCategory(nodeId.startsWith("cert-file-master-") ? "Master" : "Holder");
+    setAttachmentFile(null);
+    setAttachmentDescription("");
+    setAttachmentModalOpen(true);
+  };
+
+  const handleUploadAttachment = async () => {
+    if (!attachmentFile) {
+      alert("Please select a file to attach.");
+      return;
+    }
+    setIsUploading(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No auth token");
+
+      const formData = new FormData();
+      formData.append("file", attachmentFile);
+      formData.append("action", "eForms Attachment");
+      formData.append("description", attachmentDescription);
+      formData.append("refNum", attachmentContextNode || "");
+      formData.append("category", attachmentCategory);
+
+      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/documents`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to upload document");
+      }
+
+      alert("Attachment uploaded successfully to live server.");
+      setAttachmentModalOpen(false);
+      await fetchData();
+    } catch (err) {
+      console.error(err);
+      alert("Error uploading attachment.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   useEffect(() => {
     if (customerId) fetchData();
@@ -372,6 +694,8 @@ export default function EFormsManagerPage() {
         setCreatedCertificates(prev => [...prev, newCert]);
         setActiveTab("Certificates");
         setSelectedNode(newCert.id);
+      } else if (event.data?.type === 'UPDATE_CERTIFICATE') {
+        fetchData();
       }
     };
     window.addEventListener("message", handleMessage);
@@ -828,7 +1152,14 @@ export default function EFormsManagerPage() {
               </div>
 
               {/* Tree View */}
-              <div className="flex-1 overflow-y-auto bg-white p-2">
+              <div 
+                className={`flex-1 overflow-y-auto p-2 transition-colors ${
+                  isDragging ? "bg-primary/10 border-2 border-dashed border-primary" : "bg-white"
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
                 {displayTree.length > 0 ? (
                   displayTree.map((node) => (
                     <TreeItem
@@ -836,6 +1167,10 @@ export default function EFormsManagerPage() {
                       node={node}
                       selected={selectedNode}
                       onSelect={setSelectedNode}
+                      onCopyMaster={handleCopyMaster}
+                      onDeleteMaster={handleDeleteMaster}
+                      onUpdateMaster={handleUpdateMaster}
+                      onOpenAttachments={handleOpenAttachments}
                       onAddEditHolder={(id) => {
                         // Find the node to get its certNumber and certDbId
                         const findNode = (nodes: TreeNode[]): TreeNode | null => {
@@ -923,6 +1258,11 @@ export default function EFormsManagerPage() {
                   return <iframe src={`/acord-form.html?${params.toString()}`} className="w-full h-full border-none bg-white" />;
                 } else if (selectedNode?.startsWith("cert-file")) {
                   return <Acord25Form customer={customer} policies={policies} />;
+                } else if (selectedNode?.startsWith("doc-") && selected) {
+                  const docData = selected.documentData;
+                  if (docData && docData.url) {
+                    return <AuthenticatedDocumentPreview url={docData.url} fileName={docData.file_name} />;
+                  }
                 } else {
                   return (
                     <div className="flex-1 flex items-center justify-center min-h-full">
@@ -944,6 +1284,113 @@ export default function EFormsManagerPage() {
             </div>
           </div>
         </div>
+
+        {/* ── Attachment Modal ── */}
+        {attachmentModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="px-6 py-4 border-b border-border-main flex items-center justify-between bg-slate-50/50">
+                <h2 className="text-sm font-extrabold text-text-main flex items-center gap-2">
+                  <Paperclip size={16} className="text-primary" />
+                  Attach Document
+                </h2>
+                <button 
+                  onClick={() => setAttachmentModalOpen(false)}
+                  className="text-text-muted hover:text-red-600 transition-colors cursor-pointer"
+                >
+                  <Minus size={18} />
+                </button>
+              </div>
+              <div className="p-6 flex flex-col gap-5">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Attach To</label>
+                  <select
+                    className="w-full text-[13px] font-semibold text-text-main bg-white border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+                    value={attachmentContextNode || ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setAttachmentContextNode(val);
+                      setAttachmentCategory(val.startsWith("cert-file-master-") ? "Master" : "Holder");
+                    }}
+                  >
+                    <option value="" disabled>Select Master or Holder...</option>
+                    {createdCertificates.map(master => (
+                      <optgroup key={master.id} label={`Master: ${master.label}`}>
+                        <option value={master.id}>{master.label} (Master)</option>
+                        {master.children?.filter((c: any) => c.id.startsWith("holder-")).map((holder: any) => (
+                          <option key={holder.id} value={holder.id}>
+                            Holder: {holder.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Document File</label>
+                  <div className="relative border-2 border-dashed border-border-main rounded-xl p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 hover:border-primary/50 transition-colors cursor-pointer group">
+                    <input 
+                      type="file" 
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setAttachmentFile(e.target.files[0]);
+                        }
+                      }}
+                    />
+                    <UploadCloud size={28} className="text-slate-300 group-hover:text-primary transition-colors mb-2" />
+                    {attachmentFile ? (
+                      <p className="text-[13px] font-bold text-primary truncate max-w-[200px]">{attachmentFile.name}</p>
+                    ) : (
+                      <>
+                        <p className="text-[13px] font-bold text-text-main">Drop file here or browse</p>
+                        <p className="text-[11px] text-text-muted mt-1">PDF, DOC, DOCX, JPG, PNG</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Description</label>
+                  <input
+                    type="text"
+                    value={attachmentDescription}
+                    onChange={(e) => setAttachmentDescription(e.target.value)}
+                    placeholder="Enter document description..."
+                    className="w-full text-[13px] font-semibold text-text-main bg-white border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+                  />
+                </div>
+              </div>
+              <div className="px-6 py-4 border-t border-border-main bg-slate-50/50 flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setAttachmentModalOpen(false)}
+                  className="px-4 py-1.5 text-xs font-bold text-text-muted hover:text-text-main transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUploadAttachment}
+                  disabled={isUploading || !attachmentFile || !attachmentContextNode}
+                  className="px-5 py-2 flex items-center gap-2 bg-primary hover:bg-primary/90 disabled:bg-primary/50 text-white text-xs font-bold rounded-xl transition-all shadow-sm shadow-primary/20 cursor-pointer"
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud size={14} />
+                      Attach
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </main>
     </div>
   );
