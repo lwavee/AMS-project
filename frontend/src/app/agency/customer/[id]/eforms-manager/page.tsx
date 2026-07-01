@@ -325,7 +325,7 @@ function AuthenticatedDocumentPreview({ url, fileName }: { url: string; fileName
 
   const ext = fileName.toLowerCase().split('.').pop() || '';
   if (ext === 'pdf') {
-    return <iframe src={`${objectUrl!}#view=FitH&toolbar=0&navpanes=0`} className="w-full h-full border-none bg-white" />;
+    return <iframe src={`/pdf-viewer.html?file=${encodeURIComponent(objectUrl!)}`} className="w-full h-full border-none bg-white" />;
   } else if (['jpeg', 'jpg', 'gif', 'png'].includes(ext)) {
     return (
       <div className="flex-1 flex items-center justify-center p-4 bg-slate-100">
@@ -554,41 +554,89 @@ export default function EFormsManagerPage() {
       const token = localStorage.getItem("token");
       if (!token) return;
 
+      // 1. Fetch the certificate to copy
       const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/certificates`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch certificates");
       const certs = await res.json();
       const certToCopy = certs.find((c: any) => String(c.id) === certDbId);
-      
+
       if (!certToCopy) {
         alert("Certificate not found");
         return;
       }
-      
+
+      // 2. Create the new certificate copy
       const newCertData = {
         description: certToCopy.description ? `${certToCopy.description} (Copy)` : "Copy of Certificate",
         form_type: certToCopy.form_type,
         form_data: certToCopy.form_data
       };
-      
+
       const createRes = await fetch(`${API_BASE_URL}/api/customers/${customerId}/certificates`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify(newCertData)
       });
-      
+
       if (!createRes.ok) throw new Error("Failed to create copy");
       const createdCert = await createRes.json();
       const newCertDbId = createdCert.id;
-      
-      
-      // Holders copy logic removed
-      
-      
+
+      // 3. Fetch all holders from the original certificate
+      const holdersRes = await fetch(
+        `${API_BASE_URL}/api/customers/${customerId}/certificates/${certDbId}/holders`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (holdersRes.ok) {
+        const holders = await holdersRes.json();
+        // 4. Copy each holder into the new certificate
+        await Promise.all(
+          holders.map((h: any) =>
+            fetch(
+              `${API_BASE_URL}/api/customers/${customerId}/certificates/${newCertDbId}/holders`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({
+                  name: h.name,
+                  contact: h.contact,
+                  address: h.address,
+                  address2: h.address2,
+                  city: h.city,
+                  state: h.state,
+                  zip: h.zip,
+                  email: h.email,
+                  fax: h.fax,
+                  fax_ext: h.fax_ext,
+                  issue_date: h.issue_date,
+                  written_notice_days: h.written_notice_days,
+                  desc_of_ops: h.desc_of_ops,
+                  same_as_master: h.same_as_master,
+                  note: h.note,
+                  print_note: h.print_note,
+                  job_type: h.job_type,
+                  job_num: h.job_num,
+                  project_end_date: h.project_end_date,
+                  licensed: h.licensed,
+                  bonded: h.bonded,
+                  write_to_list: h.write_to_list,
+                  distribution_method: h.distribution_method,
+                  name_selection: h.name_selection,
+                  additional_insured: h.additional_insured || {},
+                  waiver_subrogation: h.waiver_subrogation || {},
+                }),
+              }
+            )
+          )
+        );
+      }
+
       await fetchData();
     } catch (err) {
       console.error(err);
@@ -623,6 +671,19 @@ export default function EFormsManagerPage() {
     const certDbId = nodeId.replace("cert-file-master-", "");
     window.open(
       `/agency/customer/${customerId}/eforms-manager/new-certificate?certDbId=${certDbId}`,
+      '_blank',
+      'width=1050,height=800,menubar=no,toolbar=no'
+    );
+  };
+
+  const handleOpenInterests = (id: string) => {
+    const certDbId = id.replace("cert-file-master-", "");
+    const year = new Date().getFullYear();
+    const certNumber = `${year}${certDbId.padStart(2, '0')}`;
+    const cert = createdCertificates.find(c => String(c.certDbId) === certDbId || c.id === id);
+    const certNum = cert?.certNumber || certNumber;
+    window.open(
+      `/agency/customer/${customerId}/eforms-manager/add-edit-holder?certId=${certNum}&certDbId=${certDbId}`,
       '_blank',
       'width=1050,height=800,menubar=no,toolbar=no'
     );
@@ -928,7 +989,68 @@ export default function EFormsManagerPage() {
             <button className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-red-50 text-text-muted hover:text-red-600 font-bold text-xs rounded-xl transition-all cursor-pointer"><Trash2 size={13} /> Delete</button>
           </div>
         );
-      case "Certificates":
+      case "Certificates": {
+        const isMaster = selectedNode?.startsWith("cert-file-master-");
+        if (isMaster) {
+          return (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager/new-certificate`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no')}
+                className="h-8 px-3.5 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20"
+              >
+                <Plus size={14} /> New Cert Liab
+              </button>
+              <button
+                onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager/new-cert-prop`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no')}
+                className="h-8 px-3.5 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20"
+              >
+                <Plus size={14} /> New Cert Prop
+              </button>
+              <button
+                onClick={() => selectedNode && handleCopyMaster(selectedNode)}
+                className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                <Copy size={13} /> Copy
+              </button>
+              <button
+                onClick={() => selectedNode && handleUpdateMaster(selectedNode)}
+                className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                Update
+              </button>
+              <button
+                onClick={() => selectedNode && handleOpenInterests(selectedNode)}
+                className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                Interests
+              </button>
+              <button
+                onClick={() => {
+                  if (selectedNode) {
+                    const certDbId = selectedNode.replace("cert-file-master-", "");
+                    const cert = createdCertificates.find(c => c.id === selectedNode);
+                    const certNum = cert?.certNumber || certDbId;
+                    window.open(
+                      `/agency/customer/${customerId}/eforms-manager/distribute-certificates?certDbId=${certDbId}&certNum=${certNum}`,
+                      '_blank',
+                      'width=1150,height=820,menubar=no,toolbar=no'
+                    );
+                  }
+                }}
+                className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                Distribute Certificates
+              </button>
+              <button
+                onClick={() => selectedNode && handleDeleteMaster(selectedNode)}
+                className="h-8 px-3 flex items-center gap-1.5 border border-border-main bg-white hover:bg-red-50 text-text-muted hover:text-red-600 font-bold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                <Trash2 size={13} /> Delete
+              </button>
+            </div>
+          );
+        }
+
         return (
           <>
             <button
@@ -946,6 +1068,7 @@ export default function EFormsManagerPage() {
             <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-red-50 text-text-muted hover:text-red-600 font-bold text-xs rounded-xl transition-all cursor-pointer"><Trash2 size={13} /> Delete</button>
           </>
         );
+      }
       case "EPI":
         return (
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -1175,27 +1298,7 @@ export default function EFormsManagerPage() {
                       onDeleteMaster={handleDeleteMaster}
                       onUpdateMaster={handleUpdateMaster}
                       onOpenAttachments={handleOpenAttachments}
-                      onAddEditHolder={(id) => {
-                        // Find the node to get its certNumber and certDbId
-                        const findNode = (nodes: TreeNode[]): TreeNode | null => {
-                          for (const n of nodes) {
-                            if (n.id === id) return n;
-                            if (n.children) {
-                              const found = findNode(n.children);
-                              if (found) return found;
-                            }
-                          }
-                          return null;
-                        };
-                        const node = findNode(displayTree);
-                        const certNum = node?.certNumber || id;
-                        const dbId = node?.certDbId || id.replace("cert-file-master-", "");
-                        window.open(
-                          `/agency/customer/${customerId}/eforms-manager/add-edit-holder?certId=${certNum}&certDbId=${dbId}`,
-                          '_blank',
-                          'width=1050,height=800,menubar=no,toolbar=no'
-                        );
-                      }}
+                      onAddEditHolder={handleOpenInterests}
                     />
                   ))
                 ) : (

@@ -307,6 +307,10 @@ export default function AddEditHolderPage() {
       ]);
       setIsAddingNew(false);
       setNewHolder({ ...DEFAULT_HOLDER });
+      if (window.opener) {
+        window.opener.postMessage({ type: 'UPDATE_CERTIFICATE' }, '*');
+      }
+      window.close();
     } catch (e: any) {
       setSaveError(e.message || "Error saving holder");
     } finally {
@@ -330,6 +334,13 @@ export default function AddEditHolderPage() {
   };
 
   const handleClose = () => window.close();
+
+  const handleCreateRefresh = () => {
+    if (window.opener) {
+      window.opener.postMessage({ type: 'UPDATE_CERTIFICATE' }, '*');
+    }
+    window.close();
+  };
 
   return (
     <div className="min-h-screen bg-bg-base flex flex-col font-sans text-text-main select-none">
@@ -467,7 +478,10 @@ export default function AddEditHolderPage() {
 
         {!isAddingNew && (
           <div className="flex justify-center gap-4 py-4 shrink-0">
-            <button className="px-6 py-2.5 bg-bg-base border border-border-main rounded-xl text-text-muted text-xs font-bold shadow-sm opacity-50 cursor-not-allowed">
+            <button 
+              onClick={handleCreateRefresh}
+              className="px-6 py-2.5 bg-white border border-border-main hover:bg-secondary/20 rounded-xl text-text-main text-xs font-bold shadow-sm transition-all duration-150 cursor-pointer"
+            >
               Create / Refresh Forms
             </button>
             <button onClick={handleClose} className="px-6 py-2.5 bg-white border border-border-main hover:bg-secondary/20 rounded-xl text-text-main text-xs font-bold shadow-sm transition-all duration-150 cursor-pointer">
