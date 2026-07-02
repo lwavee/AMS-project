@@ -1210,13 +1210,7 @@ export default function EFormsManagerPage() {
               <button
                 title="Print Forms"
                 onClick={() => {
-                  const panel = document.getElementById("eform-preview-panel");
-                  const iframe = panel?.querySelector("iframe") as HTMLIFrameElement | null;
-                  if (iframe?.contentWindow) {
-                    iframe.contentWindow.print();
-                  } else {
-                    window.print();
-                  }
+                  window.open(`/agency/customer/${customerId}/eforms-manager/print-options`, "_blank", "width=850,height=600,menubar=no,toolbar=no,location=no,status=no");
                 }}
                 className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
               >

@@ -599,8 +599,8 @@
             </div>
           </div>
         </td>
-        <td></td>
-        <td></td>
+        <td id="gl-ai" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
+        <td id="gl-ws" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
         <td class="center" style="vertical-align: middle;">ISCSPCM000021233</td>
         <td class="center" style="vertical-align: middle;">06/29/2026</td>
         <td class="center" style="vertical-align: middle;">06/29/2027</td>
@@ -716,8 +716,8 @@
             </div>
           </div>
         </td>
-        <td></td>
-        <td></td>
+        <td id="auto-ai" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
+        <td id="auto-ws" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
         <td></td>
         <td></td>
         <td></td>
@@ -799,8 +799,8 @@
             </div>
           </div>
         </td>
-        <td></td>
-        <td></td>
+        <td id="umbrella-ai" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
+        <td id="umbrella-ws" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
         <td></td>
         <td></td>
         <td></td>
@@ -846,7 +846,7 @@
           </div>
         </td>
         <td></td>
-        <td></td>
+        <td id="wc-ws" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
         <td class="center" style="vertical-align: middle;"></td>
         <td class="center" style="vertical-align: middle;"></td>
         <td class="center" style="vertical-align: middle;"></td>
@@ -1358,7 +1358,7 @@
           }
         }
 
-        // ── 4. Toggle ADDL INSD / SUBR WVD checkboxes based on holder attributes ──
+        // ── 4. Toggle ADDL INSD / SUBR WVD based on holder attributes ──
         try {
           const rawAi = params.get('additionalInsured');
           const rawWs = params.get('waiverSubrogation');
@@ -1372,8 +1372,9 @@
             Object.entries(checkMap).forEach(([type, elementId]) => {
               const el = document.getElementById(elementId);
               if (el) {
-                if (ai[type] === 'Y') el.classList.add('checked');
-                else el.classList.remove('checked');
+                if (ai[type] === 'Y') el.innerText = 'Y';
+                else if (ai[type] === 'N') el.innerText = 'N';
+                else el.innerText = '';
               }
             });
           }
@@ -1388,8 +1389,9 @@
             Object.entries(checkMap).forEach(([type, elementId]) => {
               const el = document.getElementById(elementId);
               if (el) {
-                if (ws[type] === 'Y') el.classList.add('checked');
-                else el.classList.remove('checked');
+                if (ws[type] === 'Y') el.innerText = 'Y';
+                else if (ws[type] === 'N') el.innerText = 'N';
+                else el.innerText = '';
               }
             });
           }

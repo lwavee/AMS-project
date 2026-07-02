@@ -16,5 +16,6 @@ class Settings:
     DEBUG: bool = os.getenv("DEBUG", "True").lower() in ("true", "1", "t")
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
     SECRET_KEY: str = os.getenv("SECRET_KEY", "secret")
+    CUSTOMJS_API_KEY: str | None = os.getenv("CUSTOMJS_API_KEY")
 
 settings = Settings()

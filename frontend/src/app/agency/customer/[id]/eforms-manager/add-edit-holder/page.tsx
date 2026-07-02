@@ -144,10 +144,10 @@ const DEFAULT_HOLDER: Omit<CertificateHolder, "id"> = {
   distribution_method: "",
   name_selection: "Certificate Holder Master List",
   additional_insured: Object.fromEntries(
-    [...INSURANCE_TYPES, "Work Comp", "Other"].map((t) => [t, "N"])
+    [...INSURANCE_TYPES, "Work Comp", "Other"].map((t) => [t, ""])
   ),
   waiver_subrogation: Object.fromEntries(
-    [...INSURANCE_TYPES, "Work Comp", "Other"].map((t) => [t, "N"])
+    [...INSURANCE_TYPES, "Work Comp", "Other"].map((t) => [t, ""])
   ),
 };
 
