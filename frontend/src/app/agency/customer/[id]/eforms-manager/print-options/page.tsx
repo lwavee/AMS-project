@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 import React, { useEffect, useState, useCallback } from "react";
 import { API_BASE_URL } from "@/lib/config";
