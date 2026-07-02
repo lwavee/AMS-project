@@ -1,102 +1,109 @@
-/* eslint-disable */
-"use client";
+  /* eslint-disable */
+  "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { API_BASE_URL } from "../../../../../lib/config";
-import Acord25Form from "../../../../../services/pdf/Acord25Form";
-import Header from "../../../../../components/Header";
-import RightDrawer from "../../../../../components/RightDrawer";
-import {
-  FileSignature,
-  Search,
-  Trash2,
-  ChevronRight,
-  ChevronDown,
-  FolderClosed,
-  FolderOpen,
-  FileText,
-  File,
-  ArrowLeft,
-  Loader2,
-  AlertTriangle,
-  Save,
-  Copy,
-  Paperclip,
-  Printer,
-  Plus,
-  Minus,
-  Edit3,
-  Download,
-  UploadCloud,
-  FilePlus,
-  Activity,
-  MoreHorizontal,
-} from "lucide-react";
+  import React, { useState, useEffect, useCallback, useRef } from "react";
+  import { useRouter, useParams } from "next/navigation";
+  import { API_BASE_URL } from "../../../../../lib/config";
+  import Acord25Form from "../../../../../services/pdf/Acord25Form";
+  import Header from "../../../../../components/Header";
+  import RightDrawer from "../../../../../components/RightDrawer";
+  import {
+    FileSignature,
+    Search,
+    Trash2,
+    ChevronRight,
+    ChevronDown,
+    FolderClosed,
+    FolderOpen,
+    FileText,
+    File,
+    ArrowLeft,
+    Loader2,
+    AlertTriangle,
+    Save,
+    Copy,
+    Paperclip,
+    Printer,
+    Plus,
+    Minus,
+    Edit3,
+    Download,
+    UploadCloud,
+    FilePlus,
+    Activity,
+    MoreHorizontal,
+    Mail,
+    Maximize2,
+    Minimize2,
+    PanelLeftClose,
+    PanelLeftOpen,
+    ArrowUpDown,
+    ArrowLeftRight,
+  } from "lucide-react";
 
-// ─── Tab definitions matching AMS360 eForms Manager ──────────────────────────
-const EFORM_TABS = [
-  "All Forms",
-  "Applications",
-  "AutoId Cards",
-  "Binders",
-  "Cancellations",
-  "Certificates",
-  "EPI",
-  "Change Requests",
-  "Loss Notices",
-] as const;
+  // ─── Tab definitions matching AMS360 eForms Manager ──────────────────────────
+  const EFORM_TABS = [
+    "All Forms",
+    "Applications",
+    "AutoId Cards",
+    "Binders",
+    "Cancellations",
+    "Certificates",
+    "EPI",
+    "Change Requests",
+    "Loss Notices",
+  ] as const;
 
-type EFormTab = typeof EFORM_TABS[number];
+  type EFormTab = typeof EFORM_TABS[number];
 
-// ─── Mock tree node structure ────────────────────────────────────────────────
-interface TreeNode {
-  id: string;
-  label: string;
-  type: "folder" | "file";
-  children?: TreeNode[];
-  formType?: string;
-  certNumber?: string;  // formatted display number e.g. "202605"
-  certDbId?: string;    // raw numeric DB id e.g. "5"
-  documentData?: any;
-  holderData?: {
-    name: string;
-    address: string;
-    address2: string;
-    city: string;
-    state: string;
-    zip: string;
-    desc_of_ops: string;
-    issue_date: string;
-    written_notice_days: number;
-    dbId: number;
-    additional_insured?: Record<string, string>;
-    waiver_subrogation?: Record<string, string>;
-  };
-}
+  // ─── Mock tree node structure ────────────────────────────────────────────────
+  interface TreeNode {
+    id: string;
+    label: string;
+    type: "folder" | "file";
+    children?: TreeNode[];
+    formType?: string;
+    certNumber?: string;  // formatted display number e.g. "202605"
+    certDbId?: string;    // raw numeric DB id e.g. "5"
+    documentData?: any;
+    holderData?: {
+      name: string;
+      address: string;
+      address2: string;
+      city: string;
+      state: string;
+      zip: string;
+      desc_of_ops: string;
+      issue_date: string;
+      written_notice_days: number;
+      dbId: number;
+      additional_insured?: Record<string, string>;
+      waiver_subrogation?: Record<string, string>;
+    };
+  }
 
-// ─── Tree View Component ─────────────────────────────────────────────────────
-function TreeItem({
-  node,
-  depth = 0,
-  selected,
-  onSelect,
-  onAddEditHolder,
-  onCopyMaster,
-  onDeleteMaster,
-  onUpdateMaster,
-  onOpenAttachments,
-}: {
-  node: TreeNode;
-  depth?: number;
-  selected: string | null;
-  onSelect: (id: string) => void;
-  onAddEditHolder?: (id: string) => void;
-  onCopyMaster?: (id: string) => void;
-  onDeleteMaster?: (id: string) => void;
-  onUpdateMaster?: (id: string) => void;
-  onOpenAttachments?: (id: string) => void;
-}) {
+  // ─── Tree View Component ─────────────────────────────────────────────────────
+  function TreeItem({
+    node,
+    depth = 0,
+    selected,
+    onSelect,
+    onAddEditHolder,
+    onCopyMaster,
+    onDeleteMaster,
+    onUpdateMaster,
+    onOpenAttachments,
+  }: {
+    node: TreeNode;
+    depth?: number;
+    selected: string | null;
+    onSelect: (id: string) => void;
+    onAddEditHolder?: (id: string) => void;
+    onCopyMaster?: (id: string) => void;
+    onDeleteMaster?: (id: string) => void;
+    onUpdateMaster?: (id: string) => void;
+    onOpenAttachments?: (id: string) => void;
+  }) {
   const [expanded, setExpanded] = useState(depth === 0);
   const isFolder = node.type === "folder";
   const isSelected = selected === node.id;
@@ -381,6 +388,7 @@ export default function EFormsManagerPage() {
   const [isUploading, setIsUploading] = useState(false);
 
   const [isDragging, setIsDragging] = useState(false);
+  const [showTreePanel, setShowTreePanel] = useState(true);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -1178,9 +1186,96 @@ export default function EFormsManagerPage() {
                 <Save size={13} />
                 <span className="hidden lg:inline">Save</span>
               </button>
-              <button className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">
+
+              <div className="h-5 w-px bg-border-main" />
+
+              {/* Email Forms */}
+              <button
+                title="Email Forms"
+                onClick={() => {
+                  const panel = document.getElementById("eform-preview-panel");
+                  const iframe = panel?.querySelector("iframe") as HTMLIFrameElement | null;
+                  const url = iframe?.src || window.location.href;
+                  const subject = encodeURIComponent("eForms Document");
+                  const body = encodeURIComponent(`Please find the attached eForms document.\n\nForm URL: ${url}`);
+                  window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
+                }}
+                className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                <Mail size={13} />
+                <span className="hidden lg:inline">Email Forms</span>
+              </button>
+
+              {/* Print Forms */}
+              <button
+                title="Print Forms"
+                onClick={() => {
+                  const panel = document.getElementById("eform-preview-panel");
+                  const iframe = panel?.querySelector("iframe") as HTMLIFrameElement | null;
+                  if (iframe?.contentWindow) {
+                    iframe.contentWindow.print();
+                  } else {
+                    window.print();
+                  }
+                }}
+                className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
+              >
                 <Printer size={13} />
-                <span className="hidden lg:inline">Print</span>
+                <span className="hidden lg:inline">Print Forms</span>
+              </button>
+
+              <div className="h-5 w-px bg-border-main" />
+
+              {/* Fit to Height */}
+              <button
+                title="Fit to Height"
+                onClick={() => {
+                  const panel = document.getElementById("eform-preview-panel");
+                  if (panel) {
+                    panel.style.overflowY = "hidden";
+                    panel.style.overflowX = "auto";
+                    const iframe = panel.querySelector("iframe") as HTMLIFrameElement | null;
+                    if (iframe) { iframe.style.width = "auto"; iframe.style.height = "100%"; }
+                  }
+                }}
+                className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                <ArrowUpDown size={13} />
+                <span className="hidden lg:inline">Fit Height</span>
+              </button>
+
+              {/* Fit to Width */}
+              <button
+                title="Fit to Width"
+                onClick={() => {
+                  const panel = document.getElementById("eform-preview-panel");
+                  if (panel) {
+                    panel.style.overflowY = "auto";
+                    panel.style.overflowX = "hidden";
+                    const iframe = panel.querySelector("iframe") as HTMLIFrameElement | null;
+                    if (iframe) { iframe.style.width = "100%"; iframe.style.height = "auto"; }
+                  }
+                }}
+                className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                <ArrowLeftRight size={13} />
+                <span className="hidden lg:inline">Fit Width</span>
+              </button>
+
+              <div className="h-5 w-px bg-border-main" />
+
+              {/* Show/Hide Tree */}
+              <button
+                title={showTreePanel ? "Hide Tree" : "Show Tree"}
+                onClick={() => setShowTreePanel(prev => !prev)}
+                className={`h-8 px-3.5 flex items-center gap-1.5 border font-bold text-xs rounded-xl transition-all cursor-pointer ${
+                  showTreePanel
+                    ? "border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary"
+                    : "border-primary bg-primary/10 text-primary hover:bg-primary/20"
+                }`}
+              >
+                {showTreePanel ? <PanelLeftClose size={13} /> : <PanelLeftOpen size={13} />}
+                <span className="hidden lg:inline">{showTreePanel ? "Hide Tree" : "Show Tree"}</span>
               </button>
             </div>
           </div>
@@ -1210,10 +1305,10 @@ export default function EFormsManagerPage() {
           </div>
 
           {/* ── Main Content Split ── */}
-          <div className="flex flex-1 min-h-0 overflow-hidden">
+          <div className="flex flex-1 min-h-0 overflow-hidden relative">
 
             {/* ── Left Panel: Customer/Policy selectors + Tree ── */}
-            <div className="w-[340px] shrink-0 border-r border-border-main bg-white flex flex-col h-full">
+            <div className={`shrink-0 border-r border-border-main bg-white flex flex-col h-full transition-all duration-300 overflow-hidden ${showTreePanel ? "w-[340px]" : "w-0 border-r-0"}`}>
 
               {/* Filters Section */}
               <div className="p-4 flex flex-col gap-3 border-b border-border-main bg-white">
@@ -1314,7 +1409,7 @@ export default function EFormsManagerPage() {
             </div>
 
             {/* ── Right Panel: Form preview area ── */}
-            <div className="flex-1 flex flex-col bg-slate-50/50 overflow-auto relative">
+            <div className="flex-1 flex flex-col bg-slate-50/50 overflow-auto relative" id="eform-preview-panel">
               {(() => {
                 // Find if the selected node is a holder node by searching the tree
                 const findNodeById = (nodes: TreeNode[], id: string): TreeNode | null => {
@@ -1389,6 +1484,7 @@ export default function EFormsManagerPage() {
                 }
               })()}
             </div>
+
           </div>
         </div>
 

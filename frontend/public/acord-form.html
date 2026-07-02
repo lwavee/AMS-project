@@ -250,9 +250,10 @@
 
     .limits-table td {
       border-bottom: 1px solid black;
-      font-size: 8px;
-      padding: 1px 4px;
+      font-size: 7.5px;
+      padding: 0px 4px;
       vertical-align: middle;
+      line-height: 1;
     }
 
     .limits-table tr:last-child td {
@@ -267,13 +268,31 @@
     .limits-table .limit-curr {
       width: 10px;
       padding-right: 2px;
-      background: #f7f6f6;
     }
 
     .limits-table .limit-val {
       text-align: right;
-      background: #f7f6f6;
     }
+
+    .limits-table {
+      width: 100%;
+      height: 100%;
+      border-collapse: collapse;
+    }
+
+    .limits-table td {
+      border-bottom: 1px solid black;
+      font-size: 7.5px;
+      padding: 0px 4px;
+      vertical-align: middle;
+      line-height: 1;
+    }
+
+    .limits-table tr:last-child td {
+      border-bottom: none;
+    }
+
+
 
     .cov-table td {
       font-size: 9px;
@@ -324,7 +343,7 @@
     .cert-holder {
       border-right: 1px solid black;
       padding: 4px;
-      height: 150px;
+      height: 120px;
     }
 
     .cancellation {
@@ -342,9 +361,12 @@
     }
 
     .signature-area {
-      margin-top: auto;
+      /* margin-top: auto; */
+      margin-left: -5px;
+      margin-right: -6px;
       border-top: 1px solid black;
       padding-top: 2px;
+      padding-left: 6px;
       font-size: 8px;
       font-weight: bold;
       position: relative;
@@ -449,17 +471,16 @@
           </tr>
           <tr>
             <td class="no-border-left" style="width: 50%;">
-              <span class="label">PHONE<br>(A/C, No, Ext):</span> &nbsp;&nbsp;&nbsp; <span id="contact-phone">(310)
+              <span class="label">PHONE<br>(A/C, No, Ext):</span> <span id="contact-phone">(310)
                 492-2007</span>
             </td>
             <td class="no-border-right" style="width: 50%;">
-              <span class="label">FAX<br>(A/C, No):</span> &nbsp;&nbsp;&nbsp; <span id="contact-fax"></span>
+              <span class="label">FAX<br>(A/C, No):</span> <span id="contact-fax"></span>
             </td>
           </tr>
           <tr>
             <td colspan="2" class="no-border-left no-border-right">
-              <span class="label">E-MAIL<br>ADDRESS:</span> &nbsp;&nbsp;&nbsp; <span
-                id="contact-email">ben@capcoinsurance.com</span>
+              <span class="label">E-MAIL<br>ADDRESS:</span> <span id="contact-email">ben@capcoinsurance.com</span>
             </td>
           </tr>
         </table>
@@ -513,10 +534,10 @@
 
     <table class="cov-table no-border-top">
       <tr>
-        <th style="width: 20px;">INSR<br>LTR</th>
+        <th style="width: 30px;">INSR<br>LTR</th>
         <th>TYPE OF INSURANCE</th>
-        <th style="width: 30px;">ADDL<br>INSD</th>
-        <th style="width: 30px;">SUBR<br>WVD</th>
+        <th style="width: 35px;">ADDL<br>INSD</th>
+        <th style="width: 35px;">SUBR<br>WVD</th>
         <th>POLICY NUMBER</th>
         <th style="width: 65px;">POLICY EFF<br>(MM/DD/YYYY)</th>
         <th style="width: 65px;">POLICY EXP<br>(MM/DD/YYYY)</th>
@@ -543,8 +564,7 @@
               <div style="height: 14px; box-sizing: border-box;"></div>
             </div>
             <div style="flex: 1; padding: 0 0 0 4px; display: flex; flex-direction: column;">
-              <div
-                style="height: 14px; box-sizing: border-box; font-size: 8px; font-weight: bold; line-height: 14px;">
+              <div style="height: 14px; box-sizing: border-box; font-size: 8px; font-weight: bold; line-height: 14px;">
                 COMMERCIAL GENERAL LIABILITY</div>
               <div style="height: 14px; box-sizing: border-box; display: flex; align-items: center; font-size: 7px;">
                 <div class="checkbox checked"
@@ -588,47 +608,111 @@
           <table class="limits-table">
             <tr>
               <td class="limit-desc">EACH OCCURRENCE</td>
-              <td class="limit-curr">$</td><td class="limit-val">1,000,000</td>
+              <td class="limit-curr">$</td>
+              <td class="limit-val">1,000,000</td>
             </tr>
             <tr>
               <td class="limit-desc">DAMAGE TO RENTED<br>PREMISES (Ea occurrence)</td>
-              <td class="limit-curr">$</td><td class="limit-val">50,000</td>
+              <td class="limit-curr">$</td>
+              <td class="limit-val">50,000</td>
             </tr>
             <tr>
               <td class="limit-desc">MED EXP (Any one person)</td>
-              <td class="limit-curr">$</td><td class="limit-val">5,000</td>
+              <td class="limit-curr">$</td>
+              <td class="limit-val">5,000</td>
             </tr>
             <tr>
               <td class="limit-desc">PERSONAL & ADV INJURY</td>
-              <td class="limit-curr">$</td><td class="limit-val">1,000,000</td>
+              <td class="limit-curr">$</td>
+              <td class="limit-val">1,000,000</td>
             </tr>
             <tr>
               <td class="limit-desc">GENERAL AGGREGATE</td>
-              <td class="limit-curr">$</td><td class="limit-val">1,000,000</td>
+              <td class="limit-curr">$</td>
+              <td class="limit-val">2,000,000</td>
             </tr>
             <tr>
               <td class="limit-desc">PRODUCTS - COMP/OP AGG</td>
-              <td class="limit-curr">$</td><td class="limit-val">1,000,000</td>
+              <td class="limit-curr">$</td>
+              <td class="limit-val">2,000,000</td>
             </tr>
             <tr>
               <td class="limit-desc">&nbsp;</td>
-              <td class="limit-curr">$</td><td class="limit-val"></td>
+              <td class="limit-curr">$</td>
+              <td class="limit-val"></td>
             </tr>
           </table>
         </td>
       </tr>
       <!-- Row 2 Auto -->
       <tr>
-        <td></td>
-        <td>
-          AUTOMOBILE LIABILITY<br>
-          <div style="margin-top: 4px;">
-            <div class="checkbox"></div> ANY AUTO<br>
-            <div class="checkbox"></div> OWNED<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AUTOS ONLY<br>
-            <div class="checkbox"></div> HIRED<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AUTOS ONLY<br>
-            <div style="float: right; margin-top: -30px;">
-              <div class="checkbox"></div> SCHEDULED<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AUTOS<br>
-              <div class="checkbox"></div> NON-OWNED<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AUTOS ONLY
+        <td class="center" style="vertical-align: middle;"></td>
+        <td style="padding: 0; vertical-align: top;">
+          <div style="display: flex; flex-direction: column; height: 100%;">
+            <div style="padding: 2px 4px 0 4px; font-size: 8px; font-weight: bold; line-height: 12px;">
+              AUTOMOBILE LIABILITY
+            </div>
+            <div style="display: flex; flex: 1;">
+              <!-- Left column -->
+              <div style="flex: 1; display: flex;">
+                <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
+                  <div
+                    style="height: 14px; border-bottom: 1px solid black; border-top: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
+                  </div>
+                  <div
+                    style="height: 14px; border-bottom: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
+                  </div>
+                  <div
+                    style="height: 14px; border-bottom: 1px solid black; border-right: 1px solid black; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">
+                    X</div>
+                  <div
+                    style="height: 14px; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box;">
+                  </div>
+                  <div style="flex: 1; box-sizing: border-box;"></div>
+                </div>
+                <div style="flex: 1; padding: 0 0 0 4px; display: flex; flex-direction: column; font-size: 7px;">
+                  <div style="height: 14px; box-sizing: border-box; display: flex; align-items: center;">ANY AUTO</div>
+                  <div
+                    style="height: 14px; box-sizing: border-box; display: flex; align-items: center; line-height: 1;">
+                    OWNED<br>AUTOS ONLY</div>
+                  <div
+                    style="height: 14px; box-sizing: border-box; display: flex; align-items: center; line-height: 1;">
+                    HIRED<br>AUTOS ONLY</div>
+                  <div style="flex: 1; box-sizing: border-box;"></div>
+                </div>
+              </div>
+              <!-- Right column -->
+              <div style="flex: 1; display: flex;">
+                <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
+                  <div style="height: 14px; box-sizing: border-box;"></div>
+                  <div
+                    style="height: 14px; border: 1px solid black; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">
+                    X</div>
+                  <div
+                    style="height: 14px; border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">
+                    X</div>
+                  <div
+                    style="height: 14px; border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box;">
+                  </div>
+                  <div style="flex: 1; box-sizing: border-box;"></div>
+                </div>
+                <div style="flex: 1; padding: 0 0 0 4px; display: flex; flex-direction: column; font-size: 7px;">
+                  <div style="height: 14px; box-sizing: border-box;"></div>
+                  <div
+                    style="height: 14px; box-sizing: border-box; display: flex; align-items: center; line-height: 1;">
+                    SCHEDULED<br>AUTOS</div>
+                  <div
+                    style="height: 14px; box-sizing: border-box; display: flex; align-items: center; line-height: 1;">
+                    NON-OWNED<br>AUTOS ONLY</div>
+                  <div
+                    style="height: 14px; box-sizing: border-box; display: flex; align-items: center; line-height: 1;">
+                  </div>
+                  <div
+                    style="height: 14px; box-sizing: border-box; display: flex; align-items: center; line-height: 1;">
+                  </div>
+                  <div style="flex: 1; box-sizing: border-box;"></div>
+                </div>
+              </div>
             </div>
           </div>
         </td>
@@ -640,24 +724,24 @@
         <td style="padding: 0;">
           <table class="limits-table">
             <tr>
-              <td>COMBINED SINGLE LIMIT<br>(Ea accident)</td>
-              <td>$</td>
+              <td class="limit-desc">COMBINED SINGLE LIMIT<br>(Ea accident)</td>
+              <td class="limit-curr">$</td>
+              <td class="limit-val">1,000,000</td>
             </tr>
             <tr>
-              <td>BODILY INJURY (Per person)</td>
-              <td>$</td>
+              <td class="limit-desc">BODILY INJURY (Per person)</td>
+              <td class="limit-curr">$</td>
+              <td class="limit-val"></td>
             </tr>
             <tr>
-              <td>BODILY INJURY (Per accident)</td>
-              <td>$</td>
+              <td class="limit-desc">BODILY INJURY (Per accident)</td>
+              <td class="limit-curr">$</td>
+              <td class="limit-val"></td>
             </tr>
             <tr>
-              <td>PROPERTY DAMAGE<br>(Per accident)</td>
-              <td>$</td>
-            </tr>
-            <tr>
-              <td>&nbsp;</td>
-              <td>$</td>
+              <td class="limit-desc">PROPERTY DAMAGE<br>(Per accident)</td>
+              <td class="limit-curr">$</td>
+              <td class="limit-val"></td>
             </tr>
           </table>
         </td>
@@ -665,12 +749,55 @@
       <!-- Row 3 Umbrella -->
       <tr>
         <td></td>
-        <td>
-          <div class="checkbox"></div> UMBRELLA LIAB &nbsp;&nbsp;&nbsp; <div class="checkbox"></div> OCCUR<br>
-          <div class="checkbox"></div> EXCESS LIAB &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <div class="checkbox">
-          </div> CLAIMS-MADE<br>
-          <hr style="margin: 4px 0; border: 0; border-top: 1px solid black;">
-          <div class="checkbox"></div> DED &nbsp;&nbsp;&nbsp; <div class="checkbox"></div> RETENTION $
+        <td style="padding: 0; vertical-align: top;">
+          <div style="display: flex; flex-direction: column; height: 100%;">
+            <div style="display: flex; border-bottom: 1px solid black;">
+              <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
+                <div
+                  style="height: 14px; border-bottom: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
+                </div>
+                <div style="height: 14px; border-right: 1px solid black; box-sizing: border-box;"></div>
+              </div>
+              <div style="padding: 0 0 0 4px; display: flex; flex-direction: column; font-size: 7px; width: 65px;">
+                <div
+                  style="height: 14px; box-sizing: border-box; display: flex; font-weight: bold; align-items: center;">
+                  UMBRELLA LIAB</div>
+                <div
+                  style="height: 14px; box-sizing: border-box; display: flex; font-weight: bold; align-items: center;">
+                  EXCESS LIAB</div>
+              </div>
+              <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
+                <div
+                  style="height: 14px; border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box;">
+                </div>
+                <div
+                  style="height: 14px; border-left: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
+                </div>
+              </div>
+              <div style="flex: 1; padding: 0 0 0 4px; display: flex; flex-direction: column; font-size: 7px;">
+                <div style="height: 14px; box-sizing: border-box; display: flex; align-items: center;">OCCUR</div>
+                <div style="height: 14px; box-sizing: border-box; display: flex; align-items: center;">CLAIMS-MADE</div>
+              </div>
+            </div>
+            <div style="display: flex; flex: 1;">
+              <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
+                <div style="height: 14px; border-right: 1px solid black; box-sizing: border-box;"></div>
+                <div style="flex: 1;"></div>
+              </div>
+              <div style="padding: 0 0 0 4px; display: flex; flex-direction: column; font-size: 7px; width: 30px;">
+                <div style="height: 14px; box-sizing: border-box; display: flex; align-items: center;">DED</div>
+                <div style="flex: 1;"></div>
+              </div>
+              <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
+                <div
+                  style="height: 14px; border-left: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
+                </div>
+              </div>
+              <div style="flex: 1; padding: 0 0 0 4px; display: flex; flex-direction: column; font-size: 7px;">
+                <div style="height: 14px; box-sizing: border-box; display: flex; align-items: center;">RETENTION $</div>
+              </div>
+            </div>
+          </div>
         </td>
         <td></td>
         <td></td>
@@ -680,16 +807,19 @@
         <td style="padding: 0;">
           <table class="limits-table">
             <tr>
-              <td>EACH OCCURRENCE</td>
-              <td>$</td>
+              <td class="limit-desc">EACH OCCURRENCE</td>
+              <td class="limit-curr">$</td>
+              <td class="limit-val">5,000,000</td>
             </tr>
             <tr>
-              <td>AGGREGATE</td>
-              <td>$</td>
+              <td class="limit-desc">AGGREGATE</td>
+              <td class="limit-curr">$</td>
+              <td class="limit-val">5,000,000</td>
             </tr>
             <tr>
-              <td>&nbsp;</td>
-              <td>$</td>
+              <td class="limit-desc">&nbsp;</td>
+              <td class="limit-curr">$</td>
+              <td class="limit-val"></td>
             </tr>
           </table>
         </td>
@@ -697,47 +827,78 @@
       <!-- Row 4 Workers Comp -->
       <tr>
         <td></td>
-        <td>
-          WORKERS COMPENSATION<br>AND EMPLOYERS' LIABILITY<br>
-          <div style="float: right; margin-top: -10px; font-weight: bold; margin-right: 5px;">Y / N</div><br>
-          <div style="font-size: 8px;">ANY PROPRIETOR/PARTNER/EXECUTIVE<br>
-            OFFICER/MEMBER EXCLUDED?<br>
-            (Mandatory in NH)<br></div>
-          <div style="float: right; margin-top: -20px;">
-            <div class="checkbox"></div> &nbsp;&nbsp;N/A
+        <td style="padding: 2px 4px; font-size: 7px; line-height: 1.1; vertical-align: top;">
+          <strong>WORKERS COMPENSATION<br>AND EMPLOYERS' LIABILITY</strong>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 1px;">
+            <div>
+              ANY PROPRIETOR/PARTNER/EXECUTIVE<br>
+              OFFICER/MEMBER EXCLUDED?<br>
+              <strong>(Mandatory in NH)</strong>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; margin-right: 4px;">
+              <div style="font-weight: bold; font-size: 7px;">Y / N</div>
+              <div style="width: 14px; height: 14px; border: 1px solid black; box-sizing: border-box;"></div>
+            </div>
           </div>
-          If yes, describe under<br>DESCRIPTION OF OPERATIONS below
+          <div style="margin-top: 1px;">
+            If yes, describe under<br>
+            DESCRIPTION OF OPERATIONS below
+          </div>
         </td>
         <td></td>
         <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
+        <td class="center" style="vertical-align: middle;"></td>
+        <td class="center" style="vertical-align: middle;"></td>
+        <td class="center" style="vertical-align: middle;"></td>
         <td style="padding: 0;">
           <table class="limits-table">
             <tr>
-              <td style="border-right: 1px solid black;">
-                <div class="checkbox" style="margin-left: 20px;"></div>
-                PER<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;STATUTE
+              <td class="limit-desc" style="padding: 0;">
+                <div style="display: flex; height: 14px;">
+                  <div
+                    style="width: 14px; border-right: 1px solid black; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; box-sizing: border-box;">
+                    X</div>
+                  <div
+                    style="padding-left: 2px; font-size: 7px; display: flex; align-items: center; line-height: 1; margin-right: 8px;">
+                    PER<br>STATUTE</div>
+                  <div
+                    style="width: 14px; border-left: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
+                  </div>
+                  <div style="padding-left: 2px; font-size: 7px; display: flex; align-items: center; line-height: 1;">
+                    OTH-<br>ER</div>
+                </div>
               </td>
-              <td colspan="2">
-                <div class="checkbox"></div> OTH-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ER
-              </td>
+              <td class="limit-curr" style="background: transparent;"></td>
+              <td class="limit-val" style="background: transparent;"></td>
             </tr>
             <tr>
-              <td colspan="2">E.L. EACH ACCIDENT</td>
-              <td>$</td>
+              <td class="limit-desc">E.L. EACH ACCIDENT</td>
+              <td class="limit-curr">$</td>
+              <td class="limit-val">1,000,000</td>
             </tr>
             <tr>
-              <td colspan="2">E.L. DISEASE - EA EMPLOYEE</td>
-              <td>$</td>
+              <td class="limit-desc">E.L. DISEASE - EA EMPLOYEE</td>
+              <td class="limit-curr">$</td>
+              <td class="limit-val">1,000,000</td>
             </tr>
             <tr>
-              <td colspan="2">E.L. DISEASE - POLICY LIMIT</td>
-              <td>$</td>
+              <td class="limit-desc">E.L. DISEASE - POLICY LIMIT</td>
+              <td class="limit-curr">$</td>
+              <td class="limit-val">1,000,000</td>
             </tr>
           </table>
         </td>
+      </tr>
+      <!-- Blank Row -->
+      <tr style="height: 45px;">
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
       </tr>
     </table>
 
@@ -748,27 +909,31 @@
         conditions )</div>
     </div>
 
-    <div class="footer-grid">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; margin-top: 5px;">
+      <div class="box-label" style="font-size: 9px; padding-left: 2px;">CERTIFICATE HOLDER</div>
+      <div class="box-label" style="font-size: 9px; padding-left: 4px;">CANCELLATION</div>
+    </div>
+    <div class="footer-grid" style="margin-top: 0;">
       <div class="cert-holder">
-        <div class="box-label" style="font-size: 9px; margin-bottom: 15px;">CERTIFICATE HOLDER</div>
-        <div style="padding-left: 50px;" id="cert-holder-details">
+        <div style="padding-left: 50px; margin-top: 25px;" id="cert-holder-details">
           Oakridge Homeowners Association<br>
-          3401 SW 51st Court<br><br><br><br>
-          <div style="display: flex; justify-content: space-between; padding-right: 30px;">
+          3401 SW 51st Court<br><br><br>
+          <div style="display: flex; justify-content: space-between; padding-right: 100px;">
             <span>Hollywood</span>
             <span>FL 33312</span>
           </div>
         </div>
       </div>
       <div class="cancellation">
-        <div class="box-label" style="font-size: 9px;">CANCELLATION</div>
-        <div class="cancellation-text">
-          SHOULD ANY OF THE ABOVE DESCRIBED POLICIES BE CANCELLED BEFORE THE EXPIRATION DATE THEREOF, NOTICE WILL BE
-          DELIVERED IN ACCORDANCE WITH THE POLICY PROVISIONS.
+        <div class="cancellation-text"
+          style="margin-top: 15px; margin-left: 10px; margin-right: 10px; margin-bottom: 10px; text-align: left; line-height: 1.4;">
+          SHOULD ANY OF THE ABOVE DESCRIBED POLICIES BE CANCELLED BEFORE<br>
+          THE EXPIRATION DATE THEREOF, NOTICE WILL BE DELIVERED IN<br>
+          ACCORDANCE WITH THE POLICY PROVISIONS.
         </div>
         <div class="signature-area">
           AUTHORIZED REPRESENTATIVE
-          <div class="signature-img">Ys</div>
+          <!-- <div class="signature-img" style="font-family: cursive; font-size: 28px; font-weight: normal; position: absolute; right: 120px; bottom: 0px; color: #555;">ys</div> -->
         </div>
       </div>
     </div>
