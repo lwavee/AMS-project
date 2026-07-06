@@ -2,12 +2,56 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 
+interface GlCoverage {
+  coverage: string;
+  limit1: string;
+  limit2?: string;
+  premium?: string;
+}
+
 interface Acord25FormProps {
   customer: any;
   policies: any[];
+  glCoverages?: GlCoverage[];
+  umbCoverages?: GlCoverage[];
+  wcPart2?: any;
 }
 
-export default function Acord25Form({ customer, policies }: Acord25FormProps) {
+// Helper: Find limit1 for a specific coverage name (case-insensitive, partial match)
+function findLimit(glCoverages: GlCoverage[], ...names: string[]): string {
+  for (const name of names) {
+    const found = glCoverages.find(c => {
+      const dbCov = (c.coverage || '').toLowerCase();
+      const search = name.toLowerCase();
+      return dbCov.includes(search) || search.includes(dbCov);
+    });
+    if (found && found.limit1 && String(found.limit1).trim() !== '') {
+      // Format as dollar amount
+      const raw = String(found.limit1).replace(/,/g, '').replace(/\$/g, '');
+      const num = parseFloat(raw);
+      if (!isNaN(num)) {
+        return '$ ' + num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      }
+      return '$ ' + found.limit1;
+    }
+  }
+  return '$ 0';
+}
+
+// Helper: Safely format a raw limit value for exact umbrella matches
+function formatLimit(val: any): string {
+  if (val && String(val).trim() !== '') {
+    const raw = String(val).replace(/,/g, '').replace(/\$/g, '');
+    const num = parseFloat(raw);
+    if (!isNaN(num)) {
+      return '$ ' + num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    return '$ ' + val;
+  }
+  return '$ 0';
+}
+
+export default function Acord25Form({ customer, policies, glCoverages = [], umbCoverages = [], wcPart2 }: Acord25FormProps) {
   const customerName = customer 
     ? (customer.name || [customer.first_name, customer.last_name].filter(Boolean).join(" "))
     : "KH Interiors, Inc.";
@@ -27,6 +71,16 @@ export default function Acord25Form({ customer, policies }: Acord25FormProps) {
 
   // Map policies to table rows
   const activePolicies = policies.filter(p => p.status === 'Active').slice(0, 5);
+
+  // ── Resolve the 6 standard ACORD 25 GL limit rows from real coverage data ──
+  const glLimits = {
+    eachOccurrence:     findLimit(glCoverages, "each occurrence"),
+    damagePremises:     findLimit(glCoverages, "fire damage", "damage to rented"),
+    medExp:             findLimit(glCoverages, "medical expense", "med exp"),
+    personalAdv:        findLimit(glCoverages, "personal & advertising", "personal & adv", "personal and advertising"),
+    generalAggregate:   findLimit(glCoverages, "general aggregate"),
+    productsCompOp:     findLimit(glCoverages, "products/completed", "products - comp", "products comp"),
+  };
 
   return (
     <div className="w-full max-w-[850px] mx-auto bg-white border border-black p-4 text-black font-sans text-[10px] leading-tight select-none shadow-lg my-4 scale-[0.9] origin-top">
@@ -146,8 +200,11 @@ export default function Acord25Form({ customer, policies }: Acord25FormProps) {
           const isUmbrella = policy.type?.toLowerCase().includes("umbrella");
           const isWorkersComp = policy.type?.toLowerCase().includes("workers");
 
+          // Only GL row uses the fetched limits; others keep generic display
+          const showGlLimits = isGeneralLiability && glCoverages.length > 0;
+
           return (
-            <div key={policy.id} className="grid grid-cols-[20px_1fr_25px_25px_120px_60px_60px_180px] border-b border-black divide-x divide-black h-[60px]">
+            <div key={policy.id} className="grid grid-cols-[20px_1fr_25px_25px_120px_60px_60px_180px] border-b border-black divide-x divide-black">
               <div className="p-1 text-center font-bold">{insurers[index % insurers.length].letter}</div>
               
               {/* Type of Insurance Block */}
@@ -158,6 +215,14 @@ export default function Acord25Form({ customer, policies }: Acord25FormProps) {
                     <div className="flex items-center ml-4 mt-2">
                       <div className="w-3 h-3 border border-black mr-1"></div> CLAIMS-MADE
                       <div className="w-3 h-3 border border-black flex items-center justify-center font-bold mx-1 ml-3">X</div> OCCUR
+                    </div>
+                    <div className="ml-1 mt-2 text-[7px]">
+                      <div className="font-bold">GEN'L AGGREGATE LIMIT APPLIES PER:</div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="flex items-center gap-0.5"><span className="w-2.5 h-2.5 border border-black inline-flex items-center justify-center text-[6px] font-bold">X</span> POLICY</span>
+                        <span className="flex items-center gap-0.5"><span className="w-2.5 h-2.5 border border-black inline-flex"></span> PRO-JECT</span>
+                        <span className="flex items-center gap-0.5"><span className="w-2.5 h-2.5 border border-black inline-flex"></span> LOC</span>
+                      </div>
                     </div>
                   </>
                 )}
@@ -183,12 +248,69 @@ export default function Acord25Form({ customer, policies }: Acord25FormProps) {
               <div className="p-1 text-center flex items-center justify-center">{policy.expDate}</div>
               
               {/* Limits Block */}
-              <div className="p-0.5 text-[8px] flex flex-col justify-between">
-                <div className="flex justify-between border-b border-black border-dashed"><span className="mr-2">EACH OCCURRENCE</span><span>$ 1,000,000</span></div>
-                <div className="flex justify-between border-b border-black border-dashed"><span className="mr-2">DAMAGE TO RENTED<br/>PREMISES (Ea occurrence)</span><span>$ 100,000</span></div>
-                <div className="flex justify-between border-b border-black border-dashed"><span className="mr-2">MED EXP (Any one person)</span><span>$ 5,000</span></div>
-                <div className="flex justify-between border-b border-black border-dashed"><span className="mr-2">PERSONAL & ADV INJURY</span><span>$ 1,000,000</span></div>
-                <div className="flex justify-between"><span className="mr-2">GENERAL AGGREGATE</span><span>$ 2,000,000</span></div>
+              <div className="p-0.5 text-[8px] flex flex-col">
+                {isGeneralLiability ? (
+                  <>
+                    <div className="flex justify-between border-b border-black border-dashed py-0.5">
+                      <span className="mr-1 font-bold">EACH OCCURRENCE</span>
+                      <span className="font-bold">{showGlLimits ? glLimits.eachOccurrence : '$ 1,000,000'}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-black border-dashed py-0.5">
+                      <span className="mr-1 leading-tight">DAMAGE TO RENTED<br/>PREMISES <span className="text-[7px]">(Ea occurrence)</span></span>
+                      <span className="font-bold self-end">{showGlLimits ? glLimits.damagePremises : '$ 50,000'}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-black border-dashed py-0.5">
+                      <span className="mr-1">MED EXP <span className="text-[7px]">(Any one person)</span></span>
+                      <span className="font-bold">{showGlLimits ? glLimits.medExp : '$ 5,000'}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-black border-dashed py-0.5">
+                      <span className="mr-1">PERSONAL &amp; ADV INJURY</span>
+                      <span className="font-bold">{showGlLimits ? glLimits.personalAdv : '$ 1,000,000'}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-black border-dashed py-0.5">
+                      <span className="mr-1">GENERAL AGGREGATE</span>
+                      <span className="font-bold">{showGlLimits ? glLimits.generalAggregate : '$ 2,000,000'}</span>
+                    </div>
+                    <div className="flex justify-between py-0.5">
+                      <span className="mr-1">PRODUCTS - COMP/OP AGG</span>
+                      <span className="font-bold">{showGlLimits ? glLimits.productsCompOp : '$ 2,000,000'}</span>
+                    </div>
+                  </>
+                ) : isUmbrella ? (
+                  <>
+                    <div className="flex justify-between border-b border-black border-dashed py-0.5">
+                      <span className="mr-1 font-bold">EACH OCCURRENCE</span>
+                      <span className="font-bold">{umbCoverages.length > 0 ? formatLimit(umbCoverages[0].limit2) : '$ 5,000,000'}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-black border-dashed py-0.5">
+                      <span className="mr-1 font-bold">AGGREGATE</span>
+                      <span className="font-bold">{umbCoverages.length > 0 ? formatLimit(umbCoverages[0].limit1) : '$ 5,000,000'}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-black border-dashed py-0.5">
+                      <span className="mr-1"></span>
+                      <span className="font-bold"></span>
+                    </div>
+                  </>
+                ) : isWorkersComp ? (
+                  <>
+                    <div className="flex justify-between border-b border-black border-dashed py-0.5">
+                      <span className="mr-1">E.L. EACH ACCIDENT</span>
+                      <span className="font-bold">{wcPart2 ? formatLimit(wcPart2.eachAccidentLimit) : '$ 1,000,000'}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-black border-dashed py-0.5">
+                      <span className="mr-1">E.L. DISEASE - EA EMPLOYEE</span>
+                      <span className="font-bold">{wcPart2 ? formatLimit(wcPart2.diseaseEachEmployee) : '$ 1,000,000'}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-black border-dashed py-0.5">
+                      <span className="mr-1">E.L. DISEASE - POLICY LIMIT</span>
+                      <span className="font-bold">{wcPart2 ? formatLimit(wcPart2.diseasePolicyLimit) : '$ 1,000,000'}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center text-gray-400 text-[7px] italic">
+                    —
+                  </div>
+                )}
               </div>
             </div>
           );

@@ -609,32 +609,32 @@
             <tr>
               <td class="limit-desc">EACH OCCURRENCE</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val">1,000,000</td>
+              <td class="limit-val" id="gl-each-occurrence">1,000,000</td>
             </tr>
             <tr>
               <td class="limit-desc">DAMAGE TO RENTED<br>PREMISES (Ea occurrence)</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val">50,000</td>
+              <td class="limit-val" id="gl-damage-rented">50,000</td>
             </tr>
             <tr>
               <td class="limit-desc">MED EXP (Any one person)</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val">5,000</td>
+              <td class="limit-val" id="gl-med-exp">5,000</td>
             </tr>
             <tr>
               <td class="limit-desc">PERSONAL & ADV INJURY</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val">1,000,000</td>
+              <td class="limit-val" id="gl-personal-adv">1,000,000</td>
             </tr>
             <tr>
               <td class="limit-desc">GENERAL AGGREGATE</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val">2,000,000</td>
+              <td class="limit-val" id="gl-general-agg">2,000,000</td>
             </tr>
             <tr>
               <td class="limit-desc">PRODUCTS - COMP/OP AGG</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val">2,000,000</td>
+              <td class="limit-val" id="gl-products-comp">2,000,000</td>
             </tr>
             <tr>
               <td class="limit-desc">&nbsp;</td>
@@ -809,12 +809,12 @@
             <tr>
               <td class="limit-desc">EACH OCCURRENCE</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val">5,000,000</td>
+              <td class="limit-val" id="umb-each-occurrence">5,000,000</td>
             </tr>
             <tr>
               <td class="limit-desc">AGGREGATE</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val">5,000,000</td>
+              <td class="limit-val" id="umb-aggregate">5,000,000</td>
             </tr>
             <tr>
               <td class="limit-desc">&nbsp;</td>
@@ -874,17 +874,17 @@
             <tr>
               <td class="limit-desc">E.L. EACH ACCIDENT</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val">1,000,000</td>
+              <td class="limit-val" id="wc-each-accident">1,000,000</td>
             </tr>
             <tr>
               <td class="limit-desc">E.L. DISEASE - EA EMPLOYEE</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val">1,000,000</td>
+              <td class="limit-val" id="wc-disease-ea-emp">1,000,000</td>
             </tr>
             <tr>
               <td class="limit-desc">E.L. DISEASE - POLICY LIMIT</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val">1,000,000</td>
+              <td class="limit-val" id="wc-disease-pol">1,000,000</td>
             </tr>
           </table>
         </td>
@@ -1397,6 +1397,36 @@
           }
         } catch (e) {
           console.error('[ACORD] Checkbox toggle parsing error:', e);
+        }
+
+        // ── 5. Populate dynamic limits ──
+        try {
+          const mappings = {
+            'gl-each-occurrence': params.get('glLimitEachOcc'),
+            'gl-damage-rented': params.get('glLimitDamage'),
+            'gl-med-exp': params.get('glLimitMedExp'),
+            'gl-personal-adv': params.get('glLimitPersonalAdv'),
+            'gl-general-agg': params.get('glLimitGenAgg'),
+            'gl-products-comp': params.get('glLimitProductsComp'),
+            'umb-each-occurrence': params.get('umbLimitEachOcc'),
+            'umb-aggregate': params.get('umbLimitAgg'),
+            'wc-each-accident': params.get('wcLimitEachAcc'),
+            'wc-disease-ea-emp': params.get('wcLimitDiseaseEaEmp'),
+            'wc-disease-pol': params.get('wcLimitDiseasePol')
+          };
+
+          Object.entries(mappings).forEach(([id, val]) => {
+            const el = document.getElementById(id);
+            if (el && val) {
+              // Strip out the '$ ' prefix if it's there so the HTML formatting remains clean, 
+              // as the '$' is already in the left column.
+              el.innerText = val.replace('$ ', '');
+            } else if (el) {
+              el.innerText = ''; // Clear default hardcoded value if no limit is available
+            }
+          });
+        } catch (e) {
+          console.error('[ACORD] Limits mapping parsing error:', e);
         }
 
       } catch (err) {

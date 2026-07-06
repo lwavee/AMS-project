@@ -359,6 +359,40 @@ function AuthenticatedDocumentPreview({ url, fileName }: { url: string; fileName
   }
 }
 
+// Helper: Find limit1 for a specific coverage name (case-insensitive, partial match)
+function findLimit(glCoverages: any[], ...names: string[]): string {
+  for (const name of names) {
+    const found = glCoverages.find(c => {
+      const dbCov = (c.coverage || '').toLowerCase();
+      const search = name.toLowerCase();
+      // Match exact or include (e.g., "fire damage" in "fire damage")
+      return dbCov.includes(search) || search.includes(dbCov);
+    });
+    if (found && found.limit1 && String(found.limit1).trim() !== '') {
+      const raw = String(found.limit1).replace(/,/g, '').replace(/\$/g, '');
+      const num = parseFloat(raw);
+      if (!isNaN(num)) {
+        return '$ ' + num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      }
+      return '$ ' + found.limit1;
+    }
+  }
+  return '$ 0';
+}
+
+// Helper: Safely format a raw limit value
+function formatLimit(val: any): string {
+  if (val && String(val).trim() !== '') {
+    const raw = String(val).replace(/,/g, '').replace(/\$/g, '');
+    const num = parseFloat(raw);
+    if (!isNaN(num)) {
+      return '$ ' + num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    return '$ ' + val;
+  }
+  return '$ 0';
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 //  EFORMS MANAGER PAGE
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -369,6 +403,9 @@ export default function EFormsManagerPage() {
 
   const [customer, setCustomer] = useState<any>(null);
   const [policies, setPolicies] = useState<any[]>([]);
+  const [glCoverages, setGlCoverages] = useState<any[]>([]);
+  const [umbCoverages, setUmbCoverages] = useState<any[]>([]);
+  const [wcPart2, setWcPart2] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -462,6 +499,61 @@ export default function EFormsManagerPage() {
           setSelectedEffDate(
             `${formatted[0].effDate || "N/A"}, ${formatted[0].status || "Active"}, ${formatted[0].type || ""}`
           );
+        }
+
+        // Fetch GL Coverages for ALL policies until we find one with data, 
+        // because the policy description might not explicitly contain "liability" (e.g. "Binder Billable")
+        if (formatted.length > 0) {
+          try {
+            const fetchPromises = formatted.map((p: any) => 
+              fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/general-liability`, {
+                headers: { Authorization: `Bearer ${token}` }
+              }).then(res => res.ok ? res.json() : [])
+            );
+            
+            const results = await Promise.all(fetchPromises);
+            // Use the first GL policy that actually has coverages with limits defined
+            const validCoverages = results.find(data => data && data.length > 0 && data.some((c: any) => c.limit1 && String(c.limit1).trim() !== ''));
+            if (validCoverages) {
+              setGlCoverages(validCoverages);
+            }
+          } catch (e) {
+            console.error("Failed to fetch GL coverages for certificate", e);
+          }
+          
+          try {
+            const umbPromises = formatted.map((p: any) => 
+              fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/umbrella`, {
+                headers: { Authorization: `Bearer ${token}` }
+              }).then(res => res.ok ? res.json() : [])
+            );
+            
+            const umbResults = await Promise.all(umbPromises);
+            // Use the first Umbrella policy that actually has coverages with limits defined
+            const validUmbCoverages = umbResults.find(data => data && data.length > 0 && data.some((c: any) => c.limit1 && String(c.limit1).trim() !== ''));
+            if (validUmbCoverages) {
+              setUmbCoverages(validUmbCoverages);
+            }
+          } catch (e) {
+            console.error("Failed to fetch Umbrella coverages for certificate", e);
+          }
+
+          try {
+            const wcPromises = formatted.map((p: any) => 
+              fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/workers-comp/part2`, {
+                headers: { Authorization: `Bearer ${token}` }
+              }).then(res => res.ok ? res.json() : null)
+            );
+            
+            const wcResults = await Promise.all(wcPromises);
+            // Use the first WC policy that actually has limits defined
+            const validWc = wcResults.find(data => data && (data.eachAccidentLimit || data.diseaseEachEmployee || data.diseasePolicyLimit));
+            if (validWc) {
+              setWcPart2(validWc);
+            }
+          } catch (e) {
+            console.error("Failed to fetch Workers Comp part 2 for certificate", e);
+          }
         }
       }
 
@@ -1405,6 +1497,26 @@ export default function EFormsManagerPage() {
             {/* ── Right Panel: Form preview area ── */}
             <div className="flex-1 flex flex-col bg-slate-50/50 overflow-auto relative" id="eform-preview-panel">
               {(() => {
+                const glLimits = {
+                  eachOccurrence:     findLimit(glCoverages, "each occurrence"),
+                  damagePremises:     findLimit(glCoverages, "fire damage", "damage to rented"),
+                  medExp:             findLimit(glCoverages, "medical expense", "med exp"),
+                  personalAdv:        findLimit(glCoverages, "personal & advertising", "personal & adv"),
+                  generalAggregate:   findLimit(glCoverages, "general aggregate"),
+                  productsCompOp:     findLimit(glCoverages, "products/completed", "products - comp"),
+                };
+                
+                const umbLimits = {
+                  eachOccurrence: umbCoverages.length > 0 ? formatLimit(umbCoverages[0].limit2) : '$ 0',
+                  aggregate:      umbCoverages.length > 0 ? formatLimit(umbCoverages[0].limit1) : '$ 0',
+                };
+
+                const wcLimits = {
+                  eachAccident:       wcPart2 ? formatLimit(wcPart2.eachAccidentLimit) : '$ 0',
+                  diseaseEaEmployee:  wcPart2 ? formatLimit(wcPart2.diseaseEachEmployee) : '$ 0',
+                  diseasePolicyLimit: wcPart2 ? formatLimit(wcPart2.diseasePolicyLimit) : '$ 0',
+                };
+
                 // Find if the selected node is a holder node by searching the tree
                 const findNodeById = (nodes: TreeNode[], id: string): TreeNode | null => {
                   for (const n of nodes) {
@@ -1441,8 +1553,19 @@ export default function EFormsManagerPage() {
                     masterDesc: masterDesc,
                     additionalInsured: JSON.stringify(h.additional_insured || {}),
                     waiverSubrogation: JSON.stringify(h.waiver_subrogation || {}),
+                    glLimitEachOcc: glLimits.eachOccurrence,
+                    glLimitDamage: glLimits.damagePremises,
+                    glLimitMedExp: glLimits.medExp,
+                    glLimitPersonalAdv: glLimits.personalAdv,
+                    glLimitGenAgg: glLimits.generalAggregate,
+                    glLimitProductsComp: glLimits.productsCompOp,
+                    umbLimitEachOcc: umbLimits.eachOccurrence,
+                    umbLimitAgg: umbLimits.aggregate,
+                    wcLimitEachAcc: wcLimits.eachAccident,
+                    wcLimitDiseaseEaEmp: wcLimits.diseaseEaEmployee,
+                    wcLimitDiseasePol: wcLimits.diseasePolicyLimit,
                   });
-                  return <iframe src={`/acord-form.html?${params.toString()}`} className="w-full h-full border-none bg-white" />;
+                  return <iframe key={params.toString()} src={`/acord-form.html?${params.toString()}`} className="w-full h-full border-none bg-white" />;
                 } else if (isMasterNode) {
                   // Find the certificate description
                   const selectedCert = createdCertificates.find(c => c.id === selectedNode);
@@ -1450,10 +1573,21 @@ export default function EFormsManagerPage() {
                   const params = new URLSearchParams({
                     customerId: customerId || '',
                     masterDesc: masterDesc,
+                    glLimitEachOcc: glLimits.eachOccurrence,
+                    glLimitDamage: glLimits.damagePremises,
+                    glLimitMedExp: glLimits.medExp,
+                    glLimitPersonalAdv: glLimits.personalAdv,
+                    glLimitGenAgg: glLimits.generalAggregate,
+                    glLimitProductsComp: glLimits.productsCompOp,
+                    umbLimitEachOcc: umbLimits.eachOccurrence,
+                    umbLimitAgg: umbLimits.aggregate,
+                    wcLimitEachAcc: wcLimits.eachAccident,
+                    wcLimitDiseaseEaEmp: wcLimits.diseaseEaEmployee,
+                    wcLimitDiseasePol: wcLimits.diseasePolicyLimit,
                   });
-                  return <iframe src={`/acord-form.html?${params.toString()}`} className="w-full h-full border-none bg-white" />;
+                  return <iframe key={params.toString()} src={`/acord-form.html?${params.toString()}`} className="w-full h-full border-none bg-white" />;
                 } else if (selectedNode?.startsWith("cert-file")) {
-                  return <Acord25Form customer={customer} policies={policies} />;
+                  return <Acord25Form customer={customer} policies={policies} glCoverages={glCoverages} umbCoverages={umbCoverages} wcPart2={wcPart2} />;
                 } else if (selectedNode?.startsWith("doc-") && selected) {
                   const docData = selected.documentData;
                   if (docData && docData.id) {
