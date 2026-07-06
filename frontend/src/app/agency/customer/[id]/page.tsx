@@ -48,7 +48,7 @@ const fieldValueCls = "text-sm font-semibold text-text-main mt-0.5";
 const emptyStateCls = "flex flex-col items-center justify-center py-20 text-center";
 
 
-// ─── Info field helper ───────────────────────────────────────────────────────
+// ─── Info field helper and a───────────────────────────────────────────────────────
 function InfoField({ label, value, icon: Icon }: { label: string; value?: string | null; icon?: any }) {
   return (
     <div className="flex flex-col gap-0.5">
