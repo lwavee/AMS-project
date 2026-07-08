@@ -65,6 +65,8 @@
     formType?: string;
     certNumber?: string;  // formatted display number e.g. "202605"
     certDbId?: string;    // raw numeric DB id e.g. "5"
+    masterData?: any;
+    isMaster?: boolean;
     documentData?: any;
     holderData?: {
       name: string;
@@ -92,6 +94,7 @@
     onCopyMaster,
     onDeleteMaster,
     onUpdateMaster,
+    onEditMaster,
     onOpenAttachments,
   }: {
     node: TreeNode;
@@ -102,6 +105,7 @@
     onCopyMaster?: (id: string) => void;
     onDeleteMaster?: (id: string) => void;
     onUpdateMaster?: (id: string) => void;
+    onEditMaster?: (id: string) => void;
     onOpenAttachments?: (id: string) => void;
   }) {
   const [expanded, setExpanded] = useState(depth === 0);
@@ -235,6 +239,15 @@
             >
               Delete
             </button>
+            <button 
+              className="w-full text-left px-3 py-1.5 hover:bg-slate-100 text-red-600"
+              onClick={() => {
+                setMenuOpen(false);
+                if (onEditMaster) onEditMaster(node.id);
+              }}
+            >
+              Edit Master
+            </button>            
             <div className="h-px bg-slate-200 my-1"></div>
            {/*
             <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Expand Node</button>
@@ -257,6 +270,7 @@
               onCopyMaster={onCopyMaster}
               onDeleteMaster={onDeleteMaster}
               onUpdateMaster={onUpdateMaster}
+              onEditMaster={onEditMaster}
               onOpenAttachments={onOpenAttachments}
             />
           ))}
@@ -377,7 +391,27 @@ function findLimit(glCoverages: any[], ...names: string[]): string {
       return '$ ' + found.limit1;
     }
   }
-  return '$ 0';
+  return '';
+}
+
+// Helper: Find limit2 for a specific coverage name (case-insensitive, partial match)
+function findLimit2(glCoverages: any[], ...names: string[]): string {
+  for (const name of names) {
+    const found = glCoverages.find(c => {
+      const dbCov = (c.coverage || '').toLowerCase();
+      const search = name.toLowerCase();
+      return dbCov.includes(search) || search.includes(dbCov);
+    });
+    if (found && found.limit2 && String(found.limit2).trim() !== '') {
+      const raw = String(found.limit2).replace(/,/g, '').replace(/\$/g, '');
+      const num = parseFloat(raw);
+      if (!isNaN(num)) {
+        return '$ ' + num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      }
+      return '$ ' + found.limit2;
+    }
+  }
+  return '';
 }
 
 // Helper: Safely format a raw limit value
@@ -390,7 +424,7 @@ function formatLimit(val: any): string {
     }
     return '$ ' + val;
   }
-  return '$ 0';
+  return '';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -404,11 +438,24 @@ export default function EFormsManagerPage() {
   const [customer, setCustomer] = useState<any>(null);
   const [policies, setPolicies] = useState<any[]>([]);
   const [glCoverages, setGlCoverages] = useState<any[]>([]);
+  const [glPolicyNo, setGlPolicyNo] = useState<string>('');
+  const [glEffDate, setGlEffDate] = useState<string>('');
+  const [glExpDate, setGlExpDate] = useState<string>('');
   const [umbCoverages, setUmbCoverages] = useState<any[]>([]);
+  const [umbPolicyNo, setUmbPolicyNo] = useState<string>('');
+  const [umbEffDate, setUmbEffDate] = useState<string>('');
+  const [umbExpDate, setUmbExpDate] = useState<string>('');
   const [wcPart2, setWcPart2] = useState<any>(null);
+  const [wcPolicyNo, setWcPolicyNo] = useState<string>('');
+  const [wcEffDate, setWcEffDate] = useState<string>('');
+  const [wcExpDate, setWcExpDate] = useState<string>('');
+  const [baCoverages, setBaCoverages] = useState<any[]>([]);
+  const [autoPolicyNo, setAutoPolicyNo] = useState<string>('');
+  const [autoEffDate, setAutoEffDate] = useState<string>('');
+  const [autoExpDate, setAutoExpDate] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const [policyCoveragesMap, setPolicyCoveragesMap] = useState<Record<string, { effDate: string, expDate: string, insurerName: string, gl: any[], umb: any[], wc: any, ba: any[] }>>({});
   const [activeTab, setActiveTab] = useState<EFormTab>("All Forms");
   const [selectedPolicy, setSelectedPolicy] = useState<string>("");
   const [selectedEffDate, setSelectedEffDate] = useState<string>("");
@@ -492,6 +539,7 @@ export default function EFormsManagerPage() {
           type: p.description || "",
           status: p.status,
           term: p.term,
+          company: p.writing_company || p.parent_company || p.company || "",
         }));
         setPolicies(formatted);
         if (formatted.length > 0) {
@@ -503,19 +551,33 @@ export default function EFormsManagerPage() {
 
         // Fetch GL Coverages for ALL policies until we find one with data, 
         // because the policy description might not explicitly contain "liability" (e.g. "Binder Billable")
+        let glResultsAll: any[][] = [];
+        let umbResultsAll: any[][] = [];
+        let wcResultsAll: any[] = [];
+        let baResultsAll: any[][] = [];
         if (formatted.length > 0) {
           try {
             const fetchPromises = formatted.map((p: any) => 
               fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/general-liability`, {
                 headers: { Authorization: `Bearer ${token}` }
-              }).then(res => res.ok ? res.json() : [])
+              }).then(async res => {
+                if (!res.ok || res.status === 204) return [];
+                try { return await res.json(); } catch { return []; }
+              })
             );
             
             const results = await Promise.all(fetchPromises);
+            glResultsAll = results;
             // Use the first GL policy that actually has coverages with limits defined
-            const validCoverages = results.find(data => data && data.length > 0 && data.some((c: any) => c.limit1 && String(c.limit1).trim() !== ''));
-            if (validCoverages) {
-              setGlCoverages(validCoverages);
+            const validIdx = results.findIndex(data => data && data.length > 0 && data.some((c: any) => c.limit1 && String(c.limit1).trim() !== ''));
+            if (validIdx !== -1) {
+              setGlCoverages(results[validIdx]);
+              const matchedPol = formatted[validIdx];
+              if (matchedPol) {
+                setGlPolicyNo(matchedPol.policyNum || '');
+                setGlEffDate(matchedPol.effDate || '');
+                setGlExpDate(matchedPol.expDate || '');
+              }
             }
           } catch (e) {
             console.error("Failed to fetch GL coverages for certificate", e);
@@ -525,14 +587,24 @@ export default function EFormsManagerPage() {
             const umbPromises = formatted.map((p: any) => 
               fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/umbrella`, {
                 headers: { Authorization: `Bearer ${token}` }
-              }).then(res => res.ok ? res.json() : [])
+              }).then(async res => {
+                if (!res.ok || res.status === 204) return [];
+                try { return await res.json(); } catch { return []; }
+              })
             );
             
             const umbResults = await Promise.all(umbPromises);
+            umbResultsAll = umbResults;
             // Use the first Umbrella policy that actually has coverages with limits defined
-            const validUmbCoverages = umbResults.find(data => data && data.length > 0 && data.some((c: any) => c.limit1 && String(c.limit1).trim() !== ''));
-            if (validUmbCoverages) {
-              setUmbCoverages(validUmbCoverages);
+            const validUmbIdx = umbResults.findIndex(data => data && data.length > 0 && data.some((c: any) => c.limit1 && String(c.limit1).trim() !== ''));
+            if (validUmbIdx !== -1) {
+              setUmbCoverages(umbResults[validUmbIdx]);
+              const matchedUmb = formatted[validUmbIdx];
+              if (matchedUmb) {
+                setUmbPolicyNo(matchedUmb.policyNum || '');
+                setUmbEffDate(matchedUmb.effDate || '');
+                setUmbExpDate(matchedUmb.expDate || '');
+              }
             }
           } catch (e) {
             console.error("Failed to fetch Umbrella coverages for certificate", e);
@@ -542,18 +614,72 @@ export default function EFormsManagerPage() {
             const wcPromises = formatted.map((p: any) => 
               fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/workers-comp/part2`, {
                 headers: { Authorization: `Bearer ${token}` }
-              }).then(res => res.ok ? res.json() : null)
+              }).then(async res => {
+                if (!res.ok || res.status === 204) return null;
+                try { return await res.json(); } catch { return null; }
+              })
             );
             
             const wcResults = await Promise.all(wcPromises);
+            wcResultsAll = wcResults;
             // Use the first WC policy that actually has limits defined
-            const validWc = wcResults.find(data => data && (data.eachAccidentLimit || data.diseaseEachEmployee || data.diseasePolicyLimit));
-            if (validWc) {
-              setWcPart2(validWc);
+            const validWcIdx = wcResults.findIndex(data => data && (data.eachAccidentLimit || data.diseaseEachEmployee || data.diseasePolicyLimit));
+            if (validWcIdx !== -1) {
+              setWcPart2(wcResults[validWcIdx]);
+              const matchedWc = formatted[validWcIdx];
+              if (matchedWc) {
+                setWcPolicyNo(matchedWc.policyNum || '');
+                setWcEffDate(matchedWc.effDate || '');
+                setWcExpDate(matchedWc.expDate || '');
+              }
             }
           } catch (e) {
             console.error("Failed to fetch Workers Comp part 2 for certificate", e);
           }
+
+          try {
+            const baPromises = formatted.map((p: any) => 
+              fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/business-auto`, {
+                headers: { Authorization: `Bearer ${token}` }
+              }).then(async res => {
+                if (!res.ok || res.status === 204) return [];
+                try { return await res.json(); } catch { return []; }
+              })
+            );
+            
+            const baResults = await Promise.all(baPromises);
+            baResultsAll = baResults;
+            // Use the first BA policy that actually has coverages with limits defined
+            const validBaIdx = baResults.findIndex(data => data && data.length > 0 && data.some((c: any) => c.limit1 && String(c.limit1).trim() !== ''));
+            if (validBaIdx !== -1) {
+              setBaCoverages(baResults[validBaIdx]);
+              const matchedBa = formatted[validBaIdx];
+              if (matchedBa) {
+                setAutoPolicyNo(matchedBa.policyNum || '');
+                setAutoEffDate(matchedBa.effDate || '');
+                setAutoExpDate(matchedBa.expDate || '');
+              }
+            }
+          } catch (e) {
+            console.error("Failed to fetch Business Auto coverages for certificate", e);
+          }
+
+          // Build policyCoveragesMap
+          const pMap: Record<string, { effDate: string, expDate: string, insurerName: string, gl: any[], umb: any[], wc: any, ba: any[] }> = {};
+          formatted.forEach((p: any, i: number) => {
+            if (p.policyNum) {
+              pMap[p.policyNum] = {
+                effDate: p.effDate || '',
+                expDate: p.expDate || '',
+                insurerName: p.company || '',
+                gl: glResultsAll[i] || [],
+                umb: umbResultsAll[i] || [],
+                wc: wcResultsAll[i] || null,
+                ba: baResultsAll[i] || []
+              };
+            }
+          });
+          setPolicyCoveragesMap(pMap);
         }
       }
 
@@ -633,6 +759,8 @@ export default function EFormsManagerPage() {
               label: c.description || certNumber,
               type: "folder" as const,
               formType: "Certificates",
+              isMaster: true,
+              masterData: c,
               certNumber,
               certDbId,
               children: [...holderChildren, ...docChildren],
@@ -1497,26 +1625,6 @@ export default function EFormsManagerPage() {
             {/* ── Right Panel: Form preview area ── */}
             <div className="flex-1 flex flex-col bg-slate-50/50 overflow-auto relative" id="eform-preview-panel">
               {(() => {
-                const glLimits = {
-                  eachOccurrence:     findLimit(glCoverages, "each occurrence"),
-                  damagePremises:     findLimit(glCoverages, "fire damage", "damage to rented"),
-                  medExp:             findLimit(glCoverages, "medical expense", "med exp"),
-                  personalAdv:        findLimit(glCoverages, "personal & advertising", "personal & adv"),
-                  generalAggregate:   findLimit(glCoverages, "general aggregate"),
-                  productsCompOp:     findLimit(glCoverages, "products/completed", "products - comp"),
-                };
-                
-                const umbLimits = {
-                  eachOccurrence: umbCoverages.length > 0 ? formatLimit(umbCoverages[0].limit2) : '$ 0',
-                  aggregate:      umbCoverages.length > 0 ? formatLimit(umbCoverages[0].limit1) : '$ 0',
-                };
-
-                const wcLimits = {
-                  eachAccident:       wcPart2 ? formatLimit(wcPart2.eachAccidentLimit) : '$ 0',
-                  diseaseEaEmployee:  wcPart2 ? formatLimit(wcPart2.diseaseEachEmployee) : '$ 0',
-                  diseasePolicyLimit: wcPart2 ? formatLimit(wcPart2.diseasePolicyLimit) : '$ 0',
-                };
-
                 // Find if the selected node is a holder node by searching the tree
                 const findNodeById = (nodes: TreeNode[], id: string): TreeNode | null => {
                   for (const n of nodes) {
@@ -1531,6 +1639,109 @@ export default function EFormsManagerPage() {
                 const selected = selectedNode ? findNodeById(treeData, selectedNode) : null;
                 const isHolderNode = selected?.holderData != null;
                 const isMasterNode = selectedNode?.startsWith("cert-file-master-");
+                
+                // Identify the relevant certificate
+                let activeCert: any = null;
+                if (isHolderNode) {
+                  const parentCertNode = treeData.find(c => 
+                    c.children && c.children.some((child: any) => child.id === selectedNode)
+                  );
+                  activeCert = parentCertNode?.masterData;
+                } else if (isMasterNode) {
+                  activeCert = selected?.masterData;
+                }
+
+                // Resolve coverages from policyCoveragesMap based on rowSelections
+                const rowSelections = activeCert?.form_data?.rowSelections || {};
+                
+                // 0: General Liability
+                const glSelectedPol = rowSelections[0];
+                const glMap = glSelectedPol ? policyCoveragesMap[glSelectedPol] : null;
+                const localGlCoverages = glMap?.gl || [];
+                const localGlPolicyNo = glSelectedPol || '';
+                const localGlEffDate = glMap?.effDate || '';
+                const localGlExpDate = glMap?.expDate || '';
+
+                // 1: Automobile
+                const autoSelectedPol = rowSelections[1];
+                const autoMap = autoSelectedPol ? policyCoveragesMap[autoSelectedPol] : null;
+                const localBaCoverages = autoMap?.ba || [];
+                const localAutoPolicyNo = autoSelectedPol || '';
+                const localAutoEffDate = autoMap?.effDate || '';
+                const localAutoExpDate = autoMap?.expDate || '';
+
+                // 7: Umbrella
+                const umbSelectedPol = rowSelections[7];
+                const umbMap = umbSelectedPol ? policyCoveragesMap[umbSelectedPol] : null;
+                const localUmbCoverages = umbMap?.umb || [];
+                const localUmbPolicyNo = umbSelectedPol || '';
+                const localUmbEffDate = umbMap?.effDate || '';
+                const localUmbExpDate = umbMap?.expDate || '';
+
+                // 4: Workers Comp
+                const wcSelectedPol = rowSelections[4];
+                const wcMap = wcSelectedPol ? policyCoveragesMap[wcSelectedPol] : null;
+                const localWcPart2 = wcMap?.wc || null;
+                const localWcPolicyNo = wcSelectedPol || '';
+                const localWcEffDate = wcMap?.effDate || '';
+                const localWcExpDate = wcMap?.expDate || '';
+
+                const glLimits = {
+                  eachOccurrence:     findLimit(localGlCoverages, "each occurrence"),
+                  damagePremises:     findLimit(localGlCoverages, "fire damage", "damage to rented"),
+                  medExp:             findLimit(localGlCoverages, "medical expense", "med exp"),
+                  personalAdv:        findLimit(localGlCoverages, "personal & advertising", "personal & adv"),
+                  generalAggregate:   findLimit(localGlCoverages, "general aggregate"),
+                  productsCompOp:     findLimit(localGlCoverages, "products/completed", "products - comp"),
+                };
+                
+                const umbLimits = {
+                  eachOccurrence: localUmbCoverages.length > 0 ? formatLimit(localUmbCoverages[0].limit2) : '',
+                  aggregate:      localUmbCoverages.length > 0 ? formatLimit(localUmbCoverages[0].limit1) : '',
+                };
+
+                const wcLimits = {
+                  eachAccident:       localWcPart2 ? formatLimit(localWcPart2.eachAccidentLimit) : '',
+                  diseaseEaEmployee:  localWcPart2 ? formatLimit(localWcPart2.diseaseEachEmployee) : '',
+                  diseasePolicyLimit: localWcPart2 ? formatLimit(localWcPart2.diseasePolicyLimit) : '',
+                };
+
+                const baLimits = {
+                  combinedSingleLimit: findLimit(localBaCoverages, "combined single limit"),
+                  bodilyInjuryPerson: findLimit(localBaCoverages, "bodily injury"),
+                  bodilyInjuryAccident: findLimit2(localBaCoverages, "bodily injury"),
+                  propertyDamage: findLimit(localBaCoverages, "property damage", "property danage"),
+                };
+
+                // Assign INSR LTR letters A/B/C/D sequentially without grouping (GL -> Umbrella -> Auto -> WC)
+                const insrMapping = (() => {
+                  const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+                  let currentLetterIdx = 0;
+                  const insurerList: { name: string, letter: string }[] = [];
+                  
+                  const assignNextLetter = (insurerName: string) => {
+                    if (currentLetterIdx >= letters.length) return '';
+                    const letter = letters[currentLetterIdx++];
+                    insurerList.push({ name: (insurerName || 'Unknown Insurer').trim(), letter });
+                    return letter;
+                  };
+
+                  const gl = glSelectedPol ? assignNextLetter(glMap?.insurerName || 'Unknown GL Insurer') : '';
+                  const auto = autoSelectedPol ? assignNextLetter(autoMap?.insurerName || 'Unknown Auto Insurer') : '';
+                  const umb = umbSelectedPol ? assignNextLetter(umbMap?.insurerName || 'Unknown Umb Insurer') : '';
+                  const wc = wcSelectedPol ? assignNextLetter(wcMap?.insurerName || 'Unknown WC Insurer') : '';
+
+                  return { gl, auto, umb, wc, insurers: insurerList };
+                })();
+
+                const dynamicInsurerParams = {
+                  insurerA: insrMapping.insurers[0]?.name || '',
+                  insurerB: insrMapping.insurers[1]?.name || '',
+                  insurerC: insrMapping.insurers[2]?.name || '',
+                  insurerD: insrMapping.insurers[3]?.name || '',
+                  insurerE: insrMapping.insurers[4]?.name || '',
+                  insurerF: insrMapping.insurers[5]?.name || '',
+                };
 
                 if (isHolderNode && selected?.holderData) {
                   const h = selected.holderData;
@@ -1553,6 +1764,23 @@ export default function EFormsManagerPage() {
                     masterDesc: masterDesc,
                     additionalInsured: JSON.stringify(h.additional_insured || {}),
                     waiverSubrogation: JSON.stringify(h.waiver_subrogation || {}),
+                    glPolicyNo: localGlPolicyNo,
+                    glEffDate: localGlEffDate,
+                    glExpDate: localGlExpDate,
+                    autoPolicyNo: localAutoPolicyNo,
+                    autoEffDate: localAutoEffDate,
+                    autoExpDate: localAutoExpDate,
+                    umbPolicyNo: localUmbPolicyNo,
+                    umbEffDate: localUmbEffDate,
+                    umbExpDate: localUmbExpDate,
+                    wcPolicyNo: localWcPolicyNo,
+                    wcEffDate: localWcEffDate,
+                    wcExpDate: localWcExpDate,
+                    ...dynamicInsurerParams,
+                    glInsrLtr: insrMapping.gl,
+                    autoInsrLtr: insrMapping.auto,
+                    umbInsrLtr: insrMapping.umb,
+                    wcInsrLtr: insrMapping.wc,
                     glLimitEachOcc: glLimits.eachOccurrence,
                     glLimitDamage: glLimits.damagePremises,
                     glLimitMedExp: glLimits.medExp,
@@ -1564,15 +1792,35 @@ export default function EFormsManagerPage() {
                     wcLimitEachAcc: wcLimits.eachAccident,
                     wcLimitDiseaseEaEmp: wcLimits.diseaseEaEmployee,
                     wcLimitDiseasePol: wcLimits.diseasePolicyLimit,
+                    baLimitCombinedSingle: baLimits.combinedSingleLimit,
+                    baLimitBodilyInjuryPerson: baLimits.bodilyInjuryPerson,
+                    baLimitBodilyInjuryAccident: baLimits.bodilyInjuryAccident,
+                    baLimitPropertyDamage: baLimits.propertyDamage,
                   });
                   return <iframe key={params.toString()} src={`/acord-form.html?${params.toString()}`} className="w-full h-full border-none bg-white" />;
                 } else if (isMasterNode) {
                   // Find the certificate description
-                  const selectedCert = createdCertificates.find(c => c.id === selectedNode);
-                  const masterDesc = selectedCert?.label || '';
+                  const masterDesc = activeCert?.label || '';
                   const params = new URLSearchParams({
                     customerId: customerId || '',
                     masterDesc: masterDesc,
+                    glPolicyNo: localGlPolicyNo,
+                    glEffDate: localGlEffDate,
+                    glExpDate: localGlExpDate,
+                    autoPolicyNo: localAutoPolicyNo,
+                    autoEffDate: localAutoEffDate,
+                    autoExpDate: localAutoExpDate,
+                    umbPolicyNo: localUmbPolicyNo,
+                    umbEffDate: localUmbEffDate,
+                    umbExpDate: localUmbExpDate,
+                    wcPolicyNo: localWcPolicyNo,
+                    wcEffDate: localWcEffDate,
+                    wcExpDate: localWcExpDate,
+                    ...dynamicInsurerParams,
+                    glInsrLtr: insrMapping.gl,
+                    autoInsrLtr: insrMapping.auto,
+                    umbInsrLtr: insrMapping.umb,
+                    wcInsrLtr: insrMapping.wc,
                     glLimitEachOcc: glLimits.eachOccurrence,
                     glLimitDamage: glLimits.damagePremises,
                     glLimitMedExp: glLimits.medExp,
@@ -1584,10 +1832,14 @@ export default function EFormsManagerPage() {
                     wcLimitEachAcc: wcLimits.eachAccident,
                     wcLimitDiseaseEaEmp: wcLimits.diseaseEaEmployee,
                     wcLimitDiseasePol: wcLimits.diseasePolicyLimit,
+                    baLimitCombinedSingle: baLimits.combinedSingleLimit,
+                    baLimitBodilyInjuryPerson: baLimits.bodilyInjuryPerson,
+                    baLimitBodilyInjuryAccident: baLimits.bodilyInjuryAccident,
+                    baLimitPropertyDamage: baLimits.propertyDamage,
                   });
                   return <iframe key={params.toString()} src={`/acord-form.html?${params.toString()}`} className="w-full h-full border-none bg-white" />;
                 } else if (selectedNode?.startsWith("cert-file")) {
-                  return <Acord25Form customer={customer} policies={policies} glCoverages={glCoverages} umbCoverages={umbCoverages} wcPart2={wcPart2} />;
+                  return <Acord25Form customer={customer} policies={policies} glCoverages={glCoverages} umbCoverages={umbCoverages} wcPart2={wcPart2} baCoverages={baCoverages} />;
                 } else if (selectedNode?.startsWith("doc-") && selected) {
                   const docData = selected.documentData;
                   if (docData && docData.id) {

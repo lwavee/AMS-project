@@ -7,7 +7,9 @@ import {
   Briefcase,
   Shield,
   Save,
-  Printer
+  Printer,
+  Check,
+  X
 } from "lucide-react";
 
 const US_STATES = [
@@ -251,7 +253,30 @@ export default function WorkersCompPage() {
         >
           <Save size={13} className="stroke-[2.5]" /> {isSaving ? 'Saving...' : 'Save'}
         </button>
-        <button className={btnCls}><Printer size={13} /> Print</button>
+        <button 
+          onClick={async () => {
+            await handleSave();
+            window.close();
+          }}
+          disabled={isSaving}
+          className={btnCls}
+        >
+          <Check size={13} /> Save & Close
+        </button>
+        <button 
+          onClick={() => window.close()}
+          className={btnCls}
+        >
+          <X size={13} /> Cancel
+        </button>
+        <button 
+          onClick={() => {
+            window.open(`/agency/customer/${customerId}/eforms-manager/print-options`, "_blank", "width=850,height=600,menubar=no,toolbar=no,location=no,status=no");
+          }}
+          className={btnCls}
+        >
+          <Printer size={13} /> Print
+        </button>
       </div>
 
       {/* ── 3. Content Area ── */}

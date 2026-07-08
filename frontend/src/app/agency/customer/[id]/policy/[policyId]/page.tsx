@@ -361,7 +361,24 @@ export default function PolicyDetailPage() {
         <button className={btnPrimaryCls}>
           <Save size={13} className="stroke-[2.5]" /> Save
         </button>
-        <button className={btnCls}>
+        <button 
+          onClick={() => window.close()}
+          className={btnCls}
+        >
+          <Check size={13} /> Save & Close
+        </button>
+        <button 
+          onClick={() => window.close()}
+          className={btnCls}
+        >
+          <X size={13} /> Cancel
+        </button>
+        <button 
+          onClick={() => {
+            window.open(`/agency/customer/${customerId}/eforms-manager/print-options`, "_blank", "width=850,height=600,menubar=no,toolbar=no,location=no,status=no");
+          }}
+          className={btnCls}
+        >
           <Printer size={13} /> Print
         </button>
         <div className="h-5 w-px bg-border-main mx-1"></div>

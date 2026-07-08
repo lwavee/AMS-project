@@ -15,6 +15,7 @@ interface Acord25FormProps {
   glCoverages?: GlCoverage[];
   umbCoverages?: GlCoverage[];
   wcPart2?: any;
+  baCoverages?: any[];
 }
 
 // Helper: Find limit1 for a specific coverage name (case-insensitive, partial match)
@@ -35,7 +36,28 @@ function findLimit(glCoverages: GlCoverage[], ...names: string[]): string {
       return '$ ' + found.limit1;
     }
   }
-  return '$ 0';
+  return '';
+}
+
+// Helper: Find limit2 for a specific coverage name (case-insensitive, partial match)
+function findLimit2(glCoverages: any[], ...names: string[]): string {
+  for (const name of names) {
+    const found = glCoverages.find(c => {
+      const dbCov = (c.coverage || '').toLowerCase();
+      const search = name.toLowerCase();
+      return dbCov.includes(search) || search.includes(dbCov);
+    });
+    if (found && found.limit2 && String(found.limit2).trim() !== '') {
+      // Format as dollar amount
+      const raw = String(found.limit2).replace(/,/g, '').replace(/\$/g, '');
+      const num = parseFloat(raw);
+      if (!isNaN(num)) {
+        return '$ ' + num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      }
+      return '$ ' + found.limit2;
+    }
+  }
+  return '';
 }
 
 // Helper: Safely format a raw limit value for exact umbrella matches
@@ -48,10 +70,10 @@ function formatLimit(val: any): string {
     }
     return '$ ' + val;
   }
-  return '$ 0';
+  return '';
 }
 
-export default function Acord25Form({ customer, policies, glCoverages = [], umbCoverages = [], wcPart2 }: Acord25FormProps) {
+export default function Acord25Form({ customer, policies, glCoverages = [], umbCoverages = [], wcPart2, baCoverages = [] }: Acord25FormProps) {
   const customerName = customer 
     ? (customer.name || [customer.first_name, customer.last_name].filter(Boolean).join(" "))
     : "KH Interiors, Inc.";
@@ -80,6 +102,14 @@ export default function Acord25Form({ customer, policies, glCoverages = [], umbC
     personalAdv:        findLimit(glCoverages, "personal & advertising", "personal & adv", "personal and advertising"),
     generalAggregate:   findLimit(glCoverages, "general aggregate"),
     productsCompOp:     findLimit(glCoverages, "products/completed", "products - comp", "products comp"),
+  };
+
+  // ── Resolve the 4 standard ACORD 25 Auto limit rows from real coverage data ──
+  const baLimits = {
+    combinedSingleLimit: findLimit(baCoverages, "combined single limit"),
+    bodilyInjuryPerson: findLimit(baCoverages, "bodily injury"),
+    bodilyInjuryAccident: findLimit2(baCoverages, "bodily injury"),
+    propertyDamage: findLimit(baCoverages, "property damage", "property danage"),
   };
 
   return (
@@ -202,6 +232,7 @@ export default function Acord25Form({ customer, policies, glCoverages = [], umbC
 
           // Only GL row uses the fetched limits; others keep generic display
           const showGlLimits = isGeneralLiability && glCoverages.length > 0;
+          const showBaLimits = isAuto && baCoverages.length > 0;
 
           return (
             <div key={policy.id} className="grid grid-cols-[20px_1fr_25px_25px_120px_60px_60px_180px] border-b border-black divide-x divide-black">
@@ -304,6 +335,25 @@ export default function Acord25Form({ customer, policies, glCoverages = [], umbC
                     <div className="flex justify-between border-b border-black border-dashed py-0.5">
                       <span className="mr-1">E.L. DISEASE - POLICY LIMIT</span>
                       <span className="font-bold">{wcPart2 ? formatLimit(wcPart2.diseasePolicyLimit) : '$ 1,000,000'}</span>
+                    </div>
+                  </>
+                ) : isAuto ? (
+                  <>
+                    <div className="flex justify-between border-b border-black border-dashed py-0.5">
+                      <span className="mr-1">COMBINED SINGLE LIMIT <span className="text-[7px]">(Ea accident)</span></span>
+                      <span className="font-bold">{showBaLimits ? baLimits.combinedSingleLimit : '$ 1,000,000'}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-black border-dashed py-0.5">
+                      <span className="mr-1">BODILY INJURY <span className="text-[7px]">(Per person)</span></span>
+                      <span className="font-bold">{showBaLimits ? baLimits.bodilyInjuryPerson : ''}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-black border-dashed py-0.5">
+                      <span className="mr-1">BODILY INJURY <span className="text-[7px]">(Per accident)</span></span>
+                      <span className="font-bold">{showBaLimits ? baLimits.bodilyInjuryAccident : ''}</span>
+                    </div>
+                    <div className="flex justify-between py-0.5">
+                      <span className="mr-1">PROPERTY DAMAGE <span className="text-[7px]">(Per accident)</span></span>
+                      <span className="font-bold">{showBaLimits ? baLimits.propertyDamage : ''}</span>
                     </div>
                   </>
                 ) : (

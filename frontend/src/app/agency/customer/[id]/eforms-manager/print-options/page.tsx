@@ -19,6 +19,52 @@ interface TreeNode {
   documentData?: any;
   holderData?: any;
   isMaster?: boolean;
+  masterData?: any;
+}
+
+// Helper: Find limit1 for a specific coverage name (case-insensitive, partial match)
+function findLimit(glCoverages: any[], ...names: string[]): string {
+  for (const name of names) {
+    const found = glCoverages.find(c => c.coverage?.toLowerCase().includes(name.toLowerCase()));
+    if (found && found.limit1 && String(found.limit1).trim() !== '') {
+      const raw = String(found.limit1).replace(/,/g, '');
+      const num = parseFloat(raw);
+      if (!isNaN(num)) {
+        return '$ ' + num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      }
+      return '$ ' + found.limit1;
+    }
+  }
+  return '';
+}
+
+// Helper: Find limit2 for a specific coverage name (case-insensitive, partial match)
+function findLimit2(glCoverages: any[], ...names: string[]): string {
+  for (const name of names) {
+    const found = glCoverages.find(c => c.coverage?.toLowerCase().includes(name.toLowerCase()));
+    if (found && found.limit2 && String(found.limit2).trim() !== '') {
+      const raw = String(found.limit2).replace(/,/g, '');
+      const num = parseFloat(raw);
+      if (!isNaN(num)) {
+        return '$ ' + num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      }
+      return '$ ' + found.limit2;
+    }
+  }
+  return '';
+}
+
+// Helper: Safely format a raw limit value
+function formatLimit(val: any): string {
+  if (val && String(val).trim() !== '') {
+    const raw = String(val).replace(/,/g, '').replace(/\$/g, '');
+    const num = parseFloat(raw);
+    if (!isNaN(num)) {
+      return '$ ' + num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    return '$ ' + val;
+  }
+  return '';
 }
 
 export default function PrintOptionsPage() {
@@ -27,9 +73,11 @@ export default function PrintOptionsPage() {
   const customerId = params?.id as string;
   const [customer, setCustomer] = useState<any>(null);
 
-  // Left panel state
   const [printOption, setPrintOption] = useState("formOnly");
   const [separatePdf, setSeparatePdf] = useState(false);
+  
+  // Coverages state
+  const [policyCoveragesMap, setPolicyCoveragesMap] = useState<Record<string, { effDate: string, expDate: string, insurerName: string, gl: any[], umb: any[], wc: any, ba: any[] }>>({});
 
   // Tree state
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
@@ -48,14 +96,93 @@ export default function PrintOptionsPage() {
         return;
       }
 
-      const [custRes, certRes, docRes] = await Promise.all([
+      const [custRes, certRes, docRes, polRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/customers/${customerId}`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API_BASE_URL}/api/customers/${customerId}/certificates`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API_BASE_URL}/api/customers/${customerId}/documents`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_BASE_URL}/api/customers/${customerId}/policies`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
 
       if (!custRes.ok) throw new Error("Failed to load customer");
       setCustomer(await custRes.json());
+
+      if (polRes.ok) {
+        const polData = await polRes.json();
+        
+        let glResultsAll: any[][] = [];
+        let umbResultsAll: any[][] = [];
+        let wcResultsAll: any[] = [];
+        let baResultsAll: any[][] = [];
+
+        // Fetch limits for GL, Umbrella, and WC just like in eforms-manager
+        try {
+          const fetchPromises = polData.map((p: any) => 
+            fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/general-liability`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }).then(async res => {
+              if (!res.ok || res.status === 204) return [];
+              try { return await res.json(); } catch { return []; }
+            })
+          );
+          const results = await Promise.all(fetchPromises);
+          glResultsAll = results;
+        } catch (e) { console.error("GL Error", e); }
+        
+        try {
+          const umbPromises = polData.map((p: any) => 
+            fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/umbrella`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }).then(async res => {
+              if (!res.ok || res.status === 204) return [];
+              try { return await res.json(); } catch { return []; }
+            })
+          );
+          const umbResults = await Promise.all(umbPromises);
+          umbResultsAll = umbResults;
+        } catch (e) { console.error("Umb Error", e); }
+        
+        try {
+          const wcPromises = polData.map((p: any) => 
+            fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/workers-comp/part2`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }).then(async res => {
+              if (!res.ok || res.status === 204) return null;
+              try { return await res.json(); } catch { return null; }
+            })
+          );
+          const wcResults = await Promise.all(wcPromises);
+          wcResultsAll = wcResults;
+        } catch (e) { console.error("WC Error", e); }
+
+        try {
+          const baPromises = polData.map((p: any) => 
+            fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/business-auto`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }).then(async res => {
+              if (!res.ok || res.status === 204) return [];
+              try { return await res.json(); } catch { return []; }
+            })
+          );
+          const baResults = await Promise.all(baPromises);
+          baResultsAll = baResults;
+        } catch (e) { console.error("BA Error", e); }
+        
+        const pMap: Record<string, { effDate: string, expDate: string, insurerName: string, gl: any[], umb: any[], wc: any, ba: any[] }> = {};
+        polData.forEach((p: any, i: number) => {
+          if (p.policy_num) {
+            pMap[p.policy_num] = {
+              effDate: p.eff_date || '',
+              expDate: p.exp_date || '',
+              insurerName: p.writing_company || p.parent_company || p.company || '',
+              gl: glResultsAll[i] || [],
+              umb: umbResultsAll[i] || [],
+              wc: wcResultsAll[i] || null,
+              ba: baResultsAll[i] || []
+            };
+          }
+        });
+        setPolicyCoveragesMap(pMap);
+      }
 
       let allDocuments: any[] = [];
       if (docRes && docRes.ok) allDocuments = await docRes.json();
@@ -106,6 +233,7 @@ export default function PrintOptionsPage() {
               isMaster: true,
               certNumber,
               certDbId,
+              masterData: c,
               children: [...holderChildren, ...docChildren],
             };
           })
@@ -173,34 +301,166 @@ export default function PrintOptionsPage() {
         const shouldInclude = isAllChecked || checkedNodes.has(n.id);
         
         if (shouldInclude) {
-          if (n.isMaster) {
-            const params = new URLSearchParams({ customerId, masterDesc: n.label });
-            const attachments = n.children?.filter(c => c.id.startsWith("doc-") && (isAllChecked || checkedNodes.has(c.id))) || [];
-            items.push({
-              type: "master", id: n.id, name: n.label, url: `/acord-form.html?${params.toString()}`, attachments
-            });
-          } else if (n.id.startsWith("holder-") && parentMaster) {
-            const h = n.holderData;
-            const params = new URLSearchParams({
-              customerId,
-              holderName: h.name || '',
-              holderAddress: h.address || '',
-              holderAddress2: h.address2 || '',
-              holderCity: h.city || '',
-              holderState: h.state || '',
-              holderZip: h.zip || '',
-              holderDesc: h.desc_of_ops || '',
-              holderIssueDate: h.issue_date || '',
-              holderNoticeDays: String(h.written_notice_days ?? 10),
-              masterDesc: parentMaster.label,
-              additionalInsured: JSON.stringify(h.additional_insured || {}),
-              waiverSubrogation: JSON.stringify(h.waiver_subrogation || {}),
-            });
-            const attachments = n.children?.filter(c => c.id.startsWith("doc-") && (isAllChecked || checkedNodes.has(c.id))) || [];
-            items.push({
-              type: "holder", id: n.id, name: n.label, url: `/acord-form.html?${params.toString()}`, attachments
-            });
+          const activeCert = n.isMaster ? n.masterData : parentMaster?.masterData;
+
+          if (activeCert) {
+            const rowSelections = activeCert.form_data?.rowSelections || {};
+            
+            // 0: General Liability
+            const glSelectedPol = rowSelections[0];
+            const glMap = glSelectedPol ? policyCoveragesMap[glSelectedPol] : null;
+            const localGlCoverages = glMap?.gl || [];
+            const localGlPolicyNo = glSelectedPol || '';
+            const localGlEffDate = glMap?.effDate || '';
+            const localGlExpDate = glMap?.expDate || '';
+
+            // 1: Automobile
+            const autoSelectedPol = rowSelections[1];
+            const autoMap = autoSelectedPol ? policyCoveragesMap[autoSelectedPol] : null;
+            const localBaCoverages = autoMap?.ba || [];
+            const localAutoPolicyNo = autoSelectedPol || '';
+            const localAutoEffDate = autoMap?.effDate || '';
+            const localAutoExpDate = autoMap?.expDate || '';
+
+            // 7: Umbrella
+            const umbSelectedPol = rowSelections[7];
+            const umbMap = umbSelectedPol ? policyCoveragesMap[umbSelectedPol] : null;
+            const localUmbCoverages = umbMap?.umb || [];
+            const localUmbPolicyNo = umbSelectedPol || '';
+            const localUmbEffDate = umbMap?.effDate || '';
+            const localUmbExpDate = umbMap?.expDate || '';
+
+            // 4: Workers Comp
+            const wcSelectedPol = rowSelections[4];
+            const wcMap = wcSelectedPol ? policyCoveragesMap[wcSelectedPol] : null;
+            const localWcPart2 = wcMap?.wc || null;
+            const localWcPolicyNo = wcSelectedPol || '';
+            const localWcEffDate = wcMap?.effDate || '';
+            const localWcExpDate = wcMap?.expDate || '';
+
+            const glLimits = {
+              eachOccurrence:     findLimit(localGlCoverages, "each occurrence"),
+              damagePremises:     findLimit(localGlCoverages, "fire damage", "damage to rented"),
+              medExp:             findLimit(localGlCoverages, "medical expense", "med exp"),
+              personalAdv:        findLimit(localGlCoverages, "personal & advertising", "personal & adv"),
+              generalAggregate:   findLimit(localGlCoverages, "general aggregate"),
+              productsCompOp:     findLimit(localGlCoverages, "products/completed", "products - comp"),
+            };
+            
+            const umbLimits = {
+              eachOccurrence: localUmbCoverages.length > 0 ? formatLimit(localUmbCoverages[0].limit2) : '',
+              aggregate:      localUmbCoverages.length > 0 ? formatLimit(localUmbCoverages[0].limit1) : '',
+            };
+
+            const wcLimits = {
+              eachAccident:       localWcPart2 ? formatLimit(localWcPart2.eachAccidentLimit) : '',
+              diseaseEaEmployee:  localWcPart2 ? formatLimit(localWcPart2.diseaseEachEmployee) : '',
+              diseasePolicyLimit: localWcPart2 ? formatLimit(localWcPart2.diseasePolicyLimit) : '',
+            };
+
+            const baLimits = {
+              combinedSingleLimit: findLimit(localBaCoverages, "combined single limit"),
+              bodilyInjuryPerson: findLimit(localBaCoverages, "bodily injury"),
+              bodilyInjuryAccident: findLimit2(localBaCoverages, "bodily injury"),
+              propertyDamage: findLimit(localBaCoverages, "property damage", "property danage"),
+            };
+
+            // Assign INSR LTR letters A/B/C/D sequentially without grouping (GL -> Umbrella -> Auto -> WC)
+            const insrMapping = (() => {
+              const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+              let currentLetterIdx = 0;
+              const insurerList: { name: string, letter: string }[] = [];
+              
+              const assignNextLetter = (insurerName: string) => {
+                if (currentLetterIdx >= letters.length) return '';
+                const letter = letters[currentLetterIdx++];
+                insurerList.push({ name: (insurerName || 'Unknown Insurer').trim(), letter });
+                return letter;
+              };
+
+              const gl = glSelectedPol ? assignNextLetter(glMap?.insurerName || 'Unknown GL Insurer') : '';
+              const auto = autoSelectedPol ? assignNextLetter(autoMap?.insurerName || 'Unknown Auto Insurer') : '';
+              const umb = umbSelectedPol ? assignNextLetter(umbMap?.insurerName || 'Unknown Umb Insurer') : '';
+              const wc = wcSelectedPol ? assignNextLetter(wcMap?.insurerName || 'Unknown WC Insurer') : '';
+
+              return { gl, auto, umb, wc, insurers: insurerList };
+            })();
+
+            const dynamicInsurerParams = {
+              insurerA: insrMapping.insurers[0]?.name || '',
+              insurerB: insrMapping.insurers[1]?.name || '',
+              insurerC: insrMapping.insurers[2]?.name || '',
+              insurerD: insrMapping.insurers[3]?.name || '',
+              insurerE: insrMapping.insurers[4]?.name || '',
+              insurerF: insrMapping.insurers[5]?.name || '',
+            };
+
+            const limitsObj = {
+              glPolicyNo: localGlPolicyNo,
+              glEffDate: localGlEffDate,
+              glExpDate: localGlExpDate,
+              autoPolicyNo: localAutoPolicyNo,
+              autoEffDate: localAutoEffDate,
+              autoExpDate: localAutoExpDate,
+              umbPolicyNo: localUmbPolicyNo,
+              umbEffDate: localUmbEffDate,
+              umbExpDate: localUmbExpDate,
+              wcPolicyNo: localWcPolicyNo,
+              wcEffDate: localWcEffDate,
+              wcExpDate: localWcExpDate,
+              ...dynamicInsurerParams,
+              glInsrLtr: insrMapping.gl,
+              autoInsrLtr: insrMapping.auto,
+              umbInsrLtr: insrMapping.umb,
+              wcInsrLtr: insrMapping.wc,
+              glLimitEachOcc: glLimits.eachOccurrence,
+              glLimitDamage: glLimits.damagePremises,
+              glLimitMedExp: glLimits.medExp,
+              glLimitPersonalAdv: glLimits.personalAdv,
+              glLimitGenAgg: glLimits.generalAggregate,
+              glLimitProductsComp: glLimits.productsCompOp,
+              umbLimitEachOcc: umbLimits.eachOccurrence,
+              umbLimitAgg: umbLimits.aggregate,
+              wcLimitEachAcc: wcLimits.eachAccident,
+              wcLimitDiseaseEaEmp: wcLimits.diseaseEaEmployee,
+              wcLimitDiseasePol: wcLimits.diseasePolicyLimit,
+              baLimitCombinedSingle: baLimits.combinedSingleLimit,
+              baLimitBodilyInjuryPerson: baLimits.bodilyInjuryPerson,
+              baLimitBodilyInjuryAccident: baLimits.bodilyInjuryAccident,
+              baLimitPropertyDamage: baLimits.propertyDamage,
+            };
+
+            if (n.isMaster) {
+              const params = new URLSearchParams({ customerId, masterDesc: n.label || "", ...limitsObj });
+              const attachments = n.children?.filter(c => c.id.startsWith("doc-") && (isAllChecked || checkedNodes.has(c.id))) || [];
+              items.push({
+                type: "master", id: n.id, name: n.label || "Master", url: `/acord-form.html?${params.toString()}`, attachments
+              });
+            } else if (n.id.startsWith("holder-") && parentMaster) {
+              const h = n.holderData;
+              const params = new URLSearchParams({
+                customerId,
+                holderName: h.name || '',
+                holderAddress: h.address || '',
+                holderAddress2: h.address2 || '',
+                holderCity: h.city || '',
+                holderState: h.state || '',
+                holderZip: h.zip || '',
+                holderDesc: h.desc_of_ops || '',
+                holderIssueDate: h.issue_date || '',
+                holderNoticeDays: String(h.written_notice_days ?? 10),
+                masterDesc: parentMaster?.label || "",
+                additionalInsured: JSON.stringify(h.additional_insured || {}),
+                waiverSubrogation: JSON.stringify(h.waiver_subrogation || {}),
+                ...limitsObj
+              });
+              const attachments = n.children?.filter(c => c.id.startsWith("doc-") && (isAllChecked || checkedNodes.has(c.id))) || [];
+              items.push({
+                type: "holder", id: n.id, name: n.label || "Holder", url: `/acord-form.html?${params.toString()}`, attachments
+              });
+            }
           }
+
         }
         if (n.children) traverse(n.children, n.isMaster ? n : parentMaster);
       }
@@ -218,12 +478,14 @@ export default function PrintOptionsPage() {
       iframe.style.height = "1100px";
       iframe.src = url;
       
-      iframe.onload = async () => {
+      let isFinished = false;
+
+      const finishIframe = async () => {
+        if (isFinished) return;
+        isFinished = true;
         try {
           const doc = iframe.contentDocument;
           if (!doc) throw new Error("No iframe document");
-          // Wait for JS in acord-form to finish populating
-          await new Promise(r => setTimeout(r, 1000)); 
           
           // Convert all img src to base64 so CustomJS can render them
           const imgs = doc.querySelectorAll('img');
@@ -245,13 +507,33 @@ export default function PrintOptionsPage() {
           }
 
           const html = doc.documentElement.outerHTML;
-          document.body.removeChild(iframe);
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
           resolve(html);
         } catch (err) {
-          document.body.removeChild(iframe);
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
           reject(err);
         }
       };
+
+      const onMessage = (e: MessageEvent) => {
+        if (e.data?.type === 'ACORD_FORM_READY') {
+          window.removeEventListener('message', onMessage);
+          finishIframe();
+        }
+      };
+
+      window.addEventListener('message', onMessage);
+
+      // Fallback timeout in case the message never fires
+      setTimeout(() => {
+        window.removeEventListener('message', onMessage);
+        finishIframe();
+      }, 4000);
+
       document.body.appendChild(iframe);
     });
   };
@@ -318,6 +600,8 @@ export default function PrintOptionsPage() {
 
   const handleSavePdf = async () => {
     const items = getSelectedItems();
+    console.log("handleSavePdf -> items:", items);
+    
     if (items.length === 0) return alert("Please select at least one form to print.");
     
     setIsProcessing(true);
@@ -367,6 +651,8 @@ export default function PrintOptionsPage() {
 
   const handlePrint = async () => {
     const items = getSelectedItems();
+    console.log("handlePrint -> items:", items);
+    
     if (items.length === 0) return alert("Please select at least one form to print.");
     
     // For native print, open all URLs in a single hidden iframe separated by page breaks
@@ -395,7 +681,7 @@ export default function PrintOptionsPage() {
                 setTimeout(() => window.close(), 500);
                 // Also close the parent print-options window
                 window.opener?.close();
-              }, 1500); // give iframes time to load
+              }, 3500); // give iframes plenty of time to load data
             };
           </script>
         </body>
@@ -493,41 +779,6 @@ export default function PrintOptionsPage() {
               Create separate PDF file(s)
             </label>
           </div>
-
-          {/* Quick Select Options (Commented out per user request) */}
-          {/*
-          <div className="bg-white border border-border-main p-5 rounded-2xl shadow-sm flex flex-col gap-4">
-            <h3 className="text-[11px] font-bold text-text-muted uppercase tracking-widest border-b border-border-main/50 pb-2">Quick Select Options</h3>
-            
-            <div className="border border-border-main rounded-xl p-3 bg-bg-base/50 flex flex-col gap-2">
-              <span className="text-[12px] font-semibold text-text-muted">Based on Form Changed Date(s)</span>
-              <div className="flex items-center gap-2 mt-1">
-                <label className="text-[12px] font-bold text-text-main w-10">From:</label>
-                <input type="date" className="flex-1 text-[12px] font-semibold bg-white border border-border-main rounded-lg px-2 py-1.5 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20" />
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-[12px] font-bold text-text-main w-10">To:</label>
-                <input type="date" className="flex-1 text-[12px] font-semibold bg-white border border-border-main rounded-lg px-2 py-1.5 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20" />
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2.5 mt-1">
-              <label className="flex items-center gap-2 text-[13px] font-semibold text-text-main cursor-pointer">
-                <input type="checkbox" className="accent-primary w-4 h-4 rounded" />
-                All Unprinted
-              </label>
-              <label className="flex items-center gap-2 text-[13px] font-semibold text-text-main cursor-pointer">
-                <input type="checkbox" className="accent-primary w-4 h-4 rounded" />
-                Certificates Only
-              </label>
-            </div>
-            
-            <button className="self-start mt-2 h-8 px-4 flex items-center justify-center border border-border-main bg-white hover:bg-secondary/60 text-text-muted rounded-xl transition-all cursor-pointer">
-              <span className="text-[16px]">🔄</span>
-            </button>
-          </div>
-          */}
-
         </div>
 
         {/* RIGHT COLUMN - TREE */}

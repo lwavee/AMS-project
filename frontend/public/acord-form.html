@@ -545,7 +545,7 @@
       </tr>
       <!-- Row 1 CGL -->
       <tr>
-        <td class="center" style="vertical-align: middle;">A</td>
+        <td id="gl-insr-ltr" class="center" style="vertical-align: middle; font-weight: bold;"></td>
         <td style="padding: 0; vertical-align: top;">
           <div style="display: flex;">
             <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
@@ -601,9 +601,9 @@
         </td>
         <td id="gl-ai" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
         <td id="gl-ws" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
-        <td class="center" style="vertical-align: middle;">ISCSPCM000021233</td>
-        <td class="center" style="vertical-align: middle;">06/29/2026</td>
-        <td class="center" style="vertical-align: middle;">06/29/2027</td>
+        <td id="gl-policy-number" class="center" style="vertical-align: middle;"></td>
+        <td id="gl-eff-date" class="center" style="vertical-align: middle;"></td>
+        <td id="gl-exp-date" class="center" style="vertical-align: middle;"></td>
         <td style="padding: 0;">
           <table class="limits-table">
             <tr>
@@ -646,7 +646,7 @@
       </tr>
       <!-- Row 2 Auto -->
       <tr>
-        <td class="center" style="vertical-align: middle;"></td>
+        <td id="auto-insr-ltr" class="center" style="vertical-align: middle; font-weight: bold;"></td>
         <td style="padding: 0; vertical-align: top;">
           <div style="display: flex; flex-direction: column; height: 100%;">
             <div style="padding: 2px 4px 0 4px; font-size: 8px; font-weight: bold; line-height: 12px;">
@@ -718,37 +718,37 @@
         </td>
         <td id="auto-ai" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
         <td id="auto-ws" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
-        <td></td>
-        <td></td>
-        <td></td>
+        <td id="auto-policy-number" class="center" style="vertical-align: middle;"></td>
+        <td id="auto-eff-date" class="center" style="vertical-align: middle;"></td>
+        <td id="auto-exp-date" class="center" style="vertical-align: middle;"></td>
         <td style="padding: 0;">
           <table class="limits-table">
             <tr>
               <td class="limit-desc">COMBINED SINGLE LIMIT<br>(Ea accident)</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val">1,000,000</td>
+              <td class="limit-val" id="auto-combined-single">1,000,000</td>
             </tr>
             <tr>
               <td class="limit-desc">BODILY INJURY (Per person)</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val"></td>
+              <td class="limit-val" id="auto-bodily-injury-person"></td>
             </tr>
             <tr>
               <td class="limit-desc">BODILY INJURY (Per accident)</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val"></td>
+              <td class="limit-val" id="auto-bodily-injury-accident"></td>
             </tr>
             <tr>
               <td class="limit-desc">PROPERTY DAMAGE<br>(Per accident)</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val"></td>
+              <td class="limit-val" id="auto-property-damage"></td>
             </tr>
           </table>
         </td>
       </tr>
       <!-- Row 3 Umbrella -->
       <tr>
-        <td></td>
+        <td id="umb-insr-ltr" class="center" style="vertical-align: middle; font-weight: bold;"></td>
         <td style="padding: 0; vertical-align: top;">
           <div style="display: flex; flex-direction: column; height: 100%;">
             <div style="display: flex; border-bottom: 1px solid black;">
@@ -801,9 +801,9 @@
         </td>
         <td id="umbrella-ai" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
         <td id="umbrella-ws" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
-        <td></td>
-        <td></td>
-        <td></td>
+        <td id="umb-policy-number" class="center" style="vertical-align: middle;"></td>
+        <td id="umb-eff-date" class="center" style="vertical-align: middle;"></td>
+        <td id="umb-exp-date" class="center" style="vertical-align: middle;"></td>
         <td style="padding: 0;">
           <table class="limits-table">
             <tr>
@@ -826,7 +826,7 @@
       </tr>
       <!-- Row 4 Workers Comp -->
       <tr>
-        <td></td>
+        <td id="wc-insr-ltr" class="center" style="vertical-align: middle; font-weight: bold;"></td>
         <td style="padding: 2px 4px; font-size: 7px; line-height: 1.1; vertical-align: top;">
           <strong>WORKERS COMPENSATION<br>AND EMPLOYERS' LIABILITY</strong>
           <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 1px;">
@@ -847,9 +847,9 @@
         </td>
         <td></td>
         <td id="wc-ws" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
-        <td class="center" style="vertical-align: middle;"></td>
-        <td class="center" style="vertical-align: middle;"></td>
-        <td class="center" style="vertical-align: middle;"></td>
+        <td id="wc-policy-number" class="center" style="vertical-align: middle;"></td>
+        <td id="wc-eff-date" class="center" style="vertical-align: middle;"></td>
+        <td id="wc-exp-date" class="center" style="vertical-align: middle;"></td>
         <td style="padding: 0;">
           <table class="limits-table">
             <tr>
@@ -1200,237 +1200,262 @@
 
     window.addEventListener('DOMContentLoaded', async () => {
       const params = new URLSearchParams(window.location.search);
-      const customerId = params.get('customerId');
-      console.log('[ACORD] customerId:', customerId);
-      if (!customerId) { console.warn('[ACORD] No customerId in URL'); return; }
 
-      const token = localStorage.getItem("token");
-      console.log('[ACORD] token present:', !!token);
-      if (!token) { console.warn('[ACORD] No auth token in localStorage'); return; }
+      // ── 1. Populate URL query parameters synchronously first ────────────────
+      // This ensures all limits and holder details are rendered immediately without waiting on network calls
 
-      const letters = ['a', 'b', 'c', 'd', 'e', 'f'];
-
-
-
+      // A. Populate dynamic limits
       try {
-        // ── 1. Fetch customer details ─────────────────────────────────────
-        const custResponse = await fetch(`http://127.0.0.1:8000/api/customers/${customerId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        console.log('[ACORD] customer status:', custResponse.status);
-        if (custResponse.ok) {
-          const customer = await custResponse.json();
-          if (customer) {
-            if (customer.name) document.getElementById('insured-name').innerText = customer.name;
-            if (customer.address) document.getElementById('insured-address').innerText = customer.address;
-            if (customer.city) document.getElementById('insured-city').innerText = customer.city;
-
-            const stateZip = [];
-            if (customer.state) stateZip.push(customer.state);
-            if (customer.zip) stateZip.push(customer.zip);
-            if (stateZip.length > 0) {
-              document.getElementById('insured-state-zip').innerText = stateZip.join(' ');
-            }
-
-            if (customer.contact_person) {
-              const contact = customer.contact_person;
-              const nameEl = document.getElementById('contact-name');
-              const phoneEl = document.getElementById('contact-phone');
-              const emailEl = document.getElementById('contact-email');
-              const faxEl = document.getElementById('contact-fax');
-              if (contact.name && nameEl) nameEl.innerText = contact.name;
-              if (contact.phone && phoneEl) phoneEl.innerText = contact.phone;
-              if (contact.email && emailEl) emailEl.innerText = contact.email;
-              if (contact.fax && faxEl) faxEl.innerText = contact.fax;
-            }
-          }
+        // Helper: format YYYY-MM-DD to MM/DD/YYYY
+        function fmtDate(d) {
+          if (!d) return '';
+          const m = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
+          if (m) return `${m[2]}/${m[3]}/${m[1]}`;
+          return d; // already formatted or unknown
         }
 
-        // ── 2. Fetch policies → populate INSURER A-F ─────────────────────
-        const polResponse = await fetch(`http://127.0.0.1:8000/api/customers/${customerId}/policies`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        console.log('[ACORD] policies status:', polResponse.status);
+        const mappings = {
+          'gl-each-occurrence': params.get('glLimitEachOcc'),
+          'gl-damage-rented': params.get('glLimitDamage'),
+          'gl-med-exp': params.get('glLimitMedExp'),
+          'gl-personal-adv': params.get('glLimitPersonalAdv'),
+          'gl-general-agg': params.get('glLimitGenAgg'),
+          'gl-products-comp': params.get('glLimitProductsComp'),
+          'umb-each-occurrence': params.get('umbLimitEachOcc'),
+          'umb-aggregate': params.get('umbLimitAgg'),
+          'wc-each-accident': params.get('wcLimitEachAcc'),
+          'wc-disease-ea-emp': params.get('wcLimitDiseaseEaEmp'),
+          'wc-disease-pol': params.get('wcLimitDiseasePol'),
+          // Business Auto limits
+          'auto-combined-single': params.get('baLimitCombinedSingle'),
+          'auto-bodily-injury-person': params.get('baLimitBodilyInjuryPerson'),
+          'auto-bodily-injury-accident': params.get('baLimitBodilyInjuryAccident'),
+          'auto-property-damage': params.get('baLimitPropertyDamage'),
+          // INSR LTR (letter assignment A/B/C/D per coverage type)
+          'gl-insr-ltr': params.get('glInsrLtr'),
+          'auto-insr-ltr': params.get('autoInsrLtr'),
+          'umb-insr-ltr': params.get('umbInsrLtr'),
+          'wc-insr-ltr': params.get('wcInsrLtr'),
+          // General Liability policy details
+          'gl-policy-number': params.get('glPolicyNo'),
+          'gl-eff-date': fmtDate(params.get('glEffDate')),
+          'gl-exp-date': fmtDate(params.get('glExpDate')),
+          // Automobile Liability policy details
+          'auto-policy-number': params.get('autoPolicyNo'),
+          'auto-eff-date': fmtDate(params.get('autoEffDate')),
+          'auto-exp-date': fmtDate(params.get('autoExpDate')),
+          // Umbrella policy details
+          'umb-policy-number': params.get('umbPolicyNo'),
+          'umb-eff-date': fmtDate(params.get('umbEffDate')),
+          'umb-exp-date': fmtDate(params.get('umbExpDate')),
+          // Workers Compensation policy details
+          'wc-policy-number': params.get('wcPolicyNo'),
+          'wc-eff-date': fmtDate(params.get('wcEffDate')),
+          'wc-exp-date': fmtDate(params.get('wcExpDate')),
+        };
 
-        if (polResponse.ok) {
-          const policies = await polResponse.json();
-          console.log('[ACORD] policies count:', policies.length);
-          console.log('[ACORD] policies raw:', JSON.stringify(policies.map(p => ({
-            id: p.id,
-            company: p.company,
-            parent_company: p.parent_company,
-            writing_company: p.writing_company
-          }))));
-
-          // Collect unique carrier names:
-          // Priority: writing_company → parent_company → company
-          const seen = new Set();
-          const carriers = [];
-          for (const p of policies) {
-            // Pick the best available name, clean it up
-            const raw = p.writing_company || p.parent_company || p.company || '';
-            const carrier = extractCarrierName(raw);
-            console.log(`[ACORD] policy ${p.id}: raw="${raw}" → carrier="${carrier}"`);
-            if (carrier && !seen.has(carrier.toLowerCase())) {
-              seen.add(carrier.toLowerCase());
-              carriers.push(carrier);
-              if (carriers.length === 6) break;
-            }
+        Object.entries(mappings).forEach(([id, val]) => {
+          const el = document.getElementById(id);
+          if (el && val) {
+            // Strip out the '$ ' prefix if it's there so the HTML formatting remains clean, 
+            // as the '$' is already in the left column.
+            el.innerText = val.replace('$ ', '');
+          } else if (el) {
+            el.innerText = ''; // Clear default hardcoded value if no limit is available
           }
+        });
+      } catch (e) {
+        console.error('[ACORD] Limits mapping parsing error:', e);
+      }
 
-          console.log('[ACORD] carriers resolved:', carriers);
+      // B. Populate Certificate Holder & Description of Operations
+      const holderName = params.get('holderName');
+      const holderAddress = params.get('holderAddress') || '';
+      const holderAddress2 = params.get('holderAddress2') || '';
+      const holderCity = params.get('holderCity') || '';
+      const holderState = params.get('holderState') || '';
+      const holderZip = params.get('holderZip') || '';
+      const holderDesc = params.get('holderDesc');
+      const holderNoticeDays = params.get('holderNoticeDays');
 
-          // Populate INSURER rows A-F
-          letters.forEach((letter, idx) => {
-            const nameEl = document.getElementById(`insurer-${letter}-name`);
-            const naicEl = document.getElementById(`insurer-${letter}-naic`);
-            if (nameEl && naicEl) {
-              if (carriers[idx]) {
-                nameEl.innerText = carriers[idx];
-                const naic = getNaic(carriers[idx]);
-                naicEl.innerText = naic;
-                console.log(`[ACORD] INSURER ${letter.toUpperCase()}: "${carriers[idx]}" NAIC=${naic}`);
-              } else {
-                nameEl.innerText = '';
-                naicEl.innerText = '';
-              }
-            } else {
-              console.warn(`[ACORD] Element insurer-${letter}-name or insurer-${letter}-naic not found`);
-            }
-          });
+      // Populate Holder Info
+      const holderEl = document.getElementById('cert-holder-details');
+      if (holderEl) {
+        if (holderName) {
+          let addrHtml = `<strong>${holderName}</strong><br>`;
+          if (holderAddress) addrHtml += `${holderAddress}<br>`;
+          if (holderAddress2) addrHtml += `${holderAddress2}<br>`;
+          addrHtml += `<div style="display: flex; justify-content: space-between; padding-right: 30px; margin-top: 10px;">
+            <span>${holderCity}</span>
+            <span>${holderState} ${holderZip}</span>
+          </div>`;
+          holderEl.innerHTML = addrHtml;
         } else {
-          console.error('[ACORD] Policies fetch failed:', polResponse.status, await polResponse.text());
+          // Master certificate preview: clear details in holder box
+          holderEl.innerHTML = `
+            <div style="color: #bbb; font-style: italic; padding-top: 20px;">
+              
+            </div>
+          `;
         }
+      }
 
-        // ── 3. Populate Certificate Holder & Description of Operations ──
-        const holderName = params.get('holderName');
-        const holderAddress = params.get('holderAddress') || '';
-        const holderAddress2 = params.get('holderAddress2') || '';
-        const holderCity = params.get('holderCity') || '';
-        const holderState = params.get('holderState') || '';
-        const holderZip = params.get('holderZip') || '';
-        const holderDesc = params.get('holderDesc');
-        const holderNoticeDays = params.get('holderNoticeDays');
+      // Populate Description of Operations
+      const descOpsEl = document.getElementById('desc-ops-text');
+      const masterDesc = params.get('masterDesc');
 
-        // Populate Holder Info
-        const holderEl = document.getElementById('cert-holder-details');
-        if (holderEl) {
-          if (holderName) {
-            let addrHtml = `<strong>${holderName}</strong><br>`;
-            if (holderAddress) addrHtml += `${holderAddress}<br>`;
-            if (holderAddress2) addrHtml += `${holderAddress2}<br>`;
-            addrHtml += `<div style="display: flex; justify-content: space-between; padding-right: 30px; margin-top: 10px;">
-              <span>${holderCity}</span>
-              <span>${holderState} ${holderZip}</span>
-            </div>`;
-            holderEl.innerHTML = addrHtml;
+      if (descOpsEl) {
+        if (holderName) {
+          // Clicked on a Holder node
+          if (holderDesc) {
+            descOpsEl.innerText = holderDesc;
+          } else if (masterDesc) {
+            descOpsEl.innerText = masterDesc;
           } else {
-            // Master certificate preview: clear details in holder box
-            holderEl.innerHTML = `
-              <div style="color: #bbb; font-style: italic; padding-top: 20px;">
-                
-              </div>
-            `;
+            descOpsEl.innerText = "Verification of Insurance Coverage ( Subject to all policy terms, exclusions and conditions )";
           }
-        }
-
-        // Populate Description of Operations
-        const descOpsEl = document.getElementById('desc-ops-text');
-        const masterDesc = params.get('masterDesc');
-
-        if (descOpsEl) {
-          if (holderName) {
-            // Clicked on a Holder node
-            if (holderDesc) {
-              descOpsEl.innerText = holderDesc;
-            } else if (masterDesc) {
-              descOpsEl.innerText = masterDesc;
-            } else {
-              descOpsEl.innerText = "Verification of Insurance Coverage ( Subject to all policy terms, exclusions and conditions )";
-            }
+        } else {
+          // Clicked on the Master Certificate node directly
+          if (masterDesc) {
+            descOpsEl.innerText = masterDesc;
           } else {
-            // Clicked on the Master Certificate node directly
-            if (masterDesc) {
-              descOpsEl.innerText = masterDesc;
-            } else {
-              descOpsEl.innerText = "Verification of Insurance Coverage ( Subject to all policy terms, exclusions and conditions )";
-            }
+            descOpsEl.innerText = "Verification of Insurance Coverage ( Subject to all policy terms, exclusions and conditions )";
           }
         }
+      }
 
-        // ── 4. Toggle ADDL INSD / SUBR WVD based on holder attributes ──
-        try {
-          const rawAi = params.get('additionalInsured');
-          const rawWs = params.get('waiverSubrogation');
-          if (rawAi) {
-            const ai = JSON.parse(rawAi);
-            const checkMap = {
-              'General Liability': 'gl-ai',
-              'Automobile Liability': 'auto-ai',
-              'Umbrella/Excess Liability': 'umbrella-ai',
-            };
-            Object.entries(checkMap).forEach(([type, elementId]) => {
-              const el = document.getElementById(elementId);
-              if (el) {
-                if (ai[type] === 'Y') el.innerText = 'Y';
-                else if (ai[type] === 'N') el.innerText = 'N';
-                else el.innerText = '';
-              }
-            });
-          }
-          if (rawWs) {
-            const ws = JSON.parse(rawWs);
-            const checkMap = {
-              'General Liability': 'gl-ws',
-              'Automobile Liability': 'auto-ws',
-              'Umbrella/Excess Liability': 'umbrella-ws',
-              'Work Comp': 'wc-ws',
-            };
-            Object.entries(checkMap).forEach(([type, elementId]) => {
-              const el = document.getElementById(elementId);
-              if (el) {
-                if (ws[type] === 'Y') el.innerText = 'Y';
-                else if (ws[type] === 'N') el.innerText = 'N';
-                else el.innerText = '';
-              }
-            });
-          }
-        } catch (e) {
-          console.error('[ACORD] Checkbox toggle parsing error:', e);
-        }
-
-        // ── 5. Populate dynamic limits ──
-        try {
-          const mappings = {
-            'gl-each-occurrence': params.get('glLimitEachOcc'),
-            'gl-damage-rented': params.get('glLimitDamage'),
-            'gl-med-exp': params.get('glLimitMedExp'),
-            'gl-personal-adv': params.get('glLimitPersonalAdv'),
-            'gl-general-agg': params.get('glLimitGenAgg'),
-            'gl-products-comp': params.get('glLimitProductsComp'),
-            'umb-each-occurrence': params.get('umbLimitEachOcc'),
-            'umb-aggregate': params.get('umbLimitAgg'),
-            'wc-each-accident': params.get('wcLimitEachAcc'),
-            'wc-disease-ea-emp': params.get('wcLimitDiseaseEaEmp'),
-            'wc-disease-pol': params.get('wcLimitDiseasePol')
+      // C. Toggle ADDL INSD / SUBR WVD based on holder attributes
+      try {
+        const rawAi = params.get('additionalInsured');
+        const rawWs = params.get('waiverSubrogation');
+        if (rawAi) {
+          const ai = JSON.parse(rawAi);
+          const checkMap = {
+            'General Liability': 'gl-ai',
+            'Automobile Liability': 'auto-ai',
+            'Umbrella/Excess Liability': 'umbrella-ai',
           };
-
-          Object.entries(mappings).forEach(([id, val]) => {
-            const el = document.getElementById(id);
-            if (el && val) {
-              // Strip out the '$ ' prefix if it's there so the HTML formatting remains clean, 
-              // as the '$' is already in the left column.
-              el.innerText = val.replace('$ ', '');
-            } else if (el) {
-              el.innerText = ''; // Clear default hardcoded value if no limit is available
+          Object.entries(checkMap).forEach(([type, elementId]) => {
+            const el = document.getElementById(elementId);
+            if (el) {
+              if (ai[type] === 'Y') el.innerText = 'Y';
+              else if (ai[type] === 'N') el.innerText = 'N';
+              else el.innerText = '';
             }
           });
-        } catch (e) {
-          console.error('[ACORD] Limits mapping parsing error:', e);
         }
+        if (rawWs) {
+          const ws = JSON.parse(rawWs);
+          const checkMap = {
+            'General Liability': 'gl-ws',
+            'Automobile Liability': 'auto-ws',
+            'Umbrella/Excess Liability': 'umbrella-ws',
+            'Work Comp': 'wc-ws',
+          };
+          Object.entries(checkMap).forEach(([type, elementId]) => {
+            const el = document.getElementById(elementId);
+            if (el) {
+              if (ws[type] === 'Y') el.innerText = 'Y';
+              else if (ws[type] === 'N') el.innerText = 'N';
+              else el.innerText = '';
+            }
+          });
+        }
+      } catch (e) {
+        console.error('[ACORD] Checkbox toggle parsing error:', e);
+      }
 
-      } catch (err) {
-        console.error("[ACORD] Failed to load dynamic form details:", err);
+      // ── 2. Run asynchronous API fetches for customer & carrier info ───────
+      // Wrapped in try/catch to fail gracefully without blocking the printing completion signal
+      const customerId = params.get('customerId');
+      if (customerId) {
+        const token = localStorage.getItem("token");
+        if (token) {
+          const letters = ['a', 'b', 'c', 'd', 'e', 'f'];
+          try {
+            // Fetch customer details
+            const custResponse = await fetch(`http://127.0.0.1:8000/api/customers/${customerId}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (custResponse.ok) {
+              const customer = await custResponse.json();
+              if (customer) {
+                if (customer.name) document.getElementById('insured-name').innerText = customer.name;
+                if (customer.address) document.getElementById('insured-address').innerText = customer.address;
+                if (customer.city) document.getElementById('insured-city').innerText = customer.city;
+
+                const stateZip = [];
+                if (customer.state) stateZip.push(customer.state);
+                if (customer.zip) stateZip.push(customer.zip);
+                if (stateZip.length > 0) {
+                  document.getElementById('insured-state-zip').innerText = stateZip.join(' ');
+                }
+
+                if (customer.contact_person) {
+                  const contact = customer.contact_person;
+                  const nameEl = document.getElementById('contact-name');
+                  const phoneEl = document.getElementById('contact-phone');
+                  const emailEl = document.getElementById('contact-email');
+                  const faxEl = document.getElementById('contact-fax');
+                  if (contact.name && nameEl) nameEl.innerText = contact.name;
+                  if (contact.phone && phoneEl) phoneEl.innerText = contact.phone;
+                  if (contact.email && emailEl) emailEl.innerText = contact.email;
+                  if (contact.fax && faxEl) faxEl.innerText = contact.fax;
+                }
+              }
+            }
+          } catch (e) {
+            console.error('[ACORD] Failed to fetch customer details:', e);
+          }
+
+          try {
+            // Fetch policies → populate INSURER A-F
+            const polResponse = await fetch(`http://127.0.0.1:8000/api/customers/${customerId}/policies`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (polResponse.ok) {
+              const policies = await polResponse.json();
+              const seen = new Set();
+              const carriers = [];
+              for (const p of policies) {
+                const raw = p.writing_company || p.parent_company || p.company || '';
+                const carrier = extractCarrierName(raw);
+                if (carrier && !seen.has(carrier.toLowerCase())) {
+                  seen.add(carrier.toLowerCase());
+                  carriers.push(carrier);
+                  if (carriers.length === 6) break;
+                }
+              }
+
+              letters.forEach((letter, idx) => {
+                const nameEl = document.getElementById(`insurer-${letter}-name`);
+                const naicEl = document.getElementById(`insurer-${letter}-naic`);
+                if (nameEl && naicEl) {
+                  if (carriers[idx]) {
+                    nameEl.innerText = carriers[idx];
+                    const naic = getNaic(carriers[idx]);
+                    naicEl.innerText = naic;
+                  } else {
+                    nameEl.innerText = '';
+                    naicEl.innerText = '';
+                  }
+                }
+              });
+            }
+          } catch (e) {
+            console.error('[ACORD] Failed to fetch policy carriers:', e);
+          }
+        } else {
+          console.warn('[ACORD] No token in localStorage; skipping API fetches');
+        }
+      } else {
+        console.warn('[ACORD] No customerId in URL; skipping API fetches');
+      }
+
+      // ── 3. Signal completion to parent window (for PDF generation) ────────
+      // This is ALWAYS triggered to ensure the PDF generation flow finishes
+      if (window.parent) {
+        window.parent.postMessage({ type: 'ACORD_FORM_READY' }, '*');
       }
     });
   </script>
