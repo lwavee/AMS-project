@@ -9,17 +9,18 @@ An AMS360-style CRM and Insurance Management platform built with **Next.js 15** 
 ## Table of Contents
 
 1. [Project Overview](#project-overview)
-2. [UI/UX Walkthrough (Sterling Theme)](#uiux-walkthrough-sterling-theme)
-3. [Project Architecture](#project-architecture)
-4. [Folder Structure](#folder-structure)
-5. [Domain Rules](#domain-rules)
-6. [API Rules](#api-rules)
-7. [Naming Rules](#naming-rules)
-8. [Backend Development Standards](#backend-development-standards)
-9. [Frontend Development Standards](#frontend-development-standards)
-10. [Team Guidelines](#team-guidelines)
-11. [Running the Project](#running-the-project)
-12. [ALL FUTURE FILES MUST FOLLOW THIS STRUCTURE](#all-future-files-must-follow-this-structure)
+2. [Recent Updates & Current Status](#recent-updates--current-status)
+3. [UI/UX Walkthrough (Sterling Theme)](#uiux-walkthrough-sterling-theme)
+4. [Project Architecture](#project-architecture)
+5. [Folder Structure](#folder-structure)
+6. [Domain Rules](#domain-rules)
+7. [API Rules](#api-rules)
+8. [Naming Rules](#naming-rules)
+9. [Backend Development Standards](#backend-development-standards)
+10. [Frontend Development Standards](#frontend-development-standards)
+11. [Team Guidelines](#team-guidelines)
+12. [Running the Project](#running-the-project)
+13. [ALL FUTURE FILES MUST FOLLOW THIS STRUCTURE](#all-future-files-must-follow-this-structure)
 
 ---
 
@@ -39,6 +40,18 @@ AMS360 is a multi-role insurance agency management system with:
 | Auth | Supabase Auth (JWT Bearer tokens) |
 | ORM | SQLAlchemy 2.0 |
 | Validation | Pydantic v2 |
+
+---
+
+## Recent Updates & Current Status
+
+**Current Stage:** We have successfully implemented the core Customer Center and Document Generation modules. 
+
+**Recent Features Added:**
+- **Customer Center & Policies:** Implemented full policy management screens (`/agency/customer/[id]/policy` and `/agency/customer/[id]/new-policy`), allowing agents to view and manage active policies associated with a customer.
+- **eForms Manager & Print Options:** Built a comprehensive tree-based UI for managing certificates and forms. It supports master/holder hierarchies, adding/editing holders, copying masters, and a robust print-options flow for generating certificates.
+- **ACORD 25 PDF Generation:** Implemented a new backend `pdf` module that integrates seamlessly with the frontend. It maps UI state into an ACORD 25 Certificate of Liability JSON payload and generates a fully flattened PDF document with the agency, insured, coverages, and certificate holder details filled in.
+- **Drag & Drop Reordering:** Enabled drag-and-drop file organization inside the eForms manager.
 
 ---
 
@@ -182,8 +195,9 @@ frontend/src/
 | `customer` | ✅ | `/agency/dashboard`, `/agency/new-customer`, full CRUD |
 | `admin` | ✅ | `/admin/dashboard`, stats cards, user management buttons |
 | `agency` | ✅ | Sidebar "Quick Reports" calls `GET /api/agency/reports` |
-| `policies` | ❌ | UI checkbox labels only — no API, no page |
-| `documents` | ❌ | Not in frontend |
+| `pdf` | ✅ | `POST /api/pdf/generate-acord-25` — Generates flattened ACORD PDFs |
+| `policies` | ✅ | `/agency/customer/[id]/policy`, `/agency/customer/[id]/new-policy` |
+| `documents` | ✅ | Handled via eForms manager & attachments |
 | `activities` | ❌ | Sidebar tab only — no API, no page |
 | `notes` | ❌ | Sidebar tab only — no API, no page |
 | `suspense` | ❌ | Sidebar tab only — no API, no page |
