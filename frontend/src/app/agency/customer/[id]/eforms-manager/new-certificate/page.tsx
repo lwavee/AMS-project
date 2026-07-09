@@ -210,12 +210,13 @@ export default function NewCertificateFormPage() {
                       <option value="">Select policy...</option>
                     )}
                     {policies.map((p, idx) => {
-                      const termSplit = p.term ? p.term.split(" - ") : [];
-                      const effDate = termSplit[0] || "";
-                      const expDate = termSplit[1] || "";
+                      const displayType = p.lobs && p.lobs.length > 1 ? "Package" : (p.lobs && p.lobs.length === 1 ? (p.lobs[0]?.type || p.lobs[0]?.level || p.type) : p.type);
+                      const eDate = p.eff_date || p.effDate;
+                      const xDate = p.exp_date || p.expDate;
+                      const dateStr = (eDate && xDate) ? `${eDate} to ${xDate}` : (p.term && p.term.indexOf("Month") === -1 ? p.term : "");
                       return (
                         <option key={idx} value={p.policy_num}>
-                          {p.policy_num}{effDate ? `, ${effDate}` : ""}{expDate ? `, ${expDate}` : ""}{p.type ? `, ${p.type}` : ""}
+                          {p.policy_num}{displayType ? `, ${displayType}` : ""}{p.status ? `, ${p.status}` : ""}{dateStr ? `, ${dateStr}` : ""}
                         </option>
                       );
                     })}

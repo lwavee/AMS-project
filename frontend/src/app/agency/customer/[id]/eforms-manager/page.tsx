@@ -478,6 +478,10 @@ export default function EFormsManagerPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   const [editedFields, setEditedFields] = useState<Record<string, string>>({});
+  // Stable iframe key: only changes when node or edit mode STARTS (not on every field edit)
+  const [iframeKey, setIframeKey] = useState<string>('');
+  // Ref to the acord-form iframe for postMessage communication
+  const acordIframeRef = useRef<HTMLIFrameElement | null>(null);
 
   useEffect(() => {
     if (selectedNode && selectedNode.startsWith("cert-file-master-")) {
@@ -492,14 +496,33 @@ export default function EFormsManagerPage() {
         else setOverrides({});
         setEditedFields({});
         setIsEditing(false);
+        setIframeKey(selectedNode + '_view_' + Date.now());
       })
-      .catch(err => console.error("Failed to fetch overrides", err));
+      .catch(err => {
+        console.error("Failed to fetch overrides", err);
+        setOverrides({});
+        setEditedFields({});
+        setIsEditing(false);
+        setIframeKey(selectedNode + '_view_' + Date.now());
+      });
     } else {
       setOverrides({});
       setEditedFields({});
       setIsEditing(false);
+      setIframeKey('');
     }
   }, [selectedNode]);
+
+  // Listen for FIELD_EDITED messages from the iframe (no re-key on field edit)
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === 'FIELD_EDITED' && e.data?.fieldId !== undefined) {
+        setEditedFields(prev => ({ ...prev, [e.data.fieldId]: e.data.value ?? '' }));
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, []);
 
   const handleFieldChange = (fieldId: string, value: string) => {
     setEditedFields(prev => ({ ...prev, [fieldId]: value }));
@@ -509,6 +532,8 @@ export default function EFormsManagerPage() {
     if (!selectedNode) return;
     const id = selectedNode.replace("cert-file-master-", "");
     const token = localStorage.getItem("token");
+    // Merge current overrides with newly edited fields
+    const mergedOverrides = { ...overrides, ...editedFields };
     try {
       const res = await fetch(`${API_BASE_URL}/api/eforms/${id}/override`, {
         method: "POST",
@@ -516,13 +541,15 @@ export default function EFormsManagerPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ overrides: editedFields })
+        body: JSON.stringify({ overrides: mergedOverrides })
       });
       if (res.ok) {
-        setOverrides(prev => ({ ...prev, ...editedFields }));
+        setOverrides(mergedOverrides);
         setEditedFields({});
+        // Exit edit mode WITHOUT reloading iframe: send postMessage to iframe
         setIsEditing(false);
-        // Would add a toast here for success
+        // Notify iframe to exit edit mode gracefully (no re-key)
+        acordIframeRef.current?.contentWindow?.postMessage({ type: 'EXIT_EDIT_MODE' }, '*');
       }
     } catch (e) {
       console.error("Failed to save overrides", e);
@@ -532,6 +559,8 @@ export default function EFormsManagerPage() {
   const handleCancelEdit = () => {
     setEditedFields({});
     setIsEditing(false);
+    // Reload iframe to discard unsaved changes
+    setIframeKey(prev => prev.replace(/_edit_.*|_view_.*/, '') + '_view_' + Date.now());
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -1546,7 +1575,11 @@ export default function EFormsManagerPage() {
                   {!isEditing ? (
                     <button
                       title="Edit Form"
-                      onClick={() => setIsEditing(true)}
+                      onClick={() => {
+                        setIsEditing(true);
+                        // Reload iframe with isEditing=true; use a new key so iframe gets fresh edit mode
+                        setIframeKey(selectedNode + '_edit_' + Date.now());
+                      }}
                       className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
                     >
                       <Edit3 size={13} />
@@ -1653,7 +1686,7 @@ export default function EFormsManagerPage() {
                       const statusFlag = p.status === "Active" ? "A" : "E";
                       return (
                         <option key={p.id} value={p.policyNum}>
-                          {p.policyNum} | {p.type || "Policy"} ({statusFlag})
+                          {p.policyNum}{p.type ? `, ${p.type}` : ""}{p.status ? `, ${p.status}` : ""}{p.term ? `, ${p.term}` : (p.effDate || p.expDate ? `, ${p.effDate || ""} - ${p.expDate || ""}` : "")}
                         </option>
                       );
                     })}
@@ -1934,9 +1967,14 @@ export default function EFormsManagerPage() {
                     baLimitBodilyInjuryAccident: baLimits.bodilyInjuryAccident,
                     baLimitPropertyDamage: baLimits.propertyDamage,
                     isEditing: isEditing ? 'true' : 'false',
-                    overrides: JSON.stringify({...overrides, ...editedFields}),
+                    overrides: JSON.stringify(overrides),
                   });
-                  return <iframe key={params.toString()} src={`/acord-form.html?${params.toString()}`} className="w-full h-full border-none bg-white" />;
+                  return <iframe
+                    key={iframeKey || (selectedNode + (isEditing ? '_edit' : '_view'))}
+                    ref={acordIframeRef}
+                    src={`/acord-form.html?${params.toString()}`}
+                    className="w-full h-full border-none bg-white"
+                  />;
                 } else if (selectedNode?.startsWith("cert-file")) {
                   return <Acord25Form 
                     customer={customer} 

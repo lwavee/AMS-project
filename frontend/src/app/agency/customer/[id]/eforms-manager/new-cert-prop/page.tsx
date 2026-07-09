@@ -1,11 +1,11 @@
-﻿/* eslint-disable */
+/* eslint-disable */
 "use client";
 import React, { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/config";
 import { useParams } from "next/navigation";
 import { Save } from "lucide-react";
 
-interface Policy { id: number; policy_number?: string; policy_num?: string; term?: string; type?: string; }
+interface Policy { id: number; policy_number?: string; policy_num?: string; term?: string; type?: string; status?: string; lobs?: any[]; eff_date?: string; exp_date?: string; effDate?: string; expDate?: string; }
 
 export default function NewCertPropPage() {
   const params = useParams();
@@ -98,7 +98,18 @@ export default function NewCertPropPage() {
   };
 
   const policyOptions = policies.length > 0
-    ? policies.map(p => { const num = p.policy_number || p.policy_num || `Policy ${p.id}`; return <option key={p.id} value={String(p.id)}>{num}{p.term ? `, ${p.term}` : ""}</option>; })
+    ? policies.map(p => { 
+        const num = p.policy_number || p.policy_num || `Policy ${p.id}`; 
+        const displayType = p.lobs && p.lobs.length > 1 ? "Package" : (p.lobs && p.lobs.length === 1 ? (p.lobs[0]?.type || p.lobs[0]?.level || p.type) : p.type);
+        const eDate = p.eff_date || p.effDate;
+        const xDate = p.exp_date || p.expDate;
+        const dateStr = (eDate && xDate) ? `${eDate} to ${xDate}` : (p.term && p.term.indexOf("Month") === -1 ? p.term : "");
+        return (
+          <option key={p.id} value={String(p.id)}>
+            {num}{displayType ? `, ${displayType}` : ""}{p.status ? `, ${p.status}` : ""}{dateStr ? `, ${dateStr}` : ""}
+          </option>
+        ); 
+      })
     : [<option key="demo" value="demo">46-CF818413, 8/14/2023</option>];
 
   return (

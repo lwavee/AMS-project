@@ -494,7 +494,9 @@ export default function NewActivityPage() {
                     <>
                       <option value="">-- Select Policy --</option>
                       {policies.map(p => (
-                        <option key={p.id} value={p.id.toString()}>{p.policyNum} ({p.company})</option>
+                        <option key={p.id} value={p.id.toString()}>
+                          {p.policy_num}{p.type ? `, ${p.type}` : ""}{p.status ? `, ${p.status}` : ""}{p.term ? `, ${p.term}` : ""}
+                        </option>
                       ))}
                     </>
                   )}

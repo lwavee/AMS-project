@@ -404,11 +404,33 @@
       border-bottom: none;
     }
 
-    .editable-field {
+    .editable-field,
+    [contenteditable="true"] {
       background-color: #ffffcc !important;
-      outline: 1px dashed #ffd700 !important;
+      outline: 1.5px dashed #e6b800 !important;
       min-height: 14px;
       cursor: text;
+      border-radius: 1px;
+    }
+
+    /* Checkbox highlight in edit mode */
+    body.edit-mode .checkbox-editable {
+      background-color: #ffffcc !important;
+      outline: 1.5px dashed #e6b800 !important;
+      cursor: pointer !important;
+    }
+
+    /* Hover feedback for editable cells */
+    [contenteditable="true"]:hover,
+    body.edit-mode .checkbox-editable:hover {
+      background-color: #fff3b0 !important;
+      outline: 1.5px solid #e6b800 !important;
+    }
+
+    [contenteditable="true"]:focus {
+      background-color: #fff8d6 !important;
+      outline: 2px solid #f0a500 !important;
+      box-shadow: 0 0 0 2px rgba(240,165,0,0.15) !important;
     }
   </style>
 </head>
@@ -644,9 +666,9 @@
               <td class="limit-val" id="gl-products-comp">2,000,000</td>
             </tr>
             <tr>
-              <td class="limit-desc">&nbsp;</td>
+              <td class="limit-desc" id="gl-extra-desc">&nbsp;</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val"></td>
+              <td class="limit-val" id="gl-extra-limit"></td>
             </tr>
           </table>
         </td>
@@ -672,7 +694,7 @@
                   <div id="chk-auto-hired" class="checkbox-editable"
                     style="height: 14px; border-bottom: 1px solid black; border-right: 1px solid black; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">
                     X</div>
-                  <div class="checkbox-editable"
+                  <div id="chk-auto-hired-other" class="checkbox-editable"
                     style="height: 14px; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box;">
                   </div>
                   <div style="flex: 1; box-sizing: border-box;"></div>
@@ -698,7 +720,7 @@
                   <div id="chk-auto-non-owned" class="checkbox-editable"
                     style="height: 14px; border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">
                     X</div>
-                  <div class="checkbox-editable"
+                  <div id="chk-auto-non-owned-other" class="checkbox-editable"
                     style="height: 14px; border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box;">
                   </div>
                   <div style="flex: 1; box-sizing: border-box;"></div>
@@ -760,10 +782,10 @@
           <div style="display: flex; flex-direction: column; height: 100%;">
             <div style="display: flex; border-bottom: 1px solid black;">
               <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
-                <div
+                <div id="chk-umb-occur" class="checkbox-editable"
                   style="height: 14px; border-bottom: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
                 </div>
-                <div style="height: 14px; border-right: 1px solid black; box-sizing: border-box;"></div>
+                <div id="chk-umb-claims-made" class="checkbox-editable" style="height: 14px; border-right: 1px solid black; box-sizing: border-box;"></div>
               </div>
               <div style="padding: 0 0 0 4px; display: flex; flex-direction: column; font-size: 7px; width: 65px;">
                 <div
@@ -774,10 +796,10 @@
                   EXCESS LIAB</div>
               </div>
               <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
-                <div
+                <div id="chk-umb-liab" class="checkbox-editable"
                   style="height: 14px; border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box;">
                 </div>
-                <div
+                <div id="chk-excess-liab" class="checkbox-editable"
                   style="height: 14px; border-left: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
                 </div>
               </div>
@@ -826,7 +848,7 @@
             <tr>
               <td class="limit-desc">&nbsp;</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val"></td>
+              <td class="limit-val" id="umb-extra-limit"></td>
             </tr>
           </table>
         </td>
@@ -844,7 +866,7 @@
             </div>
             <div style="display: flex; flex-direction: column; align-items: center; margin-right: 4px;">
               <div style="font-weight: bold; font-size: 7px;">Y / N</div>
-              <div style="width: 14px; height: 14px; border: 1px solid black; box-sizing: border-box;"></div>
+              <div id="chk-wc-yn" class="checkbox-editable" style="width: 14px; height: 14px; border: 1px solid black; box-sizing: border-box;"></div>
             </div>
           </div>
           <div style="margin-top: 1px;">
@@ -862,13 +884,13 @@
             <tr>
               <td class="limit-desc" style="padding: 0;">
                 <div style="display: flex; height: 14px;">
-                  <div
+                  <div id="chk-wc-per-statute" class="checkbox-editable"
                     style="width: 14px; border-right: 1px solid black; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; box-sizing: border-box;">
                     X</div>
                   <div
                     style="padding-left: 2px; font-size: 7px; display: flex; align-items: center; line-height: 1; margin-right: 8px;">
                     PER<br>STATUTE</div>
-                  <div
+                  <div id="chk-wc-other" class="checkbox-editable"
                     style="width: 14px; border-left: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
                   </div>
                   <div style="padding-left: 2px; font-size: 7px; display: flex; align-items: center; line-height: 1;">
@@ -898,14 +920,14 @@
       </tr>
       <!-- Blank Row -->
       <tr style="height: 45px;">
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
+        <td id="extra-insr-ltr"></td>
+        <td id="extra-type-ins"></td>
+        <td id="extra-ai" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
+        <td id="extra-ws" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
+        <td id="extra-policy-number" class="center" style="vertical-align: middle;"></td>
+        <td id="extra-eff-date" class="center" style="vertical-align: middle;"></td>
+        <td id="extra-exp-date" class="center" style="vertical-align: middle;"></td>
+        <td id="extra-limits" style="padding: 0; vertical-align: top;"></td>
       </tr>
     </table>
 
@@ -1479,32 +1501,65 @@
         'gl-policy-number', 'gl-eff-date', 'gl-exp-date', 'auto-policy-number', 'auto-eff-date', 'auto-exp-date',
         'umb-policy-number', 'umb-eff-date', 'umb-exp-date', 'wc-policy-number', 'wc-eff-date', 'wc-exp-date',
         'gl-insr-ltr', 'auto-insr-ltr', 'umb-insr-ltr', 'wc-insr-ltr',
+        'gl-ai', 'auto-ai', 'umbrella-ai',
+        'gl-ws', 'auto-ws', 'umbrella-ws', 'wc-ws',
         'gl-each-occurrence', 'gl-damage-rented', 'gl-med-exp', 'gl-personal-adv', 'gl-general-agg', 'gl-products-comp',
         'auto-combined-single', 'auto-bodily-injury-person', 'auto-bodily-injury-accident', 'auto-property-damage',
         'umb-each-occurrence', 'umb-aggregate', 'wc-each-accident', 'wc-disease-ea-emp', 'wc-disease-pol',
-        'desc-ops-text', 'holder-name', 'holder-address', 'holder-address2', 'holder-city-state-zip',
-        'cancellation-days'
+        'desc-ops-text', 'cert-holder-details',
+        'cancellation-days',
+        'extra-insr-ltr', 'extra-type-ins', 'extra-ai', 'extra-ws', 'extra-policy-number', 'extra-eff-date', 'extra-exp-date', 'extra-limits',
+        'gl-extra-desc', 'gl-extra-limit', 'umb-extra-limit'
       ];
+
+      // Apply edit mode — add body class so CSS highlights all .checkbox-editable too
+      // ── Helper: apply/remove edit highlight inline (beats any CSS specificity) ──
+      const EDIT_BG   = '#ffffcc';
+      const EDIT_OUT  = '1.5px dashed #e6b800';
+      const EDIT_RAD  = '1px';
+
+      function applyEditHighlight(el) {
+        el.style.setProperty('background-color', EDIT_BG,  'important');
+        el.style.setProperty('outline',          EDIT_OUT, 'important');
+        el.style.setProperty('border-radius',    EDIT_RAD, 'important');
+      }
+
+      function removeEditHighlight(el) {
+        el.style.removeProperty('background-color');
+        el.style.removeProperty('outline');
+        el.style.removeProperty('border-radius');
+        el.style.removeProperty('cursor');
+      }
+
+      // Apply edit mode — add body class so CSS also kicks in
+      if (isEditing) {
+        document.body.classList.add('edit-mode');
+      }
 
       editableIds.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
+          // Apply saved overrides
           if (overrides[id] !== undefined) {
             el.innerText = overrides[id];
           }
           if (isEditing) {
             el.setAttribute('contenteditable', 'true');
             el.classList.add('editable-field');
-            el.addEventListener('blur', (e) => {
-               if (window.parent) {
-                 window.parent.postMessage({ type: 'FIELD_EDITED', fieldId: id, value: el.innerText }, '*');
-               }
+            // Inline styles guarantee highlight even on td/span with competing CSS
+            applyEditHighlight(el);
+            el.style.setProperty('cursor', 'text', 'important');
+            el.addEventListener('blur', () => {
+              if (window.parent) {
+                window.parent.postMessage({ type: 'FIELD_EDITED', fieldId: id, value: el.innerText }, '*');
+              }
             });
           }
         }
       });
 
       document.querySelectorAll('.checkbox-editable').forEach(el => {
+        // Apply saved overrides to checkboxes
         if (overrides[el.id] !== undefined) {
           if (el.classList.contains('checkbox')) {
             if (overrides[el.id] === 'X') el.classList.add('checked');
@@ -1513,32 +1568,46 @@
             el.innerText = overrides[el.id];
           }
         }
-        
+
         if (isEditing) {
-          el.style.cursor = 'pointer';
-          el.style.backgroundColor = '#ffffcc';
-          el.style.outline = '1px dashed #ffd700';
+          // Apply yellow highlight inline — guaranteed on any element type
+          applyEditHighlight(el);
+          el.style.setProperty('cursor', 'pointer', 'important');
 
           el.addEventListener('click', (e) => {
+            e.stopPropagation();
             e.preventDefault();
             let newVal = '';
             if (el.classList.contains('checkbox')) {
               el.classList.toggle('checked');
               newVal = el.classList.contains('checked') ? 'X' : '';
             } else {
-              if (el.innerText.trim() === 'X') {
-                el.innerText = '';
-              } else {
-                el.innerText = 'X';
-              }
+              el.innerText = el.innerText.trim() === 'X' ? '' : 'X';
               newVal = el.innerText;
             }
-            if (window.parent) {
+            if (window.parent && el.id) {
               window.parent.postMessage({ type: 'FIELD_EDITED', fieldId: el.id, value: newVal }, '*');
             }
           });
         }
       });
+
+      // Handle EXIT_EDIT_MODE from parent (after save) — clean up all highlights without page reload
+      window.addEventListener('message', (e) => {
+        if (e.data?.type === 'EXIT_EDIT_MODE') {
+          document.body.classList.remove('edit-mode');
+          document.querySelectorAll('[contenteditable]').forEach(el => {
+            el.removeAttribute('contenteditable');
+            el.classList.remove('editable-field');
+            removeEditHighlight(el);
+          });
+          document.querySelectorAll('.checkbox-editable').forEach(el => {
+            removeEditHighlight(el);
+            el.style.removeProperty('cursor');
+          });
+        }
+      });
+
 
       // ── 4. Signal completion to parent window (for PDF generation) ────────
       // This is ALWAYS triggered to ensure the PDF generation flow finishes
