@@ -3,6 +3,7 @@ from app.core.config import settings
 from app.database.connection import test_connection, engine, Base
 from app.api.v1.router import api_router
 from app.modules.customer.model import Customer, Policy, Agency, Agent, MasterCertificate, CertificateHolder  # noqa: F401 — ensures tables are registered
+from app.modules.eforms.model import CertificateFieldOverride # noqa: F401
 from sqlalchemy import text
 import os
 from contextlib import asynccontextmanager

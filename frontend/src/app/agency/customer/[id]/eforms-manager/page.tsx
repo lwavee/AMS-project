@@ -474,6 +474,66 @@ export default function EFormsManagerPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [showTreePanel, setShowTreePanel] = useState(true);
 
+  // ── Edit Form State ──
+  const [isEditing, setIsEditing] = useState(false);
+  const [overrides, setOverrides] = useState<Record<string, string>>({});
+  const [editedFields, setEditedFields] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (selectedNode && selectedNode.startsWith("cert-file-master-")) {
+      const id = selectedNode.replace("cert-file-master-", "");
+      const token = localStorage.getItem("token");
+      fetch(`${API_BASE_URL}/api/eforms/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.overrides) setOverrides(data.overrides);
+        else setOverrides({});
+        setEditedFields({});
+        setIsEditing(false);
+      })
+      .catch(err => console.error("Failed to fetch overrides", err));
+    } else {
+      setOverrides({});
+      setEditedFields({});
+      setIsEditing(false);
+    }
+  }, [selectedNode]);
+
+  const handleFieldChange = (fieldId: string, value: string) => {
+    setEditedFields(prev => ({ ...prev, [fieldId]: value }));
+  };
+
+  const handleSaveOverrides = async () => {
+    if (!selectedNode) return;
+    const id = selectedNode.replace("cert-file-master-", "");
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/eforms/${id}/override`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ overrides: editedFields })
+      });
+      if (res.ok) {
+        setOverrides(prev => ({ ...prev, ...editedFields }));
+        setEditedFields({});
+        setIsEditing(false);
+        // Would add a toast here for success
+      }
+    } catch (e) {
+      console.error("Failed to save overrides", e);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditedFields({});
+    setIsEditing(false);
+  };
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
@@ -989,6 +1049,8 @@ export default function EFormsManagerPage() {
         setSelectedNode(newCert.id);
       } else if (event.data?.type === 'UPDATE_CERTIFICATE') {
         fetchData();
+      } else if (event.data?.type === 'FIELD_EDITED') {
+        setEditedFields(prev => ({ ...prev, [event.data.fieldId]: event.data.value }));
       }
     };
     window.addEventListener("message", handleMessage);
@@ -1478,6 +1540,41 @@ export default function EFormsManagerPage() {
 
               <div className="h-5 w-px bg-border-main" />
 
+              {/* Edit Form Toggle */}
+              {(selectedNode?.startsWith("cert-file-master-")) && (
+                <>
+                  {!isEditing ? (
+                    <button
+                      title="Edit Form"
+                      onClick={() => setIsEditing(true)}
+                      className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
+                    >
+                      <Edit3 size={13} />
+                      <span className="hidden lg:inline">Edit Form</span>
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        title="Save Changes"
+                        onClick={handleSaveOverrides}
+                        className="h-8 px-3.5 flex items-center gap-1.5 border border-primary bg-primary text-white hover:bg-primary/90 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                      >
+                        <Save size={13} />
+                        <span className="hidden lg:inline">Save</span>
+                      </button>
+                      <button
+                        title="Cancel Editing"
+                        onClick={handleCancelEdit}
+                        className="h-8 px-3.5 flex items-center gap-1.5 border border-red-500 bg-red-50 text-red-600 hover:bg-red-100 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                      >
+                        <span className="hidden lg:inline">Cancel</span>
+                      </button>
+                    </>
+                  )}
+                  <div className="h-5 w-px bg-border-main" />
+                </>
+              )}
+
               {/* Show/Hide Tree */}
               <button
                 title={showTreePanel ? "Hide Tree" : "Show Tree"}
@@ -1836,10 +1933,22 @@ export default function EFormsManagerPage() {
                     baLimitBodilyInjuryPerson: baLimits.bodilyInjuryPerson,
                     baLimitBodilyInjuryAccident: baLimits.bodilyInjuryAccident,
                     baLimitPropertyDamage: baLimits.propertyDamage,
+                    isEditing: isEditing ? 'true' : 'false',
+                    overrides: JSON.stringify({...overrides, ...editedFields}),
                   });
                   return <iframe key={params.toString()} src={`/acord-form.html?${params.toString()}`} className="w-full h-full border-none bg-white" />;
                 } else if (selectedNode?.startsWith("cert-file")) {
-                  return <Acord25Form customer={customer} policies={policies} glCoverages={glCoverages} umbCoverages={umbCoverages} wcPart2={wcPart2} baCoverages={baCoverages} />;
+                  return <Acord25Form 
+                    customer={customer} 
+                    policies={policies} 
+                    glCoverages={glCoverages} 
+                    umbCoverages={umbCoverages} 
+                    wcPart2={wcPart2} 
+                    baCoverages={baCoverages} 
+                    isEditing={isEditing}
+                    overrides={{...overrides, ...editedFields}}
+                    onFieldChange={handleFieldChange}
+                  />;
                 } else if (selectedNode?.startsWith("doc-") && selected) {
                   const docData = selected.documentData;
                   if (docData && docData.id) {

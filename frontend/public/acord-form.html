@@ -403,6 +403,13 @@
     .limits-table tr:last-child td {
       border-bottom: none;
     }
+
+    .editable-field {
+      background-color: #ffffcc !important;
+      outline: 1px dashed #ffd700 !important;
+      min-height: 14px;
+      cursor: text;
+    }
   </style>
 </head>
 
@@ -549,7 +556,7 @@
         <td style="padding: 0; vertical-align: top;">
           <div style="display: flex;">
             <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
-              <div
+              <div id="chk-gl-cgl" class="checkbox-editable"
                 style="height: 14px; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">
                 X</div>
               <div
@@ -567,10 +574,10 @@
               <div style="height: 14px; box-sizing: border-box; font-size: 8px; font-weight: bold; line-height: 14px;">
                 COMMERCIAL GENERAL LIABILITY</div>
               <div style="height: 14px; box-sizing: border-box; display: flex; align-items: center; font-size: 7px;">
-                <div class="checkbox checked"
+                <div id="chk-gl-claims-made" class="checkbox checked checkbox-editable"
                   style="margin-left: -4px; margin-top: -1px; border-left: none; width: 14px; height: 15px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;">
                 </div> <span style="margin-left: 2px;">CLAIMS-MADE</span>
-                <div class="checkbox" style="margin-left: 12px;"></div> <span style="margin-left: 2px;">OCCUR</span>
+                <div id="chk-gl-occur" class="checkbox checkbox-editable" style="margin-left: 12px;"></div> <span style="margin-left: 2px;">OCCUR</span>
               </div>
               <div
                 style="height: 14px; box-sizing: border-box; border-bottom: 1px solid black; margin-left: 4px; margin-right: 6px;">
@@ -582,13 +589,13 @@
           <div style="padding: 2px 4px 2px 2px; font-size: 7px; line-height: 1.2;">
             <div style="margin-bottom: 2px;">GEN'L AGGREGATE LIMIT APPLIES PER:</div>
             <div style="display: flex; align-items: center;">
-              <div
+              <div id="chk-gl-policy" class="checkbox-editable"
                 style="width: 14px; height: 14px; border: 1px solid black; border-left: none; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; margin-left: -2px;">
                 X</div>
               <span style="margin-left: 4px;">POLICY</span>
-              <div class="checkbox" style="margin-left: 8px;"></div>
+              <div id="chk-gl-project" class="checkbox checkbox-editable" style="margin-left: 8px;"></div>
               <span style="margin-left: 2px; font-size: 6px; line-height: 1;">PRO-<br>JECT</span>
-              <div class="checkbox" style="margin-left: 8px;"></div>
+              <div id="chk-gl-loc" class="checkbox checkbox-editable" style="margin-left: 8px;"></div>
               <span style="margin-left: 2px;">LOC</span>
             </div>
             <div style="display: flex; align-items: center;">
@@ -656,16 +663,16 @@
               <!-- Left column -->
               <div style="flex: 1; display: flex;">
                 <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
-                  <div
+                  <div id="chk-auto-any" class="checkbox-editable"
                     style="height: 14px; border-bottom: 1px solid black; border-top: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
                   </div>
-                  <div
+                  <div id="chk-auto-owned" class="checkbox-editable"
                     style="height: 14px; border-bottom: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
                   </div>
-                  <div
+                  <div id="chk-auto-hired" class="checkbox-editable"
                     style="height: 14px; border-bottom: 1px solid black; border-right: 1px solid black; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">
                     X</div>
-                  <div
+                  <div class="checkbox-editable"
                     style="height: 14px; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box;">
                   </div>
                   <div style="flex: 1; box-sizing: border-box;"></div>
@@ -685,13 +692,13 @@
               <div style="flex: 1; display: flex;">
                 <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
                   <div style="height: 14px; box-sizing: border-box;"></div>
-                  <div
+                  <div id="chk-auto-scheduled" class="checkbox-editable"
                     style="height: 14px; border: 1px solid black; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">
                     X</div>
-                  <div
+                  <div id="chk-auto-non-owned" class="checkbox-editable"
                     style="height: 14px; border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">
                     X</div>
-                  <div
+                  <div class="checkbox-editable"
                     style="height: 14px; border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box;">
                   </div>
                   <div style="flex: 1; box-sizing: border-box;"></div>
@@ -1452,7 +1459,88 @@
         console.warn('[ACORD] No customerId in URL; skipping API fetches');
       }
 
-      // ── 3. Signal completion to parent window (for PDF generation) ────────
+      // ── 3. Apply Edit Mode & Overrides ────────
+      const isEditing = params.get('isEditing') === 'true';
+      let overrides = {};
+      try {
+        const overridesStr = params.get('overrides');
+        if (overridesStr) overrides = JSON.parse(overridesStr);
+      } catch (e) {
+        console.error('[ACORD] Failed to parse overrides', e);
+      }
+
+      const editableIds = [
+        'producer-name', 'producer-address', 'producer-address2', 'producer-city', 'producer-state-zip',
+        'insured-name', 'insured-address', 'insured-city', 'insured-state-zip',
+        'contact-name', 'contact-phone', 'contact-fax', 'contact-email',
+        'insurer-a-name', 'insurer-a-naic', 'insurer-b-name', 'insurer-b-naic',
+        'insurer-c-name', 'insurer-c-naic', 'insurer-d-name', 'insurer-d-naic',
+        'insurer-e-name', 'insurer-e-naic', 'insurer-f-name', 'insurer-f-naic',
+        'gl-policy-number', 'gl-eff-date', 'gl-exp-date', 'auto-policy-number', 'auto-eff-date', 'auto-exp-date',
+        'umb-policy-number', 'umb-eff-date', 'umb-exp-date', 'wc-policy-number', 'wc-eff-date', 'wc-exp-date',
+        'gl-insr-ltr', 'auto-insr-ltr', 'umb-insr-ltr', 'wc-insr-ltr',
+        'gl-each-occurrence', 'gl-damage-rented', 'gl-med-exp', 'gl-personal-adv', 'gl-general-agg', 'gl-products-comp',
+        'auto-combined-single', 'auto-bodily-injury-person', 'auto-bodily-injury-accident', 'auto-property-damage',
+        'umb-each-occurrence', 'umb-aggregate', 'wc-each-accident', 'wc-disease-ea-emp', 'wc-disease-pol',
+        'desc-ops-text', 'holder-name', 'holder-address', 'holder-address2', 'holder-city-state-zip',
+        'cancellation-days'
+      ];
+
+      editableIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          if (overrides[id] !== undefined) {
+            el.innerText = overrides[id];
+          }
+          if (isEditing) {
+            el.setAttribute('contenteditable', 'true');
+            el.classList.add('editable-field');
+            el.addEventListener('blur', (e) => {
+               if (window.parent) {
+                 window.parent.postMessage({ type: 'FIELD_EDITED', fieldId: id, value: el.innerText }, '*');
+               }
+            });
+          }
+        }
+      });
+
+      document.querySelectorAll('.checkbox-editable').forEach(el => {
+        if (overrides[el.id] !== undefined) {
+          if (el.classList.contains('checkbox')) {
+            if (overrides[el.id] === 'X') el.classList.add('checked');
+            else el.classList.remove('checked');
+          } else {
+            el.innerText = overrides[el.id];
+          }
+        }
+        
+        if (isEditing) {
+          el.style.cursor = 'pointer';
+          el.style.backgroundColor = '#ffffcc';
+          el.style.outline = '1px dashed #ffd700';
+
+          el.addEventListener('click', (e) => {
+            e.preventDefault();
+            let newVal = '';
+            if (el.classList.contains('checkbox')) {
+              el.classList.toggle('checked');
+              newVal = el.classList.contains('checked') ? 'X' : '';
+            } else {
+              if (el.innerText.trim() === 'X') {
+                el.innerText = '';
+              } else {
+                el.innerText = 'X';
+              }
+              newVal = el.innerText;
+            }
+            if (window.parent) {
+              window.parent.postMessage({ type: 'FIELD_EDITED', fieldId: el.id, value: newVal }, '*');
+            }
+          });
+        }
+      });
+
+      // ── 4. Signal completion to parent window (for PDF generation) ────────
       // This is ALWAYS triggered to ensure the PDF generation flow finishes
       if (window.parent) {
         window.parent.postMessage({ type: 'ACORD_FORM_READY' }, '*');

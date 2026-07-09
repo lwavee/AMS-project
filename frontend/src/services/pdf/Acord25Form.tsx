@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
+import EditableText from '../../components/ui/editable/EditableText';
 
 interface GlCoverage {
   coverage: string;
@@ -16,6 +17,9 @@ interface Acord25FormProps {
   umbCoverages?: GlCoverage[];
   wcPart2?: any;
   baCoverages?: any[];
+  isEditing?: boolean;
+  overrides?: Record<string, string>;
+  onFieldChange?: (fieldId: string, value: string) => void;
 }
 
 // Helper: Find limit1 for a specific coverage name (case-insensitive, partial match)
@@ -73,14 +77,26 @@ function formatLimit(val: any): string {
   return '';
 }
 
-export default function Acord25Form({ customer, policies, glCoverages = [], umbCoverages = [], wcPart2, baCoverages = [] }: Acord25FormProps) {
-  const customerName = customer 
-    ? (customer.name || [customer.first_name, customer.last_name].filter(Boolean).join(" "))
-    : "KH Interiors, Inc.";
+export default function Acord25Form({ 
+  customer, 
+  policies, 
+  glCoverages = [], 
+  umbCoverages = [], 
+  wcPart2, 
+  baCoverages = [],
+  isEditing = false,
+  overrides = {},
+  onFieldChange = () => {}
+}: Acord25FormProps) {
+  const getVal = (key: string, defaultVal: string) => overrides[key] !== undefined ? overrides[key] : defaultVal;
 
-  const customerAddress = customer
+  const customerName = getVal('insured_name', customer 
+    ? (customer.name || [customer.first_name, customer.last_name].filter(Boolean).join(" "))
+    : "KH Interiors, Inc.");
+
+  const customerAddress = getVal('insured_address', customer
     ? `${customer.address || customer.street || '15009 SE 94th Ave.'}\n${customer.city || 'Clackamas'}, ${customer.state || 'OR'} ${customer.zip || customer.zip_code || '97015'}`
-    : "15009 SE 94th Ave.\nClackamas, OR 97015";
+    : "15009 SE 94th Ave.\nClackamas, OR 97015");
 
   // Mock some limits and insurers for the visual
   const insurers = [
@@ -146,8 +162,12 @@ export default function Acord25Form({ customer, policies, glCoverages = [], umbC
           </div>
           <div className="p-1 flex-1">
             <div className="font-bold text-[8px] mb-1">INSURED</div>
-            <div className="font-bold">{customerName}</div>
-            <div className="whitespace-pre-wrap">{customerAddress}</div>
+            <div className="font-bold">
+              <EditableText fieldId="insured_name" value={customerName} isEditing={isEditing} onChange={onFieldChange} />
+            </div>
+            <div>
+              <EditableText fieldId="insured_address" value={customerAddress} isEditing={isEditing} onChange={onFieldChange} multiline={true} />
+            </div>
           </div>
         </div>
 
@@ -156,21 +176,25 @@ export default function Acord25Form({ customer, policies, glCoverages = [], umbC
           <div className="border-b border-black">
             <div className="flex border-b border-black p-1">
               <div className="w-[50px] font-bold text-[8px]">CONTACT<br/>NAME:</div>
-              <div className="flex-1">{customer?.contact_person?.name || "Jake Weiner"}</div>
+              <div className="flex-1">
+                <EditableText fieldId="contact_name" value={getVal('contact_name', customer?.contact_person?.name || "Jake Weiner")} isEditing={isEditing} onChange={onFieldChange} />
+              </div>
             </div>
             <div className="flex border-b border-black p-1">
               <div className="flex-1 flex">
                 <span className="font-bold text-[8px] mr-1">PHONE<br/>(A/C, No, Ext):</span>
-                <span>{customer?.contact_person?.phone || "(310) 492-2007"}</span>
+                <span><EditableText fieldId="contact_phone" value={getVal('contact_phone', customer?.contact_person?.phone || "(310) 492-2007")} isEditing={isEditing} onChange={onFieldChange} /></span>
               </div>
               <div className="flex-1 flex border-l border-black pl-1">
                 <span className="font-bold text-[8px] mr-1">FAX<br/>(A/C, No):</span>
-                <span>{customer?.contact_person?.fax || "(310) 525-5292"}</span>
+                <span><EditableText fieldId="contact_fax" value={getVal('contact_fax', customer?.contact_person?.fax || "(310) 525-5292")} isEditing={isEditing} onChange={onFieldChange} /></span>
               </div>
             </div>
             <div className="flex p-1">
               <div className="font-bold text-[8px] mr-1">E-MAIL<br/>ADDRESS:</div>
-              <div className="flex-1">{customer?.contact_person?.email || "Jake@capcoinsurance.com"}</div>
+              <div className="flex-1">
+                <EditableText fieldId="contact_email" value={getVal('contact_email', customer?.contact_person?.email || "Jake@capcoinsurance.com")} isEditing={isEditing} onChange={onFieldChange} />
+              </div>
             </div>
           </div>
 
