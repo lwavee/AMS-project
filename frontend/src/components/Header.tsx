@@ -28,9 +28,10 @@ import { useRouter } from "next/navigation";
 
 interface HeaderProps {
   onToggleDrawer?: () => void;
+  onProfileClick?: () => void;
 }
 
-export default function Header({ onToggleDrawer }: HeaderProps) {
+export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) {
   const router = useRouter();
   const [userEmail, setUserEmail] = useState("");
   const [userRole, setUserRole] = useState("");
@@ -192,8 +193,16 @@ export default function Header({ onToggleDrawer }: HeaderProps) {
                         <li key={item.name}>
                           <button
                             onClick={() => {
-                              if (item.onClick) item.onClick();
-                              else {
+                              if (item.name === "Profile") {
+                                if (onProfileClick) {
+                                  onProfileClick();
+                                } else {
+                                  router.push("/agency/dashboard?tab=Agent%20Control");
+                                }
+                                setIsProfileOpen(false);
+                              } else if (item.onClick) {
+                                item.onClick();
+                              } else {
                                 // Default clicks close the menu
                                 setIsProfileOpen(false);
                               }

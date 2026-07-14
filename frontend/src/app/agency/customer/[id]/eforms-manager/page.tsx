@@ -482,6 +482,8 @@ export default function EFormsManagerPage() {
   const [iframeKey, setIframeKey] = useState<string>('');
   // Ref to the acord-form iframe for postMessage communication
   const acordIframeRef = useRef<HTMLIFrameElement | null>(null);
+  // After creating a master certificate, this holds the node ID to auto-select once fetchData refreshes
+  const pendingSelectRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (selectedNode && selectedNode.startsWith("cert-file-master-")) {
@@ -857,6 +859,24 @@ export default function EFormsManagerPage() {
           })
         );
         setCreatedCertificates(formattedCerts);
+
+        // ── Auto-select a newly-created master certificate if one is pending ──
+        if (pendingSelectRef.current) {
+          const targetId = pendingSelectRef.current;
+          pendingSelectRef.current = null;
+          const found = formattedCerts.find((c: any) => c.id === targetId);
+          if (found) {
+            setActiveTab("Certificates");
+            setSelectedNode(targetId);
+          } else {
+            // Fallback: select the last certificate (most recently created)
+            const last = formattedCerts[formattedCerts.length - 1];
+            if (last) {
+              setActiveTab("Certificates");
+              setSelectedNode(last.id);
+            }
+          }
+        }
       }
     } catch (err: any) {
       setError(err.message || "Failed to load data");
@@ -1061,21 +1081,11 @@ export default function EFormsManagerPage() {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'CREATE_CERTIFICATE') {
+        // Store the target node ID so fetchData can auto-select it after refresh
         const dbId = String(event.data.payload.id);
-        const year = new Date().getFullYear();
-        const certNumber = `${year}${dbId.padStart(2, '0')}`;
-        const newCert = {
-          id: `cert-file-master-${dbId}`,
-          label: event.data.payload.name || certNumber,
-          type: "folder" as const,
-          formType: "Certificates",
-          certNumber,
-          certDbId: dbId,
-          children: []
-        };
-        setCreatedCertificates(prev => [...prev, newCert]);
-        setActiveTab("Certificates");
-        setSelectedNode(newCert.id);
+        pendingSelectRef.current = `cert-file-master-${dbId}`;
+        // Refresh from backend so the new cert has full data (masterData, isMaster, etc.)
+        fetchData();
       } else if (event.data?.type === 'UPDATE_CERTIFICATE') {
         fetchData();
       } else if (event.data?.type === 'FIELD_EDITED') {
@@ -1084,7 +1094,7 @@ export default function EFormsManagerPage() {
     };
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, []);
+  }, [fetchData]);
 
   // ── Build tree data from customer + policies ──
   const buildTree = (): TreeNode[] => {

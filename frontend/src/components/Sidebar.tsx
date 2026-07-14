@@ -15,15 +15,17 @@ import {
   Briefcase,
   TrendingUp,
   Settings,
-  HelpCircle
+  HelpCircle,
+  Shield
 } from "lucide-react";
 
 interface SidebarProps {
   currentTab?: string;
   onTabChange?: (tab: string) => void;
+  userRole?: string;
 }
 
-export default function Sidebar({ currentTab = "Customers", onTabChange }: SidebarProps) {
+export default function Sidebar({ currentTab = "Customers", onTabChange, userRole = "agent" }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const handleTabClick = (name: string) => {
@@ -40,6 +42,11 @@ export default function Sidebar({ currentTab = "Customers", onTabChange }: Sideb
     { name: "Suspense", tab: "Suspense", icon: Clock },
     { name: "Target List", tab: "Target List", icon: Target }
   ];
+
+  if (userRole === "agency") {
+    actionLinks.push({ name: "Agent Control", tab: "Agent Control", icon: Shield });
+  }
+
 
   return (
     <aside

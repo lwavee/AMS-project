@@ -87,6 +87,9 @@ export default function NewCertificateFormPage() {
                   ? `${API_BASE_URL}/api/customers/${customerId}/certificates/${certDbId}`
                   : `${API_BASE_URL}/api/customers/${customerId}/certificates`;
                 const method = isEdit ? 'PUT' : 'POST';
+                // Generate a sensible default description if user left it blank
+                const today = new Date();
+                const autoDesc = `Certificate ${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
                 const res = await fetch(url, {
                   method,
                   headers: { 
@@ -94,7 +97,7 @@ export default function NewCertificateFormPage() {
                     'Authorization': `Bearer ${token}` 
                   },
                   body: JSON.stringify({
-                    description: description || "my frist master",
+                    description: description.trim() || autoDesc,
                     form_type: "Certificates",
                     form_data: {
                       rowSelections,
@@ -102,6 +105,10 @@ export default function NewCertificateFormPage() {
                     }
                   })
                 });
+                if (!res.ok) {
+                  console.error("Failed to save master certificate, status:", res.status);
+                  return;
+                }
                 const newCert = await res.json();
                 if (window.opener) {
                   window.opener.postMessage({ type: isEdit ? 'UPDATE_CERTIFICATE' : 'CREATE_CERTIFICATE', payload: { id: newCert.id, name: newCert.description } }, '*');

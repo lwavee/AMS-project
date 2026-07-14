@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 
 class LoginRequest(BaseModel):
@@ -16,3 +17,10 @@ class UserProfile(BaseModel):
     id: str
     email: str
     role: str
+
+
+class RegisterOutlookRequest(BaseModel):
+    email: EmailStr
+    password: str
+    name: Optional[str] = None
+
