@@ -37,7 +37,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440
 
 @router.post("/login", response_model=LoginResponse)
 async def login(req: LoginRequest, db: Session = Depends(get_db)):
-    email = req.email
+    email = req.email.strip().lower() if req.email else ""
     password = req.password
 
     # 1. Look up user in database

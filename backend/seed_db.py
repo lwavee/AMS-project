@@ -10,6 +10,8 @@ from sqlalchemy import text
 sys.path.append(os.path.join(os.getcwd(), "backend"))
 
 from app.database.connection import engine, Base, SessionLocal
+from app.modules.customer.model import Customer, Policy, Agency, Agent, MasterCertificate, CertificateHolder  # noqa: F401
+from app.modules.eforms.model import CertificateFieldOverride  # noqa: F401
 
 def seed():
     print("Initializing database and seeding...")
@@ -19,8 +21,27 @@ def seed():
     
     db = SessionLocal()
 
-    # 2. Create the 'users' table for auth (if not exists)
-    # This table is used by auth.users queries in the backend
+    # 2. Create the 'users' and 'auth.users' tables for auth (if not exists)
+    if not engine.url.drivername.startswith("sqlite"):
+        try:
+            db.execute(text("CREATE SCHEMA IF NOT EXISTS auth;"))
+            db.execute(text("""
+                CREATE TABLE IF NOT EXISTS auth.users (
+                    id TEXT PRIMARY KEY,
+                    email TEXT UNIQUE,
+                    encrypted_password TEXT,
+                    raw_user_meta_data TEXT,
+                    email_confirmed_at TIMESTAMP,
+                    role TEXT,
+                    aud TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            print(f"Note: auth.users table setup (using existing or public schema): {e}")
+
     try:
         db.execute(text("""
             CREATE TABLE IF NOT EXISTS users (
@@ -36,7 +57,8 @@ def seed():
         """))
         db.commit()
     except Exception as e:
-        print(f"Note: Table 'users' might already exist or failed to create: {e}")
+        db.rollback()
+        print(f"Note: Table 'users' setup: {e}")
 
     # 3. Prepare default users
     users_to_seed = [
@@ -65,11 +87,14 @@ def seed():
         password = user_info["password"]
         role = user_info["role"]
         
-        # Check if exists
-        result = db.execute(text("SELECT id FROM users WHERE email = :email"), {"email": email}).first()
-        if result:
-            print(f"User {email} already exists, skipping.")
-            continue
+        # Check if exists in users
+        try:
+            result = db.execute(text("SELECT id FROM users WHERE email = :email"), {"email": email}).first()
+            if result:
+                print(f"User {email} already exists in users, skipping.")
+                continue
+        except Exception as e:
+            db.rollback()
 
         # Hash password
         salt = bcrypt.gensalt()
@@ -78,18 +103,42 @@ def seed():
         user_id = str(uuid.uuid4())
         meta = json.dumps({"role": role, "full_name": user_info["name"]})
         
-        db.execute(text("""
-            INSERT INTO users (id, email, encrypted_password, raw_user_meta_data, email_confirmed_at, role, aud)
-            VALUES (:id, :email, :password, :meta, :confirmed_at, :role, :aud)
-        """), {
-            "id": user_id, 
-            "email": email, 
-            "password": hashed, 
-            "meta": meta, 
-            "confirmed_at": datetime.now(), 
-            "role": role, 
-            "aud": 'authenticated'
-        })
+        try:
+            db.execute(text("""
+                INSERT INTO users (id, email, encrypted_password, raw_user_meta_data, email_confirmed_at, role, aud)
+                VALUES (:id, :email, :password, :meta, :confirmed_at, :role, :aud)
+            """), {
+                "id": user_id, 
+                "email": email, 
+                "password": hashed, 
+                "meta": meta, 
+                "confirmed_at": datetime.now(), 
+                "role": role, 
+                "aud": 'authenticated'
+            })
+            db.commit()
+        except Exception as e:
+            db.rollback()
+
+        if not engine.url.drivername.startswith("sqlite"):
+            try:
+                db.execute(text("""
+                    INSERT INTO auth.users (id, email, encrypted_password, raw_user_meta_data, email_confirmed_at, role, aud)
+                    VALUES (:id, :email, :password, :meta, :confirmed_at, :role, :aud)
+                    ON CONFLICT (email) DO NOTHING
+                """), {
+                    "id": user_id, 
+                    "email": email, 
+                    "password": hashed, 
+                    "meta": meta, 
+                    "confirmed_at": datetime.now(), 
+                    "role": role, 
+                    "aud": 'authenticated'
+                })
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                print(f"Note inserting into auth.users: {e}")
         
         print(f"Created {role} user: {email}")
 
