@@ -10,7 +10,7 @@ env_path = BASE_DIR / ".env"
 load_dotenv(dotenv_path=env_path)
 
 class Settings:
-    DATABASE_URL: str | None = os.getenv("DATABASE_URL").strip() if os.getenv("DATABASE_URL") else None
+    DATABASE_URL: str | None = (os.getenv("DATABASE_URL") or "").strip() or None
     APP_NAME: str = os.getenv("APP_NAME", "AMS360")
     APP_ENV: str = os.getenv("APP_ENV", "development")
     DEBUG: bool = os.getenv("DEBUG", "True").lower() in ("true", "1", "t")
