@@ -525,7 +525,8 @@ export default function PolicyDetailPage() {
             )}
           </div>
 
-          {/* Panel 2: Personnel & Business Unit */}
+          {/* {/* Panel 2: Personnel & Business Unit (COMMENTED OUT) */}
+          {/*
           <div className={panelContainerCls}>
             <div className={`${panelHeaderCls} ${expandedSections['personnel'] ? 'border-b border-border-main' : ''}`} onClick={() => toggleSection('personnel')}>
               <div className="flex items-center gap-2">
@@ -575,8 +576,10 @@ export default function PolicyDetailPage() {
               </div>
             )}
           </div>
+          */}
 
-          {/* Panel 3: Additional Policy Information */}
+          {/* Panel 3: Additional Policy Information (COMMENTED OUT) */}
+          {/*
           <div className={panelContainerCls}>
             <div className={`${panelHeaderCls} ${expandedSections['additional'] ? 'border-b border-border-main' : ''}`} onClick={() => toggleSection('additional')}>
               <div className="flex items-center gap-2">
@@ -678,8 +681,10 @@ export default function PolicyDetailPage() {
               </div>
             )}
           </div>
+          */}
 
-          {/* Panel 4: First Named Insured */}
+          {/* Panel 4: First Named Insured (COMMENTED OUT) */}
+          {/*
           <div className={panelContainerCls}>
             <div className={`${panelHeaderCls} ${expandedSections['insured'] ? 'border-b border-border-main' : ''}`} onClick={() => toggleSection('insured')}>
               <div className="flex items-center gap-2">
@@ -709,8 +714,10 @@ export default function PolicyDetailPage() {
               </div>
             )}
           </div>
+          */}
 
-          {/* Panel 5: Policy Premium Totals (MOVED UP) */}
+          {/* Panel 5: Policy Premium Totals (COMMENTED OUT) */}
+          {/*
           <div className={panelContainerCls + " overflow-hidden"}>
             <div className={`${panelHeaderCls} ${expandedSections['premium'] ? 'border-b border-border-main' : ''}`} onClick={() => toggleSection('premium')}>
               <div className="flex items-center gap-2">
@@ -765,8 +772,10 @@ export default function PolicyDetailPage() {
               </div>
             )}
           </div>
+          */}
 
-          {/* Panel 6: Billing / Payment (Invoicing Section) */}
+          {/* Panel 6: Billing / Payment (COMMENTED OUT) */}
+          {/*
           <div className={panelContainerCls + " overflow-hidden"}>
             <div className={`${panelHeaderCls} ${expandedSections['billing'] ? 'border-b border-border-main' : ''}`} onClick={() => toggleSection('billing')}>
               <div className="flex items-center gap-2">
@@ -819,6 +828,7 @@ export default function PolicyDetailPage() {
               </div>
             )}
           </div>
+          */}
 
           {/* Grid Section 7: Line of Business */}
           <div className={panelContainerCls + " overflow-hidden"}>
@@ -996,7 +1006,8 @@ export default function PolicyDetailPage() {
             )}
           </div>
 
-          {/* Lower Panels rendered identically as plain headers */}
+          {/* Lower Panels (COMMENTED OUT) */}
+          {/*
           <div className="space-y-6 pt-2">
             {[
               { id: "transactionPremiumsGrid", label: "Transaction Premiums Grid" },
@@ -1026,6 +1037,7 @@ export default function PolicyDetailPage() {
               </div>
             ))}
           </div>
+          */}
 
         </div>
       </div>

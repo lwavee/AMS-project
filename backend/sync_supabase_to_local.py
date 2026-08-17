@@ -3,9 +3,11 @@ import urllib.request
 import json
 import os
 import bcrypt
+from dotenv import load_dotenv
 
-supabase_url = os.environ.get("NEXT_PUBLIC_SUPABASE_URL", "https://fwedjeeumiaftepzislf.supabase.co")
-secret_key = os.environ.get("SUPABASE_SECRET_KEY", "")
+load_dotenv()
+supabase_url = os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL", "https://fwedjeeumiaftepzislf.supabase.co")
+secret_key = os.environ.get("SUPABASE_SECRET_KEY") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 
 def fetch_table(table_name):
     url = f"{supabase_url}/rest/v1/{table_name}?select=*"

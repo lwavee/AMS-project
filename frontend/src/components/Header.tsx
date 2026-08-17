@@ -1,14 +1,14 @@
 /* eslint-disable */
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   Menu, 
   LogOut, 
   Bell, 
   User, 
   ChevronDown, 
-  ChevronRight,
+  ChevronRight, 
   ChevronLeft,
   Zap, 
   Users, 
@@ -39,12 +39,34 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [profileView, setProfileView] = useState<"main" | "quick-actions">("main");
 
+  const profileRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       setUserEmail(localStorage.getItem("email") || "agent@capco.com");
       setUserRole(localStorage.getItem("role") || "agent");
     }
   }, []);
+
+  // Click outside to dismiss profile menu or notifications popup
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setIsNotificationsOpen(false);
+      }
+    };
+
+    if (isProfileOpen || isNotificationsOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isProfileOpen, isNotificationsOpen]);
 
   // Reset profile dropdown to main view when closed
   useEffect(() => {
@@ -106,10 +128,9 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
       <div className="flex items-center gap-4">
         
         {/* Notification Bell Menu Button */}
-        <div className="relative">
+        <div className="relative" ref={notificationRef}>
           <button
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            onBlur={() => setTimeout(() => setIsNotificationsOpen(false), 200)}
             className="p-2 text-text-muted hover:text-primary hover:bg-secondary/40 rounded-full transition-all relative cursor-pointer"
             title="Notifications"
           >
@@ -141,16 +162,9 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
         <div className="h-6 w-px bg-border-main"></div>
 
         {/* User Profile Menu */}
-        <div className="relative">
+        <div className="relative" ref={profileRef}>
           <button
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            onBlur={() => {
-              // Only auto-close if the user is not clicking items in the menu
-              setTimeout(() => {
-                // We use document.activeElement checks or simple timeouts
-                // Safe check: do not close if profileView has changed
-              }, 250);
-            }}
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-secondary/40 transition-all border border-transparent hover:border-border-main cursor-pointer"
           >
             <div className="h-8 w-8 rounded-full bg-secondary text-primary flex items-center justify-center font-bold text-sm border border-border-main shadow-inner uppercase">
@@ -170,7 +184,6 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
           {/* Redesigned User Profile Dropdown holding Unified Navigation Menu */}
           {isProfileOpen && (
             <div 
-              onMouseDown={(e) => e.preventDefault()} // Prevents blur event from closing the dropdown when clicking items
               className="absolute right-0 mt-2 w-64 bg-white border border-border-main rounded-2xl shadow-2xl py-3.5 z-[999] animate-in fade-in slide-in-from-top-2 duration-150"
             >
               

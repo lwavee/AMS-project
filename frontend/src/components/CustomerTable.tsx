@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   useReactTable,
   getCoreRowModel,
@@ -42,6 +43,7 @@ export default function CustomerTable({
   onRefresh,
   inactiveColor,
 }: CustomerTableProps) {
+  const router = useRouter();
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
   // Define columns matching classic AMS360 specifications with modern presentation
@@ -130,7 +132,16 @@ export default function CustomerTable({
           const isCom = type === "Commercial";
           return (
             <div className="flex items-center gap-2 truncate">
-              <span className="font-bold text-text-main">{name}</span>
+              <span
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/agency/customer/${row.original.id}`);
+                }}
+                className="font-bold text-primary hover:underline cursor-pointer"
+                title="Click to open customer folder"
+              >
+                {name}
+              </span>
               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase shrink-0 tracking-wider ${
                 isCom ? "bg-primary/10 text-primary" : "bg-success/10 text-success"
               }`}>
@@ -191,7 +202,7 @@ export default function CustomerTable({
         size: 90,
       },
     ],
-    []
+    [router]
   );
 
   const table = useReactTable({
@@ -246,7 +257,13 @@ export default function CustomerTable({
                     key={row.id}
                     onClick={() => {
                       if (onRowClick) onRowClick(row.original);
-                      row.toggleSelected(!isSelected);
+                      // Exclusive single select on row click: unselect previous, select current
+                      setSelectedRowIds((prev) => {
+                        if (prev[row.id] && Object.keys(prev).filter(k => prev[k]).length === 1) {
+                          return {};
+                        }
+                        return { [row.id]: true };
+                      });
                     }}
                     style={
                       row.original.status === "Inactive" && inactiveColor
@@ -255,8 +272,8 @@ export default function CustomerTable({
                     }
                     className={`transition-all cursor-pointer ${
                       isSelected
-                        ? "bg-primary/10 text-text-main font-semibold"
-                        : "odd:bg-white even:bg-secondary/10"
+                        ? "!bg-primary/20 text-text-main font-bold ring-2 ring-inset ring-primary/50 shadow-sm border-l-4 border-l-primary"
+                        : "hover:bg-primary/5 odd:bg-white even:bg-secondary/10"
                     }`}
                   >
                     {row.getVisibleCells().map((cell) => (

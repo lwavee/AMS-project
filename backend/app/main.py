@@ -92,19 +92,16 @@ async def validation_exception_handler(request, exc):
 def root():
     return {"message": "AMS360 API Running", "version": "1.0.0"}
 
+from app.database.connection import test_connection, engine, Base, get_db_status
+
 @app.get("/health/")
+@app.get("/api/health/db")
 def health_check():
-    db_status = "connected"
-    try:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-    except Exception:
-        db_status = "disconnected"
-
-    from datetime import datetime
-
+    db_info = get_db_status()
     return {
         "status": "ok",
         "environment": settings.APP_ENV,
-        "database": db_status
+        "active_database_mode": db_info["active_mode"],
+        "primary_database": db_info["primary"],
+        "backup_database": db_info["backup"],
     }

@@ -21,5 +21,10 @@ class Settings:
     SUPABASE_ANON_KEY: str | None = os.getenv("SUPABASE_ANON_KEY")
     SUPABASE_SECRET_KEY: str | None = os.getenv("SUPABASE_SECRET_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
+    BACKUP_DATABASE_URL: str | None = (os.getenv("BACKUP_DATABASE_URL") or "").strip() or None
+    BACKUP_SUPABASE_URL: str | None = os.getenv("BACKUP_SUPABASE_URL")
+    BACKUP_SUPABASE_ANON_KEY: str | None = os.getenv("BACKUP_SUPABASE_ANON_KEY")
+    BACKUP_SUPABASE_SECRET_KEY: str | None = os.getenv("BACKUP_SUPABASE_SECRET_KEY")
+
 settings = Settings()
 
