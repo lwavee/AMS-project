@@ -66,10 +66,11 @@ const INSURANCE_PARENT_COMPANIES = [
   "CIBA Insurance Services, Insurance Company, CIB",
   "CM&F Group Inc, Insurance Company, CMF",
   "CNA, Insurance Company, CNA",
+  "Columbia Lloyds Insurance Company, Insurance Company, CLIC",
   "Community Associates Insurance Solutions, Insurance Company",
   "Continental Casualty Company, Insurance Company, CNC",
   "Coterie Insurance Agency LLC, Insurance Company, COT",
-  "CSE Insurance Group/ Alliance United/Safeguard",
+  "CSE Insurance Group/ Alliance United/Safeguard, Insurance Com",
   "Daigle, Insurance Company, DAG",
   "Dairyland Insurance, Insurance Company, DAI",
   "--DEFAULT--, Insurance Company, DEFCMP",
@@ -196,6 +197,9 @@ const INSURANCE_PARENT_COMPANIES = [
 
 const INSURANCE_WRITING_COMPANIES: Record<string, string[]> = {
   "(CA), Insurance Company, (CA)": ["(CA), Insurance Company, (CA)"],
+  "--DEFAULT--, Insurance Company, DEFCMP": [
+    "--DEFAULT--, Insurance Company, DEFCMP"
+  ],
   "ACE Group (formerly Atlantic Mutual Companies), Insurance Company": [
     "ACE American Insurance Company, Writing Company, ATL011",
     "ACE Group (formerly Atlantic Mutual Companies), Insurance Company"
@@ -203,6 +207,263 @@ const INSURANCE_WRITING_COMPANIES: Record<string, string[]> = {
   "Acrisure, Insurance Company, ACR": [
     "Acrisure, Insurance Company, ACR",
     "Axis Insurance Company, Writing Company, ACR001"
+  ],
+  "Aegis General Insurance, Insurance Company, AEG": [
+    "Aegis General Insurance, Insurance Company, AEG",
+    "Aegis Security Insurance Company, Writing Company, AEG001",
+    "Seaview Insurance Company, Writing Company, AEG002"
+  ],
+  "Allied/Nationwide Insurance Company, Insurance Company, ALI": [
+    "Allied Insurance Company of America, Writing Company, ALI022",
+    "Allied/Nationwide Insurance Company, Insurance Company, ALI",
+    "AMCO, Writing Company, ALI002",
+    "Depositors, Writing Company, ALI004",
+    "Freedom Specialty Ins Co, Writing Company, ALI024",
+    "Nationwide Affinity Insurance Co of America, Writing Company, ALI0",
+    "Nationwide Agribusiness Ins Co, Writing Company, ALI001",
+    "Nationwide Insurance Company of America, Writing Company, ALI01",
+    "Nationwide Mutual, Writing Company, ALI005",
+    "Nationwide Property & Casualty Insurance Co, Writing Company, ALI",
+    "Seaview Insurance Company, Writing Company, ALI025"
+  ],
+  "Allstate, Insurance Company, ALL": [
+    "Allstate County Mutual Insurance, Writing Company, ALL001",
+    "Allstate Fire and Casualty Insurance Company, Writing Company, AL",
+    "Allstate Floridian Indemnity Company, Writing Company, ALL007",
+    "Allstate Floridian Insurance Company, Writing Company, ALL006",
+    "Allstate Indemnity Company, Writing Company, ALL002",
+    "Allstate Insurance Company, Writing Company, ALL003",
+    "Allstate Motor Club, Inc., Writing Company, ALL015",
+    "Allstate New Jersey Property and Casualty Insurance Company, Writi",
+    "Allstate NJ Insurance Company, Writing Company, ALL008",
+    "Allstate Property and Casualty, Writing Company, ALL004",
+    "Allstate Texas Lloyds, Writing Company, ALL005",
+    "Allstate Vehicle & Prop Ins Co, Writing Company, ALL016",
+    "Allstate, Insurance Company, ALL",
+    "California Earthquake Authority, Writing Company, ALL009",
+    "Deerbrook Ins. Company, Writing Company, ALL010",
+    "Northbrook Indemnity Company, Writing Company, ALL011",
+    "Northbrook Property Casualty, Writing Company, ALL012"
+  ],
+  "Alteris Insurance Services Inc., Insurance Company, AIS": [
+    "Alteris Insurance Services Inc., Insurance Company, AIS",
+    "Harco National Insurance Company, Writing Company, AIS001"
+  ],
+  "American Assets Grp (CA), Insurance Company, AAG": [
+    "American Assets Grp (CA), Insurance Company, AAG",
+    "Explorer Ins Co, Writing Company, AAG001"
+  ],
+  "American Business Insurance Services (CA), Insurance Company": [
+    "American Business Insurance Services (CA), Insurance Company, A",
+    "New York Marine & General Ins.Co., Writing Company, ABU001"
+  ],
+  "American Collectors Insurance Company, Insurance Company": [
+    "American Alternative Insurance Corporation, Writing Company, ACI0",
+    "American Collectors Insurance Company, Insurance Company, ACI"
+  ],
+  "American Modern Insurance Group**additional setups required": [
+    "American Modern Insurance Group**additional setups required, Insu",
+    "American Modern P&C Ins. Co., Writing Company, AMM012"
+  ],
+  "American Prop & Cas Inc, Insurance Company, APR": [
+    "American Prop & Cas Inc, Insurance Company, APR"
+  ],
+  "AmTrust Financial Services, Inc., Insurance Company, AMT": [
+    "AmTrust Financial Services, Inc., Insurance Company, AMT",
+    "AmTrust Insurance Company of Kansas, Writing Company, AMT013",
+    "Liberty Mutual, Writing Company, AMT014",
+    "Mount Vernon Fire Insurance Company, Writing Company, AMT015",
+    "National General Ins Online Inc, Writing Company, AMT016",
+    "Security National Insurance Co, Writing Company, AMT005",
+    "Sequoia Insurance Co, Writing Company, AMT006",
+    "Technology Insurance Co, Writing Company, AMT011",
+    "Wesco Insurance Co, Writing Company, AMT008"
+  ],
+  "Anchor General Insurance Agency, Inc., Insurance Company, ANC": [
+    "Anchor General Insurance Agency, Inc., Insurance Company, ANC",
+    "Anchor General Insurance Company, Writing Company, ANC001"
+  ],
+  "Arch Ins Grp, Insurance Company, ARC": [
+    "Arch Ins Co, Writing Company, ARC001",
+    "Arch Ins Grp, Insurance Company, ARC"
+  ],
+  "Ark International Group, Insurance Company, ARK": [
+    "Ark International Group, Insurance Company, ARK",
+    "Stratford Insurance Company, Writing Company, ARK001"
+  ],
+  "Arthur J. Gallagher & Company, Insurance Company, AJG": [
+    "Arthur J. Gallagher & Company, Insurance Company, AJG"
+  ],
+  "Artisan and Truckers Casualty, Insurance Company, ART": [
+    "Artisan and Truckers Casualty, Insurance Company, ART"
+  ],
+  "Aspire General Insurance, Insurance Company, ASP": [
+    "Aspire General Ins, Writing Company, ASP001",
+    "Aspire General Insurance, Insurance Company, ASP"
+  ],
+  "Associated Industries Insurance Company, Insurance Company": [
+    "Associated Industries Insurance Company, Insurance Company, ACC"
+  ],
+  "Assurant Group**Additional Setups Required, Insurance Company": [
+    "American Bankers Ins Group, Writing Company, ASR001",
+    "American Reliable Insurance Company, Writing Company, ASR005",
+    "Assurant Group**Additional Setups Required, Insurance Company, A"
+  ],
+  "Atain Insurance Companies, Insurance Company, ATA": [
+    "Atain Insurance Companies, Insurance Company, ATA",
+    "Atain Specialty Insurance Company, Writing Company, ATA001"
+  ],
+  "Ategrity Specialty Insurance Company, Insurance Company, ATE": [
+    "Ategrity Specialty Insurance Company, Insurance Company, ATE"
+  ],
+  "AU Gold, Insurance Company, AGO": [
+    "AU Gold, Insurance Company, AGO",
+    "Certain Underwriter Lloyd's, Writing Company, AGO01"
+  ],
+  "Bamboo, Insurance Company, BAM": [
+    "Bamboo, Insurance Company, BAM",
+    "Sutton National Insurance Company, Writing Company, BAM001"
+  ],
+  "BBSI, Insurance Company, BBS": [
+    "ACE American Insurance Co, Writing Company, BBS001",
+    "BBSI, Insurance Company, BBS"
+  ],
+  "Berkley Mid-Atlantic Group**additional setups required": [
+    "Berkley Mid-Atlantic Group**additional setups required, Insurance"
+  ],
+  "BIS, Insurance Company, BIS": [
+    "Associated Industries Insurance Company, Inc., Writing Company, B",
+    "BIS, Insurance Company, BIS",
+    "Developers Surety and Indemnity Company, Writing Company, BIS0"
+  ],
+  "Blue Cross Blue Shield, Insurance Company, BCB": [
+    "Blue Cross Blue Shield, Insurance Company, BCB"
+  ],
+  "Bond Experts II, Insurance Company, BON": [
+    "Bond Experts II, Insurance Company, BON",
+    "Houston Specialty Insurance Company, Writing Company, BON001"
+  ],
+  "Bridger Auto, Insurance Company, BAIS": [
+    "Bridger Auto, Insurance Company, BAIS",
+    "Incline National Insurance Company, Writing Company, BAIS01"
+  ],
+  "Bristol West Holdings Inc, Insurance Company, BWA": [
+    "Bristol West Holdings Inc, Insurance Company, BWA",
+    "Bristol West Insurance Company, Writing Company, BWA003",
+    "Coast National Insurance Company, Writing Company, BWA001"
+  ],
+  "Britt/Paulk Insurance Agency, Insurance Company, BRI": [
+    "Britt/Paulk Insurance Agency, Insurance Company, BRI"
+  ],
+  "Brookside General (CA), Insurance Company, BRO": [
+    "Brookside General (CA), Insurance Company, BRO",
+    "Topa Insurance Company, Writing Company, BRO001"
+  ],
+  "CA Fair Plan, Insurance Company, CFP": [
+    "CA Fair Plan, Insurance Company, CFP",
+    "California Capital Insurance Co., Writing Company, CFP001"
+  ],
+  "California Earthquake Authority, Insurance Company, CEA": [
+    "California Earthquake Authority, Insurance Company, CEA"
+  ],
+  "California Low Cost Insurance Policy, Insurance Company": [
+    "21st Century Centennial Insurance Co, Writing Company, CAAR02",
+    "California Automobile Assigned Risk Plan, Writing Company, CAAR01",
+    "California Low Cost Insurance Policy, Insurance Company, CAARP"
+  ],
+  "Canopius US Insurance, Inc., Insurance Company, CUI": [
+    "Canopius US Insurance, Inc., Insurance Company, CUI",
+    "Professional Program Insurance Brokerage, Writing Company, CUI001"
+  ],
+  "Capital Insurance Group (CIG), Insurance Company, CIG": [
+    "California Capital Insurance Co, Writing Company, CIG001",
+    "Capital Insurance Group (CIG), Insurance Company, CIG",
+    "Eagle West Insurance Co, Writing Company, CIG002",
+    "Monterey Insurance Co, Writing Company, CIG003",
+    "Nevada Capital, Writing Company, CIG004"
+  ],
+  "Carnegie General Insurance Agency (CA), Insurance Company": [
+    "Carnegie Flagship Program, Writing Company, CAR001",
+    "Carnegie General Insurance Agency (CA), Insurance Company, CAR",
+    "Safe Auto Insurance Company, Writing Company, CAR002"
+  ],
+  "Certain Underwriters at Lloyds of London, Insurance Company": [
+    "Certain Underwriters at Lloyds of London, Insurance Company, CUL"
+  ],
+  "Chubb and Son, Inc., Insurance Company, CHB": [
+    "Chubb and Son, Inc., Insurance Company, CHB"
+  ],
+  "CIBA Insurance Services, Insurance Company, CIB": [
+    "CIBA Insurance Services, Insurance Company, CIB"
+  ],
+  "CM&F Group Inc, Insurance Company, CMF": [
+    "CM&F Group Inc, Insurance Company, CMF",
+    "Medical Protective Co, Writing Company, CMF001"
+  ],
+  "CNA, Insurance Company, CNA": [
+    "American Casualty Co. of Reading PA, Writing Company, CNA005",
+    "CNA Surety, Writing Company, CNA012",
+    "CNA, Insurance Company, CNA",
+    "Continental Casualty Company, Writing Company, CNA001",
+    "National Fire Insurance Company of Hartford, Writing Company, CNA",
+    "Valley Forge Insurance Company, Writing Company, CNA006",
+    "Western Surety Company, Writing Company, CNA011"
+  ],
+  "Columbia Lloyds Insurance Company, Insurance Company, CLIC": [
+    "Columbia Lloyds Ins Co, Writing Company, CLIC01",
+    "Columbia Lloyds Insurance Company, Insurance Company, CLIC"
+  ],
+  "Community Associates Insurance Solutions, Insurance Company": [
+    "Community Associates Insurance Solutions, Insurance Company, CAI",
+    "Pennsylvania Manufacturers' Association Insuran, Writing Company, CAI001"
+  ],
+  "Continental Casualty Company, Insurance Company, CNC": [
+    "Continental Casualty Company, Insurance Company, CNC",
+    "Western Surety Company, Writing Company, CNC001"
+  ],
+  "Coterie Insurance Agency LLC, Insurance Company, COT": [
+    "Coterie Insurance Agency LLC, Insurance Company, COT",
+    "Spinnaker Insurance Company, Writing Company, COT001"
+  ],
+  "CSE Insurance Group/ Alliance United/Safeguard, Insurance Com": [
+    "CSE Insurance Group/ Alliance United/Safeguard, Insurance Company, CSE",
+    "Gold, Writing Company, CSE003"
+  ],
+  "Daigle, Insurance Company, DAG": [
+    "Arch Ins Co, Writing Company, DAG002",
+    "Daigle, Insurance Company, DAG"
+  ],
+  "Dairyland Insurance, Insurance Company, DAI": [
+    "Dairyland Insurance Company, Writing Company, DAI001",
+    "Dairyland Insurance, Insurance Company, DAI",
+    "Viking Insurance Company of Wisconsin, Writing Company, DAI008"
+  ],
+  "Developers Surety and Indemnity Co., Insurance Company, DEV": [
+    "Developers Surety and Indemnity Co., Insurance Company, DEV"
+  ],
+  "Drive Insurance Company, Insurance Company, DRV": [
+    "Drive Insurance Company, Insurance Company, DRV"
+  ],
+  "Eagle West Insurance Co., Insurance Company, EAG": [
+    "Eagle West Insurance Co., Insurance Company, EAG"
+  ],
+  "Earthquake Coverage (CA), Insurance Company, EAC": [
+    "Earthquake Coverage (CA), Insurance Company, EAC"
+  ],
+  "Employers Holdings Grp, Insurance Company, EHG": [
+    "Employers Compensation Insurance Company, Writing Company, EHG001",
+    "Employers Holdings Grp, Insurance Company, EHG",
+    "Employers Preferred Ins Co, Writing Company, EHG002"
+  ],
+  "Essentia Insurance Company, Insurance Company, ESS": [
+    "Essentia Insurance Company, Insurance Company, ESS"
+  ],
+  "Evanston Insurance Company, Insurance Company, EVA": [
+    "Evanston Insurance Company, Insurance Company, EVA",
+    "Kinney & Co, Writing Company, EVA001"
+  ],
+  "Everest National Insurance Company, Insurance Company, EVR": [
+    "Everest National Insurance Company, Insurance Company, EVR"
   ]
 };
 
