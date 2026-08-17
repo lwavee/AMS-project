@@ -355,6 +355,17 @@ async def create_customer_document(
     
     return customer_service.create_customer_document(db, customer_id, doc_data)
 
+@router.delete("/{customer_id}/documents/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_customer_document(
+    customer_id: int,
+    doc_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    customer_service.delete_customer_document(db, customer_id, doc_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.get("/{customer_id}/certificates", response_model=List[schema.MasterCertificateResponse])
 def list_master_certificates(
     customer_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)

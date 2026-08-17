@@ -420,6 +420,20 @@ def create_customer_document(db: Session, customer_id: int, data: dict):
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
+def delete_customer_document(db: Session, customer_id: int, doc_id: int):
+    get_customer(db, customer_id)
+    doc = get_customer_document(db, customer_id, doc_id)
+    try:
+        repo.delete_customer_document(db, doc)
+        logger.info(f"delete_customer_document: deleted Document (ID {doc_id}) for customer ID {customer_id}")
+        return doc
+    except Exception as e:
+        logger.error(f"delete_customer_document failed: {e}")
+        traceback.print_exc()
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 def list_master_certificates(db: Session, customer_id: int) -> list:
     get_customer(db, customer_id)
     try:

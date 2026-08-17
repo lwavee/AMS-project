@@ -1,7 +1,7 @@
 /* eslint-disable */
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { API_BASE_URL } from "../../../../lib/config";
 import CustomerSidebar, { NAV_ITEMS } from "../../../../components/customer-center/CustomerSidebar";
@@ -415,213 +415,10 @@ function PolicySummaryView({ selectedPolicy, customer }: { selectedPolicy: any, 
   );
 }
 
-function EditDocumentPopup({
-  file,
-  details,
-  setDetails,
-  onSave,
-  onCancel,
-}: {
-  file: File;
-  details: any;
-  setDetails: any;
-  onSave: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-[420px] border border-border-main overflow-hidden">
-        <div className="px-5 py-4 border-b border-border-main bg-secondary/30 flex justify-between items-center">
-          <h3 className="font-extrabold text-text-main text-sm">Edit Document (EDP)</h3>
-          <button onClick={onCancel} className="text-text-muted/60 hover:text-text-main cursor-pointer">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-          </button>
-        </div>
-        <div className="p-5 space-y-4">
-          <div>
-            <label className="block text-xs font-extrabold text-text-muted mb-1">File Name</label>
-            <div className="text-xs font-semibold text-text-main bg-secondary/50 px-3 py-2 rounded-lg truncate border border-border-main/50 shadow-inner">
-              {file.name}
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-extrabold text-text-muted mb-1">Action</label>
-            <select
-              value={details.action}
-              onChange={(e) => setDetails({ ...details, action: e.target.value })}
-              className="w-full text-[13px] font-semibold text-text-main bg-white border border-border-main rounded-lg px-3 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm transition-all"
-            >
-              <option value="Upload">Upload</option>
-              <option value="Download">Download</option>
-              <option value="E-Mail In">E-Mail In</option>
-              <option value="Certificate">Certificate</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-extrabold text-text-muted mb-1">Description</label>
-            <input
-              type="text"
-              value={details.description}
-              onChange={(e) => setDetails({ ...details, description: e.target.value })}
-              placeholder="e.g. Liability Policy Endorsement"
-              className="w-full text-[13px] font-semibold text-text-main bg-white border border-border-main rounded-lg px-3 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-extrabold text-text-muted mb-1">Ref #</label>
-            <input
-              type="text"
-              value={details.refNum}
-              onChange={(e) => setDetails({ ...details, refNum: e.target.value })}
-              placeholder="Auto-generated if blank"
-              className="w-full text-[13px] font-semibold text-text-main bg-white border border-border-main rounded-lg px-3 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm transition-all"
-            />
-          </div>
-        </div>
-        <div className="px-5 py-4 border-t border-border-main bg-secondary/10 flex justify-end gap-2">
-          <button onClick={onCancel} className="px-4 py-2 text-xs font-bold text-text-main/70 hover:text-text-main hover:bg-secondary/50 rounded-xl transition-colors cursor-pointer">Cancel</button>
-          <button onClick={onSave} className="px-5 py-2 text-xs font-bold text-white bg-gradient-to-r from-primary to-primary/80 hover:-translate-y-0.5 rounded-xl shadow-md shadow-primary/30 hover:shadow-primary/40 transition-all duration-300 cursor-pointer">Save Document</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function PoliciesTab({ customerId, customer }: { customerId: string, customer?: any }) {
-  const cols = ["Policy #", "Status", "Term", "Type", "Company", "Description"];
+  const cols = ["Policy #", "Status", "Term", "Type", "Company", "Description", "Effective Date", "Expiration Date"];
   const [policies, setPolicies] = useState<any[]>([]);
   const [selectedPolicyId, setSelectedPolicyId] = useState<string | null>(null);
-  const [showRightPane, setShowRightPane] = useState("Documents");
-
-  const [documents, setDocuments] = useState<any[]>([]);
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [showEDP, setShowEDP] = useState(false);
-  const [pendingDoc, setPendingDoc] = useState<File | null>(null);
-  const [docDetails, setDocDetails] = useState({ description: "", action: "Upload", refNum: "" });
-
-  const [activities, setActivities] = useState<any[]>([]);
-
-  const loadDocuments = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/documents`, {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const formatted = data.map((d: any) => ({
-          id: d.id,
-          fileName: d.file_name,
-          ext: d.ext,
-          action: d.action,
-          description: d.description,
-          refNum: d.ref_num,
-          info: d.info,
-          url: d.url
-        }));
-        setDocuments(formatted);
-      }
-    } catch (e) {
-      console.error("Error loading documents:", e);
-    }
-  };
-
-  const loadActivities = () => {
-    const defaultMocks = [
-      {
-        id: "mock-1",
-        date: "06/09/2026",
-        action: "Email",
-        description: "Rewrite",
-        by: "KAPIL",
-        trans: "Rewrite"
-      },
-      {
-        id: "mock-2",
-        date: "06/01/2026",
-        action: "Certificate",
-        description: "e-Form saved",
-        by: "CER...",
-        trans: "Rewrite"
-      }
-    ];
-    const stored = localStorage.getItem(`activities_log_${customerId}`);
-    if (stored) {
-      setActivities(JSON.parse(stored));
-    } else {
-      setActivities(defaultMocks);
-      localStorage.setItem(`activities_log_${customerId}`, JSON.stringify(defaultMocks));
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragOver(true); };
-  const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); setIsDragOver(false); };
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      setPendingDoc(e.dataTransfer.files[0]);
-      setDocDetails({ description: "", action: "Upload", refNum: "" });
-      setShowEDP(true);
-    }
-  };
-
-  const saveDocument = async () => {
-    if (pendingDoc) {
-      try {
-        const token = localStorage.getItem("token");
-        const formData = new FormData();
-        formData.append("file", pendingDoc);
-        formData.append("action", docDetails.action);
-        formData.append("description", docDetails.description || pendingDoc.name);
-        formData.append("refNum", docDetails.refNum || "");
-
-        const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/documents`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`
-          },
-          body: formData
-        });
-
-        if (!res.ok) {
-          throw new Error("Failed to upload document");
-        }
-
-        const uploadedDoc = await res.json();
-
-        // Add to activities
-        const selectedPolicy = policies.find((p) => p.id === selectedPolicyId);
-        const userEmail = localStorage.getItem("email") || "YOU";
-        const userName = userEmail.split('@')[0].toUpperCase();
-
-        const newActivity = {
-          id: `act-${uploadedDoc.id}`,
-          date: new Date().toLocaleDateString("en-US", { year: 'numeric', month: '2-digit', day: '2-digit' }),
-          action: docDetails.action || "Upload",
-          description: docDetails.description || `Uploaded file ${pendingDoc.name}`,
-          by: userName,
-          policyNum: selectedPolicy ? selectedPolicy.policyNum : "N/A",
-          effDate: selectedPolicy ? selectedPolicy.effDate || "N/A" : "N/A",
-          trans: "Document"
-        };
-
-        setActivities(prev => {
-          const updated = [newActivity, ...prev];
-          localStorage.setItem(`activities_log_${customerId}`, JSON.stringify(updated));
-          return updated;
-        });
-
-        await loadDocuments();
-        setShowEDP(false);
-        setPendingDoc(null);
-      } catch (error) {
-        alert("Upload failed: " + error);
-      }
-    }
-  };
 
   const loadPolicies = async () => {
     try {
@@ -647,21 +444,21 @@ function PoliciesTab({ customerId, customer }: { customerId: string, customer?: 
             if (mergedLobs && mergedLobs.length === 1) {
               return mergedLobs[0]?.type || mergedLobs[0]?.level || "";
             }
-            return "";
+            return p.type || "";
           })();
 
           return {
             id: p.id.toString(),
             policyNum: p.policy_num,
-            status: p.status,
-            term: p.term,
+            status: p.status || "Active",
+            term: p.term || "1 Year",
             type: displayType,
             lobs: mergedLobs || [],
-            company: p.company,
-            description: p.description,
-            effDate: p.eff_date,
-            expDate: p.exp_date,
-            createdDate: new Date(p.created_date).toLocaleDateString()
+            company: p.company || "",
+            description: p.description || "",
+            effDate: p.eff_date || "N/A",
+            expDate: p.exp_date || "N/A",
+            createdDate: p.created_date ? new Date(p.created_date).toLocaleDateString() : ""
           };
         });
         setPolicies(formatted);
@@ -683,12 +480,8 @@ function PoliciesTab({ customerId, customer }: { customerId: string, customer?: 
 
   useEffect(() => {
     loadPolicies();
-    loadActivities();
-    loadDocuments();
     const handleStorageChange = () => {
       loadPolicies();
-      loadActivities();
-      loadDocuments();
     };
     window.addEventListener("storage", handleStorageChange);
     return () => {
@@ -697,254 +490,82 @@ function PoliciesTab({ customerId, customer }: { customerId: string, customer?: 
   }, [customerId]);
 
   return (
-    <div className="bg-white border border-border-main rounded-2xl shadow-sm overflow-hidden">
+    <div className="bg-white border border-border-main rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1 h-full min-h-0">
 
       {/* Toolbar */}
-      <div className="px-4 py-2.5 bg-secondary/40 border-b border-border-main flex items-center gap-1.5 flex-wrap">
+      <div className="px-4 py-2.5 bg-secondary/40 border-b border-border-main flex items-center gap-1.5 flex-wrap shrink-0">
         <TbarBtn
           icon={Plus}
           label="New Policy"
           primary
           onClick={() => window.open(`/agency/customer/${customerId}/new-policy`, '_blank')}
         />
-        <TbarBtn label="Copy" />
-        <TbarBtn label="Endorse" />
         <TbarBtn label="Renew" />
         <TbarBtn label="Rewrite" />
         <TbarBtn label="Cancel" />
-        <TbarBtn label="Binder Bill" />
-        <TbarBtn label="Compare" />
         <div className="ml-auto">
           <TbarBtn icon={Download} label="Export All" />
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row items-stretch border-t-0 lg:border-t-0">
-        {/* Left Side: Policies */}
-        <div className="flex-1 flex flex-col min-w-0 border-b lg:border-b-0 lg:border-r border-border-main">
-          <div className="overflow-x-auto flex-1">
-            <table className="premium-table w-full">
-              <thead>
-                <tr>
-                  <th className="w-12 text-center table-header border-r border-border-main/20">Type</th>
-                  {cols.map(col => (
-                    <th key={col} className="table-header border-r border-border-main/20 last:border-r-0">{col}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {policies.length === 0 ? (
-                  <tr>
-                    <td colSpan={cols.length + 1} className="py-20 text-center table-body">
-                      <div className="flex flex-col items-center gap-2">
-                        <Shield size={28} className="text-border-main/50" />
-                        <p className="font-extrabold text-text-muted">No Policies Found</p>
-                        <p className="text-[11px] text-text-muted/60">Click <strong>+ New Policy</strong> to add a policy for this customer.</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  policies.map((p) => {
-                    const isSelected = selectedPolicyId === p.id;
-                    return (
-                      <tr
-                        key={p.id}
-                        onClick={() => setSelectedPolicyId(p.id)}
-                        className={`cursor-pointer transition-colors ${isSelected ? "selected-row" : ""}`}
-                      >
-                        <td className="text-center table-body text-base border-r border-border-main/20">🛡️</td>
-                        <td className="table-body font-bold border-r border-border-main/20">
-                          <span
-                            onClick={() => window.open(`/agency/customer/${customerId}/policy/${p.id}`, '_blank', 'width=1100,height=850')}
-                            className="text-primary hover:underline cursor-pointer"
-                          >
-                            {p.policyNum}
-                          </span>
-                        </td>
-                        <td className="table-body font-bold text-success border-r border-border-main/20">{p.status}</td>
-                        <td className="table-body text-text-main border-r border-border-main/20">{p.term}</td>
-                        <td className="table-body text-text-main border-r border-border-main/20">{p.type}</td>
-                        <td className="table-body text-text-main font-bold border-r border-border-main/20">{p.company}</td>
-                        <td className="table-body text-text-main">{p.description}</td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-          {/* Policies Footer */}
-          <div className="px-4 py-2 border-t border-border-main bg-secondary/20 text-[11px] text-text-muted font-bold shrink-0">
-            Displaying record(s) {policies.length > 0 ? `1 - ${policies.length} of ${policies.length}` : "0 - 0 of 0"}
-          </div>
-        </div>
-
-        {/* Right Side: Documents Array */}
-        <div className="w-full lg:w-[480px] shrink-0 flex flex-col bg-white">
-          <div className="px-3 py-2 border-b border-border-main bg-secondary/10 flex items-center gap-2">
-            <span className="text-[11px] font-bold text-text-main">Show:</span>
-            <select
-              value={showRightPane}
-              onChange={(e) => setShowRightPane(e.target.value)}
-              className="text-[11px] font-bold border border-border-main rounded px-1.5 py-0.5 min-w-[120px] bg-white text-text-main outline-none focus:border-primary"
-            >
-
-              <option value="Policy ">Policy Summary</option>
-              <option value="Documents">Documents</option>
-              <option value="Notes">Notes</option>
-              <option value="Activity">Activity</option>
-            </select>
-          </div>
-
-          {showRightPane === "Documents" && (
-            <>
-              <div
-                className={`overflow-x-auto flex-1 relative transition-colors duration-200 ${isDragOver ? "bg-primary/5 ring-2 ring-inset ring-primary/40" : ""}`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-              >
-                {isDragOver && (
-                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-primary/10 backdrop-blur-[1px] border-2 border-dashed border-primary/50 m-2 rounded-xl pointer-events-none">
-                    <FolderOpen size={48} className="text-primary mb-3 animate-bounce" />
-                    <p className="font-extrabold text-primary text-sm shadow-sm p-1">Drop document here to edit details</p>
+      {/* Full width Policies Table (fit to page & bottom) */}
+      <div className="overflow-x-auto overflow-y-auto w-full flex-1 min-h-0">
+        <table className="premium-table w-full">
+          <thead>
+            <tr>
+              <th className="w-12 text-center table-header border-r border-border-main/20">Type</th>
+              {cols.map(col => (
+                <th key={col} className="table-header border-r border-border-main/20 last:border-r-0">{col}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {policies.length === 0 ? (
+              <tr>
+                <td colSpan={cols.length + 1} className="py-20 text-center table-body">
+                  <div className="flex flex-col items-center gap-2">
+                    <Shield size={28} className="text-border-main/50" />
+                    <p className="font-extrabold text-text-muted">No Policies Found</p>
+                    <p className="text-[11px] text-text-muted/60">Click <strong>+ New Policy</strong> to add a policy for this customer.</p>
                   </div>
-                )}
-                <table className="premium-table w-full whitespace-nowrap">
-                  <thead>
-                    <tr>
-                      <th className="table-header text-center w-8 border-r border-border-main/20"><input type="checkbox" className="cursor-pointer" /></th>
-                      <th className="table-header text-center w-8 border-r border-border-main/20">@</th>
-                      <th className="table-header text-center w-10 border-r border-border-main/20">Info</th>
-                      <th className="table-header border-r border-border-main/20">Action</th>
-                      <th className="table-header border-r border-border-main/20">File Name</th>
-                      <th className="table-header border-r border-border-main/20 w-12 text-center">Ext.</th>
-                      <th className="table-header border-r border-border-main/20">Description</th>
-                      <th className="table-header w-20">Ref #</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {documents.length === 0 ? (
-                      <tr>
-                        <td colSpan={8} className="text-center py-20 text-xs text-text-muted italic table-body">
-                          <span className="block mb-1">No documents found.</span>
-                          <span className="text-[11px] text-text-muted/60">Drag and drop a file here to open the <strong>Edit Document Popup</strong>.</span>
-                        </td>
-                      </tr>
-                    ) : (
-                      documents.map((doc) => (
-                        <tr key={doc.id} className="hover:bg-secondary/40">
-                          <td className="table-body text-center border-r border-border-main/20"><input type="checkbox" className="cursor-pointer" /></td>
-                          <td className="table-body text-center border-r border-border-main/20 text-text-muted/60">📎</td>
-                          <td className="table-body text-center border-r border-border-main/20">
-                            <FileText size={12} className="inline-block text-primary" />
-                          </td>
-                          <td className="table-body border-r border-border-main/20">{doc.action}</td>
-                          <td
-                            className="table-body border-r border-border-main/20 text-blue-600 font-bold cursor-pointer hover:underline truncate max-w-[150px]"
-                            onClick={() => {
-                              if (doc.url) {
-                                const targetUrl = doc.url.startsWith("/") ? `${API_BASE_URL}${doc.url}` : doc.url;
-                                window.open(targetUrl, '_blank');
-                              }
-                            }}
-                          >
-                            {doc.fileName}
-                          </td>
-                          <td className="table-body text-center border-r border-border-main/20 font-semibold">{doc.ext}</td>
-                          <td className="table-body border-r border-border-main/20 truncate max-w-[150px]">{doc.description}</td>
-                          <td className="table-body">{doc.refNum}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              {/* Documents Footer */}
-              <div className="px-3 py-2 border-t border-border-main bg-secondary/20 text-[11px] text-text-muted font-bold shrink-0 mt-auto text-right">
-                Displaying record(s) {documents.length > 0 ? `1 - ${documents.length} of ${documents.length}` : "0 - 0 of 0"}
-              </div>
-              {/* EDP Modal */}
-              {showEDP && pendingDoc && (
-                <EditDocumentPopup
-                  file={pendingDoc}
-                  details={docDetails}
-                  setDetails={setDocDetails}
-                  onSave={saveDocument}
-                  onCancel={() => { setShowEDP(false); setPendingDoc(null); }}
-                />
-              )}
-            </>
-          )}
+                </td>
+              </tr>
+            ) : (
+              policies.map((p) => {
+                const isSelected = selectedPolicyId === p.id;
+                return (
+                  <tr
+                    key={p.id}
+                    onClick={() => setSelectedPolicyId(p.id)}
+                    className={`cursor-pointer transition-colors ${isSelected ? "selected-row" : ""}`}
+                  >
+                    <td className="text-center table-body text-base border-r border-border-main/20">🛡️</td>
+                    <td className="table-body font-bold border-r border-border-main/20">
+                      <span
+                        onClick={() => window.open(`/agency/customer/${customerId}/policy/${p.id}`, '_blank', 'width=1100,height=850')}
+                        className="text-primary hover:underline cursor-pointer"
+                      >
+                        {p.policyNum}
+                      </span>
+                    </td>
+                    <td className="table-body font-bold text-success border-r border-border-main/20">{p.status}</td>
+                    <td className="table-body text-text-main border-r border-border-main/20">{p.term}</td>
+                    <td className="table-body text-text-main border-r border-border-main/20">{p.type}</td>
+                    <td className="table-body text-text-main font-bold border-r border-border-main/20">{p.company}</td>
+                    <td className="table-body text-text-main border-r border-border-main/20">{p.description}</td>
+                    <td className="table-body text-text-main border-r border-border-main/20">{p.effDate}</td>
+                    <td className="table-body text-text-main">{p.expDate}</td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
 
-          {showRightPane === "Notes" && (
-            <div className="flex-1 overflow-y-auto p-4">
-              <NotesTab customerId={customerId} />
-            </div>
-          )}
-
-          {showRightPane === "Policy " && (
-            <PolicySummaryView selectedPolicy={policies.find((p) => p.id === selectedPolicyId)} customer={customer} />
-          )}
-
-          {showRightPane === "Activity" && (
-            <div className="flex-1 flex flex-col bg-white border-t border-border-main">
-              <div className="px-3 py-1.5 border-b border-border-main bg-secondary/20 flex gap-2">
-                <TbarBtn
-                  icon={Plus}
-                  label="New Activity"
-                  onClick={() => window.open(`/agency/customer/${customerId}/new-activity`, '_blank', 'width=1000,height=900')}
-                />
-                <TbarBtn label="Activity Grouping" />
-              </div>
-              <div className="overflow-x-auto flex-1">
-                <table className="premium-table w-full whitespace-nowrap">
-                  <thead>
-                    <tr>
-                      <th className="table-header text-center w-8 border-r border-border-main/20">@</th>
-                      <th className="table-header border-r border-border-main/20">Date</th>
-                      <th className="table-header border-r border-border-main/20">Action</th>
-                      <th className="table-header border-r border-border-main/20">Description</th>
-                      <th className="table-header border-r border-border-main/20">By</th>
-                      <th className="table-header border-r border-border-main/20">Policy #</th>
-                      <th className="table-header border-r border-border-main/20">Eff. Date</th>
-                      <th className="table-header border-r border-border-main/20">Trans.</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedPolicyId ? (
-                      activities.map((act) => {
-                        const selectedPolicy = policies.find((p) => p.id === selectedPolicyId);
-                        const displayPolicyNum = act.policyNum || selectedPolicy?.policyNum || "N/A";
-                        const displayEffDate = act.effDate || selectedPolicy?.effDate || "N/A";
-
-                        return (
-                          <tr key={act.id} className="hover:bg-secondary/40">
-                            <td className="table-body text-center border-r border-border-main/20 text-text-muted/60">📎</td>
-                            <td className="table-body text-blue-600 font-semibold cursor-pointer hover:underline border-r border-border-main/20">{act.date}</td>
-                            <td className="table-body border-r border-border-main/20">{act.action}</td>
-                            <td className="table-body border-r border-border-main/20 truncate max-w-[120px]">{act.description}</td>
-                            <td className="table-body border-r border-border-main/20">{act.by}</td>
-                            <td className="table-body border-r border-border-main/20 truncate max-w-[100px]">{displayPolicyNum}</td>
-                            <td className="table-body border-r border-border-main/20">{displayEffDate}</td>
-                            <td className="table-body border-r border-border-main/20">{act.trans}</td>
-                          </tr>
-                        );
-                      })
-                    ) : (
-                      <tr>
-                        <td colSpan={8} className="text-center py-20 text-xs text-text-muted italic table-body">No activities found</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              <div className="px-3 py-2 border-t border-border-main bg-secondary/20 text-[11px] text-text-muted font-bold shrink-0 mt-auto text-right">
-                Displaying record(s) {selectedPolicyId ? `1 - ${activities.length} of ${activities.length}` : "0 - 0 of 0"}
-              </div>
-            </div>
-          )}
-        </div>
+      {/* Policies Footer */}
+      <div className="px-4 py-2 border-t border-border-main bg-secondary/20 text-[11px] text-text-muted font-bold shrink-0 mt-auto">
+        Displaying record(s) {policies.length > 0 ? `1 - ${policies.length} of ${policies.length}` : "0 - 0 of 0"}
       </div>
     </div>
   );
@@ -1252,71 +873,340 @@ function NotesTab({ customerId }: { customerId: string }) {
   );
 }
 
-function DocumentsTab() {
-  const [docs, setDocs] = useState<{ id: number; name: string; size: string; date: string }[]>([]);
+function EditDocumentPopup({
+  file,
+  details,
+  setDetails,
+  onSave,
+  onCancel,
+}: {
+  file: File;
+  details: any;
+  setDetails: any;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-[440px] border border-border-main overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="px-5 py-4 border-b border-border-main bg-secondary/30 flex justify-between items-center">
+          <h3 className="font-extrabold text-text-main text-sm">Upload Document Details</h3>
+          <button onClick={onCancel} className="text-text-muted/60 hover:text-text-main cursor-pointer p-1">
+            <XCircle size={18} />
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div>
+            <label className="block text-xs font-extrabold text-text-muted mb-1">File Name</label>
+            <div className="text-xs font-semibold text-text-main bg-secondary/50 px-3 py-2 rounded-xl truncate border border-border-main/50 shadow-inner">
+              {file.name}
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-extrabold text-text-muted mb-1">Action</label>
+            <select
+              value={details.action}
+              onChange={(e) => setDetails((prev: any) => ({ ...prev, action: e.target.value }))}
+              className="w-full text-xs font-semibold border border-border-main rounded-xl px-3 py-2 bg-white text-text-main outline-none focus:border-primary"
+            >
+              <option value="Upload">Upload</option>
+              <option value="Policy Attachment">Policy Attachment</option>
+              <option value="Customer File">Customer File</option>
+              <option value="eForms Attachment">eForms Attachment</option>
+              <option value="Claim Document">Claim Document</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-extrabold text-text-muted mb-1">Description</label>
+            <input
+              type="text"
+              placeholder="Enter document description..."
+              value={details.description}
+              onChange={(e) => setDetails((prev: any) => ({ ...prev, description: e.target.value }))}
+              className="w-full text-xs border border-border-main rounded-xl px-3 py-2 bg-white text-text-main outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-extrabold text-text-muted mb-1">Reference Number</label>
+            <input
+              type="text"
+              placeholder="e.g. POL-1234 or optional ref"
+              value={details.refNum}
+              onChange={(e) => setDetails((prev: any) => ({ ...prev, refNum: e.target.value }))}
+              className="w-full text-xs border border-border-main rounded-xl px-3 py-2 bg-white text-text-main outline-none focus:border-primary"
+            />
+          </div>
+        </div>
+        <div className="px-5 py-3.5 bg-secondary/20 border-t border-border-main flex justify-end gap-2">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 border border-border-main rounded-xl text-xs font-bold text-slate-500 hover:text-text-main hover:bg-white transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onSave}
+            className="px-5 py-2 bg-gradient-to-r from-primary to-primary/90 text-white rounded-xl text-xs font-bold shadow-md shadow-primary/20 hover:shadow-primary/30 transition-all cursor-pointer"
+          >
+            Save & Upload
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setDocs(prev => [
-      { id: Date.now(), name: file.name, size: `${(file.size / 1024).toFixed(1)} KB`, date: new Date().toLocaleDateString() },
-      ...prev,
-    ]);
-    e.target.value = "";
+function DocumentsTab({ customerId }: { customerId: string }) {
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [showEDP, setShowEDP] = useState(false);
+  const [pendingDoc, setPendingDoc] = useState<File | null>(null);
+  const [docDetails, setDocDetails] = useState({ description: "", action: "Upload", refNum: "" });
+  const [searchTerm, setSearchTerm] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const loadDocuments = useCallback(async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/documents`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const formatted = data.map((d: any) => ({
+          id: d.id,
+          fileName: d.file_name,
+          ext: d.ext,
+          action: d.action,
+          description: d.description,
+          refNum: d.ref_num,
+          info: d.info,
+          url: d.url,
+          author: d.author,
+          createdAt: d.created_at
+        }));
+        setDocuments(formatted);
+      }
+    } catch (e) {
+      console.error("Error loading documents:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [customerId]);
+
+  useEffect(() => {
+    if (customerId) loadDocuments();
+  }, [customerId, loadDocuments]);
+
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragOver(true); };
+  const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); setIsDragOver(false); };
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setPendingDoc(e.dataTransfer.files[0]);
+      setDocDetails({ description: "", action: "Upload", refNum: "" });
+      setShowEDP(true);
+    }
   };
 
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setPendingDoc(e.target.files[0]);
+      setDocDetails({ description: "", action: "Upload", refNum: "" });
+      setShowEDP(true);
+    }
+  };
+
+  const saveDocument = async () => {
+    if (pendingDoc) {
+      try {
+        const token = localStorage.getItem("token");
+        const formData = new FormData();
+        formData.append("file", pendingDoc);
+        formData.append("action", docDetails.action || "Upload");
+        formData.append("description", docDetails.description || pendingDoc.name);
+        formData.append("refNum", docDetails.refNum || "");
+
+        const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/documents`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}` },
+          body: formData
+        });
+
+        if (!res.ok) throw new Error("Failed to upload document");
+
+        await loadDocuments();
+        setShowEDP(false);
+        setPendingDoc(null);
+      } catch (error) {
+        alert("Upload failed: " + error);
+      }
+    }
+  };
+
+  const handleDelete = async (docId: number) => {
+    if (!confirm("Are you sure you want to delete this document?")) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/documents/${docId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok || res.status === 204) {
+        setDocuments(prev => prev.filter(d => d.id !== docId));
+      }
+    } catch (e) {
+      console.error("Error deleting document:", e);
+    }
+  };
+
+  const filteredDocs = documents.filter(d => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      d.fileName?.toLowerCase().includes(term) ||
+      d.description?.toLowerCase().includes(term) ||
+      d.action?.toLowerCase().includes(term) ||
+      d.refNum?.toLowerCase().includes(term)
+    );
+  });
+
   return (
-    <div className={cardCls}>
-      <div className={sectionTitleCls}>
-        <FolderOpen size={12} className="text-primary" />
-        Customer Documents
+    <div className="bg-white border border-border-main rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1 h-full min-h-0">
+      {/* Toolbar */}
+      <div className="px-4 py-2.5 bg-secondary/40 border-b border-border-main flex items-center justify-between gap-2 flex-wrap shrink-0">
+        <div className="flex items-center gap-2">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileInput}
+            className="hidden"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="h-8 px-3.5 flex items-center gap-1.5 bg-gradient-to-r from-primary to-primary/90 text-white font-bold text-xs rounded-xl shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/30 transition-all cursor-pointer"
+          >
+            <Upload size={13} />
+            Upload Document
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <input
+            type="text"
+            placeholder="Search documents..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="h-8 px-3 text-xs bg-white border border-border-main rounded-xl outline-none focus:border-primary text-text-main w-48"
+          />
+          <div className="text-[11px] text-text-muted font-bold">
+            {filteredDocs.length} {filteredDocs.length === 1 ? "document" : "documents"}
+          </div>
+        </div>
       </div>
 
-      {/* Upload */}
-      <label className="mb-5 flex items-center gap-2.5 h-10 px-4 bg-white border border-dashed border-primary/40 rounded-xl cursor-pointer hover:bg-secondary/40 transition-all w-fit">
-        <Upload size={14} className="text-primary" />
-        <span className="text-xs font-bold text-primary">Upload Document</span>
-        <input type="file" className="hidden" onChange={handleUpload} />
-      </label>
+      {/* Drag & Drop full container table */}
+      <div
+        className={`overflow-x-auto overflow-y-auto w-full flex-1 min-h-0 relative transition-colors duration-200 ${isDragOver ? "bg-primary/5 ring-2 ring-inset ring-primary/40" : ""}`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {isDragOver && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-primary/10 backdrop-blur-[1px] border-2 border-dashed border-primary/50 m-2 rounded-xl pointer-events-none">
+            <FolderOpen size={48} className="text-primary mb-3 animate-bounce" />
+            <p className="font-extrabold text-primary text-sm shadow-sm p-1">Drop document here to upload</p>
+          </div>
+        )}
 
-      {docs.length === 0 ? (
-        <EmptyState
-          icon={FolderOpen}
-          title="No Documents"
-          subtitle="Upload documents for this customer. Document storage requires Supabase Storage integration."
+        <table className="premium-table w-full whitespace-nowrap">
+          <thead>
+            <tr>
+              <th className="table-header text-center w-8 border-r border-border-main/20"><input type="checkbox" className="cursor-pointer" /></th>
+              <th className="table-header text-center w-8 border-r border-border-main/20">@</th>
+              <th className="table-header text-center w-10 border-r border-border-main/20">Info</th>
+              <th className="table-header border-r border-border-main/20">Action</th>
+              <th className="table-header border-r border-border-main/20">File Name</th>
+              <th className="table-header border-r border-border-main/20 w-16 text-center">Ext.</th>
+              <th className="table-header border-r border-border-main/20">Description</th>
+              <th className="table-header border-r border-border-main/20 w-28">Ref #</th>
+              <th className="table-header border-r border-border-main/20 w-24">Author</th>
+              <th className="table-header border-r border-border-main/20 w-36">Date</th>
+              <th className="table-header text-center w-16">Delete</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredDocs.length === 0 ? (
+              <tr>
+                <td colSpan={11} className="text-center py-20 table-body">
+                  <div className="flex flex-col items-center gap-2">
+                    <FolderOpen size={32} className="text-border-main/60" />
+                    <p className="font-extrabold text-text-muted">No Documents Found</p>
+                    <p className="text-[11px] text-text-muted/60 max-w-sm">
+                      Drag and drop files here or click <strong>Upload Document</strong> to attach files to this customer.
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              filteredDocs.map((doc) => (
+                <tr key={doc.id} className="hover:bg-secondary/40">
+                  <td className="table-body text-center border-r border-border-main/20"><input type="checkbox" className="cursor-pointer" /></td>
+                  <td className="table-body text-center border-r border-border-main/20 text-text-muted/60">📎</td>
+                  <td className="table-body text-center border-r border-border-main/20">
+                    <FileText size={13} className="inline-block text-primary" />
+                  </td>
+                  <td className="table-body border-r border-border-main/20 font-semibold">{doc.action}</td>
+                  <td
+                    className="table-body border-r border-border-main/20 text-primary font-bold cursor-pointer hover:underline truncate max-w-[200px]"
+                    onClick={() => {
+                      if (doc.url) {
+                        const targetUrl = doc.url.startsWith("/") ? `${API_BASE_URL}${doc.url}` : doc.url;
+                        window.open(targetUrl, '_blank');
+                      }
+                    }}
+                  >
+                    {doc.fileName}
+                  </td>
+                  <td className="table-body text-center border-r border-border-main/20 font-mono text-xs">{doc.ext}</td>
+                  <td className="table-body border-r border-border-main/20 truncate max-w-[200px]">{doc.description || "—"}</td>
+                  <td className="table-body border-r border-border-main/20 font-mono text-xs">{doc.refNum || "—"}</td>
+                  <td className="table-body border-r border-border-main/20 text-xs">{doc.author || "YOU"}</td>
+                  <td className="table-body border-r border-border-main/20 text-xs text-text-muted">{doc.createdAt || "—"}</td>
+                  <td className="table-body text-center">
+                    <button
+                      onClick={() => handleDelete(doc.id)}
+                      className="p-1 rounded-md text-text-muted hover:text-danger hover:bg-danger/10 transition-colors cursor-pointer"
+                      title="Delete document"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Footer */}
+      <div className="px-4 py-2 border-t border-border-main bg-secondary/20 text-[11px] text-text-muted font-bold shrink-0 mt-auto">
+        Displaying record(s) {filteredDocs.length > 0 ? `1 - ${filteredDocs.length} of ${filteredDocs.length}` : "0 - 0 of 0"}
+      </div>
+
+      {/* EDP Modal */}
+      {showEDP && pendingDoc && (
+        <EditDocumentPopup
+          file={pendingDoc}
+          details={docDetails}
+          setDetails={setDocDetails}
+          onSave={saveDocument}
+          onCancel={() => { setShowEDP(false); setPendingDoc(null); }}
         />
-      ) : (
-        <div className="space-y-2">
-          {docs.map(doc => (
-            <div key={doc.id} className="flex items-center justify-between p-3 border border-border-main rounded-xl hover:bg-secondary/20 transition-all group">
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-[10px] bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center border border-primary/20 shadow-inner">
-                  <FileText size={14} className="text-primary" />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-text-main">{doc.name}</p>
-                  <p className="text-[10px] text-slate-400">{doc.size} · {doc.date}</p>
-                </div>
-              </div>
-              <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button className="h-7 w-7 flex items-center justify-center border border-border-main rounded-lg hover:bg-white cursor-pointer">
-                  <Eye size={12} className="text-slate-400" />
-                </button>
-                <button className="h-7 w-7 flex items-center justify-center border border-border-main rounded-lg hover:bg-white cursor-pointer">
-                  <Download size={12} className="text-slate-400" />
-                </button>
-                <button onClick={() => setDocs(prev => prev.filter(d => d.id !== doc.id))} className="h-7 w-7 flex items-center justify-center border border-danger/30 rounded-lg hover:bg-danger/5 cursor-pointer">
-                  <Trash2 size={12} className="text-danger" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
       )}
-
-      <p className="text-[10px] text-slate-300 mt-4 italic">
-        Note: Persistent document storage requires Supabase Storage integration.
-      </p>
     </div>
   );
 }
@@ -1380,7 +1270,7 @@ export default function CustomerProfilePage() {
   const [customer, setCustomer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("policies");
 
   const fetchCustomer = useCallback(async () => {
     setLoading(true);
@@ -1519,8 +1409,6 @@ export default function CustomerProfilePage() {
         </div>
       </header>
 
-      {/* ── Sub-breadcrumb band (Removed for cleaner dashboard layout) ── */}
-
       {/* ── Main body ── */}
       <div className="flex flex-1 overflow-hidden">
 
@@ -1539,20 +1427,13 @@ export default function CustomerProfilePage() {
                 </h1>
                 <span className="text-border-main text-sm shrink-0">—</span>
                 <span className="text-sm font-bold text-primary capitalize shrink-0">
-                  {NAV_ITEMS.find(n => n.id === activeTab)?.label}
+                  {NAV_ITEMS.find(n => n.id === activeTab)?.label || activeTab}
                 </span>
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider hidden sm:block">
                   {customer.division || "Gamaty Insurance Agency"}
                 </span>
-                {/* <button
-                  onClick={fetchCustomer}
-                  className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary text-xs font-bold rounded-xl transition-all cursor-pointer uppercase tracking-wide"
-                >
-                  <Activity size={12} />
-                  Refresh
-                </button> */}
               </div>
             </div>
 
@@ -1667,12 +1548,12 @@ export default function CustomerProfilePage() {
           </div>
 
           {/* ─ Scrollable Tab Content ─ */}
-          <div className="flex-1 overflow-y-auto min-h-0">
+          <div className="flex-1 min-h-0 flex flex-col overflow-y-auto">
             {activeTab === "overview" && <OverviewTab c={customer} />}
             {activeTab === "policies" && <PoliciesTab customerId={customerId as string} customer={customer} />}
+            {activeTab === "documents" && <DocumentsTab customerId={customerId as string} />}
             {activeTab === "activities" && <ActivitiesTab customerId={customerId as string} />}
             {activeTab === "notes" && <NotesTab customerId={customerId as string} />}
-            {activeTab === "documents" && <DocumentsTab />}
             {activeTab === "claims" && <ClaimsTab />}
             {activeTab === "reports" && <ReportsTab />}
             {activeTab === "settings" && <SettingsTab c={customer} />}
@@ -1719,3 +1600,4 @@ export default function CustomerProfilePage() {
     </div>
   );
 }
+

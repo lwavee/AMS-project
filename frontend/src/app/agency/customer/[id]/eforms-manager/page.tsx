@@ -108,7 +108,7 @@
     onEditMaster?: (id: string) => void;
     onOpenAttachments?: (id: string) => void;
   }) {
-  const [expanded, setExpanded] = useState(depth === 0);
+  const [expanded, setExpanded] = useState(true);
   const isFolder = node.type === "folder";
   const isSelected = selected === node.id;
   
@@ -791,7 +791,7 @@ export default function EFormsManagerPage() {
             let holderChildren: TreeNode[] = [];
             try {
               const hRes = await fetch(
-                `http://127.0.0.1:8000/api/customers/${customerId}/certificates/${certDbId}/holders`,
+                `${API_BASE_URL}/api/customers/${customerId}/certificates/${certDbId}/holders`,
                 { headers: { Authorization: `Bearer ${token}` } }
               );
               if (hRes.ok) {
@@ -1110,6 +1110,7 @@ export default function EFormsManagerPage() {
         id: `cert-all`,
         label: `Certificate, Last 2 year(s)`,
         type: "folder" as const,
+        formType: "Certificates",
         children: [
           ...createdCertificates
         ],

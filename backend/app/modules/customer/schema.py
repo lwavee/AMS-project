@@ -186,7 +186,7 @@ class ContactPerson(BaseModel):
 
 class Customer(CustomerBase):
     id: int
-    created_date: date
+    created_date: Optional[Any] = None
     contact_person: Optional[ContactPerson] = None
 
     class Config:
@@ -238,10 +238,11 @@ class PolicyCreate(PolicyBase):
 class Policy(PolicyBase):
     id: int
     customer_id: int
-    created_date: date
+    created_date: Optional[Any] = None
 
     class Config:
         from_attributes = True
+
 
 
 class CustomerNoteBase(BaseModel):
@@ -484,8 +485,8 @@ class CustomerDocumentCreate(CustomerDocumentBase):
 
 class CustomerDocument(CustomerDocumentBase):
     id: int
-    customer_id: int
-    created_at: str
+    customer_id: Optional[int] = None
+    created_at: Optional[Any] = None
 
     class Config:
         from_attributes = True
@@ -501,10 +502,11 @@ class MasterCertificateCreate(MasterCertificateBase):
 class MasterCertificateResponse(MasterCertificateBase):
     id: int
     customer_id: int
-    created_date: date
+    created_date: Optional[Any] = None
 
     class Config:
         from_attributes = True
+
 
 
 # ── Certificate Holders ────────────────────────────────────────────────────────

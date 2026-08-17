@@ -7,6 +7,7 @@ import {
   FileSignature,
   User,
   Shield,
+  FolderOpen,
   Activity,
   AlertTriangle,
   StickyNote,
@@ -30,10 +31,10 @@ interface SidebarAccordionProps {
 export const ALL_TAB_IDS = [
   "overview",
   "policies",
+  "documents",
   "activities",
   "claims",
   "notes",
-  "documents",
   "reports",
   "settings",
 ] as const;
@@ -99,7 +100,7 @@ export default function SidebarAccordion({
 
   // Auto-expand Views section if a view tab is active
   useEffect(() => {
-    const viewTabs = ["overview", "policies", "activities", "claims", "notes"];
+    const viewTabs = ["overview", "policies", "documents", "activities", "claims", "notes"];
     if (viewTabs.includes(activeTab) && !expandedSections.views) {
       const timer = setTimeout(() => {
         persistSections({ ...expandedSections, views: true });
@@ -141,6 +142,12 @@ export default function SidebarAccordion({
           onClick={() => handleTabClick("policies")}
         />
         <SidebarItem
+          label="Documents"
+          icon={FolderOpen}
+          isActive={activeTab === "documents"}
+          onClick={() => handleTabClick("documents")}
+        />
+        <SidebarItem
           label="Activities"
           icon={Activity}
           isActive={activeTab === "activities"}
@@ -159,6 +166,7 @@ export default function SidebarAccordion({
           onClick={() => handleTabClick("notes")}
         />
       </SidebarSection>
+
 
       {/* ═══ FORMS ═══ */}
       <SidebarSection

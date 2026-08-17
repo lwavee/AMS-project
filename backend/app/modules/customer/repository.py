@@ -260,13 +260,18 @@ def create_customer_document(db: Session, customer_id: int, data: dict):
     valid_keys = {c.name for c in CustomerDocument.__table__.columns}
     clean_data = {k: v for k, v in data.items() if k in valid_keys}
     clean_data["customer_id"] = customer_id
-    if "created_at" not in clean_data or not clean_data["created_at"]:
-        clean_data["created_at"] = datetime.now().strftime("%m/%d/%Y %I:%M %p")
     db_doc = CustomerDocument(**clean_data)
     db.add(db_doc)
     db.commit()
     db.refresh(db_doc)
     return db_doc
+
+
+
+def delete_customer_document(db: Session, doc) -> None:
+    db.delete(doc)
+    db.commit()
+
 
 
 def get_master_certificates_by_customer_id(db: Session, customer_id: int) -> list:
