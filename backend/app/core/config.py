@@ -17,5 +17,9 @@ class Settings:
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
     SECRET_KEY: str = os.getenv("SECRET_KEY", "secret")
     CUSTOMJS_API_KEY: str | None = os.getenv("CUSTOMJS_API_KEY")
+    SUPABASE_URL: str | None = os.getenv("SUPABASE_URL")
+    SUPABASE_ANON_KEY: str | None = os.getenv("SUPABASE_ANON_KEY")
+    SUPABASE_SECRET_KEY: str | None = os.getenv("SUPABASE_SECRET_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 settings = Settings()
+
