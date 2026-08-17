@@ -4,37 +4,14 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Eye,
-  Zap,
   FileSignature,
-  BarChart3,
-  DollarSign,
   User,
   Shield,
   Activity,
   AlertTriangle,
   StickyNote,
-  Plus,
-  Edit3,
-  UserPlus,
-  Upload,
-  FilePlus,
-  ClipboardList,
-  BookOpen,
-  FolderOpen,
-  Receipt,
-  CreditCard,
-  FileSpreadsheet,
   ChevronLeft,
   ChevronRight,
-  Car,
-  FileBox,
-  Ban,
-  ShieldCheck,
-  Building,
-  RefreshCw,
-  Zap as ZapIcon,
-  TriangleAlert,
-  Files,
   Rocket,
 } from "lucide-react";
 import SidebarSection from "./SidebarSection";
@@ -78,7 +55,7 @@ export default function SidebarAccordion({
   });
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  // Expanded sections state — default: Views open
+  // Expanded sections state — default: Views and Forms open
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => {
     if (typeof window !== "undefined") {
       try {
@@ -88,10 +65,7 @@ export default function SidebarAccordion({
     }
     return {
       views: true,
-      actions: false,
-      eforms: false,
-      quickReports: false,
-      accounting: false,
+      forms: true,
     };
   });
 
@@ -123,7 +97,7 @@ export default function SidebarAccordion({
     }
   }, [isCollapsed]);
 
-  // Auto-expand the section containing the active tab
+  // Auto-expand Views section if a view tab is active
   useEffect(() => {
     const viewTabs = ["overview", "policies", "activities", "claims", "notes"];
     if (viewTabs.includes(activeTab) && !expandedSections.views) {
@@ -142,22 +116,6 @@ export default function SidebarAccordion({
   const handleActionNavigate = (url: string) => {
     window.open(url, "_blank");
     setIsMobileOpen(false);
-  };
-
-  // ── Coming Soon toast ──
-  const showComingSoon = (label: string) => {
-    // Create a temporary toast element
-    const toast = document.createElement("div");
-    toast.className = "ams-coming-soon-toast";
-    toast.innerHTML = `<span style="font-weight:700;">${label}</span> — Coming Soon`;
-    document.body.appendChild(toast);
-    requestAnimationFrame(() => {
-      toast.classList.add("visible");
-    });
-    setTimeout(() => {
-      toast.classList.remove("visible");
-      setTimeout(() => toast.remove(), 300);
-    }, 2000);
   };
 
   // ── Render sidebar content ──
@@ -202,168 +160,18 @@ export default function SidebarAccordion({
         />
       </SidebarSection>
 
-      {/* ═══ Actions ═══ */}
+      {/* ═══ FORMS ═══ */}
       <SidebarSection
-        title="Actions"
-        icon={Zap}
-        isExpanded={expandedSections.actions}
-        onToggle={() => toggleSection("actions")}
-      >
-        <SidebarItem
-          label="New Policy"
-          icon={Plus}
-          isAction
-          onClick={() => handleActionNavigate(`/agency/customer/${customerId}/new-policy`)}
-        />
-        <SidebarItem
-          label="Edit Customer"
-          icon={Edit3}
-          isAction
-          onClick={() => router.push("/agency/new-customer")}
-        />
-        <SidebarItem
-          label="Add Contact"
-          icon={UserPlus}
-          onClick={() => {
-            handleTabClick("overview");
-            // Scroll to contacts after a brief delay to allow tab switch
-            setTimeout(() => {
-              const el = document.querySelector('[class*="Contacts"]') ||
-                document.querySelector('span.section-title');
-              el?.scrollIntoView({ behavior: "smooth", block: "center" });
-            }, 200);
-          }}
-        />
-        <SidebarItem
-          label="Upload Document"
-          icon={Upload}
-          onClick={() => handleTabClick("documents")}
-        />
-      </SidebarSection>
-
-      {/* ═══ eForms ═══ */}
-      <SidebarSection
-        title="eForms"
+        title="FORMS"
         icon={FileSignature}
-        isExpanded={expandedSections.eforms}
-        onToggle={() => toggleSection("eforms")}
+        isExpanded={expandedSections.forms}
+        onToggle={() => toggleSection("forms")}
       >
-        {/* Launch eForms Manager */}
         <SidebarItem
-          label="Launch eForms Manager"
+          label="Launch eForm..."
           icon={Rocket}
           isAction
           onClick={() => handleActionNavigate(`/agency/customer/${customerId}/eforms-manager`)}
-        />
-
-        {/* "New" sub-header */}
-        <div className="px-4 pt-2 pb-1">
-          <span className="text-[11px] font-extrabold text-text-main uppercase tracking-wide">
-            New
-          </span>
-        </div>
-
-        <SidebarItem
-          label="Applications"
-          icon={FilePlus}
-          onClick={() => handleTabClick("eforms")}
-        />
-        <SidebarItem
-          label="Auto ID Card"
-          icon={Car}
-          onClick={() => handleTabClick("eforms")}
-        />
-        <SidebarItem
-          label="Binder"
-          icon={FileBox}
-          onClick={() => handleTabClick("eforms")}
-        />
-        <SidebarItem
-          label="Cancellation"
-          icon={Ban}
-          onClick={() => handleTabClick("eforms")}
-        />
-        <SidebarItem
-          label="Certificate of Liability"
-          icon={ShieldCheck}
-          onClick={() => handleTabClick("eforms")}
-        />
-        <SidebarItem
-          label="Certificate of Property"
-          icon={Building}
-          onClick={() => handleTabClick("eforms")}
-        />
-        <SidebarItem
-          label="Change Request"
-          icon={RefreshCw}
-          onClick={() => handleTabClick("eforms")}
-        />
-        <SidebarItem
-          label="EPI"
-          icon={ZapIcon}
-          onClick={() => handleTabClick("eforms")}
-        />
-        <SidebarItem
-          label="Loss Notice"
-          icon={TriangleAlert}
-          onClick={() => handleTabClick("eforms")}
-        />
-        <SidebarItem
-          label="Additional Forms"
-          icon={Files}
-          onClick={() => handleTabClick("eforms")}
-        />
-      </SidebarSection>
-
-      {/* ═══ Quick Reports ═══ */}
-      <SidebarSection
-        title="Quick Reports"
-        icon={BarChart3}
-        isExpanded={expandedSections.quickReports}
-        onToggle={() => toggleSection("quickReports")}
-      >
-        <SidebarItem
-          label="Customer Summary"
-          icon={ClipboardList}
-          isActive={activeTab === "reports"}
-          onClick={() => handleTabClick("reports")}
-        />
-        <SidebarItem
-          label="Policy Summary"
-          icon={BookOpen}
-          onClick={() => handleTabClick("policies")}
-        />
-        <SidebarItem
-          label="Document Report"
-          icon={FolderOpen}
-          onClick={() => handleTabClick("documents")}
-        />
-      </SidebarSection>
-
-      {/* ═══ Accounting ═══ */}
-      <SidebarSection
-        title="Accounting"
-        icon={DollarSign}
-        isExpanded={expandedSections.accounting}
-        onToggle={() => toggleSection("accounting")}
-      >
-        <SidebarItem
-          label="Invoices"
-          icon={Receipt}
-          disabled
-          onClick={() => showComingSoon("Invoices")}
-        />
-        <SidebarItem
-          label="Payments"
-          icon={CreditCard}
-          disabled
-          onClick={() => showComingSoon("Payments")}
-        />
-        <SidebarItem
-          label="Statements"
-          icon={FileSpreadsheet}
-          disabled
-          onClick={() => showComingSoon("Statements")}
         />
       </SidebarSection>
     </>
@@ -373,10 +181,7 @@ export default function SidebarAccordion({
   if (isCollapsed) {
     const sectionIcons = [
       { key: "views", icon: Eye, label: "Views" },
-      { key: "actions", icon: Zap, label: "Actions" },
-      { key: "eforms", icon: FileSignature, label: "eForms" },
-      { key: "quickReports", icon: BarChart3, label: "Quick Reports" },
-      { key: "accounting", icon: DollarSign, label: "Accounting" },
+      { key: "forms", icon: FileSignature, label: "FORMS" },
     ];
 
     return (
@@ -403,15 +208,15 @@ export default function SidebarAccordion({
                   localStorage.setItem(COLLAPSED_KEY, JSON.stringify(false));
                 } catch { /* ignore */ }
                 const next = { ...expandedSections };
-                // Collapse all, expand only clicked
                 Object.keys(next).forEach((k) => (next[k] = k === key));
                 persistSections(next);
               }}
               title={label}
-              className={`h-10 flex items-center justify-center transition-all cursor-pointer ${expandedSections[key]
+              className={`h-10 flex items-center justify-center transition-all cursor-pointer ${
+                expandedSections[key]
                   ? "text-primary bg-secondary"
                   : "text-text-muted hover:text-text-main hover:bg-secondary/50"
-                }`}
+              }`}
             >
               <Icon size={16} />
             </button>
