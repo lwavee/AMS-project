@@ -85,7 +85,8 @@ const INSURANCE_PARENT_COMPANIES = [
   "Federated National Insurance**additional setups required",
   "First Comp, Insurance Company, FCO",
   "First Connect Insurance Services, Insurance Company, FCN",
-  "Foremost Insurance Company, FIC",
+  "Foremost Insurance Company, Insurance Company, FIC",
+  "Frank Winston Crum Insurance, Insurance Company, FWCI",
   "GEORGIA WORKERS COMP, Insurance Company, GWC",
   "GIG Insurance Group, Insurance Company, GGG",
   "Great American, Insurance Company, GRE",
@@ -464,6 +465,99 @@ const INSURANCE_WRITING_COMPANIES: Record<string, string[]> = {
   ],
   "Everest National Insurance Company, Insurance Company, EVR": [
     "Everest National Insurance Company, Insurance Company, EVR"
+  ],
+  "Federated National Insurance**additional setups required": [
+    "Federated National Insurance**additional setups required, Insurance"
+  ],
+
+  "First Comp, Insurance Company, FCO": [
+    "First Comp, Insurance Company, FCO",
+    "Markel Insurance, Writing Company, FCO011"
+  ],
+  "First Connect Insurance Services, Insurance Company, FCN": [
+    "First Connect Insurance Services, Insurance Company, FCN",
+    "Hippo Insurance Company, Writing Company, FCN001"
+  ],
+  "Foremost Insurance Company, Insurance Company, FIC": [
+    "California Earthquake Authority, Writing Company, FIC010",
+    "Foremost Insurance Co, Writing Company, FIC001",
+    "Foremost Insurance Company, Insurance Company, FIC",
+    "Foremost Star, Writing Company, FIC009",
+    "Mobile Home, Writing Company, FIC011",
+    "Motorcyce / ORV, Writing Company, FIC008",
+    "Specialty Dwelli, Writing Company, FIC007"
+  ],
+  "Frank Winston Crum Insurance, Insurance Company, FWCI": [
+    "Clear Blue Insurance Co, Writing Company, FWCI01",
+    "Frank Winston Crum Insurance, Insurance Company, FWCI"
+  ],
+  "GEORGIA WORKERS COMP, Insurance Company, GWC": [
+    "GEORGIA WORKERS COMP, Insurance Company, GWC"
+  ],
+  "GIG Insurance Group, Insurance Company, GGG": [
+    "GIG Insurance Group, Insurance Company, GGG",
+    "Philadelphia Indemnity Insurance Companys, Writing Company, GGG"
+  ],
+  "Great American, Insurance Company, GRE": [
+    "Great American, Insurance Company, GRE"
+  ],
+  "Guard Insurance, Insurance Company, ITG": [
+    "AmGUARD Insurance Company, Writing Company, ITG002",
+    "Guard Insurance, Insurance Company, ITG"
+  ],
+  "Hagerty Insurance, Insurance Company, HAG": [
+    "Essentia Insurance Company, Writing Company, HAG001",
+    "Hagerty Insurance, Insurance Company, HAG"
+  ],
+  "Hamilton Insurance DAC (CA), Insurance Company, HAM": [
+    "Hamilton Insurance DAC (CA), Insurance Company, HAM"
+  ],
+  "Harco National Insurance Company, Insurance Company, HRC": [
+    "Harco National Insurance Company, Insurance Company, HRC"
+  ],
+  "Hartford Insurance Group, Insurance Company, HIG": [
+    "Hartford Accident and Indemnity Company, Writing Company, HIG001",
+    "Hartford Casualty Insurance Company, Writing Company, HIG002",
+    "Hartford Fire Insurance Company, Writing Company, HIG003",
+    "Hartford Insurance Company of the Midwest, Writing Company, HIG004",
+    "Hartford Insurance Group, Insurance Company, HIG",
+    "Hartford Property & Casualty, Writing Company, HIG014",
+    "Hartford Underwriters Insurance Company, Writing Company, HIG005",
+    "Scottsdale Indemnity Company, Writing Company, HIG028",
+    "Sentinel Insurance Company LTD, Writing Company, HIG010",
+    "The Automobile Ins. Co of Hartford CT, Writing Company, HIG027",
+    "Trumbull Insurance Company, Writing Company, HIG011",
+    "Twin City Fire Insurance Company, Writing Company, HIG012"
+  ],
+  "Hippo Insurance Company, Insurance Company, HIP": [
+    "Hippo Insurance Company, Insurance Company, HIP"
+  ],
+  "Hudson Insurance Company, Insurance Company, HUD": [
+    "Hudson Insurance Company, Insurance Company, HUD",
+    "J E Brown & Associates, Writing Company, HUD001"
+  ],
+  "Infinity Insurance Company**additional setups required": [
+    "Gold, Writing Company, INF020",
+    "Infinity Auto Ins Co, Writing Company, INF018",
+    "Infinity Indemnity Insurance Company, Writing Company, INF017",
+    "Infinity Insurance Company W, Writing Company, INF009",
+    "Infinity Insurance Company**additional setups required, Insurance Company",
+    "Infinity Select Insurance, Writing Company, INF010",
+    "Kemper, Writing Company, INF024",
+    "Kinney & Co, Writing Company, INF023",
+    "RSVP, Writing Company, INF019",
+    "SIAA, Writing Company, INF022",
+    "Special, Writing Company, INF021"
+  ],
+  "Interstate Fire & Casualty Company (CA), Insurance Company": [
+    "Infinity Insurance Company, Writing Company, IFC001",
+    "Interstate Fire & Casualty Company (CA), Insurance Company, IFC"
+  ],
+  "Invo Peo, Insurance Company, INV": [
+    "Bridgefield Casualty Insurance, Writing Company, INV003",
+    "Employers Preferred Insurance Co, Writing Company, INV002",
+    "Frank Crum, Writing Company, INV001",
+    "Invo Peo, Insurance Company, INV"
   ]
 };
 
@@ -663,7 +757,7 @@ export default function NewPolicyPage() {
 
       const createdPolicy = await res.json();
 
-      // Keep localStorage as quick local backup cache
+      // Keep localStorage as quick local backup cache data
       const formattedPolicy = {
         id: createdPolicy.id.toString(),
         policyNum: createdPolicy.policy_num,
