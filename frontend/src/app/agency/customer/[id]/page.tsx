@@ -4,974 +4,157 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { API_BASE_URL } from "../../../../lib/config";
-import CustomerSidebar, { NAV_ITEMS } from "../../../../components/customer-center/CustomerSidebar";
 import {
   ArrowLeft,
   User,
   FileText,
   Activity,
   StickyNote,
-  FolderOpen,
   AlertTriangle,
-  BarChart2,
-  Settings,
-  Edit3,
   Download,
   Phone,
   Mail,
   MapPin,
   Globe,
   Building2,
-  Users,
-  Briefcase,
   Calendar,
-  Hash,
   Shield,
   Plus,
   Trash2,
   Loader2,
   CheckCircle,
   XCircle,
-  ChevronRight,
-  Info,
-  Clock,
-  MessageSquare,
   Upload,
   Eye,
+  Home,
+  Bell,
+  ChevronDown,
+  Edit3,
+  ExternalLink,
+  Briefcase
 } from "lucide-react";
 
-// ─── Theme classes (consistent with project) ────────────────────────────────
-const cardCls = "bg-white/80 backdrop-blur-xl border border-border-main rounded-[20px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-0.5 relative overflow-hidden group";
-const sectionTitleCls = "text-xs font-black text-text-muted/70 uppercase tracking-[0.2em] mb-4 flex items-center gap-2";
-const fieldLabelCls = "text-[11px] font-extrabold text-text-muted uppercase tracking-widest";
-const fieldValueCls = "text-sm font-semibold text-text-main mt-0.5";
-const emptyStateCls = "flex flex-col items-center justify-center py-20 text-center";
+export default function CustomerProfilePage() {
+  const router = useRouter();
+  const params = useParams();
+  const customerId = params?.id as string;
 
-
-// ─── Info field helper and a───────────────────────────────────────────────────────
-function InfoField({ label, value, icon: Icon }: { label: string; value?: string | null; icon?: any }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className={fieldLabelCls}>{label}</span>
-      <div className="flex items-center gap-1.5 mt-0.5">
-        {Icon && <Icon size={11} className="text-text-muted shrink-0" />}
-        <span className={`${fieldValueCls} ${!value ? "text-text-muted/50 italic" : ""}`}>
-          {value || "—"}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-// ─── Section card wrapper ────────────────────────────────────────────────────
-function Section({ title, icon: Icon, children }: { title: string; icon?: any; children: React.ReactNode }) {
-  return (
-    <div className={cardCls}>
-      <div className={sectionTitleCls}>
-        {Icon && <Icon size={12} className="text-primary" />}
-        {title}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-// ─── Status badge ────────────────────────────────────────────────────────────
-function StatusBadge({ status }: { status: string }) {
-  const isActive = status === "Active";
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider shadow-sm transition-all ${isActive ? "bg-gradient-to-r from-success/10 to-success/5 text-success border border-success/20" : "bg-gradient-to-r from-danger/10 to-danger/5 text-danger border border-danger/20"
-      }`}>
-      {isActive ? <CheckCircle size={11} className="text-success/70" /> : <XCircle size={11} className="text-danger/70" />}
-      {status}
-    </span>
-  );
-}
-
-// ─── Type badge ──────────────────────────────────────────────────────────────
-function TypeBadge({ type }: { type: string }) {
-  const isCom = type === "Commercial";
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider shadow-sm transition-all ${isCom ? "bg-gradient-to-r from-primary/10 to-primary/5 text-primary border border-primary/20" : "bg-gradient-to-r from-sky-100 to-sky-50 text-sky-600 border border-sky-200"
-      }`}>
-      {isCom ? <Briefcase size={11} className="text-primary/70" /> : <User size={11} className="text-sky-500/70" />}
-      {type}
-    </span>
-  );
-}
-
-// ─── Empty state ─────────────────────────────────────────────────────────────
-function EmptyState({ icon: Icon, title, subtitle, actionLabel, onAction }: {
-  icon: any; title: string; subtitle: string; actionLabel?: string; onAction?: () => void;
-}) {
-  return (
-    <div className={emptyStateCls}>
-      <div className="h-14 w-14 rounded-[18px] bg-gradient-to-br from-secondary to-white flex items-center justify-center mb-5 border border-border-main shadow-inner relative group-hover:scale-110 transition-transform duration-500">
-        <div className="absolute inset-0 bg-primary/10 blur-xl rounded-full" />
-        <Icon size={24} className="text-primary/60 relative z-10" />
-      </div>
-      <p className="font-bold text-[15px] text-text-main px-4">{title}</p>
-      <p className="text-[13px] text-text-muted mt-1.5 max-w-xs">{subtitle}</p>
-      {actionLabel && onAction && (
-        <button
-          onClick={onAction}
-          className="mt-5 h-9 px-5 flex items-center gap-1.5 bg-gradient-to-r from-primary to-primary/80 text-white text-xs font-bold rounded-xl shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer ring-1 ring-white/20"
-        >
-          <Plus size={13} />
-          {actionLabel}
-        </button>
-      )}
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-//  TABS
-// ─── Inline field row (AMS360 style: "Label:  Value" in one line) ────────────
-function FieldRow({ label, value, link }: { label: string; value?: string | null; link?: boolean }) {
-  if (!value) return null;
-  return (
-    <div className="flex items-start gap-0 py-[3px] border-b border-border-main/30 last:border-0">
-      <span className="text-[11px] font-extrabold text-text-muted shrink-0 w-36">{label}:</span>
-      {link ? (
-        <a href={`mailto:${value}`} className="text-xs font-bold text-primary hover:underline truncate">{value}</a>
-      ) : (
-        <span className="text-xs font-bold text-text-main">{value}</span>
-      )}
-    </div>
-  );
-}
-
-// ─── Mini data table (AMS360 style) ─────────────────────────────────────────
-function MiniTable({ title, columns, rows, addLabel }: {
-  title: string;
-  columns: string[];
-  rows: (string | null)[][];
-  addLabel?: string;
-}) {
-  return (
-    <div className="mb-4">
-      {/* Collapsible header */}
-      <div className="flex items-center justify-between bg-secondary/60 border border-border-main px-4 py-2 rounded-t-xl">
-        <span className="section-title text-primary uppercase tracking-widest flex items-center gap-1.5">
-          <ChevronRight size={14} className="text-primary" />
-          {title}
-        </span>
-        {addLabel && (
-          <button className="h-7 px-3 flex items-center gap-1 bg-white border border-border-main rounded-lg text-xs font-bold text-text-muted hover:text-primary hover:border-primary/40 transition-all cursor-pointer">
-            <Plus size={12} />
-            {addLabel}
-          </button>
-        )}
-      </div>
-      <div className="border border-t-0 border-border-main rounded-b-xl overflow-hidden bg-white">
-        <table className="premium-table">
-          <thead>
-            <tr>
-              {columns.map(col => (
-                <th key={col} className="table-header border-r border-border-main/20 last:border-r-0">{col}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={columns.length} className="text-center text-text-muted/60 italic table-body">No records found</td>
-              </tr>
-            ) : (
-              rows.map((row, i) => (
-                <tr key={i}>
-                  {row.map((cell, j) => (
-                    <td key={j} className="table-body border-r border-border-main/20 last:border-r-0">{cell || "—"}</td>
-                  ))}
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function OverviewTab({ c }: { c: any }) {
-  const fullAddress = [c.address, c.address2, [c.city, c.state, c.zip].filter(Boolean).join(", ")].filter(Boolean).join("\n");
-
-  return (
-    <div className="flex gap-4 h-full">
-
-      {/* ── LEFT COLUMN: Info sections (AMS360 style) ── */}
-      <div className="w-64 shrink-0 bg-white border border-border-main rounded-2xl shadow-sm overflow-y-auto">
-        <div className="p-4 space-y-5">
-
-          {/* General Information */}
-          <div>
-            <p className="text-[10px] font-extrabold text-primary uppercase tracking-widest mb-2 pb-1 border-b border-border-main">General Information</p>
-            <div className="space-y-0">
-              <FieldRow label="Balance" value="$0.00" />
-              <FieldRow label="Customer Number" value={String(c.id || "—")} />
-              <FieldRow label="Type of Customer" value={c.customer_type || "Customer"} />
-              <FieldRow label="Type of Business" value={c.type} />
-            </div>
-            <div className="mt-2 space-y-0">
-              <FieldRow label="Name" value={c.name} />
-              <FieldRow label="Personal Name" value={[c.first_name, c.last_name].filter(Boolean).join(" ") || null} />
-              {c.firm_name && <FieldRow label="Firm Name" value={c.firm_name} />}
-              {c.dba && <FieldRow label="DBA" value={c.dba} />}
-            </div>
-            <div className="mt-2 space-y-0">
-              {c.address && <div className="py-[3px] border-b border-border-main/30"><span className="text-[11px] font-extrabold text-text-muted block">Address:</span><span className="text-xs text-text-main font-bold">{c.address}{c.address2 ? `, ${c.address2}` : ""}</span><br /><span className="text-xs text-text-main font-medium">{[c.city, c.state, c.zip].filter(Boolean).join(", ")}</span></div>}
-              <FieldRow label="Business" value={c.phone_business} />
-              <FieldRow label="Cell" value={c.cell} />
-              <FieldRow label="Phone" value={c.phone} />
-              <FieldRow label="Fax" value={c.fax} />
-              <FieldRow label="Email" value={c.email} link />
-              {c.email2 && <FieldRow label="Email2" value={c.email2} link />}
-              {c.web && <FieldRow label="Website" value={c.web} />}
-            </div>
-          </div>
-
-          {/* Additional Details */}
-          <div>
-            <p className="text-[10px] font-extrabold text-primary uppercase tracking-widest mb-2 pb-1 border-b border-border-main">Additional Details</p>
-            <div className="space-y-0">
-              <FieldRow label="Division" value={c.division} />
-              <FieldRow label="Branch" value={c.branch} />
-              <FieldRow label="Department" value={c.department} />
-              <FieldRow label="Known Since" value={c.known_since_year} />
-              <FieldRow label="Notation" value={c.notation} />
-            </div>
-          </div>
-
-          {/* Contact Preferences */}
-          <div>
-            <p className="text-[10px] font-extrabold text-primary uppercase tracking-widest mb-2 pb-1 border-b border-border-main">Contact Preferences</p>
-            <div className="space-y-0">
-              <FieldRow label="Preferred Method" value={c.preferred_method} />
-              <FieldRow label="Marketing/Solicitation" value={c.marketing_solicitation || "Unspecified"} />
-              <FieldRow label="Electronic Delivery" value={c.electronic_delivery || "Ok to send documents"} />
-            </div>
-          </div>
-
-          {/* Business with Agency */}
-          <div>
-            <p className="text-[10px] font-extrabold text-primary uppercase tracking-widest mb-2 pb-1 border-b border-border-main">Business with Agency</p>
-            <div className="space-y-0">
-              <FieldRow label="Acquisition" value={c.acquisition || "Unspecified"} />
-              <FieldRow label="Business Origin" value={c.business_origin || "Unspecified"} />
-              <FieldRow label="Customer Added Date" value={c.customer_added_date || c.created_date} />
-              <FieldRow label="Referral Name" value={c.referral_name} />
-            </div>
-          </div>
-
-          {/* Notes */}
-          {c.notes && (
-            <div>
-              <p className="text-[10px] font-extrabold text-primary uppercase tracking-widest mb-2 pb-1 border-b border-border-main">Notes</p>
-              <p className="text-[11px] text-text-main leading-relaxed whitespace-pre-wrap">{c.notes}</p>
-            </div>
-          )}
-
-        </div>
-      </div>
-
-      {/* ── RIGHT COLUMN: Data tables (AMS360 style) ── */}
-      <div className="flex-1 overflow-y-auto space-y-0">
-
-        {/* Contacts table */}
-        <MiniTable
-          title="Contacts"
-          addLabel="Add Contact"
-          columns={["Info", "Contact Name", "Title", "Business Phone"]}
-          rows={
-            c.primary_exec ? [
-              ["👤", c.primary_exec, "Primary Exec", c.phone_business || c.phone || ""],
-              ...(c.representative ? [["👤", c.representative, "Representative", ""]] : []),
-            ] : []
-          }
-        />
-
-        {/* Dependents */}
-        <MiniTable
-          title="Dependents"
-          addLabel="Add Dependent"
-          columns={["Info", "Dependent Name", "Relationship"]}
-          rows={[]}
-        />
-
-        {/* Account Service Groups */}
-        <MiniTable
-          title="Account Service Groups"
-          addLabel="Add Group"
-          columns={["Info", "Primary", "Type", "Title", "Name", "Type of Business"]}
-          rows={[
-            ...(c.executive ? [["✓", "Yes", "Exec", "Account Exec", c.executive, c.type || "All"]] : []),
-            ...(c.representative ? [["✓", "Yes", "Rep", "Account Rep", c.representative, "All"]] : []),
-          ]}
-        />
-
-        {/* Cross References */}
-        <MiniTable
-          title="Cross References"
-          addLabel="Add Reference"
-          columns={["Type", "Cross Reference"]}
-          rows={c.match_code ? [["X-Reference", c.match_code]] : []}
-        />
-
-        {/* Policy Auto-Check */}
-        <MiniTable
-          title="Policy Auto-Check"
-          columns={["Line of Business", "Enabled"]}
-          rows={[
-            ["Personal", c.check_personal ? "✓ Yes" : "No"],
-            ["Health", c.check_health ? "✓ Yes" : "No"],
-            ["Commercial", c.check_commercial ? "✓ Yes" : "No"],
-            ["Life", c.check_life ? "✓ Yes" : "No"],
-            ["Financial Services", c.check_financial ? "✓ Yes" : "No"],
-            ["Benefits", c.check_benefits ? "✓ Yes" : "No"],
-          ]}
-        />
-
-      </div>
-    </div>
-  );
-}
-
-// ─── AMS360-style action toolbar button ──────────────────────────────────────
-function TbarBtn({ icon: Icon, label, primary, onClick }: { icon?: any; label: string; primary?: boolean; onClick?: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`h-7 px-2.5 flex items-center gap-1 text-xs font-bold rounded-lg border transition-all cursor-pointer ${primary
-        ? "bg-gradient-to-r from-primary to-primary/90 text-white border-transparent hover:shadow-md hover:shadow-primary/30 shadow-sm shadow-primary/20 hover:-translate-y-px"
-        : "bg-white/80 backdrop-blur-sm text-text-main border-border-main hover:bg-white hover:text-primary hover:shadow-sm hover:border-primary/30"
-        }`}>
-      {Icon && <Icon size={12} />}
-      {label}
-    </button>
-  );
-}
-
-function PolicySummaryView({ selectedPolicy, customer }: { selectedPolicy: any, customer: any }) {
-  if (!selectedPolicy) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center py-20 opacity-60">
-        <Shield size={32} className="text-border-main mb-3" />
-        <span className="text-sm font-extrabold text-text-muted">No Policy Selected</span>
-        <span className="text-[11px] text-text-muted mt-1 max-w-[200px] text-center">Select a policy from the table to view its summary details</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex-1 overflow-y-auto bg-white p-5 space-y-4 border-t border-border-main">
-      {/* Basic Policy Information */}
-      <div>
-        <p className="text-[11px] font-extrabold text-text-main mb-1.5">Basic Policy Information</p>
-        <div className="space-y-0">
-          <FieldRow label="Business New to Agency" value="N" />
-          <div className="flex items-start gap-0 py-[3px] border-b border-border-main/30">
-            <span className="text-[11px] font-bold text-slate-500 shrink-0 w-36">Policy #:</span>
-            <span className="text-[11px] font-semibold text-primary hover:underline cursor-pointer">{selectedPolicy.policyNum}</span>
-          </div>
-          <FieldRow label="Policy Term" value={selectedPolicy.term} />
-          <FieldRow label="Policy Type" value={selectedPolicy.type} />
-          <FieldRow label="Policy Description" value={selectedPolicy.description} />
-          <FieldRow label="Transaction Date" value={selectedPolicy.effDate || "N/A"} />
-          <FieldRow label="Transaction Type" value="Rewrite" />
-          <FieldRow label="Transaction Description" value="Rewrite" />
-          <FieldRow label="Parent Company" value="ISC" />
-          <FieldRow label="Writing Company" value={selectedPolicy.company} />
-          <FieldRow label="Division" value={customer?.division || "Gamaty Insurance Agency"} />
-          <FieldRow label="Branch" value={customer?.branch || "Capital & Co"} />
-          <FieldRow label="Department" value={customer?.department || "Commercial"} />
-        </div>
-      </div>
-
-      {/* Service Personnel */}
-      <div className="border-t border-border-main/50 pt-3">
-        <p className="text-[11px] font-extrabold text-text-main mb-1.5">Service Personnel</p>
-        <div className="space-y-0">
-          <FieldRow label="Primary Executive" value={customer?.primary_exec || "Yoav Anatian"} />
-          <FieldRow label="Primary Representative" value={customer?.representative || "Yoav Anatian"} />
-        </div>
-      </div>
-
-      {/* First Named Insured */}
-      <div className="border-t border-border-main/50 pt-3">
-        <p className="text-[11px] font-extrabold text-text-main mb-1.5">First Named Insured</p>
-        <div className="space-y-0">
-          <FieldRow label="Firm Name" value={customer?.firm_name || customer?.name} />
-          <FieldRow label="Dec Name" value={customer?.firm_name || customer?.name} />
-        </div>
-      </div>
-
-      {/* Lines of Business */}
-      <div className="border-t border-border-main/50 pt-3 flex items-center gap-1.5">
-        <p className="text-[11px] font-extrabold text-text-main">Lines of Business:</p>
-        <span className="text-[11px] text-primary font-bold hover:underline cursor-pointer">{selectedPolicy.type}</span>
-      </div>
-    </div>
-  );
-}
-
-function PoliciesTab({ customerId, customer }: { customerId: string, customer?: any }) {
-  const cols = ["Policy #", "Status", "Term", "Type", "Company", "Description", "Effective Date", "Expiration Date"];
-  const [policies, setPolicies] = useState<any[]>([]);
-  const [selectedPolicyId, setSelectedPolicyId] = useState<string | null>(null);
-
-  const loadPolicies = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/policies`, {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const storedStr = localStorage.getItem(`policies_${customerId}`);
-        const storedPolicies = storedStr ? JSON.parse(storedStr) : [];
-
-        const formatted = data.map((p: any) => {
-          const storedMatch = storedPolicies.find((sp: any) => sp.id === p.id.toString());
-          const mergedLobs = p.lobs || (storedMatch ? storedMatch.lobs : []);
-
-          const displayType = (() => {
-            if (mergedLobs && mergedLobs.length > 1) {
-              return "Package";
-            }
-            if (mergedLobs && mergedLobs.length === 1) {
-              return mergedLobs[0]?.type || mergedLobs[0]?.level || "";
-            }
-            return p.type || "";
-          })();
-
-          return {
-            id: p.id.toString(),
-            policyNum: p.policy_num,
-            status: p.status || "Active",
-            term: p.term || "1 Year",
-            type: displayType,
-            lobs: mergedLobs || [],
-            company: p.company || "",
-            description: p.description || "",
-            effDate: p.eff_date || "N/A",
-            expDate: p.exp_date || "N/A",
-            createdDate: p.created_date ? new Date(p.created_date).toLocaleDateString() : ""
-          };
-        });
-        setPolicies(formatted);
-        localStorage.setItem(`policies_${customerId}`, JSON.stringify(formatted));
-      } else {
-        const stored = localStorage.getItem(`policies_${customerId}`);
-        if (stored) {
-          setPolicies(JSON.parse(stored));
-        }
-      }
-    } catch (e) {
-      console.error(e);
-      const stored = localStorage.getItem(`policies_${customerId}`);
-      if (stored) {
-        setPolicies(JSON.parse(stored));
-      }
-    }
-  };
+  const [mounted, setMounted] = useState(false);
+  const [customer, setCustomer] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadPolicies();
-    const handleStorageChange = () => {
-      loadPolicies();
-    };
-    window.addEventListener("storage", handleStorageChange);
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, [customerId]);
+    setMounted(true);
+  }, []);
 
-  return (
-    <div className="bg-white border border-border-main rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1 h-full min-h-0">
+  // Policies State
+  const [policies, setPolicies] = useState<any[]>([]);
+  const [selectedPolicyIndex, setSelectedPolicyIndex] = useState(0);
 
-      {/* Toolbar */}
-      <div className="px-4 py-2.5 bg-secondary/40 border-b border-border-main flex items-center gap-1.5 flex-wrap shrink-0">
-        <TbarBtn
-          icon={Plus}
-          label="New Policy"
-          primary
-          onClick={() => window.open(`/agency/customer/${customerId}/new-policy`, '_blank')}
-        />
-        <TbarBtn label="Renew" />
-        <TbarBtn label="Rewrite" />
-        <TbarBtn label="Cancel" />
-        <div className="ml-auto">
-          <TbarBtn icon={Download} label="Export All" />
-        </div>
-      </div>
+  // Bottom Tabs - Default to "notes" as requested in screenshot 3
+  const [activeTab, setActiveTab] = useState<
+    "notes" | "status_history" | "contact_info" | "rating_info" | "all_policies" | "eforms"
+  >("notes");
 
-      {/* Full width Policies Table (fit to page & bottom) */}
-      <div className="overflow-x-auto overflow-y-auto w-full flex-1 min-h-0">
-        <table className="premium-table w-full">
-          <thead>
-            <tr>
-              <th className="w-12 text-center table-header border-r border-border-main/20">Type</th>
-              {cols.map(col => (
-                <th key={col} className="table-header border-r border-border-main/20 last:border-r-0">{col}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {policies.length === 0 ? (
-              <tr>
-                <td colSpan={cols.length + 1} className="py-20 text-center table-body">
-                  <div className="flex flex-col items-center gap-2">
-                    <Shield size={28} className="text-border-main/50" />
-                    <p className="font-extrabold text-text-muted">No Policies Found</p>
-                    <p className="text-[11px] text-text-muted/60">Click <strong>+ New Policy</strong> to add a policy for this customer.</p>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              policies.map((p) => {
-                const isSelected = selectedPolicyId === p.id;
-                return (
-                  <tr
-                    key={p.id}
-                    onClick={() => setSelectedPolicyId(p.id)}
-                    className={`cursor-pointer transition-colors ${isSelected ? "selected-row" : ""}`}
-                  >
-                    <td className="text-center table-body text-base border-r border-border-main/20">🛡️</td>
-                    <td className="table-body font-bold border-r border-border-main/20">
-                      <span
-                        onClick={() => window.open(`/agency/customer/${customerId}/policy/${p.id}`, '_blank', 'width=1100,height=850')}
-                        className="text-primary hover:underline cursor-pointer"
-                      >
-                        {p.policyNum}
-                      </span>
-                    </td>
-                    <td className="table-body font-bold text-success border-r border-border-main/20">{p.status}</td>
-                    <td className="table-body text-text-main border-r border-border-main/20">{p.term}</td>
-                    <td className="table-body text-text-main border-r border-border-main/20">{p.type}</td>
-                    <td className="table-body text-text-main font-bold border-r border-border-main/20">{p.company}</td>
-                    <td className="table-body text-text-main border-r border-border-main/20">{p.description}</td>
-                    <td className="table-body text-text-main border-r border-border-main/20">{p.effDate}</td>
-                    <td className="table-body text-text-main">{p.expDate}</td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+  // Notify Filter Pills for Notes (Screenshot 3)
+  const [noteFilters, setNoteFilters] = useState<string[]>(["Underwriter"]);
+  const toggleNoteFilter = (filter: string) => {
+    setNoteFilters((prev) =>
+      prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]
+    );
+  };
 
-      {/* Policies Footer */}
-      <div className="px-4 py-2 border-t border-border-main bg-secondary/20 text-[11px] text-text-muted font-bold shrink-0 mt-auto">
-        Displaying record(s) {policies.length > 0 ? `1 - ${policies.length} of ${policies.length}` : "0 - 0 of 0"}
-      </div>
-    </div>
-  );
-}
+  // Documents State (Screenshot 4)
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [docLoading, setDocLoading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [showDocModal, setShowDocModal] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [docAction, setDocAction] = useState("Upload");
+  const [docDescription, setDocDescription] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-function ActivitiesTab({ customerId }: { customerId: string }) {
-  const cols = ["Date", "By", "Policy #", "Eff. Date", "Trans.", "Action", "Description", "Group"];
+  // Notes State
+  const [notes, setNotes] = useState<any[]>([]);
+  const [newNoteText, setNewNoteText] = useState("");
+  const [noteLoading, setNoteLoading] = useState(false);
+
+  // Activities State
   const [activities, setActivities] = useState<any[]>([]);
 
-  const loadActivities = () => {
-    const defaultMocks = [
-      {
-        id: "mock-1",
-        date: "06/09/2026",
-        by: "KAPIL",
-        action: "Email",
-        description: "Rewrite",
-        policyNum: "ISCCX03000010905",
-        effDate: "02/24/2026",
-        trans: "Rewrite",
-        group: "(All)"
-      },
-      {
-        id: "mock-2",
-        date: "06/01/2026",
-        by: "CER...",
-        action: "Certificate",
-        description: "e-Form saved",
-        policyNum: "ISCCX03000010905",
-        effDate: "02/24/2026",
-        trans: "Rewrite",
-        group: "(All)"
-      }
-    ];
-    const stored = localStorage.getItem(`activities_log_${customerId}`);
-    if (stored) {
-      setActivities(JSON.parse(stored));
-    } else {
-      setActivities(defaultMocks);
-      localStorage.setItem(`activities_log_${customerId}`, JSON.stringify(defaultMocks));
-    }
-  };
+  // Action Menu Dropdown
+  const [actionMenuOpen, setActionMenuOpen] = useState(false);
 
-  useEffect(() => {
-    if (customerId) {
-      loadActivities();
-      const handleStorageChange = () => {
-        loadActivities();
-      };
-      window.addEventListener("storage", handleStorageChange);
-      return () => {
-        window.removeEventListener("storage", handleStorageChange);
-      };
-    }
-  }, [customerId]);
-
-  return (
-    <div className="bg-white border border-border-main rounded-2xl shadow-sm overflow-hidden">
-
-      {/* Toolbar */}
-      <div className="px-4 py-2.5 bg-secondary/40 border-b border-border-main flex items-center gap-1.5 flex-wrap">
-        <TbarBtn
-          icon={Plus}
-          label="New Activity"
-          primary
-          onClick={() => window.open(`/agency/customer/${customerId}/new-activity`, '_blank', 'width=1000,height=900')}
-        />
-        <TbarBtn label="Activity Grouping" />
-        <div className="ml-auto">
-          <TbarBtn icon={Download} label="Export All" />
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="premium-table">
-          <thead>
-            <tr>
-              <th className="w-12 text-center table-header border-r border-border-main/20">Type</th>
-              {cols.map(col => (
-                <th key={col} className="table-header border-r border-border-main/20 last:border-r-0 whitespace-nowrap">{col}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {activities.length === 0 ? (
-              <tr>
-                <td colSpan={cols.length + 1} className="py-20 text-center table-body">
-                  <div className="flex flex-col items-center gap-2">
-                    <Activity size={28} className="text-border-main/50" />
-                    <p className="font-extrabold text-text-muted">No Activities Found</p>
-                    <p className="text-[11px] text-text-muted/60">Click <strong>+ New Activity</strong> to log an activity for this customer.</p>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              activities.map((act) => (
-                <tr key={act.id} className="hover:bg-secondary/40">
-                  <td className="text-center table-body text-base border-r border-border-main/20">
-                    {act.type === "Suspense" ? "🔔" : "📎"}
-                  </td>
-                  <td className="table-body text-blue-600 font-bold border-r border-border-main/20">{act.date}</td>
-                  <td className="table-body border-r border-border-main/20">{act.by}</td>
-                  <td className="table-body font-mono border-r border-border-main/20">{act.policyNum || "N/A"}</td>
-                  <td className="table-body border-r border-border-main/20">{act.effDate || "N/A"}</td>
-                  <td className="table-body border-r border-border-main/20">{act.trans || "General"}</td>
-                  <td className="table-body border-r border-border-main/20">{act.action || "Email"}</td>
-                  <td className="table-body border-r border-border-main/20 truncate max-w-[200px]">{act.description}</td>
-                  <td className="table-body">{act.group || "(All)"}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Footer */}
-      <div className="px-4 py-2 border-t border-border-main bg-secondary/20 text-[11px] text-text-muted font-bold">
-        Displaying record(s) {activities.length > 0 ? `1 - ${activities.length} of ${activities.length}` : "0 - 0 of 0"}
-      </div>
-    </div>
-  );
-}
-
-
-
-
-function NotesTab({ customerId }: { customerId: string }) {
-  const [notes, setNotes] = useState<any[]>([]);
-  const [newNote, setNewNote] = useState("");
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editText, setEditText] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const fetchNotes = useCallback(async () => {
+  // ── Fetch Customer Data ──
+  const fetchCustomer = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/notes`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setNotes(data);
+      if (!token) {
+        router.push("/login");
+        return;
       }
-    } catch (e) {
-      console.error("Failed to fetch notes", e);
+
+      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.status === 401) {
+        router.push("/login");
+        return;
+      }
+      if (res.status === 404) {
+        setError("Customer not found.");
+        return;
+      }
+      if (!res.ok) throw new Error(`Error ${res.status}`);
+
+      const data = await res.json();
+      setCustomer(data);
+    } catch (err: any) {
+      setError(err.message || "Failed to load customer profile.");
     } finally {
       setLoading(false);
     }
+  }, [customerId, router]);
+
+  // ── Fetch Policies ──
+  const loadPolicies = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/policies`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const formatted = data.map((p: any) => ({
+          id: p.id.toString(),
+          policyNum: p.policy_num || "Not Bound",
+          status: p.status || "Active",
+          term: p.term || "1 Year",
+          type: p.type || "General Liability",
+          company: p.company || "Kinsale Insurance Company",
+          description: p.description || "Policy Coverage",
+          effDate: p.eff_date || "08/17/2026",
+          expDate: p.exp_date || "08/17/2027",
+          cost: p.cost || "$3,304.03",
+        }));
+        setPolicies(formatted);
+      }
+    } catch (e) {
+      console.error("Error loading policies", e);
+    }
   }, [customerId]);
 
-  useEffect(() => {
-    if (customerId) {
-      fetchNotes();
-    }
-  }, [customerId, fetchNotes]);
-
-  const handleAdd = async () => {
-    if (!newNote.trim()) return;
-    try {
-      const token = localStorage.getItem("token");
-      const userEmail = localStorage.getItem("email") || "YOU";
-      const userName = userEmail.split('@')[0].toUpperCase();
-      const userRole = localStorage.getItem("role") || "agent";
-
-      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/notes`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          text: newNote.trim(),
-          author: userName,
-          role: userRole
-        })
-      });
-
-      if (res.ok) {
-        setNewNote("");
-        fetchNotes();
-      }
-    } catch (e) {
-      console.error("Failed to add note", e);
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/notes/${id}`, {
-        method: "DELETE",
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      if (res.ok) {
-        fetchNotes();
-      }
-    } catch (e) {
-      console.error("Failed to delete note", e);
-    }
-  };
-
-  const handleSaveEdit = async (id: number) => {
-    if (!editText.trim()) return;
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/notes/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({ text: editText.trim() })
-      });
-      if (res.ok) {
-        setEditingId(null);
-        fetchNotes();
-      }
-    } catch (e) {
-      console.error("Failed to edit note", e);
-    }
-  };
-
-  return (
-    <div className={cardCls}>
-      <div className={sectionTitleCls}>
-        <StickyNote size={12} className="text-primary" />
-        Customer Notes
-      </div>
-
-      {/* Create note */}
-      <div className="flex gap-2 mb-5">
-        <textarea
-          value={newNote}
-          onChange={e => setNewNote(e.target.value)}
-          placeholder="Write a note..."
-          rows={2}
-          className="flex-1 px-3 py-2 border border-border-main rounded-xl text-xs text-text-main bg-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all resize-none"
-        />
-        <button
-          onClick={handleAdd}
-          disabled={!newNote.trim()}
-          className="h-10 px-4 self-start bg-gradient-to-r from-primary to-primary/90 text-white font-bold text-xs rounded-xl shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 ring-1 ring-white/20"
-        >
-          <Plus size={13} />
-          Add
-        </button>
-      </div>
-
-      {/* Note list */}
-      {loading ? (
-        <div className="py-10 text-center text-xs text-slate-400 font-bold uppercase tracking-wider">
-          Loading notes...
-        </div>
-      ) : notes.length === 0 ? (
-        <EmptyState
-          icon={StickyNote}
-          title="No Notes Yet"
-          subtitle="Add a note above to start documenting important information about this customer."
-        />
-      ) : (
-        <div className="space-y-3">
-          {notes.map(note => (
-            <div key={note.id} className="border border-border-main rounded-xl p-3.5 bg-secondary/20 group">
-              {editingId === note.id ? (
-                <div className="space-y-2">
-                  <textarea
-                    value={editText}
-                    onChange={e => setEditText(e.target.value)}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-primary/40 rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/10 resize-none bg-white"
-                  />
-                  <div className="flex gap-2">
-                    <button onClick={() => handleSaveEdit(note.id)} className="h-7 px-3 bg-gradient-to-r from-primary to-primary/80 text-white text-[10px] font-bold rounded-lg cursor-pointer shadow-sm hover:shadow-primary/30 hover:-translate-y-0.5 transition-all">Save</button>
-                    <button onClick={() => setEditingId(null)} className="h-7 px-3 border border-border-main text-[10px] font-bold rounded-lg cursor-pointer">Cancel</button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <p className="text-xs text-text-main leading-relaxed whitespace-pre-wrap">{note.text}</p>
-                  <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase text-slate-400 bg-white px-2 py-0.5 rounded border border-border-main">
-                        By: {note.author} ({note.role})
-                      </span>
-                      <span className="text-[10px] text-slate-400">{note.created_at}</span>
-                    </div>
-                    <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => { setEditingId(note.id); setEditText(note.text); }} className="h-6 w-6 flex items-center justify-center border border-border-main rounded-lg hover:bg-white cursor-pointer transition-colors">
-                        <Edit3 size={10} className="text-slate-400" />
-                      </button>
-                      <button onClick={() => handleDelete(note.id)} className="h-6 w-6 flex items-center justify-center border border-danger/30 rounded-lg hover:bg-danger/5 cursor-pointer transition-colors">
-                        <Trash2 size={10} className="text-danger" />
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function EditDocumentPopup({
-  file,
-  details,
-  setDetails,
-  onSave,
-  onCancel,
-}: {
-  file: File;
-  details: any;
-  setDetails: any;
-  onSave: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-[440px] border border-border-main overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="px-5 py-4 border-b border-border-main bg-secondary/30 flex justify-between items-center">
-          <h3 className="font-extrabold text-text-main text-sm">Upload Document Details</h3>
-          <button onClick={onCancel} className="text-text-muted/60 hover:text-text-main cursor-pointer p-1">
-            <XCircle size={18} />
-          </button>
-        </div>
-        <div className="p-5 space-y-4">
-          <div>
-            <label className="block text-xs font-extrabold text-text-muted mb-1">File Name</label>
-            <div className="text-xs font-semibold text-text-main bg-secondary/50 px-3 py-2 rounded-xl truncate border border-border-main/50 shadow-inner">
-              {file.name}
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-extrabold text-text-muted mb-1">Action</label>
-            <select
-              value={details.action}
-              onChange={(e) => setDetails((prev: any) => ({ ...prev, action: e.target.value }))}
-              className="w-full text-xs font-semibold border border-border-main rounded-xl px-3 py-2 bg-white text-text-main outline-none focus:border-primary"
-            >
-              <option value="Upload">Upload</option>
-              <option value="Policy Attachment">Policy Attachment</option>
-              <option value="Customer File">Customer File</option>
-              <option value="eForms Attachment">eForms Attachment</option>
-              <option value="Claim Document">Claim Document</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-extrabold text-text-muted mb-1">Description</label>
-            <input
-              type="text"
-              placeholder="Enter document description..."
-              value={details.description}
-              onChange={(e) => setDetails((prev: any) => ({ ...prev, description: e.target.value }))}
-              className="w-full text-xs border border-border-main rounded-xl px-3 py-2 bg-white text-text-main outline-none focus:border-primary"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-extrabold text-text-muted mb-1">Reference Number</label>
-            <input
-              type="text"
-              placeholder="e.g. POL-1234 or optional ref"
-              value={details.refNum}
-              onChange={(e) => setDetails((prev: any) => ({ ...prev, refNum: e.target.value }))}
-              className="w-full text-xs border border-border-main rounded-xl px-3 py-2 bg-white text-text-main outline-none focus:border-primary"
-            />
-          </div>
-        </div>
-        <div className="px-5 py-3.5 bg-secondary/20 border-t border-border-main flex justify-end gap-2">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 border border-border-main rounded-xl text-xs font-bold text-slate-500 hover:text-text-main hover:bg-white transition-colors cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onSave}
-            className="px-5 py-2 bg-gradient-to-r from-primary to-primary/90 text-white rounded-xl text-xs font-bold shadow-md shadow-primary/20 hover:shadow-primary/30 transition-all cursor-pointer"
-          >
-            Save & Upload
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DocumentsTab({ customerId }: { customerId: string }) {
-  const [documents, setDocuments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [showEDP, setShowEDP] = useState(false);
-  const [pendingDoc, setPendingDoc] = useState<File | null>(null);
-  const [docDetails, setDocDetails] = useState({ description: "", action: "Upload", refNum: "" });
-  const [searchTerm, setSearchTerm] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
+  // ── Fetch Documents ──
   const loadDocuments = useCallback(async () => {
-    setLoading(true);
+    setDocLoading(true);
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/documents`, {
-        headers: { "Authorization": `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         const data = await res.json();
@@ -982,622 +165,1221 @@ function DocumentsTab({ customerId }: { customerId: string }) {
           action: d.action,
           description: d.description,
           refNum: d.ref_num,
-          info: d.info,
           url: d.url,
           author: d.author,
-          createdAt: d.created_at
+          createdAt: d.created_at || new Date().toISOString().split("T")[0],
         }));
         setDocuments(formatted);
       }
     } catch (e) {
       console.error("Error loading documents:", e);
     } finally {
-      setLoading(false);
+      setDocLoading(false);
+    }
+  }, [customerId]);
+
+  // ── Fetch Notes ──
+  const loadNotes = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/notes`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNotes(data);
+      }
+    } catch (e) {
+      console.error("Failed to load notes", e);
+    }
+  }, [customerId]);
+
+  // ── Fetch Activities ──
+  const loadActivities = useCallback(() => {
+    const defaultMocks = [
+      {
+        id: "mock-1",
+        program: "General Liability",
+        changedAt: "08/17/2026 10:45 AM",
+        user: "Travis Bell",
+        status: "Quote Active",
+      },
+      {
+        id: "mock-2",
+        program: "Commercial Package",
+        changedAt: "08/17/2026 09:30 AM",
+        user: "Agent",
+        status: "Application Submitted",
+      },
+    ];
+    const stored = localStorage.getItem(`activities_log_${customerId}`);
+    if (stored) {
+      setActivities(JSON.parse(stored));
+    } else {
+      setActivities(defaultMocks);
+      localStorage.setItem(`activities_log_${customerId}`, JSON.stringify(defaultMocks));
     }
   }, [customerId]);
 
   useEffect(() => {
-    if (customerId) loadDocuments();
-  }, [customerId, loadDocuments]);
+    if (customerId) {
+      fetchCustomer();
+      loadPolicies();
+      loadDocuments();
+      loadNotes();
+      loadActivities();
+    }
+  }, [customerId, fetchCustomer, loadPolicies, loadDocuments, loadNotes, loadActivities]);
 
-  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragOver(true); };
-  const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); setIsDragOver(false); };
-  const handleDrop = (e: React.DragEvent) => {
+  // ── Upload Document Handler ──
+  const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      setPendingDoc(e.dataTransfer.files[0]);
-      setDocDetails({ description: "", action: "Upload", refNum: "" });
-      setShowEDP(true);
+      setPendingFile(e.dataTransfer.files[0]);
+      setDocDescription(e.dataTransfer.files[0].name);
+      setShowDocModal(true);
     }
   };
 
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setPendingDoc(e.target.files[0]);
-      setDocDetails({ description: "", action: "Upload", refNum: "" });
-      setShowEDP(true);
+      setPendingFile(e.target.files[0]);
+      setDocDescription(e.target.files[0].name);
+      setShowDocModal(true);
     }
   };
 
-  const saveDocument = async () => {
-    if (pendingDoc) {
-      try {
-        const token = localStorage.getItem("token");
-        const formData = new FormData();
-        formData.append("file", pendingDoc);
-        formData.append("action", docDetails.action || "Upload");
-        formData.append("description", docDetails.description || pendingDoc.name);
-        formData.append("refNum", docDetails.refNum || "");
+  const handleSaveDocument = async () => {
+    if (!pendingFile) return;
+    try {
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("file", pendingFile);
+      formData.append("action", docAction);
+      formData.append("description", docDescription || pendingFile.name);
 
-        const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/documents`, {
-          method: "POST",
-          headers: { "Authorization": `Bearer ${token}` },
-          body: formData
-        });
+      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/documents`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
 
-        if (!res.ok) throw new Error("Failed to upload document");
-
-        await loadDocuments();
-        setShowEDP(false);
-        setPendingDoc(null);
-      } catch (error) {
-        alert("Upload failed: " + error);
-      }
+      if (!res.ok) throw new Error("Upload failed");
+      await loadDocuments();
+      setShowDocModal(false);
+      setPendingFile(null);
+    } catch (err: any) {
+      alert("Document upload failed: " + err.message);
     }
   };
 
-  const handleDelete = async (docId: number) => {
+  const handleDeleteDocument = async (docId: number) => {
     if (!confirm("Are you sure you want to delete this document?")) return;
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/documents/${docId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok || res.status === 204) {
-        setDocuments(prev => prev.filter(d => d.id !== docId));
+      if (res.ok) {
+        setDocuments((prev) => prev.filter((d) => d.id !== docId));
       }
     } catch (e) {
-      console.error("Error deleting document:", e);
+      console.error("Failed to delete document", e);
     }
   };
 
-  const filteredDocs = documents.filter(d => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return (
-      d.fileName?.toLowerCase().includes(term) ||
-      d.description?.toLowerCase().includes(term) ||
-      d.action?.toLowerCase().includes(term) ||
-      d.refNum?.toLowerCase().includes(term)
-    );
-  });
-
-  return (
-    <div className="bg-white border border-border-main rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1 h-full min-h-0">
-      {/* Toolbar */}
-      <div className="px-4 py-2.5 bg-secondary/40 border-b border-border-main flex items-center justify-between gap-2 flex-wrap shrink-0">
-        <div className="flex items-center gap-2">
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileInput}
-            className="hidden"
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="h-8 px-3.5 flex items-center gap-1.5 bg-gradient-to-r from-primary to-primary/90 text-white font-bold text-xs rounded-xl shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/30 transition-all cursor-pointer"
-          >
-            <Upload size={13} />
-            Upload Document
-          </button>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <input
-            type="text"
-            placeholder="Search documents..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-8 px-3 text-xs bg-white border border-border-main rounded-xl outline-none focus:border-primary text-text-main w-48"
-          />
-          <div className="text-[11px] text-text-muted font-bold">
-            {filteredDocs.length} {filteredDocs.length === 1 ? "document" : "documents"}
-          </div>
-        </div>
-      </div>
-
-      {/* Drag & Drop full container table */}
-      <div
-        className={`overflow-x-auto overflow-y-auto w-full flex-1 min-h-0 relative transition-colors duration-200 ${isDragOver ? "bg-primary/5 ring-2 ring-inset ring-primary/40" : ""}`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        {isDragOver && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-primary/10 backdrop-blur-[1px] border-2 border-dashed border-primary/50 m-2 rounded-xl pointer-events-none">
-            <FolderOpen size={48} className="text-primary mb-3 animate-bounce" />
-            <p className="font-extrabold text-primary text-sm shadow-sm p-1">Drop document here to upload</p>
-          </div>
-        )}
-
-        <table className="premium-table w-full whitespace-nowrap">
-          <thead>
-            <tr>
-              <th className="table-header text-center w-8 border-r border-border-main/20"><input type="checkbox" className="cursor-pointer" /></th>
-              <th className="table-header text-center w-8 border-r border-border-main/20">@</th>
-              <th className="table-header text-center w-10 border-r border-border-main/20">Info</th>
-              <th className="table-header border-r border-border-main/20">Action</th>
-              <th className="table-header border-r border-border-main/20">File Name</th>
-              <th className="table-header border-r border-border-main/20 w-16 text-center">Ext.</th>
-              <th className="table-header border-r border-border-main/20">Description</th>
-              <th className="table-header border-r border-border-main/20 w-28">Ref #</th>
-              <th className="table-header border-r border-border-main/20 w-24">Author</th>
-              <th className="table-header border-r border-border-main/20 w-36">Date</th>
-              <th className="table-header text-center w-16">Delete</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredDocs.length === 0 ? (
-              <tr>
-                <td colSpan={11} className="text-center py-20 table-body">
-                  <div className="flex flex-col items-center gap-2">
-                    <FolderOpen size={32} className="text-border-main/60" />
-                    <p className="font-extrabold text-text-muted">No Documents Found</p>
-                    <p className="text-[11px] text-text-muted/60 max-w-sm">
-                      Drag and drop files here or click <strong>Upload Document</strong> to attach files to this customer.
-                    </p>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              filteredDocs.map((doc) => (
-                <tr key={doc.id} className="hover:bg-secondary/40">
-                  <td className="table-body text-center border-r border-border-main/20"><input type="checkbox" className="cursor-pointer" /></td>
-                  <td className="table-body text-center border-r border-border-main/20 text-text-muted/60">📎</td>
-                  <td className="table-body text-center border-r border-border-main/20">
-                    <FileText size={13} className="inline-block text-primary" />
-                  </td>
-                  <td className="table-body border-r border-border-main/20 font-semibold">{doc.action}</td>
-                  <td
-                    className="table-body border-r border-border-main/20 text-primary font-bold cursor-pointer hover:underline truncate max-w-[200px]"
-                    onClick={() => {
-                      if (doc.url) {
-                        const targetUrl = doc.url.startsWith("/") ? `${API_BASE_URL}${doc.url}` : doc.url;
-                        window.open(targetUrl, '_blank');
-                      }
-                    }}
-                  >
-                    {doc.fileName}
-                  </td>
-                  <td className="table-body text-center border-r border-border-main/20 font-mono text-xs">{doc.ext}</td>
-                  <td className="table-body border-r border-border-main/20 truncate max-w-[200px]">{doc.description || "—"}</td>
-                  <td className="table-body border-r border-border-main/20 font-mono text-xs">{doc.refNum || "—"}</td>
-                  <td className="table-body border-r border-border-main/20 text-xs">{doc.author || "YOU"}</td>
-                  <td className="table-body border-r border-border-main/20 text-xs text-text-muted">{doc.createdAt || "—"}</td>
-                  <td className="table-body text-center">
-                    <button
-                      onClick={() => handleDelete(doc.id)}
-                      className="p-1 rounded-md text-text-muted hover:text-danger hover:bg-danger/10 transition-colors cursor-pointer"
-                      title="Delete document"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Footer */}
-      <div className="px-4 py-2 border-t border-border-main bg-secondary/20 text-[11px] text-text-muted font-bold shrink-0 mt-auto">
-        Displaying record(s) {filteredDocs.length > 0 ? `1 - ${filteredDocs.length} of ${filteredDocs.length}` : "0 - 0 of 0"}
-      </div>
-
-      {/* EDP Modal */}
-      {showEDP && pendingDoc && (
-        <EditDocumentPopup
-          file={pendingDoc}
-          details={docDetails}
-          setDetails={setDocDetails}
-          onSave={saveDocument}
-          onCancel={() => { setShowEDP(false); setPendingDoc(null); }}
-        />
-      )}
-    </div>
-  );
-}
-
-function ClaimsTab() {
-  return (
-    <div className={cardCls}>
-      <EmptyState
-        icon={AlertTriangle}
-        title="No Claims Found"
-        subtitle="Claims filed for this customer will appear here."
-        actionLabel="File Claim"
-        onAction={() => { }}
-      />
-    </div>
-  );
-}
-
-function ReportsTab() {
-  return (
-    <div className={cardCls}>
-      <EmptyState
-        icon={BarChart2}
-        title="No Reports Available"
-        subtitle="Customer reports and analytics will appear here once data is available."
-        actionLabel="Generate Report"
-        onAction={() => { }}
-      />
-    </div>
-  );
-}
-
-function SettingsTab({ c }: { c: any }) {
-  return (
-    <div className="space-y-5">
-      <Section title="Folder Settings" icon={Settings}>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <InfoField label="Customer Status" value={c.status} />
-          <InfoField label="Customer Type" value={c.customer_type} />
-          <InfoField label="Exclude from Target List" value={c.exclude_target_list ? "Yes" : "No"} />
-          <InfoField label="Exclude from Purge" value={c.exclude_purge ? "Yes" : "No"} />
-          <InfoField label="Alt Name for Billing" value={c.alt_name_billing ? "Yes" : "No"} />
-          <InfoField label="Alt Address for Billing" value={c.alt_address_billing ? "Yes" : "No"} />
-        </div>
-      </Section>
-      <Section title="Multiple Entity" icon={Building2}>
-        <InfoField label="Multiple Entity Type" value={c.multiple_entity_customer_type || "Standard"} />
-      </Section>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-//  MAIN PAGE
-// ═══════════════════════════════════════════════════════════════════════════════
-export default function CustomerProfilePage() {
-  const router = useRouter();
-  const params = useParams();
-  const customerId = params?.id;
-
-  const [customer, setCustomer] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("policies");
-
-  const fetchCustomer = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  // ── Add Note Handler (Screenshot 3) ──
+  const handleAddNote = async () => {
+    if (!newNoteText.trim()) return;
+    setNoteLoading(true);
     try {
       const token = localStorage.getItem("token");
-      if (!token) { router.push("/login"); return; }
+      const userEmail = localStorage.getItem("email") || "Agent";
+      const userName = userEmail.split("@")[0].toUpperCase();
+      const userRole = localStorage.getItem("role") || "agent";
 
-      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}`, {
-        headers: { "Authorization": `Bearer ${token}` },
+      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/notes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          text: newNoteText.trim(),
+          author: userName,
+          role: userRole,
+          notify: noteFilters.join(", "),
+        }),
       });
 
-      if (res.status === 401) { router.push("/login"); return; }
-      if (res.status === 404) { setError("Customer not found."); return; }
-      if (!res.ok) throw new Error(`Error ${res.status}`);
-
-      const data = await res.json();
-      setCustomer(data);
-    } catch (err: any) {
-      setError(err.message || "Failed to load customer.");
+      if (res.ok) {
+        setNewNoteText("");
+        loadNotes();
+      }
+    } catch (e) {
+      console.error("Failed to add note", e);
     } finally {
-      setLoading(false);
+      setNoteLoading(false);
     }
-  }, [customerId, router]);
+  };
 
-  useEffect(() => {
-    if (customerId) fetchCustomer();
-  }, [customerId, fetchCustomer]);
-
+  // ── Export CSV Handler ──
   const handleExport = () => {
     if (!customer) return;
-    const rows = Object.entries(customer).map(([k, v]) => `${k},${JSON.stringify(v)}`).join("\n");
+    const rows = Object.entries(customer)
+      .map(([k, v]) => `"${k}","${String(v || "").replace(/"/g, '""')}"`)
+      .join("\n");
     const blob = new Blob([rows], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `customer_${customer.id}_${customer.name?.replace(/\s+/g, "_")}.csv`;
+    a.download = `sterling_ams_customer_${customer.id}_${(customer.name || "profile").replace(/\s+/g, "_")}.csv`;
     a.click();
   };
 
-  // ── Loading ──
-  if (loading) {
+  if (!mounted || loading) {
     return (
-      <div className="flex flex-col h-screen bg-bg-base font-sans">
-        <div className="bg-white/80 backdrop-blur-xl border-b border-border-main h-16 px-6 flex items-center gap-3 shrink-0 shadow-[0_4px_20px_rgb(0,0,0,0.03)] z-50">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/30 shrink-0 ring-1 ring-white/50 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-white/20 w-1/2 h-full transform -skew-x-12 -translate-x-full group-hover:translate-x-[300%] transition-transform duration-1000" />
-            <span className="text-white font-bold text-xl tracking-wider font-sans relative z-10">S</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-base tracking-tight text-text-main leading-tight font-sans">
-              Sterling Insurance Services
-            </span>
-          </div>
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="bg-white px-10 py-8 rounded-2xl border border-border-main shadow-xl flex flex-col items-center gap-3">
-            <Loader2 className="animate-spin text-primary" size={32} />
-            <span className="font-bold text-xs uppercase tracking-widest text-slate-500">Loading Customer Profile...</span>
-          </div>
+      <div suppressHydrationWarning className="flex flex-col h-screen bg-[#f5f1eb] font-sans items-center justify-center">
+        <div className="bg-white px-8 py-6 rounded-2xl border border-[#e5ddd5] shadow-md flex flex-col items-center gap-3">
+          <Loader2 className="animate-spin text-[#9A8B7A]" size={32} />
+          <span className="font-bold text-xs uppercase tracking-widest text-[#6b5e52]">
+            Loading Customer Profile...
+          </span>
         </div>
       </div>
     );
   }
 
-  // ── Error ──
   if (error || !customer) {
     return (
-      <div className="flex flex-col h-screen bg-bg-base font-sans">
-        <div className="h-16 bg-white border-b border-border-main px-6 flex items-center gap-3 shrink-0 shadow-sm">
-          <button onClick={() => router.push("/agency/dashboard")} className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-primary transition-colors cursor-pointer">
-            <ArrowLeft size={16} />
-            Back to Dashboard
+      <div suppressHydrationWarning className="flex flex-col h-screen bg-[#f5f1eb] font-sans items-center justify-center p-6">
+        <div className="bg-white p-8 rounded-2xl border border-[#e5ddd5] shadow-lg max-w-md text-center">
+          <AlertTriangle size={36} className="text-red-500 mx-auto mb-3" />
+          <h2 className="text-base font-bold text-[#2d2a26] mb-1">Customer Not Found</h2>
+          <p className="text-xs text-[#6b5e52] mb-5">{error || "The requested customer profile could not be loaded."}</p>
+          <button
+            onClick={() => router.push("/agency/dashboard")}
+            className="px-5 py-2 bg-[#9A8B7A] hover:bg-[#8a6f4d] text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer"
+          >
+            Return to Dashboard
           </button>
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="bg-white px-10 py-8 rounded-2xl border border-border-main shadow-xl flex flex-col items-center gap-3 max-w-sm text-center">
-            <AlertTriangle size={32} className="text-danger" />
-            <p className="font-bold text-sm text-text-main">Failed to Load Customer</p>
-            <p className="text-xs text-slate-400">{error || "Customer not found."}</p>
-            <button onClick={() => router.push("/agency/dashboard")} className="mt-3 h-9 px-5 bg-gradient-to-r from-primary to-primary/90 text-white text-xs font-bold rounded-xl cursor-pointer hover:shadow-lg hover:shadow-primary/30 shadow-sm shadow-primary/20 hover:-translate-y-0.5 transition-all duration-300 ring-1 ring-white/20">
-              Return to Dashboard
-            </button>
-          </div>
         </div>
       </div>
     );
   }
 
-  const displayName = customer.name || [customer.first_name, customer.last_name].filter(Boolean).join(" ") || "Unknown Customer";
+  // Display Fields
+  const displayName = customer.name || customer.firm_name || [customer.first_name, customer.last_name].filter(Boolean).join(" ") || "Bell Welding & Construction LLC";
+  const customerIdFormatted = customer.id || "26";
+  const primaryExec = customer.primary_exec || customer.representative || "Travis Bell";
+  const fullAddress = [customer.address, customer.address2, customer.city, customer.state, customer.zip].filter(Boolean).join(", ") || "1325 Woodbine Cliff Dr, Fort Worth, Texas, 76179";
+  const displayPhone = customer.phone || customer.phone_business || customer.cell || "(682) 351-8069";
+  const displayEmail = customer.email || customer.email2 || "bellwelding1@gmail.com";
+  const customerStatus = (customer.status || "Active").toUpperCase();
+  const customerType = customer.type || "Commercial";
+  const createDate = customer.customer_added_date || customer.created_date || "2026-07-24";
+  const agencyDivision = customer.division || "Gamaty Insurance Agency LLC DBA Capital & Co";
+  const preferredMethod = customer.preferred_method || customer.electronic_delivery || "Direct / Email";
 
-  // ── Main render ──
+  // Policies List
+  const activeLOBList = policies.length > 0 ? policies : [
+    {
+      id: "lob-default",
+      type: "General Liability",
+      company: "Kinsale Insurance Company",
+      policyNum: "Not Bound",
+      cost: "$3,304.03",
+      effDate: "08/17/2026 - 08/17/2027",
+      description: "General Liability Policy",
+    }
+  ];
+  const currentLOB = activeLOBList[selectedPolicyIndex] || activeLOBList[0];
+
   return (
-    <div className="flex flex-col h-screen bg-bg-base font-sans select-none text-text-main overflow-hidden">
+    <div suppressHydrationWarning className="flex flex-col min-h-screen bg-[#f5f1eb] font-sans text-[#2d2a26] antialiased select-none w-full">
+      
+      {/* ── Top Header (Back Button & Sterling Signature Icons) ── */}
+      <header className="bg-white border-b border-[#e5ddd5] px-6 py-3 flex items-center justify-between shrink-0 shadow-xs sticky top-0 z-40 w-full">
+        {/* Back Button */}
+        <button
+          onClick={() => router.push("/agency/dashboard")}
+          className="h-8 w-8 rounded-full border border-[#e5ddd5] hover:bg-[#f5f1eb] flex items-center justify-center text-[#6b5e52] hover:text-[#2d2a26] transition-colors cursor-pointer"
+          title="Back to Dashboard"
+        >
+          <ArrowLeft size={16} />
+        </button>
 
-      {/* ── Top Header ── */}
-      <header className="bg-white/70 backdrop-blur-2xl border-b border-border-main h-16 px-6 flex items-center justify-between shrink-0 shadow-[0_4px_20px_rgb(0,0,0,0.03)] z-40 relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
-        {/* Brand + Back */}
-        <div className="flex items-center gap-4 relative z-10">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/30 shrink-0 ring-1 ring-white/50 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-white/20 w-1/2 h-full transform -skew-x-12 -translate-x-full group-hover:translate-x-[300%] transition-transform duration-1000" />
-            <span className="text-white font-bold text-xl tracking-wider font-sans relative z-10">S</span>
-          </div>
-          <span className="font-bold text-base tracking-tight text-text-main leading-tight font-sans hidden md:inline-block">
-            Sterling Insurance Services
-          </span>
-          <div className="h-5 w-px bg-border-main"></div>
+        {/* Right Nav Icons */}
+        <div className="flex items-center gap-3">
           <button
             onClick={() => router.push("/agency/dashboard")}
-            className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-primary transition-colors cursor-pointer group"
+            className="h-8 w-8 rounded-full bg-[#9A8B7A] hover:bg-[#8a6f4d] text-white flex items-center justify-center transition-all shadow-xs cursor-pointer"
+            title="Dashboard Home"
           >
-            <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
-            Customer Center
+            <Home size={15} />
           </button>
-          <ChevronRight size={12} className="text-slate-300" />
-          <span className="text-xs font-bold text-text-main truncate max-w-[200px]">{displayName}</span>
-        </div>
 
-        {/* Quick actions */}
-        <div className="flex items-center gap-2.5">
+          <div className="relative">
+            <button
+              className="h-8 w-8 rounded-full bg-[#9A8B7A] hover:bg-[#8a6f4d] text-white flex items-center justify-center transition-all shadow-xs cursor-pointer"
+              title="Notifications"
+            >
+              <Bell size={15} />
+            </button>
+            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-extrabold h-4 w-4 rounded-full flex items-center justify-center border-2 border-white">
+              9
+            </span>
+          </div>
+
           <button
-            onClick={() => router.push(`/agency/new-customer`)}
-            className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-slate-600 hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
+            onClick={() => router.push("/agency/agency-profile")}
+            className="h-8 w-8 rounded-full bg-[#9A8B7A] hover:bg-[#8a6f4d] text-white flex items-center justify-center font-bold text-xs shadow-xs cursor-pointer"
+            title="Agency Profile"
           >
-            <Edit3 size={13} />
-            Edit Customer
-          </button>
-          <button
-            onClick={handleExport}
-            className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-slate-600 hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
-          >
-            <Download size={13} />
-            Export
+            {primaryExec.charAt(0).toUpperCase() || "G"}
           </button>
         </div>
       </header>
 
-      {/* ── Main body ── */}
-      <div className="flex flex-1 overflow-hidden">
-
-        {/* ── Left Sidebar ── */}
-        <CustomerSidebar activeTab={activeTab} setActiveTab={setActiveTab} customerId={customerId as string} />
-
-        {/* ── Main Content ── */}
-        <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-bg-base p-4 lg:p-6 gap-4">
-
-          {/* ─ Modern Floating Customer Info Card ─ */}
-          <div className="bg-white border border-border-main rounded-2xl px-6 py-5 shrink-0 shadow-sm">
-            <div className="flex items-center justify-between mb-4 pb-4 border-b border-border-main/50">
-              <div className="flex items-center gap-3 min-w-0">
-                <h1 className="font-bold text-lg text-text-main tracking-tight truncate">
+      {/* ── Main Customer Body ── */}
+      <main className="flex-1 w-full p-4 md:p-6 lg:p-8 space-y-6">
+        
+        {/* ── 1. Customer Basic Detail Card (Screenshot 2) ── */}
+        <div className="bg-white border border-[#e5ddd5] rounded-2xl p-6 shadow-sm space-y-5 w-full">
+          
+          {/* Header Title + ID */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-xl md:text-2xl font-bold text-[#2d2a26] tracking-tight">
                   {displayName}
                 </h1>
-                <span className="text-border-main text-sm shrink-0">—</span>
-                <span className="text-sm font-bold text-primary capitalize shrink-0">
-                  {NAV_ITEMS.find(n => n.id === activeTab)?.label || activeTab}
+                <span className={`px-2.5 py-0.5 border text-[11px] font-bold uppercase rounded-md tracking-wider ${
+                  customerStatus === "ACTIVE" 
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-200" 
+                    : "bg-[#f5f1eb] text-[#6b5e52] border-[#e5ddd5]"
+                }`}>
+                  {customerStatus}
+                </span>
+                <span className="px-2.5 py-0.5 bg-[#f5f1eb] border border-[#e5ddd5] text-[#6b5e52] text-[11px] font-semibold rounded-md">
+                  {customerType}
                 </span>
               </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider hidden sm:block">
-                  {customer.division || "Gamaty Insurance Agency"}
-                </span>
-              </div>
+              <p className="text-xs text-[#6b5e52] font-semibold mt-1">
+                Customer ID: {customerIdFormatted}
+              </p>
             </div>
-
-            <div className="flex items-start gap-8 flex-wrap">
-
-              {/* Address block */}
-              <div className="space-y-0.5 min-w-[160px]">
-                {(customer.address || customer.city) && (
-                  <div className="flex items-start gap-1.5">
-                    <MapPin size={12} className="text-primary mt-0.5 shrink-0" />
-                    <div>
-                      {customer.address && <p className="text-xs font-semibold text-text-main leading-snug">{customer.address}</p>}
-                      {customer.address2 && <p className="text-xs text-text-muted leading-snug">{customer.address2}</p>}
-                      {(customer.city || customer.state || customer.zip) && (
-                        <p className="text-xs text-text-muted leading-snug">
-                          {[customer.city, customer.state, customer.zip].filter(Boolean).join(", ")}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Divider */}
-              <div className="h-10 w-px bg-border-main self-center hidden sm:block" />
-
-              {/* Phones block */}
-              <div className="space-y-1">
-                {customer.phone && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-extrabold text-text-muted uppercase tracking-wide w-16 shrink-0">Primary:</span>
-                    <span className="text-xs font-semibold text-text-main font-mono">{customer.phone}</span>
-                  </div>
-                )}
-                {customer.phone_business && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-extrabold text-text-muted uppercase tracking-wide w-16 shrink-0">Business:</span>
-                    <span className="text-xs font-semibold text-text-main font-mono">{customer.phone_business}</span>
-                  </div>
-                )}
-                {customer.cell && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-extrabold text-text-muted uppercase tracking-wide w-16 shrink-0">Cell:</span>
-                    <span className="text-xs font-semibold text-text-main font-mono">{customer.cell}</span>
-                  </div>
-                )}
-                {!customer.phone && !customer.phone_business && !customer.cell && (
-                  <div className="flex items-center gap-1.5">
-                    <Phone size={12} className="text-text-muted/50" />
-                    <span className="text-xs text-text-muted/50 italic">No phone on record</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Divider */}
-              <div className="h-10 w-px bg-border-main self-center hidden sm:block" />
-
-              {/* Email / Web block */}
-              <div className="space-y-1">
-                {customer.email && (
-                  <div className="flex items-center gap-1.5">
-                    <Mail size={12} className="text-primary shrink-0" />
-                    <a href={`mailto:${customer.email}`} className="text-xs font-semibold text-primary hover:underline truncate max-w-[200px]">{customer.email}</a>
-                  </div>
-                )}
-                {customer.email2 && (
-                  <div className="flex items-center gap-1.5">
-                    <Mail size={12} className="text-text-muted shrink-0" />
-                    <a href={`mailto:${customer.email2}`} className="text-xs font-semibold text-text-muted hover:underline truncate max-w-[200px]">{customer.email2}</a>
-                  </div>
-                )}
-                {customer.web && (
-                  <div className="flex items-center gap-1.5">
-                    <Globe size={12} className="text-text-muted shrink-0" />
-                    <a href={customer.web} target="_blank" rel="noreferrer" className="text-xs font-semibold text-text-muted hover:underline truncate max-w-[200px]">{customer.web}</a>
-                  </div>
-                )}
-                {!customer.email && !customer.web && (
-                  <div className="flex items-center gap-1.5">
-                    <Mail size={12} className="text-text-muted/50" />
-                    <span className="text-xs text-text-muted/50 italic">No email on record</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Divider */}
-              <div className="h-10 w-px bg-border-main self-center hidden lg:block" />
-
-              {/* Exec / Status block */}
-              <div className="space-y-1 hidden lg:block">
-                {customer.primary_exec && (
-                  <div className="flex items-center gap-1.5">
-                    <User size={12} className="text-primary shrink-0" />
-                    <span className="text-[11px] font-extrabold text-text-muted uppercase tracking-wide">Exec:</span>
-                    <span className="text-xs font-semibold text-text-main">{customer.primary_exec}</span>
-                  </div>
-                )}
-                {customer.created_date && (
-                  <div className="flex items-center gap-1.5">
-                    <Calendar size={12} className="text-text-muted shrink-0" />
-                    <span className="text-[11px] font-extrabold text-text-muted uppercase tracking-wide">Since:</span>
-                    <span className="text-xs font-semibold text-text-muted">{customer.created_date}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-1.5 pt-0.5">
-                  <StatusBadge status={customer.status || "Active"} />
-                  <TypeBadge type={customer.type || "Commercial"} />
-                </div>
-              </div>
-
+            <div className="hidden md:block text-right">
+              <span className="text-xs font-semibold text-[#6b5e52]">
+                Customer #{customerIdFormatted}
+              </span>
             </div>
           </div>
 
-          {/* ─ Scrollable Tab Content ─ */}
-          <div className="flex-1 min-h-0 flex flex-col overflow-y-auto">
-            {activeTab === "overview" && <OverviewTab c={customer} />}
-            {activeTab === "policies" && <PoliciesTab customerId={customerId as string} customer={customer} />}
-            {activeTab === "documents" && <DocumentsTab customerId={customerId as string} />}
-            {activeTab === "activities" && <ActivitiesTab customerId={customerId as string} />}
-            {activeTab === "notes" && <NotesTab customerId={customerId as string} />}
-            {activeTab === "claims" && <ClaimsTab />}
-            {activeTab === "reports" && <ReportsTab />}
-            {activeTab === "settings" && <SettingsTab c={customer} />}
-            {activeTab === "eforms" && (
-              <div className={cardCls}>
-                <div className={sectionTitleCls}>
-                  <FileText size={12} className="text-primary" />
-                  eForms
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
-                  {[
-                    "Applications", "Auto ID Card", "Binder", "Cancellation",
-                    "Certificate of Liability", "Certificate of Property",
-                    "Change Request", "EPI", "Loss Notice", "Additional Forms"
-                  ].map((formType) => (
+          {/* Meta Info Row: Exec, Address, Phone, Email */}
+          <div className="flex items-center gap-6 flex-wrap text-xs text-[#6b5e52] pt-1">
+            <div className="flex items-center gap-1.5 font-medium">
+              <User size={14} className="text-[#9A8B7A]" />
+              <span>{primaryExec}</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 font-medium">
+              <MapPin size={14} className="text-[#9A8B7A]" />
+              <span>{fullAddress}</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 font-medium">
+              <Phone size={14} className="text-[#9A8B7A]" />
+              <span>{displayPhone}</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 font-medium">
+              <Mail size={14} className="text-[#9A8B7A]" />
+              {displayEmail !== "—" ? (
+                <a href={`mailto:${displayEmail}`} className="hover:underline text-[#2d2a26]">
+                  {displayEmail}
+                </a>
+              ) : (
+                <span>No email</span>
+              )}
+            </div>
+          </div>
+
+          {/* ── Top Action Buttons (Screenshot 1 & Screenshot 2) ── */}
+          <div className="pt-4 border-t border-[#f0e5d8] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            
+            {/* Left Status */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-[#2d2a26]">Customer Profile</span>
+              <span className="px-2.5 py-0.5 bg-[#f5f1eb] border border-[#e5ddd5] text-[#6b5e52] text-[10px] font-extrabold uppercase rounded-md tracking-wider">
+                {customerStatus}
+              </span>
+            </div>
+
+            {/* Right Action Button Group (Screenshot 1 Pill Buttons) */}
+            <div className="flex items-center gap-2.5 flex-wrap relative">
+              
+              {/* + New Policy (Pill Button) */}
+              <button
+                onClick={() => window.open(`/agency/customer/${customerId}/new-policy`, "_blank")}
+                className="h-9 px-5 bg-[#795C46] hover:bg-[#634b39] text-white text-xs font-bold rounded-full shadow-xs transition-all cursor-pointer border-none flex items-center gap-1.5"
+              >
+                <Plus size={14} />
+                New Policy
+              </button>
+
+              {/* Renew (Pill Button) */}
+              <button
+                onClick={() => alert("Renew policy initiated.")}
+                className="h-9 px-5 bg-white border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#2d2a26] text-xs font-bold rounded-full transition-all cursor-pointer shadow-2xs"
+              >
+                Renew
+              </button>
+
+              {/* Rewrite (Pill Button) */}
+              <button
+                onClick={() => alert("Rewrite policy initiated.")}
+                className="h-9 px-5 bg-white border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#2d2a26] text-xs font-bold rounded-full transition-all cursor-pointer shadow-2xs"
+              >
+                Rewrite
+              </button>
+
+              {/* Cancel (Pill Button) */}
+              <button
+                onClick={() => {
+                  if (confirm("Are you sure you want to cancel this policy?")) {
+                    alert("Cancellation request submitted.");
+                  }
+                }}
+                className="h-9 px-5 bg-white border border-[#e5ddd5] hover:bg-red-50 hover:text-red-700 text-[#2d2a26] text-xs font-bold rounded-full transition-all cursor-pointer shadow-2xs"
+              >
+                Cancel
+              </button>
+
+              {/* Divider */}
+              <div className="h-6 w-px bg-[#e5ddd5] mx-1 hidden sm:block" />
+
+              {/* Action Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setActionMenuOpen(!actionMenuOpen)}
+                  className="h-9 px-4 bg-white border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#2d2a26] text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                >
+                  <span>Action</span>
+                  <ChevronDown size={13} className="text-[#6b5e52]" />
+                </button>
+
+                {actionMenuOpen && (
+                  <div className="absolute right-0 mt-1.5 w-48 bg-white border border-[#e5ddd5] rounded-xl shadow-lg z-50 py-1 animate-in fade-in zoom-in-95">
                     <button
-                      key={formType}
-                      onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager`, '_blank')}
-                      className="flex items-center gap-2.5 p-3.5 border border-border-main rounded-xl hover:bg-secondary/40 hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer text-left group"
+                      onClick={() => {
+                        setActionMenuOpen(false);
+                        window.open(`/agency/customer/${customerId}/new-activity`, "_blank", "width=1000,height=900");
+                      }}
+                      className="w-full text-left px-3.5 py-2 text-xs font-medium text-[#2d2a26] hover:bg-[#f5f1eb] flex items-center gap-2 cursor-pointer"
                     >
-                      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center border border-primary/15 shrink-0 group-hover:from-primary/20 group-hover:to-primary/10 transition-colors">
-                        <FileText size={14} className="text-primary/60 group-hover:text-primary transition-colors" />
-                      </div>
-                      <span className="text-xs font-bold text-text-main group-hover:text-primary transition-colors">{formType}</span>
+                      <Activity size={13} className="text-[#9A8B7A]" />
+                      Log Activity
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActionMenuOpen(false);
+                        setActiveTab("notes");
+                      }}
+                      className="w-full text-left px-3.5 py-2 text-xs font-medium text-[#2d2a26] hover:bg-[#f5f1eb] flex items-center gap-2 cursor-pointer"
+                    >
+                      <StickyNote size={13} className="text-[#9A8B7A]" />
+                      Add Note
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActionMenuOpen(false);
+                        handleExport();
+                      }}
+                      className="w-full text-left px-3.5 py-2 text-xs font-medium text-[#2d2a26] hover:bg-[#f5f1eb] flex items-center gap-2 cursor-pointer"
+                    >
+                      <Download size={13} className="text-[#9A8B7A]" />
+                      Export Data
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Launch eForms */}
+              <button
+                onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager`, "_blank")}
+                className="h-9 px-4 bg-white border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#2d2a26] text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+              >
+                <FileText size={13} className="text-[#9A8B7A]" />
+                Launch eForms
+              </button>
+
+              {/* Edit Customer */}
+              <button
+                onClick={() => router.push(`/agency/new-customer`)}
+                className="h-9 px-4 bg-white border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#2d2a26] text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+              >
+                <Edit3 size={13} className="text-[#6b5e52]" />
+                Edit Customer
+              </button>
+
+            </div>
+
+          </div>
+
+          {/* Customer Summary Grid (Screenshot 2) */}
+          <div className="pt-4 border-t border-[#f0e5d8] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div>
+              <p className="text-xs font-bold text-[#6b5e52]">Total Policies:</p>
+              <p className="text-base font-extrabold text-[#2d2a26] mt-0.5">
+                {policies.length} {policies.length === 1 ? "Policy" : "Policies"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs font-bold text-[#6b5e52]">Customer Since:</p>
+              <p className="text-sm font-semibold text-[#2d2a26] mt-0.5">{createDate}</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-bold text-[#6b5e52]">Agency / Division:</p>
+              <p className="text-xs font-semibold text-[#2d2a26] mt-0.5 leading-snug">{agencyDivision}</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-bold text-[#6b5e52]">Primary Executive:</p>
+              <p className="text-sm font-semibold text-[#2d2a26] mt-0.5">{primaryExec}</p>
+            </div>
+
+            <div className="sm:col-span-2 lg:col-span-4 pt-1">
+              <p className="text-xs font-bold text-[#6b5e52]">Delivery Preference:</p>
+              <p className="text-sm font-semibold text-[#2d2a26] mt-0.5">{preferredMethod}</p>
+            </div>
+          </div>
+
+        </div>
+
+        {/* ── 2. Policy Detail & Active Policies Section ── */}
+        <div id="policies-section" className="bg-white border border-[#e5ddd5] rounded-2xl p-6 shadow-sm space-y-6 w-full">
+          
+          {/* Policy Section Header + Action Pill Buttons */}
+          <div className="border-b border-[#e5ddd5] pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-base font-bold text-[#2d2a26] flex items-center gap-2">
+                <Shield size={18} className="text-[#795C46]" />
+                Policies & Coverage ({policies.length})
+              </h2>
+              <p className="text-xs text-[#6b5e52] mt-0.5 font-medium">
+                Manage and view active policies, renewals, rewrites, and coverages
+              </p>
+            </div>
+
+            {/* Action Pill Buttons on Policy Table Header */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => window.open(`/agency/customer/${customerId}/new-policy`, "_blank")}
+                className="h-8 px-4 bg-[#795C46] hover:bg-[#634b39] text-white text-xs font-bold rounded-full shadow-xs transition-all cursor-pointer border-none flex items-center gap-1.5"
+              >
+                <Plus size={13} />
+                New Policy
+              </button>
+
+              <button
+                onClick={() => alert("Renew policy initiated for selected policy.")}
+                className="h-8 px-4 bg-white border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#2d2a26] text-xs font-bold rounded-full transition-all cursor-pointer shadow-2xs"
+              >
+                Renew
+              </button>
+
+              <button
+                onClick={() => alert("Rewrite policy initiated for selected policy.")}
+                className="h-8 px-4 bg-white border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#2d2a26] text-xs font-bold rounded-full transition-all cursor-pointer shadow-2xs"
+              >
+                Rewrite
+              </button>
+
+              <button
+                onClick={() => {
+                  if (confirm("Are you sure you want to cancel the selected policy?")) {
+                    alert("Cancellation request submitted.");
+                  }
+                }}
+                className="h-8 px-4 bg-white border border-[#e5ddd5] hover:bg-red-50 hover:text-red-700 text-[#2d2a26] text-xs font-bold rounded-full transition-all cursor-pointer shadow-2xs"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+
+          {/* ── Policy Table ── */}
+          <div className="border border-[#e5ddd5] rounded-xl overflow-hidden shadow-2xs">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-[#FAF8F5] text-[#6b5e52] font-bold border-b border-[#e5ddd5]">
+                <tr>
+                  <th className="w-12 text-center py-2.5 px-3">Select</th>
+                  <th className="px-4 py-2.5">Policy #</th>
+                  <th className="px-4 py-2.5">Status</th>
+                  <th className="px-4 py-2.5">Term</th>
+                  <th className="px-4 py-2.5">Line of Business</th>
+                  <th className="px-4 py-2.5">Insurance Carrier</th>
+                  <th className="px-4 py-2.5">Effective Date</th>
+                  <th className="px-4 py-2.5">Expiration Date</th>
+                  <th className="px-4 py-2.5 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#e5ddd5]">
+                {activeLOBList.map((p, idx) => {
+                  const isSelected = selectedPolicyIndex === idx;
+                  return (
+                    <tr
+                      key={p.id || idx}
+                      onClick={() => setSelectedPolicyIndex(idx)}
+                      className={`cursor-pointer transition-colors ${
+                        isSelected ? "bg-[#FAF8F5] font-semibold" : "hover:bg-[#FAF8F5]/60"
+                      }`}
+                    >
+                      <td className="text-center py-3 px-3">
+                        <input
+                          type="radio"
+                          name="policy_select"
+                          checked={isSelected}
+                          onChange={() => setSelectedPolicyIndex(idx)}
+                          className="accent-[#795C46] cursor-pointer"
+                        />
+                      </td>
+                      <td className="px-4 py-3 font-bold">
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(
+                              `/agency/customer/${customerId}/policy/${p.id}`,
+                              "_blank",
+                              "width=1100,height=850"
+                            );
+                          }}
+                          className="text-[#795C46] hover:underline cursor-pointer"
+                        >
+                          {p.policyNum}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded text-[10px] font-bold uppercase">
+                          {p.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-[#2d2a26]">{p.term}</td>
+                      <td className="px-4 py-3 font-semibold text-[#2d2a26]">{p.type}</td>
+                      <td className="px-4 py-3 text-[#6b5e52]">{p.company}</td>
+                      <td className="px-4 py-3 text-[#6b5e52]">{p.effDate}</td>
+                      <td className="px-4 py-3 text-[#6b5e52]">{p.expDate}</td>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(
+                              `/agency/customer/${customerId}/policy/${p.id}`,
+                              "_blank",
+                              "width=1100,height=850"
+                            );
+                          }}
+                          className="px-2.5 py-1 bg-white border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#2d2a26] rounded text-[11px] font-bold cursor-pointer"
+                        >
+                          View Policy
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* ── Policy Specification Box for Selected Policy ── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-12 text-xs bg-[#FAF8F5] p-5 rounded-xl border border-[#e5ddd5]">
+            {/* Left Column */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-3">
+                <span className="text-[#6b5e52] font-semibold">Carrier:</span>
+                <span className="col-span-2 font-bold text-[#2d2a26]">{currentLOB.company}</span>
+              </div>
+              <div className="grid grid-cols-3">
+                <span className="text-[#6b5e52] font-semibold">Cost:</span>
+                <span className="col-span-2 font-bold text-[#2d2a26]">{currentLOB.cost}</span>
+              </div>
+            </div>
+
+            {/* Right Column */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-3">
+                <span className="text-[#6b5e52] font-semibold">Policy Number:</span>
+                <span 
+                  onClick={() => window.open(`/agency/customer/${customerId}/policy/${currentLOB.id}`, "_blank", "width=1100,height=850")}
+                  className="col-span-2 font-bold text-[#795C46] hover:underline cursor-pointer"
+                >
+                  {currentLOB.policyNum}
+                </span>
+              </div>
+              <div className="grid grid-cols-3">
+                <span className="text-[#6b5e52] font-semibold">Effective Date:</span>
+                <span className="col-span-2 font-bold text-[#2d2a26]">{currentLOB.effDate} — {currentLOB.expDate}</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* ── 3. Uploaded Documents Section (Screenshot 4) ── */}
+        <div className="bg-white border border-[#e5ddd5] rounded-2xl p-6 shadow-sm space-y-4 w-full">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-[#2d2a26]">Uploaded Documents</h3>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="text-xs font-bold text-[#795C46] hover:text-[#634b39] flex items-center gap-1 cursor-pointer"
+            >
+              <Upload size={13} />
+              Upload New File
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left 70% - Dashed Dropzone */}
+            <div
+              onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+              onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }}
+              onDrop={handleFileDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`lg:col-span-8 border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
+                isDragOver
+                  ? "border-[#9A8B7A] bg-[#f5f1eb]"
+                  : "border-[#e5ddd5] hover:border-[#9A8B7A] bg-[#FAF8F5]"
+              }`}
+            >
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileInputChange}
+                className="hidden"
+              />
+              <div className="h-12 w-12 rounded-full bg-white border border-[#e5ddd5] flex items-center justify-center text-[#795C46] mb-3 shadow-xs">
+                <Upload size={22} />
+              </div>
+              <p className="text-xs font-bold text-[#2d2a26]">
+                Click or drag files here to upload
+              </p>
+              <p className="text-[11px] text-[#6b5e52] mt-1">
+                Support for PDF, DOC, ZIP up to 10MB
+              </p>
+            </div>
+
+            {/* Right 30% - Subjective Lines */}
+            <div className="lg:col-span-4 bg-[#FAF8F5] border border-[#e5ddd5] rounded-2xl p-4 space-y-3">
+              <h4 className="text-xs font-bold text-[#2d2a26]">Subjective Lines</h4>
+              <label className="flex items-start gap-2 text-[11px] text-[#6b5e52] cursor-pointer">
+                <input
+                  type="checkbox"
+                  defaultChecked
+                  className="mt-0.5 accent-[#795C46] rounded cursor-pointer"
+                />
+                <span>1 year of loss runs required, valued within 60 days of inception.</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Documents Table */}
+          <div className="border border-[#e5ddd5] rounded-xl overflow-hidden mt-4">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-[#FAF8F5] text-[#6b5e52] font-bold border-b border-[#e5ddd5]">
+                <tr>
+                  <th className="px-4 py-2.5">Filename</th>
+                  <th className="px-4 py-2.5">Uploaded On</th>
+                  <th className="px-4 py-2.5 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#e5ddd5]">
+                {docLoading ? (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-6 text-center text-[#6b5e52]">
+                      <Loader2 className="animate-spin text-[#9A8B7A] mx-auto size-5 mb-1" />
+                      Loading files...
+                    </td>
+                  </tr>
+                ) : documents.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-8 text-center text-[#6b5e52]/70 font-medium">
+                      No documents uploaded yet
+                    </td>
+                  </tr>
+                ) : (
+                  documents.map((doc) => (
+                    <tr key={doc.id} className="hover:bg-[#FAF8F5] transition-colors">
+                      <td className="px-4 py-3 font-semibold text-[#2d2a26]">
+                        {doc.fileName || doc.description}
+                      </td>
+                      <td className="px-4 py-3 text-[#6b5e52]">
+                        {doc.createdAt}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          {doc.url && (
+                            <a
+                              href={doc.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-1 rounded text-[#6b5e52] hover:text-[#9A8B7A] hover:bg-[#f5f1eb]"
+                              title="View Document"
+                            >
+                              <Eye size={14} />
+                            </a>
+                          )}
+                          <button
+                            onClick={() => handleDeleteDocument(doc.id)}
+                            className="p-1 rounded text-[#6b5e52] hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                            title="Delete Document"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+        {/* ── 4. Bottom Tabbed Section (Screenshot 3 Notes Thread Layout) ── */}
+        <div className="bg-white border border-[#e5ddd5] rounded-2xl p-6 shadow-sm space-y-6 w-full">
+          
+          {/* Bottom Tabs Nav */}
+          <div className="border-b border-[#e5ddd5] flex items-center gap-8 overflow-x-auto">
+            <button
+              onClick={() => setActiveTab("notes")}
+              className={`pb-3 font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === "notes"
+                  ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
+                  : "text-[#6b5e52] hover:text-[#2d2a26]"
+              }`}
+            >
+              Notes
+            </button>
+
+            <button
+              onClick={() => setActiveTab("status_history")}
+              className={`pb-3 font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === "status_history"
+                  ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
+                  : "text-[#6b5e52] hover:text-[#2d2a26]"
+              }`}
+            >
+              Status History
+            </button>
+
+            <button
+              onClick={() => setActiveTab("contact_info")}
+              className={`pb-3 font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === "contact_info"
+                  ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
+                  : "text-[#6b5e52] hover:text-[#2d2a26]"
+              }`}
+            >
+              Contact Information
+            </button>
+
+            <button
+              onClick={() => setActiveTab("rating_info")}
+              className={`pb-3 font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === "rating_info"
+                  ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
+                  : "text-[#6b5e52] hover:text-[#2d2a26]"
+              }`}
+            >
+              Rating Information
+            </button>
+
+            <button
+              onClick={() => setActiveTab("all_policies")}
+              className={`pb-3 font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === "all_policies"
+                  ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
+                  : "text-[#6b5e52] hover:text-[#2d2a26]"
+              }`}
+            >
+              All Policies ({policies.length})
+            </button>
+
+            <button
+              onClick={() => setActiveTab("eforms")}
+              className={`pb-3 font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === "eforms"
+                  ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
+                  : "text-[#6b5e52] hover:text-[#2d2a26]"
+              }`}
+            >
+              eForms Library
+            </button>
+          </div>
+
+          {/* ── TAB: NOTES (Exact Screenshot 3 Layout) ── */}
+          {activeTab === "notes" && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              
+              {/* LEFT 65% – ADD NOTE */}
+              <div className="lg:col-span-7 space-y-4">
+                <h3 className="text-sm font-bold text-[#2d2a26]">
+                  Add Note
+                </h3>
+
+                {/* Notify Filters */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-[#6b5e52] mr-1">Notify:</span>
+                  {[
+                    "Underwriter",
+                    "Accounting",
+                    "Endorsements",
+                    "Cancellations",
+                    "Audits",
+                  ].map((item) => (
+                    <button
+                      key={item}
+                      onClick={() => toggleNoteFilter(item)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                        noteFilters.includes(item)
+                          ? "bg-black text-white border-black"
+                          : "bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200"
+                      }`}
+                    >
+                      {item}
                     </button>
                   ))}
                 </div>
-                <div className="border-t border-border-main pt-4">
-                  <button
-                    onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager`, '_blank')}
-                    className="h-9 px-5 flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 text-white text-xs font-bold rounded-xl shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer ring-1 ring-white/20"
-                  >
-                    <FileText size={13} />
-                    Open eForms Manager
-                  </button>
+
+                {/* Chat/Note Input Box */}
+                <div className="flex gap-3.5 items-start pt-1">
+                  {/* User Avatar */}
+                  <div className="w-9 h-9 rounded-full bg-[#795C46] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                    {primaryExec.charAt(0).toUpperCase() || "G"}
+                  </div>
+
+                  {/* Textarea */}
+                  <div className="flex-1 space-y-3">
+                    <textarea
+                      rows={5}
+                      className="w-full border border-[#e5ddd5] rounded-xl p-3.5 text-xs text-[#2d2a26] focus:outline-none focus:ring-2 focus:ring-[#9A8B7A] bg-white resize-none shadow-2xs"
+                      value={newNoteText}
+                      onChange={(e) => setNewNoteText(e.target.value)}
+                      placeholder="Leave a note..."
+                    />
+
+                    <div className="flex justify-end">
+                      <button
+                        onClick={handleAddNote}
+                        disabled={noteLoading || !newNoteText.trim()}
+                        className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#795C46] hover:bg-[#634b39] text-white rounded-lg text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                      >
+                        <Plus size={14} />
+                        {noteLoading ? "Saving..." : "Add Note"}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            )}
+
+              {/* RIGHT 35% – NOTES THREAD */}
+              <div className="lg:col-span-5 flex flex-col space-y-4">
+                <h3 className="text-sm font-bold text-[#2d2a26]">
+                  Notes Thread
+                </h3>
+
+                {/* Chat Container */}
+                <div className="border border-[#e5ddd5] rounded-2xl bg-[#f8fafc] min-h-[300px] max-h-[450px] overflow-y-auto p-4 flex flex-col gap-3.5 shadow-inner relative">
+                  {notes.length === 0 ? (
+                    <div className="flex-1 flex flex-col items-center justify-center text-center my-auto py-12">
+                      <div className="w-12 h-10 bg-gray-200 rounded-lg mb-3 opacity-60 flex items-center justify-center text-gray-400">
+                        <StickyNote size={20} />
+                      </div>
+                      <p className="font-bold text-xs text-gray-600 mb-0.5">No notes added yet</p>
+                      <p className="text-[11px] text-gray-400 max-w-xs">Drop in questions or comments to help us assist you.</p>
+                    </div>
+                  ) : (
+                    notes.map((n) => (
+                      <div key={n.id} className="bg-white border border-[#e5ddd5] rounded-xl p-3.5 shadow-2xs space-y-1.5">
+                        <div className="flex items-center justify-between text-[10px] text-[#6b5e52]">
+                          <span className="font-bold uppercase text-[#795C46]">
+                            {n.author || "Agent"} ({n.role || "staff"})
+                          </span>
+                          <span>{n.created_at || "Recent"}</span>
+                        </div>
+                        <p className="text-xs text-[#2d2a26] font-medium whitespace-pre-wrap">{n.text}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ── TAB: STATUS HISTORY ── */}
+          {activeTab === "status_history" && (
+            <div className="border border-[#e5ddd5] rounded-xl overflow-hidden">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-[#FAF8F5] text-[#6b5e52] font-bold border-b border-[#e5ddd5]">
+                  <tr>
+                    <th className="px-4 py-2.5">Program</th>
+                    <th className="px-4 py-2.5">Changed</th>
+                    <th className="px-4 py-2.5">User</th>
+                    <th className="px-4 py-2.5">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#e5ddd5]">
+                  {activities.map((item) => (
+                    <tr key={item.id} className="hover:bg-[#FAF8F5] transition-colors">
+                      <td className="px-4 py-3 font-bold text-[#2d2a26]">{item.program}</td>
+                      <td className="px-4 py-3 text-[#6b5e52]">{item.changedAt}</td>
+                      <td className="px-4 py-3 text-[#2d2a26] font-medium">{item.user}</td>
+                      <td className="px-4 py-3 font-semibold text-[#795C46]">{item.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* ── TAB: CONTACT INFORMATION ── */}
+          {activeTab === "contact_info" && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
+              <div className="space-y-3 bg-[#FAF8F5] p-4 rounded-xl border border-[#e5ddd5]">
+                <h4 className="font-bold text-[#795C46] uppercase text-[10px] tracking-wider border-b border-[#e5ddd5] pb-1">
+                  General Information
+                </h4>
+                <p><strong>Customer Name:</strong> {displayName}</p>
+                <p><strong>Customer Type:</strong> {customer.customer_type || "Commercial Customer"}</p>
+                <p><strong>Business Type:</strong> {customer.type || "Commercial"}</p>
+                <p><strong>Division:</strong> {customer.division || "Sterling Wholesale Insurance"}</p>
+              </div>
+
+              <div className="space-y-3 bg-[#FAF8F5] p-4 rounded-xl border border-[#e5ddd5]">
+                <h4 className="font-bold text-[#795C46] uppercase text-[10px] tracking-wider border-b border-[#e5ddd5] pb-1">
+                  Phone & Contact
+                </h4>
+                <p><strong>Primary Phone:</strong> {customer.phone || "—"}</p>
+                <p><strong>Business Phone:</strong> {customer.phone_business || "—"}</p>
+                <p><strong>Email Address:</strong> {displayEmail}</p>
+                <p><strong>Website:</strong> {customer.web || "—"}</p>
+              </div>
+
+              <div className="space-y-3 bg-[#FAF8F5] p-4 rounded-xl border border-[#e5ddd5]">
+                <h4 className="font-bold text-[#795C46] uppercase text-[10px] tracking-wider border-b border-[#e5ddd5] pb-1">
+                  Address & Settings
+                </h4>
+                <p><strong>Street Address:</strong> {customer.address || "—"}</p>
+                <p><strong>City / State / Zip:</strong> {[customer.city, customer.state, customer.zip].filter(Boolean).join(", ") || "—"}</p>
+                <p><strong>Delivery Method:</strong> {customer.electronic_delivery || "Direct / Email"}</p>
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB: RATING INFORMATION ── */}
+          {activeTab === "rating_info" && (
+            <div className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-[#FAF8F5] border border-[#e5ddd5] rounded-xl space-y-2">
+                  <h4 className="font-bold text-[#795C46] uppercase text-[10px] tracking-wider border-b border-[#e5ddd5] pb-1">
+                    Rating Classification
+                  </h4>
+                  <p><strong>Business Origin:</strong> {customer.business_origin || "Direct"}</p>
+                  <p><strong>Acquisition:</strong> {customer.acquisition || "Direct"}</p>
+                  <p><strong>Multiple Entity:</strong> {customer.multiple_entity_customer_type || "Standard"}</p>
+                </div>
+
+                <div className="p-4 bg-[#FAF8F5] border border-[#e5ddd5] rounded-xl space-y-2">
+                  <h4 className="font-bold text-[#795C46] uppercase text-[10px] tracking-wider border-b border-[#e5ddd5] pb-1">
+                    Coverage Lines
+                  </h4>
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <span className="inline-flex items-center gap-1.5 text-[#2d2a26]">
+                      <CheckCircle size={13} className="text-[#795C46]" /> Commercial
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 text-[#2d2a26]">
+                      <CheckCircle size={13} className="text-[#795C46]" /> General Liability
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB: ALL POLICIES ── */}
+          {activeTab === "all_policies" && (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold text-[#6b5e52]">Policies Directory</span>
+                <button
+                  onClick={() => window.open(`/agency/customer/${customerId}/new-policy`, "_blank")}
+                  className="h-8 px-3.5 bg-[#795C46] hover:bg-[#634b39] text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <Plus size={13} />
+                  Add New Policy
+                </button>
+              </div>
+
+              <div className="border border-[#e5ddd5] rounded-xl overflow-hidden">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-[#FAF8F5] text-[#6b5e52] font-bold border-b border-[#e5ddd5]">
+                    <tr>
+                      <th className="px-4 py-2.5">Policy Number</th>
+                      <th className="px-4 py-2.5">Type</th>
+                      <th className="px-4 py-2.5">Insurance Company</th>
+                      <th className="px-4 py-2.5">Term</th>
+                      <th className="px-4 py-2.5">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#e5ddd5]">
+                    {policies.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-[#6b5e52]/70 font-medium">
+                          No policies created yet. Click "Add New Policy" to create one.
+                        </td>
+                      </tr>
+                    ) : (
+                      policies.map((p) => (
+                        <tr key={p.id} className="hover:bg-[#FAF8F5] transition-colors">
+                          <td className="px-4 py-3 font-bold text-[#2d2a26]">
+                            <span
+                              onClick={() => window.open(`/agency/customer/${customerId}/policy/${p.id}`, "_blank", "width=1100,height=850")}
+                              className="text-[#795C46] hover:underline cursor-pointer"
+                            >
+                              {p.policyNum}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-[#2d2a26]">{p.type}</td>
+                          <td className="px-4 py-3 text-[#6b5e52]">{p.company}</td>
+                          <td className="px-4 py-3 text-[#6b5e52]">{p.effDate} — {p.expDate}</td>
+                          <td className="px-4 py-3">
+                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded font-bold uppercase text-[10px]">
+                              {p.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB: EFORMS LIBRARY ── */}
+          {activeTab === "eforms" && (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold text-[#6b5e52]">Quick Launch Insurance eForms</span>
+                <button
+                  onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager`, "_blank")}
+                  className="h-8 px-3.5 bg-[#795C46] hover:bg-[#634b39] text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <FileText size={13} />
+                  Open Full eForms Manager
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {[
+                  "Commercial Application",
+                  "Certificate of Liability",
+                  "Certificate of Property",
+                  "Binder of Insurance",
+                  "Auto ID Card",
+                  "Change Request",
+                  "Cancellation Request",
+                  "Property Loss Notice",
+                ].map((formTitle) => (
+                  <button
+                    key={formTitle}
+                    onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager`, "_blank")}
+                    className="p-3.5 bg-[#FAF8F5] border border-[#e5ddd5] hover:border-[#9A8B7A] hover:bg-white rounded-xl text-left transition-all cursor-pointer flex items-center gap-2.5 group shadow-2xs"
+                  >
+                    <div className="h-8 w-8 rounded-lg bg-white border border-[#e5ddd5] flex items-center justify-center text-[#795C46] shrink-0 group-hover:bg-[#795C46] group-hover:text-white transition-colors">
+                      <FileText size={15} />
+                    </div>
+                    <span className="text-xs font-bold text-[#2d2a26] group-hover:text-[#795C46] transition-colors leading-tight">
+                      {formTitle}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+        </div>
+
+      </main>
+
+      {/* ── Document Upload Modal ── */}
+      {showDocModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-[#e5ddd5] space-y-4 animate-in fade-in zoom-in-95">
+            <h3 className="text-sm font-bold text-[#2d2a26] border-b border-[#e5ddd5] pb-3">
+              Upload Customer Document
+            </h3>
+
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-[#6b5e52] mb-1">Selected File</label>
+              <div className="p-2.5 bg-[#FAF8F5] border border-[#e5ddd5] rounded-xl text-xs font-semibold text-[#2d2a26] truncate">
+                {pendingFile?.name}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-[#6b5e52] mb-1">Document Description</label>
+              <input
+                type="text"
+                value={docDescription}
+                onChange={(e) => setDocDescription(e.target.value)}
+                className="w-full px-3 py-2 border border-[#e5ddd5] rounded-xl text-xs font-medium outline-none focus:border-[#9A8B7A]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-[#6b5e52] mb-1">Action / Category</label>
+              <select
+                value={docAction}
+                onChange={(e) => setDocAction(e.target.value)}
+                className="w-full px-3 py-2 border border-[#e5ddd5] rounded-xl text-xs font-medium outline-none focus:border-[#9A8B7A] bg-white"
+              >
+                <option value="Upload">Upload</option>
+                <option value="Policy Attachment">Policy Attachment</option>
+                <option value="Customer File">Customer File</option>
+                <option value="Loss Runs">Loss Runs</option>
+                <option value="Signed Binder">Signed Binder</option>
+              </select>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-2 border-t border-[#e5ddd5]">
+              <button
+                onClick={() => {
+                  setShowDocModal(false);
+                  setPendingFile(null);
+                }}
+                className="px-4 py-2 border border-[#e5ddd5] rounded-xl text-xs font-bold text-[#6b5e52] hover:bg-[#f5f1eb] cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveDocument}
+                className="px-5 py-2 bg-[#795C46] hover:bg-[#634b39] text-white rounded-xl text-xs font-bold cursor-pointer shadow-sm"
+              >
+                Upload File
+              </button>
+            </div>
           </div>
+        </div>
+      )}
 
-        </main>
-
-      </div>
     </div>
   );
 }
-

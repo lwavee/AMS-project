@@ -261,7 +261,7 @@ export default function Page() {
     if (selectedCustomers.length > 0) {
       const selectedNames = selectedCustomers.map(c => c.name).join(", ");
       const confirmDelete = window.confirm(
-        `AMS360 - Delete Record\n\nAre you sure you want to delete the selected customer(s)?\n- ${selectedNames}`
+        `Sterling AMS - Delete Record\n\nAre you sure you want to delete the selected customer(s)?\n- ${selectedNames}`
       );
       if (confirmDelete) {
         setIsLoading(true);
@@ -302,7 +302,7 @@ export default function Page() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.setAttribute("href", url);
-    a.setAttribute("download", `ams360_customers_${new Date().toISOString().split('T')[0]}.csv`);
+    a.setAttribute("download", `sterling_ams_customers_${new Date().toISOString().split('T')[0]}.csv`);
     a.click();
   };
 

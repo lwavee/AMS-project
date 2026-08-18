@@ -93,7 +93,7 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
     { name: "Notifications", icon: Bell, hasSubmenu: false },
     { name: "Help", icon: HelpCircle, hasSubmenu: true },
     { name: "AOR", icon: Award, hasSubmenu: true },
-    { name: "Vertafore Suite", icon: Grid, hasSubmenu: true },
+    { name: "Sterling Suite", icon: Grid, hasSubmenu: true },
   ];
 
   // Quick Action Submenu items
@@ -107,51 +107,61 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
   ];
 
   return (
-    <header className="bg-bg-base/90 backdrop-blur-md border-b border-border-main h-16 px-6 flex items-center justify-between sticky top-0 z-50 shadow-sm select-none">
+    <header className="bg-white border-b border-[#e5ddd5] h-16 px-6 flex items-center justify-between sticky top-0 z-50 shadow-sm select-none">
       
       {/* Brand Logo & Title */}
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-md shadow-primary/20 shrink-0">
-          <span className="text-white font-bold text-xl tracking-wider font-sans">S</span>
-        </div>
+      <div 
+        onClick={() => router.push(userRole === "admin" ? "/admin/dashboard" : "/agency/dashboard")}
+        className="flex items-center gap-3 cursor-pointer"
+      >
+        <img 
+          src="/sterling-logo.JPG" 
+          alt="Sterling Wholesale Insurance" 
+          className="h-9 w-auto object-contain bg-white rounded"
+        />
         <div className="flex flex-col">
-          <span className="font-bold text-lg tracking-tight text-text-main leading-tight font-sans">
-            Sterling Insurance Services
+          <span className="font-extrabold text-lg tracking-tight text-[#2d2a26] leading-tight font-sans">
+            Sterling AMS
           </span>
-          <span className="text-[11px] uppercase tracking-widest text-primary font-bold leading-none mt-0.5">
-            Agency Management System
+          <span className="text-[10px] uppercase tracking-widest text-[#9A8B7A] font-bold leading-none mt-0.5">
+            Wholesale Insurance
           </span>
         </div>
       </div>
 
       {/* Right Actions Toolbar */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 md:gap-4">
         
         {/* Notification Bell Menu Button */}
         <div className="relative" ref={notificationRef}>
           <button
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            className="p-2 text-text-muted hover:text-primary hover:bg-secondary/40 rounded-full transition-all relative cursor-pointer"
+            className="h-10 w-10 rounded-full bg-[#f5f1eb] hover:bg-[#ede5db] text-[#6b5e52] hover:text-[#2d2a26] flex items-center justify-center transition-all relative cursor-pointer border border-[#e5ddd5]"
             title="Notifications"
           >
-            <Bell size={19} />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-danger animate-pulse"></span>
+            <Bell size={18} />
+            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
           </button>
 
           {/* Notification Dropdown Menu */}
           {isNotificationsOpen && (
-            <div className="absolute right-0 mt-2 w-72 bg-white border border-border-main rounded-xl shadow-xl py-2 z-[999] animate-in fade-in slide-in-from-top-2 duration-155">
-              <div className="px-4 py-2 border-b border-border-main font-bold text-xs text-text-muted uppercase tracking-wider">
-                Notifications
+            <div className="absolute right-0 mt-2 w-80 bg-white border border-[#e5ddd5] rounded-2xl shadow-xl py-2 z-[999] animate-in fade-in slide-in-from-top-2 duration-150 overflow-hidden">
+              <div className="px-4 py-3 border-b border-[#e5ddd5] bg-[#f5f1eb]/60 flex items-center justify-between">
+                <span className="font-bold text-xs text-[#2d2a26] uppercase tracking-wider">
+                  Notifications
+                </span>
+                <span className="text-[10px] font-bold bg-[#9A8B7A] text-white px-2 py-0.5 rounded-full">
+                  2 New
+                </span>
               </div>
-              <div className="max-h-60 overflow-y-auto">
-                <div className="px-4 py-3 hover:bg-secondary/30 transition-colors border-b border-border-main/50">
-                  <p className="text-xs text-text-main font-semibold">New customer folder created</p>
-                  <span className="text-[11px] text-text-muted">Just now</span>
+              <div className="max-h-64 overflow-y-auto divide-y divide-[#e5ddd5]/50">
+                <div className="px-4 py-3 hover:bg-[#f5f1eb] transition-colors cursor-pointer">
+                  <p className="text-xs text-[#2d2a26] font-semibold">New policy document attached</p>
+                  <span className="text-[11px] text-[#6b5e52]">Just now</span>
                 </div>
-                <div className="px-4 py-3 hover:bg-secondary/30 transition-colors">
-                  <p className="text-xs text-text-main font-semibold">System backup completed</p>
-                  <span className="text-[11px] text-text-muted">2 hours ago</span>
+                <div className="px-4 py-3 hover:bg-[#f5f1eb] transition-colors cursor-pointer">
+                  <p className="text-xs text-[#2d2a26] font-semibold">Customer record synced</p>
+                  <span className="text-[11px] text-[#6b5e52]">2 hours ago</span>
                 </div>
               </div>
             </div>
@@ -159,47 +169,46 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
         </div>
 
         {/* Vertical Divider */}
-        <div className="h-6 w-px bg-border-main"></div>
+        <div className="h-6 w-px bg-[#e5ddd5]"></div>
 
         {/* User Profile Menu */}
         <div className="relative" ref={profileRef}>
           <button
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-secondary/40 transition-all border border-transparent hover:border-border-main cursor-pointer"
+            className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl hover:bg-[#f5f1eb] transition-all border border-transparent hover:border-[#e5ddd5] cursor-pointer"
           >
-            <div className="h-8 w-8 rounded-full bg-secondary text-primary flex items-center justify-center font-bold text-sm border border-border-main shadow-inner uppercase">
-              {userEmail ? userEmail.charAt(0) : "A"}
+            <div className="h-8 w-8 rounded-full bg-[#9A8B7A] text-white flex items-center justify-center font-bold text-xs shadow-sm uppercase">
+              {userEmail ? userEmail.charAt(0) : "S"}
             </div>
             <div className="hidden md:flex flex-col text-left">
-              <span className="text-sm font-bold text-text-main leading-tight truncate max-w-[120px]">
+              <span className="text-xs font-bold text-[#2d2a26] leading-tight truncate max-w-[130px]">
                 {userEmail}
               </span>
-              <span className="text-[10px] uppercase tracking-wider text-primary font-extrabold leading-none mt-0.5">
+              <span className="text-[10px] uppercase tracking-wider text-[#9A8B7A] font-extrabold leading-none mt-0.5">
                 {userRole}
               </span>
             </div>
-            <ChevronDown size={14} className="text-text-muted" />
+            <ChevronDown size={14} className="text-[#6b5e52]" />
           </button>
 
-          {/* Redesigned User Profile Dropdown holding Unified Navigation Menu */}
+          {/* User Profile Dropdown */}
           {isProfileOpen && (
             <div 
-              className="absolute right-0 mt-2 w-64 bg-white border border-border-main rounded-2xl shadow-2xl py-3.5 z-[999] animate-in fade-in slide-in-from-top-2 duration-150"
+              className="absolute right-0 mt-2 w-64 bg-white border border-[#e5ddd5] rounded-2xl shadow-xl py-3 z-[999] animate-in fade-in slide-in-from-top-2 duration-150 overflow-hidden"
             >
-              
-              {/* Profile Details Header */}
-              <div className="px-4 pb-3 border-b border-border-main flex flex-col mb-2">
-                <span className="text-sm font-extrabold text-text-main truncate">{userEmail}</span>
-                <span className="text-[10px] uppercase font-bold text-primary tracking-wider mt-0.5">{userRole}</span>
+              {/* Profile Header */}
+              <div className="px-4 pb-3 border-b border-[#e5ddd5] bg-[#f5f1eb]/50 -mt-3 pt-3 mb-2 flex flex-col">
+                <span className="text-xs font-bold text-[#2d2a26] truncate">{userEmail}</span>
+                <span className="text-[10px] uppercase font-bold text-[#9A8B7A] tracking-wider mt-0.5">{userRole}</span>
               </div>
 
               {profileView === "main" ? (
                 /* MAIN NAVIGATION MENU */
-                <div className="space-y-1.5 animate-in fade-in slide-in-from-left-2 duration-150">
-                  <div className="px-4 py-1.5 text-[11px] font-bold text-text-muted uppercase tracking-widest">
-                    Main Menu
+                <div className="space-y-1 animate-in fade-in duration-150">
+                  <div className="px-4 py-1 text-[10px] font-bold text-[#6b5e52] uppercase tracking-widest">
+                    Quick Menu
                   </div>
-                  <ul className="space-y-0.5 max-h-[320px] overflow-y-auto px-2">
+                  <ul className="space-y-0.5 max-h-[300px] overflow-y-auto px-2">
                     {mainItems.map((item) => {
                       const Icon = item.icon;
                       return (
@@ -216,18 +225,17 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
                               } else if (item.onClick) {
                                 item.onClick();
                               } else {
-                                // Default clicks close the menu
                                 setIsProfileOpen(false);
                               }
                             }}
-                            className="w-full text-left px-3 py-2 text-xs font-bold text-text-main hover:bg-secondary/50 rounded-xl flex items-center justify-between transition-all cursor-pointer group"
+                            className="w-full text-left px-3 py-2 text-xs font-semibold text-[#2d2a26] hover:bg-[#f5f1eb] hover:text-[#9A8B7A] rounded-lg flex items-center justify-between transition-colors cursor-pointer group"
                           >
                             <div className="flex items-center gap-2.5">
-                              <Icon size={14} className="text-text-muted group-hover:text-primary transition-colors stroke-[2.2]" />
+                              <Icon size={14} className="text-[#6b5e52] group-hover:text-[#9A8B7A] transition-colors" />
                               <span>{item.name}</span>
                             </div>
                             {item.hasSubmenu && (
-                              <ChevronRight size={13} className="text-text-muted group-hover:text-primary transition-colors group-hover:translate-x-0.5 duration-200" />
+                              <ChevronRight size={13} className="text-[#6b5e52] group-hover:text-[#9A8B7A] transition-colors" />
                             )}
                           </button>
                         </li>
@@ -237,24 +245,22 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
                 </div>
               ) : (
                 /* QUICK ACTIONS SUBMENU */
-                <div className="space-y-2.5 animate-in fade-in slide-in-from-right-2 duration-150 px-2">
-                  {/* Back Link */}
+                <div className="space-y-2 animate-in fade-in duration-150 px-2">
                   <button
                     onClick={() => setProfileView("main")}
-                    className="flex items-center gap-1.5 text-primary font-extrabold text-[11px] uppercase tracking-wider hover:text-primary/80 transition-colors px-3 py-1 cursor-pointer w-full text-left"
+                    className="flex items-center gap-1.5 text-[#9A8B7A] font-bold text-[11px] uppercase tracking-wider hover:text-[#8a6f4d] transition-colors px-3 py-1 cursor-pointer w-full text-left"
                   >
-                    <ChevronLeft size={13} className="stroke-[2.5]" />
-                    <span>Back to main navigation</span>
+                    <ChevronLeft size={13} strokeWidth={2.5} />
+                    <span>Back to main</span>
                   </button>
                   
-                  {/* Divider */}
-                  <div className="h-px bg-border-main/50 mx-2"></div>
+                  <div className="h-px bg-[#e5ddd5]/60 mx-2"></div>
 
-                  <div className="px-3 py-0.5 text-[11px] font-bold text-text-muted uppercase tracking-widest">
+                  <div className="px-3 py-0.5 text-[10px] font-bold text-[#6b5e52] uppercase tracking-widest">
                     Quick Actions
                   </div>
 
-                  <ul className="space-y-0.5 max-h-[300px] overflow-y-auto">
+                  <ul className="space-y-0.5 max-h-[280px] overflow-y-auto">
                     {quickActionsItems.map((item) => {
                       const Icon = item.icon;
                       return (
@@ -268,9 +274,9 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
                                 window.open(`/agency/customer/${cid}/new-activity`, '_blank', 'width=1000,height=900');
                               }
                             }}
-                            className="w-full text-left px-3 py-2 text-xs font-bold text-text-main hover:bg-secondary/50 rounded-xl flex items-center gap-2.5 transition-all cursor-pointer group"
+                            className="w-full text-left px-3 py-2 text-xs font-semibold text-[#2d2a26] hover:bg-[#f5f1eb] hover:text-[#9A8B7A] rounded-lg flex items-center gap-2.5 transition-colors cursor-pointer group"
                           >
-                            <Icon size={14} className="text-text-muted group-hover:text-primary transition-colors stroke-[2.2]" />
+                            <Icon size={14} className="text-[#6b5e52] group-hover:text-[#9A8B7A] transition-colors" />
                             <span>{item.name}</span>
                           </button>
                         </li>
@@ -280,16 +286,16 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
                 </div>
               )}
 
-              {/* Bottom Separator */}
-              <div className="h-px bg-border-main my-2"></div>
+              {/* Separator */}
+              <div className="h-px bg-[#e5ddd5] my-2"></div>
 
               {/* Log Out Action */}
               <div className="px-2">
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left px-3 py-2.5 text-xs font-extrabold text-danger hover:bg-danger/5 hover:text-danger flex items-center gap-2.5 rounded-xl transition-colors cursor-pointer"
+                  className="w-full text-left px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2.5 transition-colors cursor-pointer"
                 >
-                  <LogOut size={14} className="stroke-[2.2]" />
+                  <LogOut size={14} />
                   <span>Log Out</span>
                 </button>
               </div>
@@ -300,7 +306,7 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
 
         {/* Mobile Hamburger toggle */}
         <button
-          className="p-2 text-text-muted hover:text-primary hover:bg-secondary/40 rounded-lg md:hidden cursor-pointer"
+          className="p-2 text-[#6b5e52] hover:text-[#2d2a26] hover:bg-[#f5f1eb] rounded-lg md:hidden cursor-pointer"
           onClick={onToggleDrawer}
           aria-label="Open menu"
         >

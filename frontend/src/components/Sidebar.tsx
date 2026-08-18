@@ -6,7 +6,9 @@ import {
   Users,
   ChevronLeft,
   ChevronRight,
-  Shield
+  Shield,
+  FileSpreadsheet,
+  Settings
 } from "lucide-react";
 
 interface SidebarProps {
@@ -35,27 +37,27 @@ export default function Sidebar({ currentTab = "Customers", onTabChange, userRol
 
   return (
     <aside
-      className={`bg-bg-base border-r border-border-main flex flex-col transition-all duration-300 select-none font-sans shrink-0 ${
+      className={`bg-white border-r border-[#e5ddd5] flex flex-col transition-all duration-300 select-none font-sans shrink-0 ${
         isCollapsed ? "w-16" : "w-60"
-      } h-[calc(100vh-64px)] sticky top-16 z-45`}
+      } h-[calc(100vh-64px)] sticky top-16 z-40`}
     >
       {/* Sidebar Content */}
       <div className="flex-1 overflow-y-auto py-4 px-3 flex flex-col justify-between">
-        <div className="space-y-4">
+        <div className="space-y-3">
           
           {/* Section Header & Collapse Toggle */}
-          <div className={`flex items-center mb-2 ${isCollapsed ? "justify-center" : "justify-between px-3"}`}>
+          <div className={`flex items-center mb-1 ${isCollapsed ? "justify-center" : "justify-between px-2"}`}>
             {!isCollapsed && (
-              <span className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider">
-                Navigation
+              <span className="text-[10px] font-bold text-[#6b5e52] uppercase tracking-widest">
+                Main Menu
               </span>
             )}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="h-7 w-7 flex items-center justify-center rounded-lg text-text-muted hover:text-text-main hover:bg-secondary transition-colors cursor-pointer"
+              className="h-7 w-7 flex items-center justify-center rounded-lg text-[#6b5e52] hover:text-[#2d2a26] hover:bg-[#f5f1eb] transition-colors cursor-pointer"
               title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             >
-              {isCollapsed ? <ChevronRight size={16} strokeWidth={2.5} /> : <ChevronLeft size={16} strokeWidth={2.5} />}
+              {isCollapsed ? <ChevronRight size={16} strokeWidth={2.2} /> : <ChevronLeft size={16} strokeWidth={2.2} />}
             </button>
           </div>
 
@@ -70,12 +72,12 @@ export default function Sidebar({ currentTab = "Customers", onTabChange, userRol
                     onClick={() => handleTabClick(link.tab)}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all cursor-pointer text-left ${
                       isActive
-                        ? "bg-secondary text-primary font-bold border border-primary/10 shadow-xs"
-                        : "text-text-muted hover:bg-secondary/50 hover:text-text-main"
+                        ? "bg-[#f5f1eb] text-[#9A8B7A] font-bold border border-[#e5ddd5]/60 shadow-xs"
+                        : "text-[#6b5e52] hover:bg-[#f5f1eb] hover:text-[#2d2a26]"
                     }`}
                     title={link.name}
                   >
-                    <IconComponent size={18} className={isActive ? "text-primary shrink-0" : "text-text-muted shrink-0"} />
+                    <IconComponent size={18} className={isActive ? "text-[#9A8B7A] shrink-0" : "text-[#6b5e52] shrink-0"} />
                     {!isCollapsed && <span className="text-sm font-semibold tracking-tight">{link.name}</span>}
                   </button>
                 </li>
@@ -86,23 +88,23 @@ export default function Sidebar({ currentTab = "Customers", onTabChange, userRol
         </div>
 
         {/* Bottom Branding Badge */}
-        <div className="pt-4 border-t border-border-main">
-          <div className="bg-secondary/40 rounded-xl p-3 border border-border-main/50 text-center">
+        <div className="pt-4 border-t border-[#e5ddd5]">
+          <div className="bg-[#f5f1eb]/80 rounded-xl p-3 border border-[#e5ddd5] text-center">
             {isCollapsed ? (
-              <div className="h-5 w-5 mx-auto rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-bold">
+              <div className="h-6 w-6 mx-auto rounded-full bg-[#9A8B7A] text-white flex items-center justify-center text-xs font-bold shadow-sm">
                 S
               </div>
             ) : (
               <div className="space-y-0.5">
                 <div className="flex items-center justify-center gap-1.5">
-                  <div className="h-4.5 w-4.5 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-extrabold">
+                  <div className="h-5 w-5 rounded-full bg-[#9A8B7A] text-white flex items-center justify-center text-[11px] font-extrabold shadow-sm">
                     S
                   </div>
-                  <span className="text-xs font-bold text-text-main uppercase tracking-widest">
-                    Sterling Box
+                  <span className="text-xs font-bold text-[#2d2a26] uppercase tracking-wider">
+                    Sterling AMS
                   </span>
                 </div>
-                <p className="text-[10px] text-text-muted font-medium">v1.0.0 Stable</p>
+                <p className="text-[10px] text-[#6b5e52] font-medium">Wholesale Insurance</p>
               </div>
             )}
           </div>

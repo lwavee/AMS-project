@@ -41,7 +41,7 @@
     ArrowLeftRight,
   } from "lucide-react";
 
-  // ─── Tab definitions matching AMS360 eForms Manager ──────────────────────────
+  // ─── Tab definitions matching Sterling AMS eForms Manager ──────────────────────────
   const EFORM_TABS = [
     "All Forms",
     "Applications",

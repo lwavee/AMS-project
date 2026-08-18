@@ -49,7 +49,7 @@ export default function RightDrawer({ open, onClose }: RightDrawerProps) {
     { name: "Notifications", icon: Bell, hasSubmenu: false },
     { name: "Help", icon: HelpCircle, hasSubmenu: true },
     { name: "AOR", icon: Award, hasSubmenu: true },
-    { name: "Vertafore Suite", icon: Grid, hasSubmenu: true },
+    { name: "Sterling Suite", icon: Grid, hasSubmenu: true },
   ];
 
   // Quick actions items with icons
@@ -67,26 +67,26 @@ export default function RightDrawer({ open, onClose }: RightDrawerProps) {
       {/* Backdrop */}
       {open && (
         <div 
-          className="fixed inset-0 bg-slate-950/20 backdrop-blur-xs z-[100] transition-opacity duration-300 animate-in fade-in"
+          className="fixed inset-0 bg-black/30 backdrop-blur-xs z-[100] transition-opacity duration-300 animate-in fade-in"
           onClick={onClose}
         />
       )}
 
       {/* Drawer */}
       <div 
-        className={`fixed right-0 top-0 h-screen w-80 bg-white border-l border-border-main shadow-2xl z-[101] flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`fixed right-0 top-0 h-screen w-80 bg-white border-l border-[#e5ddd5] shadow-2xl z-[101] flex flex-col transition-transform duration-300 ease-in-out ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
         role="dialog" 
         aria-hidden={!open}
       >
         {/* Header */}
-        <div className="bg-secondary/40 px-5 py-4 border-b border-border-main flex justify-between items-center shrink-0">
-          <div className="font-extrabold text-sm text-text-main tracking-tight">
+        <div className="bg-[#f5f1eb]/80 px-5 py-4 border-b border-[#e5ddd5] flex justify-between items-center shrink-0">
+          <div className="font-extrabold text-sm text-[#2d2a26] tracking-tight">
             {currentView === "main" ? "Navigation Menu" : "Quick Actions"}
           </div>
           <button 
-            className="bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 border border-border-main h-7 w-7 flex items-center justify-center rounded-xl transition-all font-bold text-xs cursor-pointer shadow-sm animate-in fade-in"
+            className="bg-white hover:bg-[#f5f1eb] text-[#6b5e52] hover:text-[#2d2a26] border border-[#e5ddd5] h-7 w-7 flex items-center justify-center rounded-lg transition-all font-bold text-xs cursor-pointer shadow-xs"
             onClick={onClose}
             aria-label="Close"
           >
@@ -95,7 +95,7 @@ export default function RightDrawer({ open, onClose }: RightDrawerProps) {
         </div>
 
         {/* Content */}
-        <div className="p-5 overflow-y-auto flex-1 bg-bg-base/30">
+        <div className="p-5 overflow-y-auto flex-1 bg-[#FAF8F5]">
           
           {currentView === "main" ? (
             /* Main Navigation View */
@@ -106,16 +106,16 @@ export default function RightDrawer({ open, onClose }: RightDrawerProps) {
                   <li 
                     key={item.name} 
                     onClick={item.onClick}
-                    className="flex items-center justify-between p-3.5 bg-white hover:bg-secondary/40 border border-border-main rounded-xl transition-all cursor-pointer shadow-sm group hover:scale-[1.01]"
+                    className="flex items-center justify-between p-3.5 bg-white hover:bg-[#f5f1eb] border border-[#e5ddd5] rounded-xl transition-all cursor-pointer shadow-xs group"
                   >
                     <div className="flex items-center gap-3">
-                      <IconComponent size={16} className="text-slate-400 group-hover:text-primary transition-colors stroke-[2.2]" />
-                      <span className="text-xs font-bold text-text-main group-hover:text-primary transition-colors">
+                      <IconComponent size={16} className="text-[#6b5e52] group-hover:text-[#9A8B7A] transition-colors stroke-[2.2]" />
+                      <span className="text-xs font-bold text-[#2d2a26] group-hover:text-[#9A8B7A] transition-colors">
                         {item.name}
                       </span>
                     </div>
                     {item.hasSubmenu && (
-                      <ChevronRight size={13} className="text-slate-400 group-hover:text-primary transition-colors group-hover:translate-x-0.5 duration-200" />
+                      <ChevronRight size={13} className="text-[#6b5e52] group-hover:text-[#9A8B7A] transition-colors group-hover:translate-x-0.5 duration-200" />
                     )}
                   </li>
                 );
@@ -128,7 +128,7 @@ export default function RightDrawer({ open, onClose }: RightDrawerProps) {
               {/* Back Button */}
               <button
                 onClick={() => setCurrentView("main")}
-                className="flex items-center gap-2 text-primary font-bold text-xs hover:text-primary/80 transition-colors pb-2 cursor-pointer border-b border-border-main/55 w-full text-left"
+                className="flex items-center gap-2 text-[#9A8B7A] font-bold text-xs hover:text-[#8a6f4d] transition-colors pb-2 cursor-pointer border-b border-[#e5ddd5] w-full text-left"
               >
                 <ChevronLeft size={14} className="stroke-[2.5]" />
                 <span>Back to main navigation</span>
@@ -140,7 +140,7 @@ export default function RightDrawer({ open, onClose }: RightDrawerProps) {
                   const IconComponent = action.icon;
                   return (
                     <li 
-                      key={action.name}
+                      key={action.name} 
                       onClick={() => {
                         if (action.name === "New Activity") {
                           const match = window.location.pathname.match(/\/agency\/customer\/([^\/]+)/);
@@ -149,10 +149,10 @@ export default function RightDrawer({ open, onClose }: RightDrawerProps) {
                           onClose();
                         }
                       }}
-                      className="flex items-center gap-3 p-3.5 bg-white hover:bg-secondary/40 border border-border-main rounded-xl transition-all cursor-pointer shadow-sm group hover:scale-[1.01]"
+                      className="flex items-center gap-3 p-3.5 bg-white hover:bg-[#f5f1eb] border border-[#e5ddd5] rounded-xl transition-all cursor-pointer shadow-xs group"
                     >
-                      <IconComponent size={16} className="text-slate-400 group-hover:text-primary transition-colors stroke-[2.2]" />
-                      <span className="text-xs font-bold text-text-main group-hover:text-primary transition-colors">
+                      <IconComponent size={16} className="text-[#6b5e52] group-hover:text-[#9A8B7A] transition-colors stroke-[2.2]" />
+                      <span className="text-xs font-bold text-[#2d2a26] group-hover:text-[#9A8B7A] transition-colors">
                         {action.name}
                       </span>
                     </li>

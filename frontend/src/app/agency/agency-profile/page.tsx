@@ -27,6 +27,7 @@ import { API_BASE_URL } from "../../../lib/config";
 
 export default function AgencyProfilePage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [currentTab, setCurrentTab] = useState("Agent Control");
   const [userRole, setUserRole] = useState("agency");
   const [agencyProfile, setAgencyProfile] = useState<any>(null);
@@ -47,17 +48,14 @@ export default function AgencyProfilePage() {
   });
 
   useEffect(() => {
+    setMounted(true);
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
     if (!token) {
       router.push("/login");
       return;
     }
-    if (role !== "agency") {
-      router.push("/agency/dashboard");
-      return;
-    }
-    setUserRole(role);
+    setUserRole(role || "agency");
     fetchProfile();
     fetchAgents();
   }, []);
@@ -138,8 +136,10 @@ export default function AgencyProfilePage() {
     });
   };
 
+  if (!mounted) return null;
+
   return (
-    <div className="flex flex-col bg-bg-base min-h-screen text-text-main font-sans h-screen">
+    <div suppressHydrationWarning className="flex flex-col bg-bg-base min-h-screen text-text-main font-sans h-screen">
       <Header
         onToggleDrawer={() => {}}
         onProfileClick={() => router.push("/agency/agency-profile")}

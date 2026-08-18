@@ -38,7 +38,7 @@ export default function CustomerToolbar({
 
   return (
     <div
-      className="bg-white border border-border-main rounded-2xl px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 select-none font-sans shrink-0 shadow-sm"
+      className="bg-white border border-[#e5ddd5] rounded-2xl px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 select-none font-sans shrink-0 shadow-sm"
     >
       {/* Primary Actions Group */}
       <div className="flex flex-wrap items-center gap-2">
@@ -46,23 +46,23 @@ export default function CustomerToolbar({
         {/* New Customer Button */}
         <button
           onClick={onNewCustomer}
-          className="h-9 px-4 flex items-center gap-1.5 bg-white hover:bg-secondary text-primary font-bold text-sm rounded-full border border-border-main shadow-sm cursor-pointer active:scale-[0.98] transition-all"
+          className="h-9 px-4 flex items-center gap-1.5 bg-[#9A8B7A] hover:bg-[#8a6f4d] text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-sm cursor-pointer active:scale-[0.98] transition-all border-none"
         >
-          <Plus size={15} className="stroke-[2.5]" />
+          <Plus size={15} strokeWidth={2.5} />
           <span>New Customer</span>
         </button>
 
         {/* Divider */}
-        <div className="w-px h-5 bg-border-main mx-1"></div>
+        <div className="w-px h-5 bg-[#e5ddd5] mx-1"></div>
 
         {/* Edit Button */}
         {canEdit && (
           <button
             disabled={!isSingleSelection}
             onClick={onEdit}
-            className={`h-9 px-4 flex items-center gap-2 border text-sm font-bold rounded-full transition-all ${isSingleSelection
-              ? "bg-white border-border-main text-text-muted hover:bg-secondary hover:text-primary cursor-pointer active:scale-[0.98] shadow-sm"
-              : "bg-secondary/30 border-transparent text-border-main cursor-not-allowed"
+            className={`h-9 px-4 flex items-center gap-1.5 border text-xs font-bold uppercase tracking-wider rounded-full transition-all ${isSingleSelection
+              ? "bg-white border-[#e5ddd5] text-[#2d2a26] hover:bg-[#f5f1eb] hover:text-[#9A8B7A] cursor-pointer active:scale-[0.98] shadow-sm"
+              : "bg-[#f5f1eb]/50 border-transparent text-[#6b5e52]/40 cursor-not-allowed"
               }`}
           >
             <Edit size={13} />
@@ -74,12 +74,12 @@ export default function CustomerToolbar({
         <button
           disabled={!isSingleSelection}
           onClick={onOpen}
-          className={`h-9 px-4 flex items-center gap-2 border text-xs font-bold rounded-full transition-all ${isSingleSelection
-            ? "bg-white border-border-main text-text-muted hover:bg-secondary hover:text-primary cursor-pointer active:scale-[0.98] shadow-sm"
-            : "bg-secondary/30 border-transparent text-border-main cursor-not-allowed"
+          className={`h-9 px-4 flex items-center gap-1.5 border text-xs font-bold uppercase tracking-wider rounded-full transition-all ${isSingleSelection
+            ? "bg-white border-[#e5ddd5] text-[#2d2a26] hover:bg-[#f5f1eb] hover:text-[#9A8B7A] cursor-pointer active:scale-[0.98] shadow-sm"
+            : "bg-[#f5f1eb]/50 border-transparent text-[#6b5e52]/40 cursor-not-allowed"
             }`}
         >
-          <FolderOpen size={13} className={isSingleSelection ? "text-primary" : "text-border-main"} />
+          <FolderOpen size={13} className={isSingleSelection ? "text-[#9A8B7A]" : "text-[#6b5e52]/40"} />
           <span>Open Folder</span>
         </button>
 
@@ -88,9 +88,9 @@ export default function CustomerToolbar({
           <button
             disabled={!hasSelection}
             onClick={onDelete}
-            className={`h-9 px-4 flex items-center gap-2 border text-sm font-bold rounded-full transition-all ${hasSelection
-              ? "bg-white border-border-main text-danger hover:bg-danger/5 cursor-pointer active:scale-[0.98] shadow-sm"
-              : "bg-secondary/30 border-transparent text-border-main cursor-not-allowed"
+            className={`h-9 px-4 flex items-center gap-1.5 border text-xs font-bold uppercase tracking-wider rounded-full transition-all ${hasSelection
+              ? "bg-white border-[#e5ddd5] text-red-600 hover:bg-red-50 cursor-pointer active:scale-[0.98] shadow-sm"
+              : "bg-[#f5f1eb]/50 border-transparent text-[#6b5e52]/40 cursor-not-allowed"
               }`}
           >
             <Trash2 size={13} />
@@ -106,7 +106,7 @@ export default function CustomerToolbar({
         {/* Refresh Button */}
         <button
           onClick={onRefresh}
-          className="h-9 px-3.5 flex items-center justify-center border border-border-main bg-white hover:bg-secondary text-text-muted hover:text-primary rounded-full transition-all cursor-pointer shadow-sm"
+          className="h-9 px-3.5 flex items-center justify-center border border-[#e5ddd5] bg-white hover:bg-[#f5f1eb] text-[#6b5e52] hover:text-[#2d2a26] rounded-full transition-all cursor-pointer shadow-sm"
           title="Refresh grid data"
         >
           <RotateCw size={13} />
@@ -116,7 +116,7 @@ export default function CustomerToolbar({
         {onExport && (
           <button
             onClick={onExport}
-            className="h-9 px-4 flex items-center gap-2 border border-border-main bg-white hover:bg-secondary text-text-muted hover:text-primary rounded-full font-bold text-sm transition-all cursor-pointer shadow-sm"
+            className="h-9 px-4 flex items-center gap-1.5 border border-[#e5ddd5] bg-white hover:bg-[#f5f1eb] text-[#2d2a26] hover:text-[#9A8B7A] rounded-full font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-sm"
             title="Export CSV"
           >
             <Download size={13} />
@@ -124,10 +124,10 @@ export default function CustomerToolbar({
           </button>
         )}
 
-        {/* Selection indicators */}
+        {/* Selection indicator */}
         {hasSelection && (
-          <div className="h-9 px-4 flex items-center justify-center bg-primary/10 border border-primary/20 rounded-full text-primary font-bold text-sm tracking-wider">
-            SELECTED: {selectedCount}
+          <div className="h-9 px-3.5 flex items-center justify-center bg-[#9A8B7A]/15 border border-[#9A8B7A]/30 rounded-full text-[#9A8B7A] font-bold text-xs uppercase tracking-wider">
+            Selected: {selectedCount}
           </div>
         )}
       </div>
