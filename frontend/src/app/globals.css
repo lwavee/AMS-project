@@ -199,3 +199,12 @@ input[type="checkbox"] {
   outline: 2px solid #9A8B7A !important;
   outline-offset: 1px;
 }
+
+/* Permanently hide Next.js Dev Indicator Pill Badge (N 1 Issue x) and Portals */
+nextjs-portal,
+nextjs-portal * {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

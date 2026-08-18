@@ -19,6 +19,11 @@ export default function GeneralLiabilityPage() {
   const customerId = params?.id as string;
   const policyId = params?.policyId as string;
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   
 
   const US_STATES = [
@@ -202,8 +207,10 @@ export default function GeneralLiabilityPage() {
   };
 
 
+  if (!mounted) return null;
+
   return (
-    <div className="min-h-screen bg-bg-base text-text-main font-sans flex flex-col select-none overflow-x-hidden pb-24">
+    <div suppressHydrationWarning className="min-h-screen bg-bg-base text-text-main font-sans flex flex-col select-none overflow-x-hidden pb-24">
 
       {/* ── 1. Modern Sticky Header ── */}
       <header className="bg-white/85 backdrop-blur-md border-b border-border-main h-16 px-6 flex items-center justify-between shrink-0 shadow-sm sticky top-0 z-50">

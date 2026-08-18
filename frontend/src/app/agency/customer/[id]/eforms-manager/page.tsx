@@ -4,6 +4,7 @@
   import React, { useState, useEffect, useCallback, useRef } from "react";
   import { useRouter, useParams } from "next/navigation";
   import { API_BASE_URL } from "../../../../../lib/config";
+import { confirmDialog } from "@/components/ToastProvider";
   import Acord25Form from "../../../../../services/pdf/Acord25Form";
   import Header from "../../../../../components/Header";
   import RightDrawer from "../../../../../components/RightDrawer";
@@ -114,27 +115,75 @@
   
   // Menu logic
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuCoords, setMenuCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const isMaster = node.id.startsWith("cert-file-master-");
   const menuRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  const toggleMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!menuOpen && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      const windowWidth = window.innerWidth;
+      
+      const popupHeight = 240; // approx height of 7-item menu
+      const popupWidth = 192;  // w-48 = 192px
+
+      let top = rect.bottom + 4;
+      // If bottom space is insufficient (< 240px), flip UPWARDS above the button
+      if (windowHeight - rect.bottom < popupHeight && rect.top > popupHeight) {
+        top = rect.top - popupHeight;
+      }
+
+      let left = rect.left;
+      // If right space is tight, align to right side of button or viewport
+      if (rect.left + popupWidth > windowWidth - 10) {
+        left = windowWidth - popupWidth - 12;
+      }
+      if (left < 10) left = 10;
+
+      setMenuCoords({ top, left });
+    }
+    setMenuOpen(!menuOpen);
+  };
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+    function handleClickOutside(event: Event) {
+      if (
+        menuRef.current && !menuRef.current.contains(event.target as Node) &&
+        btnRef.current && !btnRef.current.contains(event.target as Node)
+      ) {
         setMenuOpen(false);
       }
     }
+    function handleScroll() {
+      if (menuOpen) setMenuOpen(false);
+    }
+    function handleWindowBlur() {
+      if (menuOpen) setMenuOpen(false);
+    }
     
     if (menuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
+      window.addEventListener("mousedown", handleClickOutside, true);
+      window.addEventListener("click", handleClickOutside, true);
+      window.addEventListener("pointerdown", handleClickOutside, true);
+      window.addEventListener("scroll", handleScroll, true);
+      window.addEventListener("blur", handleWindowBlur);
     }
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("mousedown", handleClickOutside, true);
+      window.removeEventListener("click", handleClickOutside, true);
+      window.removeEventListener("pointerdown", handleClickOutside, true);
+      window.removeEventListener("scroll", handleScroll, true);
+      window.removeEventListener("blur", handleWindowBlur);
     };
   }, [menuOpen]);
 
   return (
     <div>
-      <div className="relative group" ref={menuRef}>
+      <div className="relative group">
         <div
           className={`
             w-full flex items-center justify-between gap-2 px-2 py-1.5 text-[13px] font-medium rounded-lg
@@ -177,12 +226,9 @@
           
           {isMaster && (
             <button 
-              className={`p-1 rounded-md hover:bg-slate-300 ${menuOpen ? 'bg-slate-300' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setMenuOpen(!menuOpen);
-              }}
+              ref={btnRef}
+              className={`p-1 rounded-md hover:bg-slate-300 ${menuOpen ? 'bg-slate-300' : 'opacity-0 group-hover:opacity-100'} transition-opacity cursor-pointer`}
+              onClick={toggleMenu}
             >
               <MoreHorizontal size={14} className="text-slate-500" />
             </button>
@@ -191,10 +237,12 @@
         
         {isMaster && menuOpen && (
           <div 
-            className="absolute z-50 right-4 top-8 bg-white border border-slate-200 shadow-xl rounded-md py-1 w-48 text-xs font-medium text-slate-700"
+            ref={menuRef}
+            style={{ position: 'fixed', top: `${menuCoords.top}px`, left: `${menuCoords.left}px`, zIndex: 9999 }}
+            className="bg-white border border-slate-200 shadow-2xl rounded-xl py-1 w-48 text-xs font-medium text-slate-700 animate-in fade-in zoom-in-95 duration-100"
           >
             <button 
-              className="w-full text-left px-3 py-1.5 hover:bg-slate-100"
+              className="w-full text-left px-3 py-1.5 hover:bg-slate-100 cursor-pointer"
               onClick={() => {
                 setMenuOpen(false);
                 if (onAddEditHolder) onAddEditHolder(node.id);
@@ -203,7 +251,7 @@
               Add/Edit Holder
             </button>
             <button 
-              className="w-full text-left px-3 py-1.5 hover:bg-slate-100"
+              className="w-full text-left px-3 py-1.5 hover:bg-slate-100 cursor-pointer"
               onClick={() => {
                 setMenuOpen(false);
                 if (onCopyMaster) onCopyMaster(node.id);
@@ -211,9 +259,9 @@
             >
               Copy
             </button>
-            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Renew</button>
+            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100 cursor-pointer">Renew</button>
             <button 
-              className="w-full text-left px-3 py-1.5 hover:bg-slate-100"
+              className="w-full text-left px-3 py-1.5 hover:bg-slate-100 cursor-pointer"
               onClick={() => {
                 setMenuOpen(false);
                 if (onUpdateMaster) onUpdateMaster(node.id);
@@ -222,7 +270,7 @@
               Update Master Cert
             </button>
             <button 
-              className="w-full text-left px-3 py-1.5 hover:bg-slate-100"
+              className="w-full text-left px-3 py-1.5 hover:bg-slate-100 cursor-pointer"
               onClick={() => {
                 setMenuOpen(false);
                 if (onOpenAttachments) onOpenAttachments(node.id);
@@ -231,7 +279,7 @@
               Attachments
             </button>
             <button 
-              className="w-full text-left px-3 py-1.5 hover:bg-slate-100 text-red-600"
+              className="w-full text-left px-3 py-1.5 hover:bg-slate-100 text-red-600 cursor-pointer"
               onClick={() => {
                 setMenuOpen(false);
                 if (onDeleteMaster) onDeleteMaster(node.id);
@@ -240,20 +288,14 @@
               Delete
             </button>
             <button 
-              className="w-full text-left px-3 py-1.5 hover:bg-slate-100 text-red-600"
+              className="w-full text-left px-3 py-1.5 hover:bg-slate-100 text-red-600 cursor-pointer"
               onClick={() => {
                 setMenuOpen(false);
                 if (onEditMaster) onEditMaster(node.id);
               }}
             >
               Edit Master
-            </button>            
-            <div className="h-px bg-slate-200 my-1"></div>
-           {/*
-            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Expand Node</button>
-            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Expand All</button>
-            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Collapse</button>
-            <button className="w-full text-left px-3 py-1.5 hover:bg-slate-100">Collapse All</button>*/}
+            </button>
           </div>
         )}
       </div>
@@ -982,7 +1024,7 @@ export default function EFormsManagerPage() {
   };
 
   const handleDeleteMaster = async (nodeId: string) => {
-    if (!confirm("Are you sure you want to delete this master certificate?")) return;
+    if (!(await confirmDialog("Are you sure you want to delete this master certificate?", "Delete Certificate"))) return;
     const certDbId = nodeId.replace("cert-file-master-", "");
     try {
       const token = localStorage.getItem("token");
@@ -1466,7 +1508,7 @@ export default function EFormsManagerPage() {
       <RightDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       {/* ── Main Content Area ── */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-bg-base p-4 lg:p-6 gap-4">
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-bg-base p-1.5 gap-2">
 
         {/* Top Breadcrumb/Back */}
         {/* <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-widest text-text-muted px-2 shrink-0">
@@ -1663,34 +1705,34 @@ export default function EFormsManagerPage() {
           <div className="flex flex-1 min-h-0 overflow-hidden relative">
 
             {/* ── Left Panel: Customer/Policy selectors + Tree ── */}
-            <div className={`shrink-0 border-r border-border-main bg-white flex flex-col h-full transition-all duration-300 overflow-hidden ${showTreePanel ? "w-[340px]" : "w-0 border-r-0"}`}>
+            <div className={`shrink-0 border-r border-border-main bg-white flex flex-col h-full transition-all duration-300 overflow-hidden ${showTreePanel ? "w-[230px]" : "w-0 border-r-0"}`}>
 
               {/* Filters Section */}
-              <div className="p-4 flex flex-col gap-3 border-b border-border-main bg-white">
+              <div className="p-2.5 flex flex-col gap-2 border-b border-border-main bg-white">
 
                 {/* Customer field */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Customer</label>
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Customer</label>
+                  <div className="flex items-center gap-1.5">
                     <input
                       type="text"
                       value={customerName}
                       readOnly
-                      className="flex-1 text-[13px] font-semibold text-text-main bg-bg-base border border-border-main rounded-xl px-3 py-2 outline-none"
+                      className="flex-1 text-xs font-semibold text-text-main bg-bg-base border border-border-main rounded-lg px-2 py-1.5 outline-none truncate"
                     />
-                    <button className="h-9 w-9 rounded-xl bg-secondary flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors cursor-pointer shrink-0">
-                      <Search size={14} />
+                    <button className="h-7 w-7 rounded-lg bg-secondary flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors cursor-pointer shrink-0">
+                      <Search size={13} />
                     </button>
                   </div>
                 </div>
 
                 {/* Policy # dropdown */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Policy #</label>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Policy #</label>
                   <select
                     value={selectedPolicy}
                     onChange={(e) => setSelectedPolicy(e.target.value)}
-                    className="w-full text-[13px] font-semibold text-text-main bg-white border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 cursor-pointer truncate appearance-none"
+                    className="w-full text-xs font-semibold text-text-main bg-white border border-border-main rounded-lg px-2 py-1.5 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 cursor-pointer truncate appearance-none"
                     title={selectedPolicy}
                   >
                     {policies.map((p) => {
@@ -1708,12 +1750,12 @@ export default function EFormsManagerPage() {
                 </div>
 
                 {/* Eff Date dropdown */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Effective Date</label>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Effective Date</label>
                   <select
                     value={selectedEffDate}
                     onChange={(e) => setSelectedEffDate(e.target.value)}
-                    className="w-full text-[13px] font-semibold text-text-main bg-white border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 cursor-pointer truncate appearance-none"
+                    className="w-full text-xs font-semibold text-text-main bg-white border border-border-main rounded-lg px-2 py-1.5 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 cursor-pointer truncate appearance-none"
                     title={selectedEffDate}
                   >
                     {policies.map((p) => (

@@ -144,18 +144,18 @@ export default function SearchBar({
     <div className="bg-white border border-[#e5ddd5] rounded-2xl font-sans shrink-0 select-none shadow-sm flex flex-col transition-all duration-300">
 
       {/* TOP ROW */}
-      <div className="px-6 py-3 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#e5ddd5]/60 bg-[#f5f1eb]/50 rounded-t-2xl">
+      <div className="px-3 sm:px-6 py-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#e5ddd5]/60 bg-[#f5f1eb]/50 rounded-t-2xl">
         
         {/* Left Side: Search & Pick */}
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] uppercase tracking-wider font-bold text-[#6b5e52]">Search for:</span>
-            <div className="flex items-center border border-[#e5ddd5] rounded-lg bg-white shadow-xs h-8.5 w-64 px-3 focus-within:border-[#9A8B7A] focus-within:ring-1 focus-within:ring-[#9A8B7A]/30">
+        <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+          <div className="flex items-center gap-2 flex-1 sm:flex-initial min-w-[200px]">
+            <span className="text-[11px] uppercase tracking-wider font-bold text-[#6b5e52] shrink-0">Search for:</span>
+            <div className="flex items-center border border-[#e5ddd5] rounded-lg bg-white shadow-xs h-8.5 flex-1 sm:w-64 px-3 focus-within:border-[#9A8B7A] focus-within:ring-1 focus-within:ring-[#9A8B7A]/30 min-w-0">
               <input
                 type="text"
                 value={filters.searchQuery}
                 onChange={(e) => updateFilter("searchQuery", e.target.value)}
-                className="flex-1 outline-none bg-transparent text-[#2d2a26] text-xs font-semibold h-full w-full placeholder:text-[#6b5e52]/50"
+                className="flex-1 outline-none bg-transparent text-[#2d2a26] text-xs font-semibold h-full min-w-0 placeholder:text-[#6b5e52]/50"
                 placeholder="Type keyword..."
               />
               <Search size={14} className="text-[#9A8B7A] shrink-0 ml-1" />
@@ -163,9 +163,9 @@ export default function SearchBar({
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-[11px] uppercase tracking-wider font-bold text-[#6b5e52]">Pick:</span>
-            <div className="flex items-center border border-[#e5ddd5] rounded-lg bg-white h-8.5 w-32 shadow-xs overflow-hidden">
-              <input type="text" className="w-full px-2 outline-none bg-transparent text-xs font-semibold h-full" disabled />
+            <span className="text-[11px] uppercase tracking-wider font-bold text-[#6b5e52] shrink-0">Pick:</span>
+            <div className="flex items-center border border-[#e5ddd5] rounded-lg bg-white h-8.5 w-24 sm:w-32 shadow-xs overflow-hidden">
+              <input type="text" className="w-full px-2 outline-none bg-transparent text-xs font-semibold h-full min-w-0" disabled />
               <button className="px-2 text-[#6b5e52] hover:text-[#9A8B7A] bg-[#f5f1eb] border-l border-[#e5ddd5] h-full flex items-center justify-center cursor-pointer">
                 <RefreshCw size={12} className="stroke-[2.5]" />
               </button>
@@ -185,7 +185,7 @@ export default function SearchBar({
       </div>
 
       {/* VIEW OPTIONS BAR */}
-      <div className="px-6 py-2.5 flex items-center justify-between bg-white border-b border-[#e5ddd5]/60 rounded-b-2xl">
+      <div className="px-3 sm:px-6 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white border-b border-[#e5ddd5]/60 rounded-b-2xl">
         <button
           onClick={() => setIsOptionsExpanded(!isOptionsExpanded)}
           className="flex items-center gap-2 text-[11px] uppercase tracking-wider font-bold text-[#2d2a26] hover:text-[#9A8B7A] transition-colors cursor-pointer outline-none"
@@ -194,23 +194,23 @@ export default function SearchBar({
           View Options
         </button>
 
-        <div className="flex items-center gap-3">
-          <span className="text-[11px] uppercase tracking-wider font-bold text-[#2d2a26]">Select View:</span>
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <span className="text-[11px] uppercase tracking-wider font-bold text-[#2d2a26] shrink-0">Select View:</span>
           <div className="relative">
             <select
               value={currentViewName}
               onChange={(e) => setCurrentViewName(e.target.value)}
-              className="h-8 pl-3 pr-8 border border-[#e5ddd5] rounded-lg bg-white text-xs font-semibold text-[#2d2a26] focus:outline-none focus:border-[#9A8B7A] appearance-none cursor-pointer w-48 shadow-xs"
+              className="h-8 pl-2.5 pr-7 border border-[#e5ddd5] rounded-lg bg-white text-xs font-semibold text-[#2d2a26] focus:outline-none focus:border-[#9A8B7A] appearance-none cursor-pointer w-36 sm:w-48 shadow-xs"
             >
               {Object.keys(savedViews).map((vName) => (
                 <option key={vName} value={vName}>{vName}</option>
               ))}
             </select>
-            <ChevronDown size={12} className="text-[#6b5e52] absolute right-2.5 top-2.5 pointer-events-none" />
+            <ChevronDown size={12} className="text-[#6b5e52] absolute right-2 top-2.5 pointer-events-none" />
           </div>
           <button 
             onClick={handleApplyView}
-            className="h-8 px-4 bg-[#9A8B7A] hover:bg-[#8a6f4d] text-white text-[11px] uppercase tracking-wider font-bold rounded-lg shadow-xs transition-colors cursor-pointer border-none"
+            className="h-8 px-3.5 bg-[#9A8B7A] hover:bg-[#8a6f4d] text-white text-[11px] uppercase tracking-wider font-bold rounded-lg shadow-xs transition-colors cursor-pointer border-none shrink-0"
           >
             Apply View
           </button>

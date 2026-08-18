@@ -8,6 +8,11 @@ export default function UmbrellaPage() {
   const params = useParams();
   const customerId = params?.id as string;
   const policyId = params?.policyId as string;
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
 
   const [covMode, setCovMode] = useState<"view" | "add" | "edit">("view");
@@ -158,8 +163,10 @@ export default function UmbrellaPage() {
   const btnPrimaryCls = "h-8 px-4 bg-primary text-white text-xs font-bold rounded-xl shadow-sm hover:bg-primary/90 flex items-center gap-1.5 transition-all";
   const btnCls = "h-8 px-3 bg-white border border-border-main text-text-main text-xs font-bold rounded-xl shadow-sm hover:bg-secondary/40 flex items-center gap-1.5 transition-all";
 
+  if (!mounted) return null;
+
   return (
-    <div className="min-h-screen bg-bg-base text-text-main font-sans flex flex-col select-none overflow-x-hidden pb-24">
+    <div suppressHydrationWarning className="min-h-screen bg-bg-base text-text-main font-sans flex flex-col select-none overflow-x-hidden pb-24">
 
       {/* ── 1. Sticky Header ── */}
       <header className="bg-white/85 backdrop-blur-md border-b border-border-main h-16 px-6 flex items-center justify-between shrink-0 shadow-sm sticky top-0 z-50">

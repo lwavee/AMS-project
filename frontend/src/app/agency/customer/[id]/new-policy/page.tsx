@@ -100,6 +100,7 @@ const INSURANCE_PARENT_COMPANIES = [
   "Infinity Insurance Company**additional setups required",
   "Interstate Fire & Casualty Company (CA), Insurance Company",
   "Invo Peo, Insurance Company, INV",
+  "JENCAP, Insurance Company, JENC",
   "K2Specialty, Insurance Company, K2S",
   "Kaiser Permanente, Insurance Company, KAP",
   "Kemper, Insurance Company, KEM",
@@ -114,7 +115,7 @@ const INSURANCE_PARENT_COMPANIES = [
   "Mercury Insurance Group, Insurance Company, MER",
   "MetLife Auto & Home, Insurance Company, MET",
   "Minnesota FAIR Plan (MN), Insurance Company, MFP",
-  "Minnesota Workers' Compensation Assigned Risk Pla",
+  "Minnesota Workers' Compensation Assigned Risk Pla, Insurance Company",
   "Montana State Fund, Insurance Company, MNS",
   "Monterey Insurance Company, Insurance Company, MON",
   "Munich Re Grp, Insurance Company, MUN",
@@ -142,8 +143,8 @@ const INSURANCE_PARENT_COMPANIES = [
   "ProSure Group, Insurance Company, PRG",
   "Red Shield Insurance Company, Insurance Company, RSI",
   "RLI Corporation, Insurance Company, RLI",
-  "Rockingham Mutual Insurance Company, Insurance Company",
-  "RV Nuccio & Associates Insurance Brokers, Inc.",
+  "Rockingham Mutual Insurance Company, Insurance Company, RMI",
+  "RV Nuccio & Associates Insurance Brokers, Inc., Insurance Company",
   "Safe Herb, Insurance Company, SFH",
   "Safebuilt Insurance Services, Insurance Company, SFB",
   "Safeco Insurance Company, Insurance Company, SAF",
@@ -154,7 +155,7 @@ const INSURANCE_PARENT_COMPANIES = [
   "Scottsdale Insurance Company, Insurance Company, SCT",
   "Seaview Insurance Company, Insurance Company, SEA",
   "Sentinel Insurance Company, LTD, Insurance Company, SNT",
-  "Sequoia Insurance Company **additional setups required",
+  "Sequoia Insurance Company **additional setups required, Insurance",
   "Skyward Specialty Insurance, Insurance Company, SKY",
   "Special Markets Ins Consultants, Insurance Company, SMC",
   "Standard Fire Insurance (ID), Insurance Company, STF",
@@ -162,18 +163,19 @@ const INSURANCE_PARENT_COMPANIES = [
   "State Auto Insurance Companies, Insurance Company, STA",
   "State Compensation Insurance Fund, Insurance Company, SCF",
   "State Fund, Insurance Company, SFU",
-  "State National Insurance Company, Inc., Insurance Company, SN",
-  "Stillwater Insurance Services (formerly Fidelity National Insurance",
+  "State National Insurance Company, Inc., Insurance Company, SNC",
+  "Stillwater Insurance Services (formerly Fidelity National Insurance)",
   "Suretec Insurance Co., Insurance Company, STC",
   "Surety One, Insurance Company, SON",
   "Surety Solutions, Insurance Company, SSL",
   "TBD (CA), Insurance Company, TBD",
   "Technology Insurance Co., Insurance Company, TCH",
-  "Terheggen-Malone Marine insurance (CA) (CA), Insurance Compa",
+  "Terheggen-Malone Marine insurance (CA) (CA), Insurance Company",
   "Texas Mutual Insurance, Insurance Company, TEX",
   "The Insurance Shop, Insurance Company, TIS",
   "The Medical Protective Company, Insurance Company, MED",
   "Thimble Insurance Services, Insurance Company, THM",
+  "TMR General Agency, Inc, Insurance Company, TMRG",
   "Tokio Marine Management, Inc., Insurance Company, TOK",
   "Travelers Insurance Company, Insurance Company, TRV",
   "Trisura Specialty Insurance Company, Insurance Company, TRI",
@@ -189,11 +191,11 @@ const INSURANCE_PARENT_COMPANIES = [
   "Victoria Insurance Group *Additional setups required",
   "Wbl Grp, Insurance Company, WBL",
   "Western Surety Company, Insurance Company, WSC",
-  "Woldwide Insurance Network Inc. dba Smart Choice, Insurance C",
+  "Woldwide Insurance Network Inc. dba Smart Choice, Insurance Company",
   "Wright National Flood Insurance, Insurance Company, WNF",
   "XYZ Insurance Company, Insurance Company, XYZ",
   "Zenith, Insurance Company, ZEN",
-  "Zurich Insurance Company**additional setups required"
+  "Zurich Insurance Company**additional setups required, Insurance Company"
 ];
 
 const INSURANCE_WRITING_COMPANIES: Record<string, string[]> = {
@@ -469,7 +471,6 @@ const INSURANCE_WRITING_COMPANIES: Record<string, string[]> = {
   "Federated National Insurance**additional setups required": [
     "Federated National Insurance**additional setups required, Insurance"
   ],
-
   "First Comp, Insurance Company, FCO": [
     "First Comp, Insurance Company, FCO",
     "Markel Insurance, Writing Company, FCO011"
@@ -558,6 +559,522 @@ const INSURANCE_WRITING_COMPANIES: Record<string, string[]> = {
     "Employers Preferred Insurance Co, Writing Company, INV002",
     "Frank Crum, Writing Company, INV001",
     "Invo Peo, Insurance Company, INV"
+  ],
+  "JENCAP, Insurance Company, JENC": [
+    "Atlantic Casualty Insurance Company, Writing Company, JENC01",
+    "JENCAP, Insurance Company, JENC"
+  ],
+  "K2Specialty, Insurance Company, K2S": [
+    "K2Specialty, Insurance Company, K2S",
+    "Midvale Ind Co, Writing Company, K2S001"
+  ],
+  "Kaiser Permanente, Insurance Company, KAP": [
+    "Kaiser Permanente, Insurance Company, KAP"
+  ],
+  "Kemper, Insurance Company, KEM": [
+    "Alpha Property & Casualty Insurance Company, Writing Company, KEM001",
+    "Financial Indemnity Company, Writing Company, KEM011",
+    "Infinity Assurance Insurance Company, Writing Company, KEM023",
+    "Infinity Commercial Auto, Writing Company, KEM019",
+    "Infinity County Mutual Insurance Company, Writing Company, KEM021",
+    "Infinity Insurance Company, Writing Company, KEM020",
+    "Infinity Select Insurance Company, Writing Company, KEM024",
+    "Kemper, Insurance Company, KEM",
+    "Unitrin Specialty, Writing Company, KEM018"
+  ],
+  "KENTUCKY WORKERS COMP, Insurance Company, KWC": [
+    "KENTUCKY WORKERS COMP, Insurance Company, KWC"
+  ],
+  "Liberty Mutual Agency Corporation, Insurance Company, LRM": [
+    "America Fire and Casualty Co, Writing Company, LRM016",
+    "American Economy Ins Co, Writing Company, LRM043",
+    "AMERICAN STATES PREFERRED INSURANCE COMPANY, Writing Company",
+    "First National Ins Co of America, Writing Company, LRM034",
+    "General Ins Co of America, Writing Company, LRM040",
+    "Liberty County Mutual Insurance Company (CO T), Writing Company",
+    "Liberty Mutual Agency Corporation, Insurance Company, LRM",
+    "Liberty Mutual Fire Insurance Co, Writing Company, LRM014",
+    "Liberty Mutual Insurance Company, Writing Company, LRM022",
+    "Liberty Mutual Personal Insurance Company (Co V), Writing Company",
+    "LM General Insurance Company (Co S), Writing Company, LRM032",
+    "Ohio Casualty Insurance Co, Writing Company, LRM018",
+    "Ohio Security Insurance Co, Writing Company, LRM017",
+    "Safeco Ins Co of Illinois, Writing Company, LRM036",
+    "Safeco Ins Co of Indiana, Writing Company, LRM042",
+    "Safeco Insurance Company of America, Writing Company, LRM041",
+    "Safeco Insurance, Writing Company, LRM038",
+    "Safeco of Oregon, Writing Company, LRM037",
+    "West American Insurance Co, Writing Company, LRM019"
+  ],
+  "Life Insurance Generic, Insurance Company, LIF": [
+    "Life Insurance Generic, Insurance Company, LIF"
+  ],
+  "Magna Carta Companies, Insurance Company, MAG": [
+    "Magna Carta Companies, Insurance Company, MAG",
+    "Public Service Mutual Insurance Company, Writing Company, MAG001"
+  ],
+  "Main Street America Group, Insurance Company, NGM": [
+    "Austin Mutual Insurance Co., Writing Company, NGM009",
+    "Main Street America Group, Insurance Company, NGM",
+    "Markel Insurance Company, Writing Company, NGM010",
+    "Spring Valley Mutual Insurance Company, Writing Company, NGM008"
+  ],
+  "Mapfre USA (Formerly Commerce and Commerce West Insurance": [
+    "Commerce West Ins Co, Writing Company, CMW001",
+    "Mapfre Ins Co, Writing Company, CMW003",
+    "Mapfre USA (Formerly Commerce and Commerce West Insurance Co",
+    "SIAA, Writing Company, CMW008"
+  ],
+  "Markel American Insurance Company, Insurance Company, MKL": [
+    "Essentia Insurance Company, Writing Company, MKL004",
+    "Evanston Insurance Company, Writing Company, MKL002",
+    "Markel American Insurance Co, Writing Company, MKL001",
+    "Markel American Insurance Company, Insurance Company, MKL",
+    "Markel Insurance Company, Writing Company, MKL005",
+    "SureTec Insurance Company,, Writing Company, MKL003"
+  ],
+  "MARYLAND WORKERS COMP, Insurance Company, YMC": [
+    "MARYLAND WORKERS COMP, Insurance Company, YMC"
+  ],
+  "Mercury Insurance Group, Insurance Company, MER": [
+    "American Mercury Insurance Company, Writing Company, MER001",
+    "American Mercury Lloyds Insurance Co, Writing Company, MER002",
+    "California Automobile Insurance Co., Writing Company, MER009",
+    "Mercury Casualty Company, Writing Company, MER005",
+    "Mercury County Mutual Insurance Co, Writing Company, MER004",
+    "Mercury Indemnity of America, Writing Company, MER007",
+    "Mercury Indemnity of Georgia, Writing Company, MER013",
+    "Mercury Insurance Co of Florida, Writing Company, MER006",
+    "Mercury Insurance Company of Georgia, Writing Company, MER012",
+    "Mercury Insurance Company of Illinois, Writing Company, MER011",
+    "Mercury Insurance Company, Writing Company, MER010",
+    "Mercury Insurance Group, Insurance Company, MER",
+    "Mercury National Insurance Company, Writing Company, MER008",
+    "State and County Mutual Fire Insurance Co. (S), Writing Company, MER003"
+  ],
+  "MetLife Auto & Home, Insurance Company, MET": [
+    "MetLife Auto & Home, Insurance Company, MET",
+    "Metropolitan Direct Property and Casualty Insurance Company, Writing Company",
+  ],
+  "Minnesota FAIR Plan (MN), Insurance Company, MFP": [
+    "Minnesota FAIR Plan (MN), Insurance Company, MFP"
+  ],
+  "Minnesota Workers' Compensation Assigned Risk Pla, Insurance Company": [
+    "Minnesota Workers' Compensation Assigned Risk Pla, Insurance Company",
+    "Superior Point, Writing Company, MWC001"
+  ],
+  "Montana State Fund, Insurance Company, MNS": [
+    "Montana State Fund, Insurance Company, MNS"
+  ],
+  "Monterey Insurance Company, Insurance Company, MON": [
+    "Monterey Insurance Company, Insurance Company, MON"
+  ],
+  "Munich Re Grp, Insurance Company, MUN": [
+    "American Modern Prop & Cas Ins Co, Writing Company, MUN001",
+    "Munich Re Grp, Insurance Company, MUN"
+  ],
+  "National General (formerly GMAC), Insurance Company, INT": [
+    "Integon National, Writing Company, INT011",
+    "Integon Preferred Insurance Co, Writing Company, INT013",
+    "National General (formerly GMAC), Insurance Company, INT",
+    "Stillwater Property & Casualy Insurance Company, Writing Company"
+  ],
+  "Nationwide Exclusive, Insurance Company, NAT": [
+    "Allied Insurance Company of America, Writing Company, NAT014",
+    "Allied Property & Casualty Insurance Company, Writing Company",
+    "AMCO Insurance Company, Writing Company, NAT022",
+    "Colonial County Mutual Insurance Company, Writing Company",
+    "Crestbrook Insurance Company ( NW Private Client), Writing Company",
+    "Depositors Insurance Company, Writing Company, NAT026",
+    "Home State County Mutual, Writing Company, NAT030",
+    "Motor Club of Iowa Insurance Company, Writing Company",
+    "Nationwide Affinity Insurance Co of America, Writing Company",
+    "Nationwide Agribusiness Insurance Company, Writing Company",
+    "Nationwide Assurance Company, Writing Company, NAT002",
+    "Nationwide Exclusive, Insurance Company, NAT",
+    "Nationwide General Insurance Company, Writing Company",
+    "Nationwide Indemnity Company, Writing Company, NAT001",
+    "Nationwide Insurance Company of America, Writing Company",
+    "Nationwide Insurance of Florida, Writing Company, NAT003",
+    "Nationwide Life and Annuities Insurance Company, Writing Company",
+    "Nationwide Life, Writing Company, NAT028",
+    "Nationwide Lloyds, Writing Company, NAT011",
+    "Nationwide Mutual Fire Insurance Company, Writing Company",
+    "Nationwide Mutual Insurance Company, Writing Company, NAT006",
+    "Nationwide Mutual Property & Casualty Co, Writing Company",
+    "Nationwide, Writing Company, NAT012",
+    "Scottsdale Indemnity Company, Writing Company, NAT020",
+    "Titan Indemnity, Writing Company, NAT019",
+    "Titan Insurance Company, Writing Company, NAT024",
+    "Victoria Automobile Insurance Company, Writing Company",
+    "Victoria Fire and Casualty Ins, Writing Company, NAT027",
+    "Victoria National Insurance Company, Writing Company, NAT017",
+    "Victoria Select Insurance Company, Writing Company, NAT013",
+    "Victoria Specialty Insurance Company, Writing Company, NAT016"
+  ],
+  "Nautilus Insurance Company, Insurance Company, NTI": [
+    "Nautilus Insurance Company, Insurance Company, NTI"
+  ],
+  "New York State Insurance Fund, Insurance Company, NEW": [
+    "New York State Insurance Fund, Insurance Company, NEW"
+  ],
+  "Next Insurance US Company, Insurance Company, NXT": [
+    "Next Insurance US Company, Insurance Company, NXT",
+    "State National Insurance Company, Writing Company, NXT001"
+  ],
+  "NIPC, Insurance Company, NIPC": [
+    "American Alternative Insurance Corporation, Writing Company, NIPC",
+    "NIPC, Insurance Company, NIPC"
+  ],
+  "Nonprofits Insurance Alliance Group, Insurance Company, NON": [
+    "California Capital Insurance Co., Writing Company, NON004",
+    "Nonprofits Insurance Alliance Group, Insurance Company, NON",
+    "Nonprofits Insurance Alliance of CA, Writing Company, NON001",
+    "North American Elite Insurance Company, Writing Company, NON002",
+    "QBE Insurance Corporation, Writing Company, NON003"
+  ],
+  "Norguard Ins Co, Insurance Company, NRG": [
+    "Norguard Ins Co, Insurance Company, NRG"
+  ],
+  "Northern California Schools Insurance Group, Insurance Company": [
+    "Northern California Schools Insurance Group, Insurance Company"
+  ],
+  "Northfield Insurance Company, Insurance Company, NOR": [
+    "Hawkeye Wholesale Insurance Services Inc., Writing Company, NOR",
+    "Northfield Insurance Company, Insurance Company, NOR"
+  ],
+  "Novita Insurance Solution, Insurance Company, NVI": [
+    "ComStar General Insurance Solution, Writing Company, NVI001",
+    "Novita Insurance Solution, Insurance Company, NVI"
+  ],
+  "Obsidian Specialty Insurance Copany, Insurance Company, OBS": [
+    "Obsidian Specialty Insurance Copany, Insurance Company, OBS"
+  ],
+  "Pacific Specialty Insurance Company, Insurance Company, PAC": [
+    "Kinney & Co, Writing Company, PAC004",
+    "McGraw Insurance Services, Writing Company, PAC003",
+    "Pacific Specialty Insurance Co, Writing Company, PAC001",
+    "Pacific Specialty Insurance Company, Insurance Company, PAC"
+  ],
+  "Parent Company, Insurance Company, PNT": [
+    "Accident Fund Gen Ins Co, Writing Company, PNT007",
+    "AMCO Insurance Company, Writing Company, PNT001",
+    "Charter Oak Fire Ins Co, Writing Company, PNT003",
+    "Farmington Casualty Company, Writing Company, PNT004",
+    "Fidelity & Guar Ins Co, Writing Company, PNT006",
+    "First Comp, Writing Company, PNT011",
+    "Parent Company, Insurance Company, PNT",
+    "Pennsylvania Manufacturers' Association Insuran, Writing Company",
+    "Phoenix Insurance (PHX), Writing Company, PNT005",
+    "Preferred Contractors Insurance Co., Writing Company, PNT008",
+    "Sequoia Insurance Company, Writing Company, PNT010",
+    "Standard Fire Insurance Company, Writing Company, PNT002",
+    "Technology Insurance Company, Inc., Writing Company, PNT009"
+  ],
+  "Pennsylvania Lumbermens Grp, Insurance Company, PLG": [
+    "Pennsylvania Lumbermens Grp, Insurance Company, PLG",
+    "Pennsylvania Lumbermens Mut Ins, Writing Company, PLG001"
+  ],
+  "Philadelphia Ins Co., Insurance Company, PHI": [
+    "GIG Insurance Group, Writing Company, PHI002",
+    "Philadelphia Indemnity Insurance Companys, Writing Company",
+    "Philadelphia Ins Co., Insurance Company, PHI"
+  ],
+  "Preferred Contractors Insurance Company, Insurance Company": [
+    "Preferred Contractors Insurance Company, Insurance Company"
+  ],
+  "Prime Insurance Company, Insurance Company, PCO": [
+    "Prime Insurance Company, Insurance Company, PCO"
+  ],
+  "Progressive Insurance, Insurance Company, PRO": [
+    "Artisan and Truckers Casualty, Writing Company, PRO048",
+    "Drive Insurance Co, Writing Company, PRO050",
+    "Drive New Jersey Insurance Co, Writing Company, PRO034",
+    "Progressive Auto Pro, Writing Company, PRO028",
+    "Progressive Casualty Ins Co, Writing Company, PRO005",
+    "Progressive Casualty Ins, Writing Company, PRO001",
+    "Progressive Classic Ins Co, Writing Company, PRO012",
+    "Progressive County Mutual, Writing Company, PRO008",
+    "Progressive Insurance, Insurance Company, PRO",
+    "Progressive Northern Ins Co, Writing Company, PRO049",
+    "Progressive Preferred Ins Co, Writing Company, PRO006",
+    "Progressive West Ins, Writing Company, PRO020",
+    "United Financial Casualty Co, Writing Company, PRO014"
+  ],
+  "Propeller, Inc., Insurance Company, PPL": [
+    "Arch Insurance Company, Writing Company, PPL007",
+    "Bond - CA, Writing Company, PPL002",
+    "Bond - Commercial, Writing Company, PPL001",
+    "Bond - OR, Writing Company, PPL004",
+    "Bond - Residential, Writing Company, PPL005",
+    "Bond, Writing Company, PPL003",
+    "Bonds - WA, Writing Company, PPL006",
+    "Propeller, Inc., Insurance Company, PPL"
+  ],
+  "Prospect, Insurance Company, PRS": [
+    "Prospect, Insurance Company, PRS",
+    "Travelers Personal Ins Co, Writing Company, PRS001"
+  ],
+  "ProSure Group, Insurance Company, PRG": [
+    "ProSure Group, Insurance Company, PRG"
+  ],
+  "Red Shield Insurance Company, Insurance Company, RSI": [
+    "Red Shield Insurance Company, Insurance Company, RSI"
+  ],
+  "RLI Corporation, Insurance Company, RLI": [
+    "RLI Corporation, Insurance Company, RLI",
+    "RLI Indemnity Company, Writing Company, RLI002"
+  ],
+  "Rockingham Mutual Insurance Company, Insurance Company, RMI": [
+    "Rockingham Mutual Insurance Company, Insurance Company, RMI"
+  ],
+  "RV Nuccio & Associates Insurance Brokers, Inc., Insurance Company": [
+    "RV Nuccio & Associates Insurance Brokers, Inc., Insurance Company"
+  ],
+  "Safe Herb, Insurance Company, SFH": [
+    "Hubson Excess Insurance Co., Writing Company, SFH001",
+    "Safe Herb, Insurance Company, SFH"
+  ],
+  "Safebuilt Insurance Services, Insurance Company, SFB": [
+    "Employers Preferred Ins Co, Writing Company, SFB001",
+    "Safebuilt Insurance Services, Insurance Company, SFB"
+  ],
+  "Safeco Insurance Company, Insurance Company, SAF": [
+    "General Insurance Company of America, Writing Company, SAF007",
+    "Safeco Insurance Company of America, Writing Company, SAF008",
+    "Safeco Insurance Company, Insurance Company, SAF"
+  ],
+  "Safeway Insurance Company, Insurance Company, SIC": [
+    "Safeway Insurance Co., Writing Company, SIC001",
+    "Safeway Insurance Company, Insurance Company, SIC"
+  ],
+  "SAIF Corp, Insurance Company, SAI": [
+    "SAIF Corp, Insurance Company, SAI",
+    "Third Coast Insurance Company, Writing Company, SAI001"
+  ],
+  "Sample Work Comp Company, Insurance Company, SWC": [
+    "Sample Work Comp Company, Insurance Company, SWC"
+  ],
+  "SCJ Insurance Services, Insurance Company, SCJ": [
+    "Americas Ins Co, Writing Company, SCJ002",
+    "Safe Auto Ins Co, Writing Company, SCJ001",
+    "SCJ Insurance Services, Insurance Company, SCJ"
+  ],
+  "Scottsdale Insurance Company, Insurance Company, SCT": [
+    "Scottsdale Insurance Company, Insurance Company, SCT"
+  ],
+  "Seaview Insurance Company, Insurance Company, SEA": [
+    "Seaview Insurance Company, Insurance Company, SEA"
+  ],
+  "Sentinel Insurance Company, LTD, Insurance Company, SNT": [
+    "Sentinel Insurance Company, LTD, Insurance Company, SNT"
+  ],
+  "Sequoia Insurance Company **additional setups required, Insurance": [
+    "Sequoia Insurance Company **additional setups required, Insurance"
+  ],
+  "Skyward Specialty Insurance, Insurance Company, SKY": [
+    "Great Midwest Insurance Company, Writing Company, SKY001",
+    "Skyward Specialty Insurance, Insurance Company, SKY"
+  ],
+  "Special Markets Ins Consultants, Insurance Company, SMC": [
+    "Special Markets Insurance Consultants, Ins., Writing Company, SMC001",
+    "Special Markets Ins Consultants, Insurance Company, SMC"
+  ],
+  "Standard Fire Insurance (ID), Insurance Company, STF": [
+    "Standard Fire Insurance (ID), Insurance Company, STF"
+  ],
+  "Starstone National Insurance Co. (OR), Insurance Company, SNI": [
+    "Starstone National Insurance Co. (OR), Insurance Company, SNI"
+  ],
+  "State Auto Insurance Companies, Insurance Company, STA": [
+    "State Auto Insurance Companies, Insurance Company, STA",
+    "State Auto Property & Casualty, Writing Company, STA004"
+  ],
+  "State Compensation Insurance Fund, Insurance Company, SCF": [
+    "Kinney & Co, Writing Company, SCF001",
+    "State Compensation Insurance Fund of CA, Writing Company",
+    "State Compensation Insurance Fund, Insurance Company, SCF"
+  ],
+  "State Fund, Insurance Company, SFU": [
+    "State Fund, Insurance Company, SFU"
+  ],
+  "State National Insurance Company, Inc., Insurance Company, SNC": [
+    "State National Insurance Company, Inc., Insurance Company, SNC"
+  ],
+  "Stillwater Insurance Services (formerly Fidelity National Insurance)": [
+    "Stillwater Insurance Services (formerly Fidelity National Insurance)"
+  ],
+  "Suretec Insurance Co., Insurance Company, STC": [
+    "Bond - AZ, Writing Company, STC008",
+    "Bond - Boli, Writing Company, STC004",
+    "Bond - CA, Writing Company, STC005",
+    "Bond - License & Permit Bond, Writing Company, STC012",
+    "Bond - OR, Writing Company, STC009",
+    "Bond - Performance, Writing Company, STC013",
+    "Bond - Public Works, Writing Company, STC001",
+    "Bond - Residential, Writing Company, STC010",
+    "Bond - WA, Writing Company, STC011",
+    "Bond, Writing Company, STC006",
+    "Bond- Commercial, Writing Company, STC002",
+    "Bond- Plumbing, Writing Company, STC003",
+    "Bond-Janitorial, Writing Company, STC007",
+    "Suretec Insurance Co., Insurance Company, STC"
+  ],
+  "Surety One, Insurance Company, SON": [
+    "Surety One, Insurance Company, SON"
+  ],
+  "Surety Solutions, Insurance Company, SSL": [
+    "Hudson Insurance Company, Writing Company, SSL001",
+    "Surety Solutions, Insurance Company, SSL"
+  ],
+  "TBD (CA), Insurance Company, TBD": [
+    "TBD (CA), Insurance Company, TBD"
+  ],
+  "Technology Insurance Co., Insurance Company, TCH": [
+    "Technology Insurance Co., Insurance Company, TCH"
+  ],
+  "Terheggen-Malone Marine insurance (CA) (CA), Insurance Company": [
+    "Terheggen-Malone Marine insurance (CA) (CA), Insurance Company"
+  ],
+  "Texas Mutual Insurance, Insurance Company, TEX": [
+    "Argonaut Insurance Company, Writing Company, TEX001",
+    "Texas Mutual Insurance Company, Writing Company, TEX002",
+    "Texas Mutual Insurance, Insurance Company, TEX"
+  ],
+  "The Insurance Shop, Insurance Company, TIS": [
+    "Employers Prefered Insurance Company, Writing Company, TIS001",
+    "The Insurance Shop, Insurance Company, TIS"
+  ],
+  "The Medical Protective Company, Insurance Company, MED": [
+    "CM&F Group Inc, Writing Company, MED002",
+    "Medical Protective Company, Writing Company, MED001",
+    "The Medical Protective Company, Insurance Company, MED"
+  ],
+  "Thimble Insurance Services, Insurance Company, THM": [
+    "National Speciality Insurance Company, Writing Company, THM001",
+    "Thimble Insurance Services, Insurance Company, THM"
+  ],
+  "TMR General Agency, Inc, Insurance Company, TMRG": [
+    "Greate Lakes Insurance SE, Writing Company, TMRG01",
+    "TMR General Agency, Inc, Insurance Company, TMRG"
+  ],
+  "Tokio Marine Management, Inc., Insurance Company, TOK": [
+    "American Contractors Indemnity Company, Writing Company",
+    "Houston Casualty Company, Writing Company, TOK002",
+    "Texas Bonding Company, Writing Company, TOK005",
+    "Tokio Marine Management, Inc., Insurance Company, TOK",
+    "US Specialty Insurance Company, Writing Company, TOK003"
+  ],
+  "Travelers Insurance Company, Insurance Company, TRV": [
+    "Charter Oak Fire Ins Co, Writing Company, TRV001",
+    "Consumers County Mutual, Writing Company, TRV023",
+    "Farmington Casualty Company, Writing Company, TRV014",
+    "Fidelity & Guaranty Insurance Underwriters, Writing Company",
+    "Liberty Mutual Insurance, Writing Company, TRV033",
+    "Phoenix Insurance (PHX), Writing Company, TRV002",
+    "St Paul Fire and Marine Ins Co, Writing Company, TRV019",
+    "St. Paul Protective Ins. Co., Writing Company, TRV030",
+    "The Automobile Ins Co of Hartford CT, Writing Company, TRV013",
+    "The First Floridian, Writing Company, TRV020",
+    "The Standard Fire Insurance Company, Writing Company, TRV012",
+    "The Travelers Indemnity Company of Connecticut, Writing Company",
+    "TRAVCAL Indemnity Company (Auto), Writing Company, TRV021",
+    "TRAVCO Insurance Co, Writing Company, TRV022",
+    "Traveler?s Lloyd?s Co, Writing Company, TRV008",
+    "Travelers C&S of Illinois, Writing Company, TRV010",
+    "Travelers Casualty & Surety Company of America, Writing Company",
+    "Travelers Casualty & Surety, Writing Company, TRV009",
+    "Travelers Casualty Co of CT, Writing Company, TRV016",
+    "Travelers Commercial Ins Co, Writing Company, TRV017",
+    "Travelers Excess and Surplus Lines Co, Writing Company, TRV018",
+    "Travelers Home and Marine Co., Writing Company, TRV028",
+    "Travelers Indemnity (IND), Writing Company, TRV003",
+    "Travelers Indemnity Co of Missouri, Writing Company, TRV011",
+    "Travelers Indemnity of America (TIA), Writing Company, TRV004",
+    "Travelers Ins Co, Writing Company, TRV007",
+    "Travelers Insurance Company, Insurance Company, TRV",
+    "Travelers Lloyds of Texas Ins Co, Writing Company, TRV027",
+    "Travelers of Illinois (TIL), Writing Company, TRV005",
+    "Travelers of Rhode Island (TRI), Writing Company, TRV006",
+    "Travelers Personal Ins Co, Writing Company, TRV034",
+    "Travelers Personal security Ins Co, Writing Company, TRV024",
+    "Travelers Property Casualty Co of Amer, Writing Company",
+    "Travelers Property Casualty Co of Ill, Writing Company, TRV026",
+    "Travelers Property Casualty Ins Co, Writing Company, TRV025"
+  ],
+  "Trisura Specialty Insurance Company, Insurance Company, TRI": [
+    "Trisura Specialty Insurance Company, Insurance Company, TRI"
+  ],
+  "U.S. Specialty Insurance Company, Insurance Company, USP": [
+    "U.S. Specialty Insurance Company, Insurance Company, USP"
+  ],
+  "Unigard Insurance Company- a QBE Company**additional setups": [
+    "QBE, Writing Company, UNI007",
+    "Unigard Insurance Company- a QBE Company**additional setups"
+  ],
+  "United Health Care, Insurance Company, UHC": [
+    "United Health Care, Insurance Company, UHC"
+  ],
+  "United Specialty Insurance Company, Insurance Company, UIN": [
+    "United Specialty Insurance Company, Insurance Company, UIN"
+  ],
+  "Unitrin Specialty, Insurance Company, UNS": [
+    "Unitrin Specialty, Insurance Company, UNS"
+  ],
+  "USLI Investment Corporation, Insurance Company, USL": [
+    "Evanston Insurance Company, Writing Company, USL005",
+    "Kinney & Co, Writing Company, USL006",
+    "Mount Vernon Fire Insurance Company, Writing Company, USL002",
+    "United States Liability Insurance Company, Writing Company",
+    "USLI Investment Corporation, Insurance Company, USL"
+  ],
+  "Valley Forge Insurance, Insurance Company, VFO": [
+    "BOP, Writing Company, VFO002",
+    "Pollution, Writing Company, VFO001",
+    "Valley Forge Insurance, Insurance Company, VFO"
+  ],
+  "Valley Surety Insurance Agency, Insurance Company, VAL": [
+    "Valley Surety Insurance Agency, Insurance Company, VAL"
+  ],
+  "VFIS Insurance Services, Insurance Company, VFI": [
+    "AIG Specialty Insurance Company, Writing Company, VFI001",
+    "National Union Fire Insurance Company, Writing Company, VFI002",
+    "VFIS Insurance Services, Insurance Company, VFI"
+  ],
+  "Victoria Insurance Group *Additional setups required": [
+    "Victoria Insurance Group *Additional setups required"
+  ],
+  "Wbl Grp, Insurance Company, WBL": [
+    "Stillwater Prop & Cas Ins Co, Writing Company, WBL001",
+    "Wbl Grp, Insurance Company, WBL"
+  ],
+  "Western Surety Company, Insurance Company, WSC": [
+    "Bond - Boli, Writing Company, WSC001",
+    "Bond - Commercial, Writing Company, WSC002",
+    "Bond - WA, Writing Company, WSC003",
+    "Western Surety Company, Insurance Company, WSC"
+  ],
+  "Woldwide Insurance Network Inc. dba Smart Choice, Insurance Company": [
+    "Midvale Indemnity Company, Writing Company, WWN001",
+    "Woldwide Insurance Network Inc. dba Smart Choice, Insurance Company"
+  ],
+  "Wright National Flood Insurance, Insurance Company, WNF": [
+    "Wright National Flood Ins, Writing Company, WNF001",
+    "Wright National Flood Insurance, Insurance Company, WNF"
+  ],
+  "XYZ Insurance Company, Insurance Company, XYZ": [
+    "XYZ Insurance Company, Insurance Company, XYZ"
+  ],
+  "Zenith, Insurance Company, ZEN": [
+    "Zenith, Insurance Company, ZEN"
+  ],
+  "Zurich Insurance Company**additional setups required, Insurance Company": [
+    "American Zurich Insurance Company, Writing Company, MIG009",
+    "Coast National Insurance Company, Writing Company, MIG021",
+    "Foremost Insurance, Writing Company, MIG017",
+    "Foremost Signature, Writing Company, MIG018",
+    "Zurich Insurance Company**additional setups required, Insurance Company",
+    "Zurich-American Insurance Company, Writing Company, MIG008"
   ]
 };
 
@@ -565,6 +1082,11 @@ export default function NewPolicyPage() {
   const params = useParams();
   const router = useRouter();
   const customerId = params?.id as string;
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Customer state loaded from API
   const [customerName, setCustomerName] = useState("Loading...");
@@ -803,16 +1325,18 @@ export default function NewPolicyPage() {
     }
   };
 
+  if (!mounted) return null;
+
   return (
-    <div className="min-h-screen bg-bg-base font-sans select-none text-text-main pb-24">
+    <div suppressHydrationWarning className="min-h-screen bg-bg-base font-sans select-none text-text-main pb-24">
       {/* ── Top Window Bar ── */}
-      <header className="bg-white/85 backdrop-blur-md border-b border-border-main h-16 px-6 flex items-center justify-between shrink-0 shadow-sm sticky top-0 z-50">
+      <header className="bg-white/85 backdrop-blur-md border-b border-border-main h-16 px-4 sm:px-6 flex items-center justify-between shrink-0 shadow-sm sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-md shadow-primary/20 shrink-0">
             <span className="text-white font-bold text-xl tracking-wider font-sans">S</span>
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-base tracking-tight text-text-main leading-tight font-sans">Sterling Insurance Services</span>
+            <span className="font-bold text-sm sm:text-base tracking-tight text-text-main leading-tight font-sans">Sterling Insurance Services</span>
             <span className="text-[9px] uppercase tracking-wider text-primary font-bold leading-none mt-0.5">Create New Policy</span>
           </div>
         </div>
@@ -827,7 +1351,7 @@ export default function NewPolicyPage() {
       </header>
 
       {/* ── Descriptive Instruction Box ── */}
-      <div className="max-w-5xl mx-auto px-6 mt-6">
+      <div className="max-w-5xl mx-auto px-3 sm:px-6 mt-4 sm:mt-6">
         <div className="bg-secondary/40 border border-border-main rounded-2xl p-4 flex gap-3.5 items-start">
           <Info className="size-5 text-primary shrink-0 mt-0.5" />
           <div className="text-xs text-slate-600 space-y-1 font-medium">
@@ -837,7 +1361,7 @@ export default function NewPolicyPage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 mt-6">
+      <div className="max-w-5xl mx-auto px-3 sm:px-6 mt-4 sm:mt-6">
 
         {/* Success Feedback Card */}
         {success && (
@@ -1316,7 +1840,7 @@ export default function NewPolicyPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 border-t border-border-main/50 pt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-border-main/50 pt-4">
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Executive</label>
                     <select
@@ -1465,7 +1989,7 @@ export default function NewPolicyPage() {
           </div>
 
           {/* ── STICKY BOTTOM ACTIONS BAR ── */}
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-border-main py-4 px-8 flex justify-end gap-3 z-50 shadow-lg select-none">
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-border-main py-3.5 px-4 sm:px-8 flex justify-between sm:justify-end gap-3 z-50 shadow-lg select-none">
             <button
               type="button"
               onClick={handleCancel}

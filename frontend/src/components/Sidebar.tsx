@@ -37,7 +37,7 @@ export default function Sidebar({ currentTab = "Customers", onTabChange, userRol
 
   return (
     <aside
-      className={`bg-white border-r border-[#e5ddd5] flex flex-col transition-all duration-300 select-none font-sans shrink-0 ${
+      className={`hidden md:flex bg-white border-r border-[#e5ddd5] flex-col transition-all duration-300 select-none font-sans shrink-0 ${
         isCollapsed ? "w-16" : "w-60"
       } h-[calc(100vh-64px)] sticky top-16 z-40`}
     >

@@ -38,10 +38,10 @@ export default function CustomerToolbar({
 
   return (
     <div
-      className="bg-white border border-[#e5ddd5] rounded-2xl px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 select-none font-sans shrink-0 shadow-sm"
+      className="bg-white border border-[#e5ddd5] rounded-2xl px-3 sm:px-6 py-3 flex items-center justify-between gap-2 select-none font-sans shrink-0 shadow-sm overflow-x-auto custom-scrollbar"
     >
       {/* Primary Actions Group */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-2 shrink-0">
 
         {/* New Customer Button */}
         <button

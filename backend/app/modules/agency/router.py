@@ -39,6 +39,8 @@ class AgencyProfileUpdateRequest(BaseModel):
 class AgentCreateRequest(BaseModel):
     name: str
     password: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
 
 class AgentResponse(BaseModel):
     id: int
@@ -198,9 +200,12 @@ def create_agent(req: AgentCreateRequest, current_user: dict = Depends(get_curre
     # Extract domain from agency email
     domain = agency.email.split("@")[-1] if "@" in agency.email else "capco.com"
     
-    # Deriving agent's email: lowercase_name@domain
-    username = req.name.lower().strip().replace(" ", "")
-    agent_email = f"{username}@{domain}"
+    # Deriving or using provided agent's email
+    if req.email and req.email.strip():
+        agent_email = req.email.strip().lower()
+    else:
+        username = req.name.lower().strip().replace(" ", "")
+        agent_email = f"{username}@{domain}"
     
     # Check if agent email already exists in auth.users or users
     user_exists = False

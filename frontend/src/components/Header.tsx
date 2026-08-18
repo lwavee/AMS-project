@@ -107,23 +107,23 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
   ];
 
   return (
-    <header className="bg-white border-b border-[#e5ddd5] h-16 px-6 flex items-center justify-between sticky top-0 z-50 shadow-sm select-none">
+    <header className="bg-white border-b border-[#e5ddd5] h-16 px-3 sm:px-6 flex items-center justify-between sticky top-0 z-50 shadow-sm select-none">
       
       {/* Brand Logo & Title */}
       <div 
         onClick={() => router.push(userRole === "admin" ? "/admin/dashboard" : "/agency/dashboard")}
-        className="flex items-center gap-3 cursor-pointer"
+        className="flex items-center gap-2 sm:gap-3 cursor-pointer shrink-0"
       >
         <img 
           src="/sterling-logo.JPG" 
           alt="Sterling Wholesale Insurance" 
-          className="h-9 w-auto object-contain bg-white rounded"
+          className="h-7 sm:h-9 w-auto object-contain bg-white rounded"
         />
         <div className="flex flex-col">
-          <span className="font-extrabold text-lg tracking-tight text-[#2d2a26] leading-tight font-sans">
+          <span className="font-extrabold text-sm sm:text-lg tracking-tight text-[#2d2a26] leading-tight font-sans">
             Sterling AMS
           </span>
-          <span className="text-[10px] uppercase tracking-widest text-[#9A8B7A] font-bold leading-none mt-0.5">
+          <span className="hidden sm:block text-[10px] uppercase tracking-widest text-[#9A8B7A] font-bold leading-none mt-0.5">
             Wholesale Insurance
           </span>
         </div>

@@ -5,6 +5,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Modal from "../../../components/Modal";
 import Sidebar from "../../../components/Sidebar";
+import { confirmDialog } from "@/components/ToastProvider";
 import SearchBar, { AdvancedFilterState, defaultFilterState } from "../../../components/SearchBar";
 import CustomerToolbar from "../../../components/CustomerToolbar";
 import CustomerTable from "../../../components/CustomerTable";
@@ -71,6 +72,8 @@ export default function Page() {
   });
   const [addAgentForm, setAddAgentForm] = useState({
     name: "",
+    email: "",
+    phone: "",
     password: ""
   });
   const [agentFormLoading, setAgentFormLoading] = useState(false);
@@ -260,8 +263,9 @@ export default function Page() {
   const handleDeleteClick = async () => {
     if (selectedCustomers.length > 0) {
       const selectedNames = selectedCustomers.map(c => c.name).join(", ");
-      const confirmDelete = window.confirm(
-        `Sterling AMS - Delete Record\n\nAre you sure you want to delete the selected customer(s)?\n- ${selectedNames}`
+      const confirmDelete = await confirmDialog(
+        `Are you sure you want to delete the selected customer(s)?\n${selectedNames}`,
+        "Delete Record"
       );
       if (confirmDelete) {
         setIsLoading(true);
@@ -419,8 +423,8 @@ export default function Page() {
     setAgentFormError("");
     setAgentFormSuccess("");
 
-    if (!addAgentForm.name || !addAgentForm.password) {
-      setAgentFormError("Agent Name and Password are required.");
+    if (!addAgentForm.name || !addAgentForm.email || !addAgentForm.password) {
+      setAgentFormError("Agent Name, Email, and Password are required.");
       setAgentFormLoading(false);
       return;
     }
@@ -442,7 +446,7 @@ export default function Page() {
       }
 
       setAgentFormSuccess("Agent created successfully!");
-      setAddAgentForm({ name: "", password: "" });
+      setAddAgentForm({ name: "", email: "", phone: "", password: "" });
       fetchAgents();
       // Auto close modal after a short delay
       setTimeout(() => {
@@ -457,8 +461,9 @@ export default function Page() {
   };
 
   const handleDeleteAgent = async (agentId: number, agentName: string) => {
-    const confirmDelete = window.confirm(
-      `Sterling Portal - Delete Agent\n\nAre you sure you want to permanently delete agent "${agentName}"?\nThis agent will no longer be able to log in.`
+    const confirmDelete = await confirmDialog(
+      `Are you sure you want to permanently delete agent "${agentName}"? This agent will no longer be able to log in.`,
+      "Delete Agent"
     );
     if (!confirmDelete) return;
 
@@ -487,10 +492,10 @@ export default function Page() {
     const domain = agencyProfile?.domain || "capco.com";
     return (
       <div className="space-y-6 animate-in fade-in duration-200">
-        
+
         {/* 2-Column Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
+
           {/* Left Column: Agency Profile details */}
           <div className="bg-white border border-border-main rounded-2xl p-6 shadow-sm flex flex-col justify-between text-left">
             <div>
@@ -580,10 +585,10 @@ export default function Page() {
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Manage your agents ({agents.length})</p>
                 </div>
               </div>
-              
+
               <button
                 onClick={() => {
-                  setAddAgentForm({ name: "", password: "" });
+                  setAddAgentForm({ name: "", email: "", phone: "", password: "" });
                   setAgentFormError("");
                   setAgentFormSuccess("");
                   setIsAddAgentModalOpen(true);
@@ -661,8 +666,8 @@ export default function Page() {
     <div className="flex flex-col bg-bg-base min-h-screen text-text-main font-sans select-none h-screen relative">
 
       {/* Modern Top Header (DashboardHeader) */}
-      <Header 
-        onToggleDrawer={() => setDrawerOpen(true)} 
+      <Header
+        onToggleDrawer={() => setDrawerOpen(true)}
         onProfileClick={() => {
           if (userRole === "agency") {
             router.push("/agency/agency-profile");
@@ -696,14 +701,14 @@ export default function Page() {
         <main className="flex-1 flex flex-col min-w-0 bg-bg-base overflow-hidden">
 
           {/* Premium Page Title Bar */}
-          <div className="px-6 pt-2 pb-2 flex items-center justify-between shrink-0 select-none">
+          <div className="px-3 sm:px-6 pt-2 pb-2 flex items-center justify-between shrink-0 select-none">
             <h1 className="text-lg font-bold text-text-main">
               {currentTab === "Agent Control" && userRole === "agency" ? "Agency Profile & Agent Control" : "Customer Center"}
             </h1>
           </div>
 
           {/* Main Tab Content */}
-          <div className="flex-1 px-6 pb-6 pt-0 overflow-y-auto space-y-2 min-h-0">
+          <div className="flex-1 px-3 sm:px-6 pb-6 pt-0 overflow-y-auto space-y-2 min-h-0">
             {currentTab === "Agent Control" && userRole === "agency" ? (
               renderAgentControlView()
             ) : (
@@ -1004,7 +1009,7 @@ export default function Page() {
               {/* Form */}
               <form onSubmit={handleUpdateProfileSubmit} className="p-5 space-y-4 flex-1 overflow-y-auto max-h-[75vh]">
                 <div className="grid grid-cols-2 gap-4 text-left">
-                  
+
                   {/* Agency Name */}
                   <div className="col-span-2 flex flex-col gap-1.5">
                     <label className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider">Agency Name <span className="text-danger">*</span></label>
@@ -1117,7 +1122,7 @@ export default function Page() {
 
               {/* Form */}
               <form onSubmit={handleCreateAgentSubmit} className="p-5 space-y-4 text-left">
-                
+
                 {agentFormError && (
                   <div className="bg-danger/5 border border-danger/20 text-danger text-xs font-semibold rounded-xl p-3 flex items-center gap-2">
                     <AlertCircle size={14} />
@@ -1134,25 +1139,48 @@ export default function Page() {
 
                 {/* Agent Name */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider">Employee Name <span className="text-danger">*</span></label>
+                  <label className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider">Agent Name <span className="text-danger">*</span></label>
                   <input
                     type="text"
                     required
                     value={addAgentForm.name}
-                    onChange={(e) => setAddAgentForm({ ...addAgentForm, name: e.target.value })}
+                    onChange={(e) => {
+                      const newName = e.target.value;
+                      const derivedEmail = newName.trim() ? `${newName.toLowerCase().trim().replace(/\s+/g, '')}@${agencyProfile?.domain || 'capco.com'}` : "";
+                      setAddAgentForm((prev) => ({
+                        ...prev,
+                        name: newName,
+                        email: prev.email && !prev.email.includes('@') ? derivedEmail : prev.email || derivedEmail
+                      }));
+                    }}
                     className="w-full h-10 px-3.5 border border-border-main rounded-xl text-sm bg-white text-text-main focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all shadow-sm"
-                    placeholder="e.g. Kapil"
+                    placeholder="e.g. Kapil Sharma"
                   />
-                  
-                  {/* Derived email preview! */}
-                  {addAgentForm.name.trim() && (
-                    <div className="mt-1 bg-secondary/40 border border-border-main/50 rounded-lg px-3 py-2 flex flex-col">
-                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Derived Login Email:</span>
-                      <span className="text-xs font-mono font-bold text-primary mt-0.5">
-                        {addAgentForm.name.toLowerCase().trim().replace(/\s+/g, '')}@{agencyProfile?.domain || 'capco.com'}
-                      </span>
-                    </div>
-                  )}
+                </div>
+
+                {/* Agent Email */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider">Agent Email <span className="text-danger">*</span></label>
+                  <input
+                    type="email"
+                    required
+                    value={addAgentForm.email}
+                    onChange={(e) => setAddAgentForm({ ...addAgentForm, email: e.target.value })}
+                    className="w-full h-10 px-3.5 border border-border-main rounded-xl text-sm bg-white text-text-main focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all shadow-sm"
+                    placeholder={`e.g. kapil@${agencyProfile?.domain || 'capco.com'}`}
+                  />
+                </div>
+
+                {/* Contact Number */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider">Contact Number</label>
+                  <input
+                    type="tel"
+                    value={addAgentForm.phone}
+                    onChange={(e) => setAddAgentForm({ ...addAgentForm, phone: e.target.value })}
+                    className="w-full h-10 px-3.5 border border-border-main rounded-xl text-sm bg-white text-text-main focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all shadow-sm"
+                    placeholder="e.g. (555) 019-2834"
+                  />
                 </div>
 
                 {/* Password */}

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "../../../lib/config";
 import Header from "../../../components/Header";
+import { confirmDialog } from "@/components/ToastProvider";
 import { 
   Plus, 
   Trash2, 
@@ -164,7 +165,8 @@ export default function AdminDashboardPage() {
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!confirm("Are you sure you want to permanently delete this user? This action cannot be undone.")) return;
+    const confirmed = await confirmDialog("Are you sure you want to permanently delete this user? This action cannot be undone.", "Delete User");
+    if (!confirmed) return;
 
     setModalLoading(true);
     setModalError("");

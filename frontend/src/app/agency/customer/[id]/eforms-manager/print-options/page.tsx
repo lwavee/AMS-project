@@ -7,6 +7,8 @@ import {
   X, Printer, CheckSquare, Square, MinusSquare, PlusSquare, FileText, Loader2
 } from "lucide-react";
 import { PDFDocument } from "pdf-lib";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 interface TreeNode {
   id: string;
@@ -469,48 +471,61 @@ export default function PrintOptionsPage() {
     return items;
   };
 
-  const getHtmlFromIframe = async (url: string): Promise<string> => {
+  const getPdfBufferFromIframe = async (url: string): Promise<ArrayBuffer> => {
     return new Promise((resolve, reject) => {
       const iframe = document.createElement("iframe");
       iframe.style.position = "fixed";
       iframe.style.top = "-9999px";
+      iframe.style.left = "-9999px";
       iframe.style.width = "850px";
       iframe.style.height = "1100px";
       iframe.src = url;
-      
+
       let isFinished = false;
 
       const finishIframe = async () => {
         if (isFinished) return;
         isFinished = true;
         try {
-          const doc = iframe.contentDocument;
-          if (!doc) throw new Error("No iframe document");
-          
-          // Convert all img src to base64 so CustomJS can render them
-          const imgs = doc.querySelectorAll('img');
-          for (const img of Array.from(imgs)) {
-            if (img.src && !img.src.startsWith('data:')) {
-              try {
-                const imgRes = await fetch(img.src);
-                const blob = await imgRes.blob();
-                const base64 = await new Promise<string>((res) => {
-                  const reader = new FileReader();
-                  reader.onloadend = () => res(reader.result as string);
-                  reader.readAsDataURL(blob);
-                });
-                img.src = base64;
-              } catch (e) {
-                console.error("Failed to convert img to base64", e);
-              }
-            }
-          }
+          const doc = iframe.contentDocument || iframe.contentWindow?.document;
+          if (!doc || !doc.body) throw new Error("Iframe document not accessible");
 
-          const html = doc.documentElement.outerHTML;
+          const imgs = Array.from(doc.querySelectorAll("img"));
+          await Promise.all(
+            imgs.map(
+              (img) =>
+                new Promise((res) => {
+                  if (img.complete) return res(null);
+                  img.onload = () => res(null);
+                  img.onerror = () => res(null);
+                })
+            )
+          );
+
+          const canvas = await html2canvas(doc.body, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            width: 850,
+            windowWidth: 850,
+          });
+
+          const imgData = canvas.toDataURL("image/jpeg", 0.95);
+          const pdf = new jsPDF({
+            orientation: "portrait",
+            unit: "pt",
+            format: "letter",
+          });
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = pdf.internal.pageSize.getHeight();
+          pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
+
+          const pdfArrayBuffer = pdf.output("arraybuffer");
+
           if (document.body.contains(iframe)) {
             document.body.removeChild(iframe);
           }
-          resolve(html);
+          resolve(pdfArrayBuffer);
         } catch (err) {
           if (document.body.contains(iframe)) {
             document.body.removeChild(iframe);
@@ -520,36 +535,21 @@ export default function PrintOptionsPage() {
       };
 
       const onMessage = (e: MessageEvent) => {
-        if (e.data?.type === 'ACORD_FORM_READY') {
-          window.removeEventListener('message', onMessage);
-          finishIframe();
+        if (e.data?.type === "ACORD_FORM_READY") {
+          window.removeEventListener("message", onMessage);
+          setTimeout(finishIframe, 300);
         }
       };
 
-      window.addEventListener('message', onMessage);
+      window.addEventListener("message", onMessage);
 
-      // Fallback timeout in case the message never fires
       setTimeout(() => {
-        window.removeEventListener('message', onMessage);
+        window.removeEventListener("message", onMessage);
         finishIframe();
-      }, 4000);
+      }, 3500);
 
       document.body.appendChild(iframe);
     });
-  };
-
-  const fetchPdfBuffer = async (html: string): Promise<ArrayBuffer> => {
-    const token = localStorage.getItem("token");
-    const res = await fetch(`${API_BASE_URL}/api/pdf/generate`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify({ html })
-    });
-    if (!res.ok) throw new Error(`Backend API Error: ${res.statusText}`);
-    return await res.arrayBuffer();
   };
 
   const fetchAttachmentBuffer = async (docId: string): Promise<{ buffer: ArrayBuffer, type: string }> => {
@@ -565,9 +565,8 @@ export default function PrintOptionsPage() {
   };
 
   const processItemIntoPdf = async (item: any, targetPdf: PDFDocument, includeAttachments: boolean) => {
-    // 1. Get HTML & Convert to PDF
-    const html = await getHtmlFromIframe(item.url);
-    const formPdfBuffer = await fetchPdfBuffer(html);
+    // 1. Convert form iframe directly to PDF ArrayBuffer via client-side html2canvas & jsPDF
+    const formPdfBuffer = await getPdfBufferFromIframe(item.url);
     
     // 2. Load Form PDF and copy pages
     const formPdf = await PDFDocument.load(formPdfBuffer);
