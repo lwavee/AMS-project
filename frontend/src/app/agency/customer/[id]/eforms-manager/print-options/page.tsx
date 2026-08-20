@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { API_BASE_URL } from "@/lib/config";
 import { useParams, useRouter } from "next/navigation";
+import { showToast } from "@/components/ToastProvider";
 import {
   X, Printer, CheckSquare, Square, MinusSquare, PlusSquare, FileText, Loader2
 } from "lucide-react";
@@ -571,7 +572,7 @@ export default function PrintOptionsPage() {
     // 2. Load Form PDF and copy pages
     const formPdf = await PDFDocument.load(formPdfBuffer);
     const copiedPages = await targetPdf.copyPages(formPdf, formPdf.getPageIndices());
-    copiedPages.forEach(page => targetPdf.addPage(page));
+    copiedPages.forEach((page: any) => targetPdf.addPage(page));
 
     // 3. Attachments
     if (includeAttachments && item.attachments.length > 0) {
@@ -581,7 +582,7 @@ export default function PrintOptionsPage() {
           if (type.includes("pdf")) {
             const attPdf = await PDFDocument.load(buffer);
             const attPages = await targetPdf.copyPages(attPdf, attPdf.getPageIndices());
-            attPages.forEach(page => targetPdf.addPage(page));
+            attPages.forEach((page: any) => targetPdf.addPage(page));
           } else if (type.includes("image")) {
             let image;
             if (type.includes("png")) image = await targetPdf.embedPng(buffer);
@@ -601,7 +602,7 @@ export default function PrintOptionsPage() {
     const items = getSelectedItems();
     console.log("handleSavePdf -> items:", items);
     
-    if (items.length === 0) return alert("Please select at least one form to print.");
+    if (items.length === 0) { showToast("Please select at least one form to print.", "warning"); return; }
     
     setIsProcessing(true);
     const includeAttachments = printOption === "overflow";
@@ -642,7 +643,7 @@ export default function PrintOptionsPage() {
       
     } catch (err) {
       console.error(err);
-      alert("Error generating PDF. Check console for details.");
+      showToast("Error generating PDF. Check console for details.", "error");
     } finally {
       setIsProcessing(false);
     }
@@ -652,11 +653,11 @@ export default function PrintOptionsPage() {
     const items = getSelectedItems();
     console.log("handlePrint -> items:", items);
     
-    if (items.length === 0) return alert("Please select at least one form to print.");
+    if (items.length === 0) { showToast("Please select at least one form to print.", "warning"); return; }
     
     // For native print, open all URLs in a single hidden iframe separated by page breaks
     const printWindow = window.open("", "_blank", "width=850,height=1100");
-    if (!printWindow) return alert("Popup blocked!");
+    if (!printWindow) { showToast("Popup blocked!", "error"); return; }
     
     printWindow.document.write(`
       <html>

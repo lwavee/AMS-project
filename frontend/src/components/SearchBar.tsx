@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Search, ChevronDown, ChevronUp, RefreshCw, SlidersHorizontal } from "lucide-react";
+import { showToast } from "@/components/ToastProvider";
 
 export interface AdvancedFilterState {
   searchQuery: string;
@@ -111,7 +112,7 @@ export default function SearchBar({
     localStorage.setItem("sterling_saved_views", JSON.stringify(updatedViews));
     setCurrentViewName(nameToSave);
     setNewViewName("");
-    alert(`View "${nameToSave}" saved successfully!`);
+    showToast(`View "${nameToSave}" saved successfully!`, "success");
   };
 
   const handleApplyView = () => {

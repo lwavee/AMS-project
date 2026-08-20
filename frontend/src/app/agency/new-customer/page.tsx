@@ -5,6 +5,8 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Info } from "lucide-react";
 import { API_BASE_URL } from "../../../lib/config";
+import { showToast } from "@/components/ToastProvider";
+
 
 // ─── Helpers ────────────────────────────────────────────────
 const inputCls =
@@ -241,7 +243,7 @@ export default function NewCustomerPage() {
             }
             if (andClose) router.push("/agency/dashboard");
             else {
-                alert("Customer saved successfully!");
+                showToast("Customer saved successfully!", "success");
                 setF({ ...defaultForm });
                 setServiceGroups([]);
                 setContacts([]);

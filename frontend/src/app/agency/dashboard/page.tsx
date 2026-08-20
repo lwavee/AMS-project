@@ -5,7 +5,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Modal from "../../../components/Modal";
 import Sidebar from "../../../components/Sidebar";
-import { confirmDialog } from "@/components/ToastProvider";
+import { confirmDialog, showToast } from "@/components/ToastProvider";
 import SearchBar, { AdvancedFilterState, defaultFilterState } from "../../../components/SearchBar";
 import CustomerToolbar from "../../../components/CustomerToolbar";
 import CustomerTable from "../../../components/CustomerTable";
@@ -282,7 +282,7 @@ export default function Page() {
           await fetchCustomers();
           setSelectedRowIds({});
         } catch (error) {
-          alert("Error deleting customer: " + error);
+          showToast("Error deleting customer: " + error, "error");
         } finally {
           setIsLoading(false);
         }
@@ -346,7 +346,7 @@ export default function Page() {
       setIsNewModalOpen(false);
       setSelectedRowIds({});
     } catch (error) {
-      alert("Error creating customer: " + error);
+      showToast("Error creating customer: " + error, "error");
     } finally {
       setIsLoading(false);
     }
@@ -387,7 +387,7 @@ export default function Page() {
       setIsEditModalOpen(false);
       setSelectedRowIds({});
     } catch (error) {
-      alert("Error updating customer: " + error);
+      showToast("Error updating customer: " + error, "error");
     } finally {
       setIsLoading(false);
     }
@@ -411,7 +411,7 @@ export default function Page() {
       setAgencyProfile(data);
       setIsEditProfileModalOpen(false);
     } catch (error: any) {
-      alert("Error updating profile: " + error.message);
+      showToast("Error updating profile: " + error.message, "error");
     } finally {
       setIsLoading(false);
     }
@@ -482,7 +482,7 @@ export default function Page() {
       }
       fetchAgents();
     } catch (error: any) {
-      alert("Error deleting agent: " + error.message);
+      showToast("Error deleting agent: " + error.message, "error");
     } finally {
       setIsLoading(false);
     }

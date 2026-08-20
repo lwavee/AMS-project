@@ -1078,6 +1078,1100 @@ const INSURANCE_WRITING_COMPANIES: Record<string, string[]> = {
   ]
 };
 
+const BROKERAGE_PARENT_COMPANIES: string[] = [
+  "Abacus Insurance, Brokerage Company, ABA",
+  "Abram Interstate Insurance Services, Brokerage Company, ABR",
+  "Affinity Nonprofits, Brokerage Company, AFF",
+  "American Surplus Lines Agency, Brokerage Company, ASL",
+  "AmWins Access Insurance Services, Brokerage Company, AMW",
+  "AON Association Services, Brokerage Company, AON",
+  "Arrowhead General Insurance Agency Inc., Brokerage Company",
+  "Atlas General Insurance Services, Brokerage Company, ATL",
+  "Bass Underwriters Inc., Brokerage Company, BAS",
+  "Bellingham Insurance Services, Brokerage Company, BEL",
+  "Berkshire Hathaway Grp, Brokerage Company, BER",
+  "biBerk A Berkshire Hathaway Company, Brokerage Company, BIE",
+  "Builders and Tradesmen (BTIS), Brokerage Company, BTI",
+  "Burns & Wilcox, Brokerage Company, BUR",
+  "BX Bond Exchange, Brokerage Company, BXB",
+  "CBIC, Brokerage Company, CBIC",
+  "Century Surety Company, Brokerage Company, CEN",
+  "Charity First Insurance Services, Inc., Brokerage Company, CHA",
+  "Cluett Commercial Insurance, Brokerage Company, CLU",
+  "Colonial General Insurance Agency, Inc., Brokerage Company, CGA",
+  "Commodore Insurance, Brokerage Company, CMM",
+  "Cover Whale Insurance Solutions, LLC (CA), Brokerage Company",
+  "CRC Group, Brokerage Company, CRC",
+  "Delos Insurance Solutions Backed  (CA), Brokerage Company, DSB",
+  "DGA Insurance Services, LLC, Brokerage Company, DGA",
+  "Elite MGA, Brokerage Company, EMG",
+  "Evergreen Insurance Managers, Inc., Brokerage Company, EVG",
+  "Evolution Insurance Brokers, LLC, Brokerage Company, EVO",
+  "Gateway Underwriters Agency, Brokerage Company, GAT",
+  "Gorst & Compass Insurance, Brokerage Company, GOR",
+  "Greenwood General Insurance Agency, Brokerage Company, GRN",
+  "GSU Insurance Services, Brokerage Company, GSU",
+  "Hawkeye Wholesale Insurance Services Inc., Brokerage Company",
+  "Hiscox Ins Co Inc, Brokerage Company, HIS",
+  "Hull & Company LLC, Brokerage Company, HUC",
+  "Ian H. Graham Insurance, Brokerage Company, IAN",
+  "ICAT Earthquake (residential only), Brokerage Company, ICA",
+  "IES Indemnity, Brokerage Company, IES",
+  "Insco, Brokerage Company, INC",
+  "International Beauty Brokerage, Inc. (IBBI), Brokerage Company",
+  "ISC, Brokerage Company, ISC",
+  "J E Brown, Brokerage Company, JEB",
+  "J R Olsen, Brokerage Company, JRO",
+  "Jencap Speciality Insurance Services, Brokerage Company, JEN",
+  "K&K Insurance Group, Inc., Brokerage Company, KAK",
+  "Keating Insurance, Brokerage Company, KEA",
+  "KW Specialty Insurance Company, Brokerage Company, KWS",
+  "Lloyd's of London, Brokerage Company, LOL",
+  "London Underwriters, Brokerage Company, LON",
+  "Mini Co Insurance Agency LLC, Brokerage Company, MIN",
+  "Monarch E & S Insurance Services, Brokerage Company, MON",
+  "Morstan General Agency, Brokerage Company, MOR",
+  "Myers & Stevens, Brokerage Company, MYE",
+  "Nationwide Brokerage Solutions, Brokerage Company, NBS",
+  "Navigators Insurance Co., Brokerage Company, NAV",
+  "NCCI, Brokerage Company, NCC",
+  "NCIP - Natural Catastrophe Insurance Program, Brokerage Company",
+  "New Age Underwriter's Agency, Inc, Brokerage Company, NAU",
+  "NIF Group, Brokerage Company, NIF",
+  "Novatae Risk Group, Brokerage Company, NVT",
+  "Novus Underwriters, Inc., Brokerage Company, NOV",
+  "One80, Brokerage Company, One80",
+  "Osprey Underwriters Inc., Brokerage Company, OSP",
+  "Pacific Coast E&S, Brokerage Company, PCE",
+  "Pacific Excess Insurance Marketing Inc, Brokerage Company, PEX",
+  "Paragon Insurance Holdings, Brokerage Company, PAR",
+  "PersonalUmbrella.com, Brokerage Company, PUM",
+  "Primex Insurance Brokers, Brokerage Company, PIB",
+  "Professional Program Insurance Brokerage, Brokerage Company",
+  "R.E. Chaix & Associates, Brokerage Company, REC",
+  "RIC Insurance General Agency Inc., Brokerage Company, RIC",
+  "Risk Exchange Insurance Services, Inc., Brokerage Company, REX",
+  "Risk Placement Services, Inc, Brokerage Company, RPS",
+  "River Valley Underwriters (RVU), Brokerage Company, RVU",
+  "Rivington, Brokerage Company, RIV",
+  "Robert Moreno Insurance Services (CA), Brokerage Company, RC",
+  "RSG National Specialty Programs, Brokerage Company, RSG",
+  "RSI, Brokerage Company, RSI",
+  "RT- Specialty, Brokerage Company, RTS",
+  "S Phillips Surety, Brokerage Company, SPS",
+  "Scottish American, Brokerage Company, SAM",
+  "Shield Commercial Insurance Services, Brokerage Company, SHI",
+  "SIAA, Brokerage Company, SIA",
+  "SIS, Brokerage Company, SIS",
+  "Sterling Insurance Services LLC, Brokerage Company, SISL",
+  "Superior Access/Bolt Access, Brokerage Company, SUP",
+  "Supression Pro Insurance Services, Brokerage Company, SPP",
+  "TCB Insurance Programs, Brokerage Company, TCB",
+  "Texas Security General Insurance Agency, LLC, Brokerage Compa",
+  "The Mechanic Group, Brokerage Company, TMG",
+  "Underwriters at Lloyd's London, Brokerage Company, ULL",
+  "Union General Insurance Services, Inc., Brokerage Company, UG",
+  "USG, Brokerage Company, USG1",
+  "Western Security Surplus Brokerage, Brokerage Company, WSS",
+  "Wholesure Solutions, LLC ( Appalachians ), Brokerage Company",
+  "Word and Brown, Brokerage Company, WAB",
+  "Worldwide Facilities, Inc., Brokerage Company, WOR",
+  "XS Specialty LLC, Brokerage Company, XSS"
+];
+
+const BROKERAGE_WRITING_COMPANIES: Record<string, string[]> = {
+  "Abacus Insurance, Brokerage Company, ABA": [
+    "Abacus Insurance, Brokerage Company, ABA",
+    "AGCS Marine Insurance Company, Writing Company, ABA003",
+    "American Guarantee and Liability Insurance Comp, Writing Company",
+    "Zurich American Insurance Company, Writing Company, ABA002"
+  ],
+  "Abram Interstate Insurance Services, Brokerage Company, ABR": [
+    "Abram Interstate Insurance Services, Brokerage Company, ABR",
+    "Liberty Mutual Insurance Company, Writing Company, ABR003",
+    "Travelers Property Casualty Co of Amer, Writing Company, ABR002",
+    "Underwriters at Lloyd's London, Writing Company, ABR001"
+  ],
+  "Affinity Nonprofits, Brokerage Company, AFF": [
+    "Affinity Nonprofits, Brokerage Company, AFF",
+    "Arch Insurance Company, Writing Company, AFF002",
+    "Philadelphia Indemnity Insurance Companys, Writing Company"
+  ],
+  "American Surplus Lines Agency, Brokerage Company, ASL": [
+    "American Surplus Lines Agency, Brokerage Company, ASL",
+    "United States Liability Insurance Company, Writing Company"
+  ],
+  "AmWins Access Insurance Services, Brokerage Company, AMW": [
+    "Accelerant Specialty Insurance Company, Writing Company",
+    "ACE Property & Casualty Insurance Company, Writing Company",
+    "Admiral Insurance Company, Writing Company, AMW018",
+    "AmWins Access Insurance Services, Brokerage Company, AMW",
+    "Artisan and Truckers Casualty Co, Writing Company, AMW032",
+    "AXIS Surplus Insurance Company, Writing Company, AMW028",
+    "Capitol Specialty Insurance Corp., Writing Company, AMW039",
+    "Century Surety, Writing Company, AMW010",
+    "Colony Insurance Company, Writing Company, AMW041",
+    "Covington Specialty Ins Co, Writing Company, AMW001",
+    "Employer's Preferred Ins Co., Writing Company, AMW026",
+    "Evanston Insurance Company, Writing Company, AMW002",
+    "Gerber Life Insurance Company, Writing Company, AMW024",
+    "Gotham Insurance Company, Writing Company, AMW021",
+    "Great American E&S Insurance Company, Writing Company",
+    "Great American Insurance Company, Writing Company, AMW005",
+    "Great Divide Insurance Company, Writing Company, AMW031",
+    "Houston Specialty Insurance Company, Writing Company",
+    "IES Indemnity Excess & Surplus Agency Inc, Writing Company",
+    "Infinity Commercial Auto, Writing Company, AMW014",
+    "James River Insurance Company, Writing Company, AMW030",
+    "Kinsale Insurance Company, Writing Company, AMW029",
+    "Liberty Mutual Insurance Company, Writing Company, AMW023",
+    "Maxum Indemnity Company, Writing Company, AMW006",
+    "Mesa Underwriters Specialty Insurance Company, Writing Company",
+    "Mount Vernon Fire Insurance Company, Writing Company",
+    "Mount Vernon Specialty Ins Co, Writing Company, AMW007",
+    "Mt. Hawley Insurance Company, Writing Company, AMW020",
+    "National Liability & Fire Ins. Co., Writing Company, AMW013",
+    "Nautilus Insurance Company, Writing Company, AMW004",
+    "Ohio Security Insurance Company, Writing Company, AMW025",
+    "Penn-Star Insurance Company, Writing Company, AMW011",
+    "Progressive Casualty Insurance Company, Writing Company",
+    "RLI Insurance Company, Writing Company, AMW037",
+    "Scottsdale Insurance Company, Writing Company, AMW003",
+    "StarNet Insurance Company, Writing Company, AMW043",
+    "State Compensation Insurance Fund, Writing Company, AMW017",
+    "The Pie Insurance Company, Writing Company, AMW015",
+    "Travelers Casualty and Surety Company of America, Writing Company",
+    "Underwriters at Lloyd's London, Writing Company, AMW038",
+    "United Financial Casualty Company, Writing Company, AMW033",
+    "United States Liability Insurance Co., Writing Company, AMW008",
+    "Westchester Specialty Insurance Services, Inc., Writing Company",
+    "Western World Insurance Company, Writing Company, AMW019"
+  ],
+  "AON Association Services, Brokerage Company, AON": [
+    "AON Association Services, Brokerage Company, AON",
+    "Arch Ins Co, Writing Company, AON002",
+    "Granite State Insurance Co, Writing Company, AON001",
+    "The Hartford, Writing Company, AON003",
+    "Twin City Fire Insurance Company, Writing Company, AON004"
+  ],
+  "Arrowhead General Insurance Agency Inc., Brokerage Company": [
+    "Arrowhead General Insurance Agency Inc., Brokerage Company, AR",
+    "Everest National Insurance Company, Writing Company, ARR001",
+    "Integon National Insurance Company, Writing Company, ARR002"
+  ],
+  "Atlas General Insurance Services, Brokerage Company, ATL": [
+    "Accelerant Specialty Insurance Co, Writing Company, ATL002",
+    "Accident Fund General Insurance Company, Writing Company",
+    "Accredited Surety & Casualty Co, Writing Company, ATL004",
+    "AmGuard Insurance Company, Writing Company, ATL015",
+    "Atlas General Insurance Services, Brokerage Company, ATL",
+    "Century Surety Insurance Company, Writing Company, ATL001",
+    "Endurance Assurance Corporation, Writing Company, ATL010",
+    "Falls Lake Fire & Casualty Co, Writing Company, ATL014",
+    "Kinsale Insurance Company, Writing Company, ATL011",
+    "Mesa Underwriters Specialty Insurance Co., Writing Company",
+    "PennStar, Writing Company, ATL007",
+    "Rockingham Casualty Company, Writing Company, ATL012",
+    "Rockingham Insurance Company, Writing Company, ATL008",
+    "Rockingham Specialty, Writing Company, ATL013",
+    "StarStone National Insurance Co., Writing Company, ATL005",
+    "Trisura Specialty Insurance Company, Writing Company, ATL009"
+  ],
+  "Bass Underwriters Inc., Brokerage Company, BAS": [
+    "AXIS Surplus Insurance Company, Writing Company, BAS004",
+    "Bass Underwriters Inc., Brokerage Company, BAS",
+    "Burlington Insurance Company, Writing Company, BAS003",
+    "Century Surety Insurance, Writing Company, BAS002",
+    "James River Insurance Company, Writing Company, BAS005",
+    "Penn-America Insurance Company, Writing Company, BAS001"
+  ],
+  "Bellingham Insurance Services, Brokerage Company, BEL": [
+    "Bellingham Insurance Services, Brokerage Company, BEL",
+    "Hudson Insurance Company, Writing Company, BEL001",
+    "Underwriters at Lloyd's of London, Writing Company, BEL002"
+  ],
+  "Berkshire Hathaway Grp, Brokerage Company, BER": [
+    "AmGuard Insurance Company, Writing Company, BER001",
+    "Berkshire Hathaway Assur Corp, Writing Company, BER006",
+    "Berkshire Hathaway Grp, Brokerage Company, BER",
+    "Berkshire Hathaway Specialty Ins Co, Writing Company, BER007",
+    "Continental Divide Insurance Company, Writing Company, BER008",
+    "National Liability & Fire Ins. Co., Writing Company, BER005",
+    "Oak River Insurance Company, Writing Company, BER009",
+    "Philadelphia Reins Corp, Writing Company, BER010",
+    "The Medical Protective Company, Writing Company, BER002",
+    "United States Liability Insurance Co., Writing Company, BER004",
+    "Wellfleet Insurance Company, Writing Company, BER003"
+  ],
+  "biBerk A Berkshire Hathaway Company, Brokerage Company, BIE": [
+    "Berkshire Hathaway Direct Insurance Company, Writing Company",
+    "biBerk A Berkshire Hathaway Company, Brokerage Company, BIB",
+    "National Liability & Fire Insurance Company, Writing Company",
+    "Wellfleet Insurance Company, Writing Company, BIB002"
+  ],
+  "Builders and Tradesmen (BTIS), Brokerage Company, BTI": [
+    "Accredited Surety & Casualty Co, Writing Company, BTI013",
+    "AIG Insurance Company, Writing Company, BTI016",
+    "AM Specialty Insurance, Writing Company, BTI043",
+    "American Casualty Company of Reading, Pennsylvania, Writing Company",
+    "AmGUARD Insurance Company, Writing Company, BTI061",
+    "AmTrust, Writing Company, BTI004",
+    "Associated Industries Ins Co Inc, Writing Company, BTI051",
+    "AXIS Surplus Insurance Company, Writing Company, BTI060",
+    "Builders and Tradesmen (BTIS), Brokerage Company, BTI",
+    "CBIC, Writing Company, BTI003",
+    "Certain Underwriters at Lloyd's, London, Writing Company, BTI042",
+    "Clear Blue Speciality Insurance Company, Writing Company",
+    "Clear Spring Property and Casualty Company, Writing Company",
+    "CNA, Writing Company, BTI017",
+    "Continental Casualty Company, Writing Company, BTI011",
+    "Contractors Bonding and Insurance Company, Writing Company",
+    "Crum & Forster Specialty Insurance Company, Writing Company",
+    "Employers Preferred Insurance Co., Writing Company, BTI044",
+    "Evanston Insurance Company, Writing Company, BTI006",
+    "Great American Insurance Company, Writing Company, BTI025",
+    "Gridiron Insurance Underwriter 0166, Writing Company, BTI038",
+    "Hartford of the Midwest, Writing Company, BTI018",
+    "Hiscox Insurance Company, Writing Company, BTI037",
+    "Infinity Commercial Auto, Writing Company, BTI027",
+    "Insurance Company of the West, Writing Company, BTI039",
+    "Integon National Insurance Company, Writing Company, BTI031",
+    "Integon Preferred Insurance Company, Writing Company, BTI030",
+    "Liberty Mutual, Writing Company, BTI033",
+    "Lloyds of London, Writing Company, BTI019",
+    "Mapfre Ins Co, Writing Company, BTI052",
+    "Merchants Bonding Co A Mut, Writing Company, BTI008",
+    "Mount Vernon Fire Insurance Company, Writing Company, BTI049",
+    "Mt. Hawley Insurance Company, Writing Company, BTI007",
+    "National Fire Insurance Co. of Hartford, Writing Company, BTI053",
+    "National General, Writing Company, BTI028",
+    "Nationwide Mutual Insurance Company, Writing Company, BTI012",
+    "Navigators Insurance Company, Writing Company, BTI023",
+    "Next Insurance Company, Writing Company, BTI024",
+    "Ohio Security Insurance Company, Writing Company, BTI029",
+    "Old Replublic Surety Company, Writing Company, BTI005",
+    "Palomar Excess & Surplus Insurance Company, Writing Company",
+    "Philadelphia Indemnity Insurance Company, Writing Company",
+    "Security National Insurance Co, Writing Company, BTI048",
+    "Sequoia Insurance Company, Writing Company, BTI026",
+    "Sierra Specialty Insurance Company, Writing Company, BTI062",
+    "Sirius America Insurance Co, Writing Company, BTI020",
+    "Spinnaker Insurance Company, Writing Company, BTI021",
+    "Starr Indemnity & Liability Company, Writing Company, BTI015",
+    "State National Insurance Company Inc., Writing Company, BTI036",
+    "Technology Insurance Co., Writing Company, BTI047",
+    "The Hartford, Writing Company, BTI034",
+    "The North River Insurance Company, Writing Company, BTI041",
+    "The Ohio Casualty Insurance Company, Writing Company, BTI010",
+    "The Pie Insurance Company, Writing Company, BTI002",
+    "Transportation Insurance Company a Stock Insurance Company, Writing Company",
+    "United States Liability Insurance Group, Writing Company, BTI032",
+    "Valley Forge Insurance Company, Writing Company, BTI055",
+    "Wesco Insurance Company, Writing Company, BTI022",
+    "Western Surety Company, Writing Company, BTI035",
+    "Zenith, Writing Company, BTI046"
+  ],
+  "Burns & Wilcox, Brokerage Company, BUR": [
+    "Ace Fire Underwriters Insurance Company, Writing Company",
+    "American Modern Property and Casualty Insurance, Writing Company",
+    "AmGUARD Insurance Company, Writing Company, BUR008",
+    "Atain Specialty Insurance Company, Writing Company, BUR002",
+    "Ategrity Specialty Insurance Company, Writing Company, BUR012",
+    "Beazley Breach Response, Writing Company, BUR011",
+    "Burns & Wilcox, Brokerage Company, BUR",
+    "Certain Underwriters at Lloyd's, London, Writing Company, BUR014",
+    "Colony Insurance Company, Writing Company, BUR001",
+    "Evanston Insurance Company, Writing Company, BUR003",
+    "Gemini Insurance Company, Writing Company, BUR015",
+    "Hudson Insurance Company, Writing Company, BUR009",
+    "North Light Specialty Ins Co, Writing Company, BUR006",
+    "Philadelphia Indemnity Insurance Companys, Writing Company",
+    "RLI Insurance Company, Writing Company, BUR005",
+    "Scottsdale Insurance Company, Writing Company, BUR010"
+  ],
+  "BX Bond Exchange, Brokerage Company, BXB": [
+    "ATLANTIC SPECIALTY INSURANCE COMPANY, Writing Company",
+    "BX Bond Exchange, Brokerage Company, BXB",
+    "Great American Insurance Company, Writing Company, BXB005",
+    "Great Midwest Ins Co, Writing Company, BXB006",
+    "Hudson Insurance Company, Writing Company, BXB003",
+    "Jet Insurance Company, Writing Company, BXB001",
+    "Old Republic Surety, Writing Company, BXB002"
+  ],
+  "CBIC, Brokerage Company, CBIC": [
+    "CBIC, Brokerage Company, CBIC"
+  ],
+  "Century Surety Company, Brokerage Company, CEN": [
+    "Century Surety Company, Brokerage Company, CEN",
+    "R. E. Chaix & Associates, Writing Company, CEN001"
+  ],
+  "Charity First Insurance Services, Inc., Brokerage Company, CHA": [
+    "Charity First Insurance Services, Inc., Brokerage Company, CHA",
+    "Nova Cas Co, Writing Company, CHA002",
+    "Travelers Property Casualty Co of Amer, Writing Company, CHA001"
+  ],
+  "Cluett Commercial Insurance, Brokerage Company, CLU": [
+    "Cluett Commercial Insurance, Brokerage Company, CLU",
+    "The Hartford, Writing Company, CLU001"
+  ],
+  "Colonial General Insurance Agency, Inc., Brokerage Company, CGA": [
+    "Colonial General Insurance Agency, Inc., Brokerage Company, CGA",
+    "Scottsdale Insurance Company, Writing Company, CGA001"
+  ],
+  "Commodore Insurance, Brokerage Company, CMM": [
+    "Clear Blue Specialty Insurance Company, Writing Company, CMM001",
+    "Commodore Insurance, Brokerage Company, CMM",
+    "Commodore Risk Retention Group, Writing Company, CMM002",
+    "Lloyd's of London, Writing Company, CMM003"
+  ],
+  "Cover Whale Insurance Solutions, LLC (CA), Brokerage Company": [
+    "Accredited Specialty Insurance Company, Writing Company, CWS005",
+    "Canopius US Insurance Company, Writing Company, CWS009",
+    "Certain Underwriters at Lloyds of London, Writing Company, CWS007",
+    "Cover Whale Insurance Solutions, LLC (CA), Brokerage Company",
+    "Everspan Indemnity Insurance Company, Writing Company, CWS004",
+    "General Security Indemnity Company of Arizona, Writing Company",
+    "Knight Specialty Insurance Company, Writing Company, CWS006",
+    "Lloyds of London, Writing Company, CWS002",
+    "Trisura Specialty insurance Company, Writing Company, CWS003"
+  ],
+  "CRC Group, Brokerage Company, CRC": [
+    "AXIS Insurance Company, Writing Company, CRC024",
+    "Burlington Insurance Company, Writing Company, CRC010",
+    "Century Surety Company, Writing Company, CRC015",
+    "Champlain Specialty Insurance Company, Writing Company, CRC021",
+    "Colony Insurance Company, Writing Company, CRC023",
+    "CRC Group, Brokerage Company, CRC",
+    "Evanston Insurance Co., Writing Company, CRC004",
+    "Gotham Insurance Company, Writing Company, CRC006",
+    "Great Lakes Insurance, Writing Company, CRC009",
+    "Hadron Specialty Insurance Company, Writing Company, CRC027",
+    "Hamilton Select Insurance Inc., Writing Company, CRC007",
+    "Hiscox Ins Co Inc, Writing Company, CRC019",
+    "Hudson Excess Insurance Company, Writing Company, CRC013",
+    "James River Insurance Company, Writing Company, CRC018",
+    "Kinsale Insurance Company, Writing Company, CRC014",
+    "Lexington Insurance Co., Writing Company, CRC001",
+    "Mount Vernon Fire Insurance Company, Writing Company, CRC016",
+    "MS Transverse Specialty Insurance Company, Writing Company",
+    "Mt. Hawley Insurance Company, Writing Company, CRC003",
+    "Old Republic Union Insurance Company, Writing Company, CRC011",
+    "Palms Specialty Insurance Company, Inc, Writing Company",
+    "Scottsdale Insurance Company, Writing Company, CRC008",
+    "Seneca Specialty Insurance Company, Writing Company, CRC025",
+    "StarStone National Insurance Company, Writing Company, CRC005",
+    "StarStone Specialty Insurance Company, Writing Company, CRC020",
+    "Steadfast Insurance Company, Writing Company, CRC026",
+    "Westchester Surplus Lines Insurance Company, Writing Company",
+    "Western World Insurance Company, Writing Company, CRC002",
+    "Zurich American Insurance Company, Writing Company, CRC012"
+  ],
+  "Delos Insurance Solutions Backed  (CA), Brokerage Company, DSB": [
+    "Delos Insurance Solutions Backed  (CA), Brokerage Company, DSB",
+    "Homesite Insurance Company, Writing Company, DSB001"
+  ],
+  "DGA Insurance Services, LLC, Brokerage Company, DGA": [
+    "DGA Insurance Services, LLC, Brokerage Company, DGA",
+    "Northfield Excess & Surplus Lines, Writing Company, DGA001"
+  ],
+  "Elite MGA, Brokerage Company, EMG": [
+    "Clear Blue Insurance Co., Writing Company, EMG002",
+    "Concert Specialty Insurance Company, Writing Company, EMG003",
+    "Elite MGA, Brokerage Company, EMG",
+    "The Hanover Insurance Group, Inc., Writing Company, EMG001"
+  ],
+  "Evergreen Insurance Managers, Inc., Brokerage Company, EVG": [
+    "Crum and Forster Specialty Insurance Company, Writing Company",
+    "Evergreen Insurance Managers, Inc., Brokerage Company, EVG",
+    "Penn-Star Insurance Co, Writing Company, EVG001"
+  ],
+  "Evolution Insurance Brokers, LLC, Brokerage Company, EVO": [
+    "Evolution Insurance Brokers, LLC, Brokerage Company, EVO",
+    "Prime Insurance Company, Writing Company, EVO001"
+  ],
+  "Gateway Underwriters Agency, Brokerage Company, GAT": [
+    "Alliance of Nonprofits for Ins RRG, Writing Company, GAT003",
+    "Gateway Underwriters Agency, Brokerage Company, GAT",
+    "Mount Vernon Fire Insurance Company, Writing Company, GAT002",
+    "United States Liability Insurance Co., Writing Company, GAT001"
+  ],
+  "Gorst & Compass Insurance, Brokerage Company, GOR": [
+    "Accident Fund General Insurance Company, Writing Company",
+    "Clear Spring Insurance, Writing Company, GOR002",
+    "Evanston Insurance Company, Writing Company, GOR001",
+    "Gorst & Compass Insurance, Brokerage Company, GOR",
+    "Great American E&S Insurance, Writing Company, GOR009",
+    "Mesa Underwriters Specialty Insurance Company A, Writing Company",
+    "Mount Vernon Fire Insurance Company, Writing Company, GOR008",
+    "Nautilus Insurance Company, Writing Company, GOR004",
+    "Underwriters at Lloyd's A, XV, Writing Company, GOR007",
+    "United States Liability Insurance Company, Writing Company"
+  ],
+  "Greenwood General Insurance Agency, Brokerage Company, GRN": [
+    "AmGUARD Insurance Company, Writing Company, GRN003",
+    "Business Alliance Insurance, Writing Company, GRN002",
+    "Crum & Forster Specialty Insurance Company, Writing Company",
+    "Falls Lake Fire & Casualty Co, Writing Company, GRN014",
+    "Great American Insurance Company, Writing Company, GRN007",
+    "Greenwood General Insurance Agency, Brokerage Company, GRN",
+    "Hadron Specialty Insurance Company, Writing Company, GRN006",
+    "Kinsale Insurance Company, Writing Company, GRN011",
+    "Mt. Hawley Insurance Company, Writing Company, GRN001",
+    "National Liability & Fire Insurance Co, Writing Company, GRN004",
+    "Rockingham Casualty Company, Writing Company, GRN013",
+    "Rockingham Specialty, Inc., Writing Company, GRN015",
+    "Scottsdale Insurance Company, Writing Company, GRN005",
+    "The Hartford, Writing Company, GRN008",
+    "United National Insurance Company, Writing Company, GRN009",
+    "United Specialty Insurance Company, Writing Company, GRN010"
+  ],
+  "GSU Insurance Services, Brokerage Company, GSU": [
+    "Colony Insurance Company, Writing Company, GSU001",
+    "GSU Insurance Services, Brokerage Company, GSU",
+    "National Fire & Marine Insurance Company, Writing Company",
+    "National Liability & Fire Ins. Co., Writing Company, GSU004",
+    "Nautilus Insurance Company, Writing Company, GSU003",
+    "Northfield Insurance Company, Writing Company, GSU007",
+    "Scottsdale Insurance Company, Writing Company, GSU002",
+    "Western World Insurance Co, Writing Company, GSU006",
+    "Western World Insurance Group, Writing Company, GSU005"
+  ],
+  "Hawkeye Wholesale Insurance Services Inc., Brokerage Company": [
+    "ACE Property & Casualty Insurance Company, Writing Company",
+    "Clear Blue Insurance Co., Writing Company, HWS008",
+    "Everest National Insurance Company, Writing Company, HWS005",
+    "Great Divide Insurance Company, Writing Company, HWS009",
+    "Hawkeye Wholesale Insurance Services Inc., Brokerage Company",
+    "HDI Global Specialty SE, Writing Company, HWS002",
+    "Nautilus Insurance Company, Writing Company, HWS003",
+    "Northfield Insurance Company, Writing Company, HWS006",
+    "Seneca Insurance Company, Inc., Writing Company, HWS010",
+    "Starstone National Ins/Torus National Ins Co., Writing Company",
+    "State National Insurance Company, Inc., Writing Company, HWS007"
+  ],
+  "Hiscox Ins Co Inc, Brokerage Company, HIS": [
+    "Hiscox Ins Co Inc, Brokerage Company, HIS"
+  ],
+  "Hull & Company LLC, Brokerage Company, HUC": [
+    "Amguard Ins Co, Writing Company, HUC008",
+    "Atlantic Casualty Insurance Company, Writing Company, HUC011",
+    "Berkley Assur Co, Writing Company, HUC004",
+    "Colony Insurance Company, Writing Company, HUC001",
+    "Great American Assurance Company, Writing Company, HUC010",
+    "Houston Specialty Insurance Company, Writing Company, HUC003",
+    "Hull & Company LLC, Brokerage Company, HUC",
+    "James River Insurance Company, Writing Company, HUC009",
+    "Kinsale Insurance Co., Writing Company, HUC002",
+    "Kinsale Insurance Company, Writing Company, HUC005",
+    "National Liability & Fire Ins. Co., Writing Company, HUC007",
+    "Penn-Star Insurance Company, Writing Company, HUC006"
+  ],
+  "Ian H. Graham Insurance, Brokerage Company, IAN": [
+    "Continental Casualty Company, Writing Company, IAN002",
+    "Ian H. Graham Insurance, Brokerage Company, IAN",
+    "Obsidian Specialty Insurance Company, Writing Company, IAN001"
+  ],
+  "ICAT Earthquake (residential only), Brokerage Company, ICA": [
+    "Accident Fund General Insurance Company, Writing Company",
+    "American Contractors Indem. Co., Writing Company, ICA002",
+    "Certain Underwriters at Lloyd's, London, Writing Company, ICA008",
+    "ICAT Earthquake (residential only), Brokerage Company, ICA",
+    "Nationwide, Writing Company, ICA006",
+    "Nova Casualty Company, Writing Company, ICA007",
+    "Obsidian Specialty Insurance Company, Writing Company, ICA001",
+    "Scottsdale Insurance Company, Writing Company, ICA003",
+    "Third Coast Insurance Company, Writing Company, ICA004"
+  ],
+  "IES Indemnity, Brokerage Company, IES": [
+    "Beazley Insurance Company, Writing Company, IES001",
+    "IES Indemnity, Brokerage Company, IES",
+    "Mount Vernon Fire Insurance Co., Writing Company, IES002",
+    "United States Liability Insurance Co., Writing Company, IES003"
+  ],
+  "Insco, Brokerage Company, INC": [
+    "Developers Surety and Indemnity Co., Writing Company, INC001",
+    "Insco, Brokerage Company, INC"
+  ],
+  "International Beauty Brokerage, Inc. (IBBI), Brokerage Company": [
+    "International Beauty Brokerage, Inc. (IBBI), Brokerage Company",
+    "Lloyds of London, Writing Company, IBB001",
+    "Topa Insurance Company, Writing Company, IBB002"
+  ],
+  "ISC, Brokerage Company, ISC": [
+    "Accident Fund Gen Ins Co, Writing Company, ISC009",
+    "Accident Fund General Insurance Company, Writing Company",
+    "AIX Specialty Insurance Company, Writing Company, ISC003",
+    "Certain Underwriters at Lloyd's, London, Writing Company, ISC013",
+    "Clear Blue Specialty Insurance, Writing Company, ISC018",
+    "Hamilton Insurance DAC, Writing Company, ISC019",
+    "Interstate Fire & Casualty Company, Writing Company, ISC001",
+    "ISC, Brokerage Company, ISC",
+    "Loyd's London Insurance Company, Writing Company, ISC015",
+    "Nova Casualty Company, Writing Company, ISC010",
+    "Obsidian Specialty Insurance Company, Writing Company, ISC002",
+    "PCIC, Writing Company, ISC004",
+    "Preferred Contractors Insurance Co., Writing Company, ISC012",
+    "Preferred Contractors Insurance Company, RRG, Writing Company",
+    "SiriusPoint Specialty Insurance Corporation, Writing Company",
+    "Sutton Specialty Insurance Company, Writing Company, ISC014",
+    "The Pie Insurance Company, Writing Company, ISC017",
+    "Third Coast Insurance Company, Writing Company, ISC006",
+    "Trisura Specialty Insurance Company, Writing Company, ISC011",
+    "United Specialty Insurance Company, Writing Company, ISC016",
+    "US Specialty Insurance Company, Writing Company, ISC007",
+    "Westchester Surplus Lines Insurance Company, Writing Company"
+  ],
+  "J R Olsen, Brokerage Company, JRO": [
+    "Hartford Fire Insurance Company, Writing Company, JRO001",
+    "J R Olsen, Brokerage Company, JRO"
+  ],
+  "Jencap Speciality Insurance Services, Brokerage Company, JEN": [
+    "Jencap Speciality Insurance Services, Brokerage Company, JEN",
+    "Mesa Underwriters Specialty Insurance Company, Writing Company",
+    "Mount Vernon Fire Insurance Company, Writing Company, JEN002",
+    "Nautilus Insurance Company, Writing Company, JEN003",
+    "Scottsdale Indemnity Company, Writing Company, JEN001",
+    "United States Liability Insurance Company, Writing Company, JEN005"
+  ],
+  "K&K Insurance Group, Inc., Brokerage Company, KAK": [
+    "AIG Insurance Company, Writing Company, KAK003",
+    "K&K Insurance Group, Inc., Brokerage Company, KAK",
+    "Markel, Writing Company, KAK001",
+    "Nationwide Mutual Insurance Co, Writing Company, KAK002"
+  ],
+  "Keating Insurance, Brokerage Company, KEA": [
+    "Crum & Forster Commercial Insurance, Writing Company, KE",
+    "Keating Insurance, Brokerage Company, KEA"
+  ],
+  "KW Specialty Insurance Company, Brokerage Company, KWS": [
+    "Financial Indemnity Company, Writing Company, KWS001",
+    "KW Specialty Insurance Company, Brokerage Company, KWS"
+  ],
+  "Lloyd's of London, Brokerage Company, LOL": [
+    "Highland Insurance Solutions, Writing Company, LOL002",
+    "Lloyd's of London, Brokerage Company, LOL",
+    "Professional Program Insurance Brokerage, Writing Company, LOL001"
+  ],
+  "London Underwriters, Brokerage Company, LON": [
+    "Biberk, Writing Company, LON001",
+    "London Underwriters, Brokerage Company, LON",
+    "National Liability & Fire Insurance Co, Writing Company, LON003",
+    "Pie Casualty Insurance Company, Writing Company, LON006",
+    "Sierra Specialty Insurance Company, Writing Company, LON005",
+    "State National Insurance Company, Inc., Writing Company, LON002",
+    "Wellfleet Insurance Company, Writing Company, LON004"
+  ],
+  "Mini Co Insurance Agency LLC, Brokerage Company, MIN": [
+    "Aspen American Ins. Co., Writing Company, MIN001",
+    "Mini Co Insurance Agency LLC, Brokerage Company, MIN",
+    "Safeco Insurance Company of America, Writing Company, MIN002"
+  ],
+  "Monarch E & S Insurance Services, Brokerage Company, MON": [
+    "Associated Industries Insurance Company, Inc, Writing Company",
+    "Atlantic Casualty Insurance Company, Writing Company, MON023",
+    "Burlington Insurance Company, Writing Company, MON012",
+    "Canopius US Insurance, Writing Company, MON013",
+    "Century Surety Insurance Company, Writing Company, MON005",
+    "Certain Underwriters at Lloyds, London, Writing Company, MON022",
+    "Champlain Specialty Insurance Company, Writing Company, MON019",
+    "Colony Insurance Company, Writing Company, MON003",
+    "Concert Specialty Insurance Company, Writing Company, MON002",
+    "Cumis Specialty Insurance Company, Writing Company, MON016",
+    "Evanston Insurance Company, Writing Company, MON004",
+    "Gemini Insurance Company, Writing Company, MON009",
+    "Great American Insurance Company, Writing Company, MON014",
+    "GuideOne National Insurance Company, Writing Company, MON011",
+    "Hudson Excess Insurance Company, Writing Company, MON018",
+    "Kinsale Insurance Company, Writing Company, MON021",
+    "Mesa Underwriters Specialty, Writing Company, MON010",
+    "Monarch E & S Insurance Services, Brokerage Company, MON",
+    "Mount Vernon Fire Insurance, Writing Company, MON017",
+    "Nautilus Insurance Company, Writing Company, MON008",
+    "Northfield Insurance Company, Writing Company, MON024",
+    "Richmond National Insurance Company, Writing Company, MON001",
+    "Scottsdale Insurance Company, Writing Company, MON007",
+    "U.S. Liability Insurance Co, Writing Company, MON020",
+    "United National Insurance Company, Writing Company, MON015"
+  ],
+  "Morstan General Agency, Brokerage Company, MOR": [
+    "Morstan General Agency, Brokerage Company, MOR",
+    "Trisura Specialty Insurance Company, Writing Company, MOR001"
+  ],
+  "Myers & Stevens, Brokerage Company, MYE": [
+    "Ace American Insurance Company, Writing Company, MYE001",
+    "BCS Insurance Company, Writing Company, MYE002",
+    "Myers & Stevens, Brokerage Company, MYE"
+  ],
+  "Nationwide Brokerage Solutions, Brokerage Company, NBS": [
+    "American Modern Property and Casualty Insurance, Writing Company",
+    "Century Insurance Group, Writing Company, NBS004",
+    "Hiscox Insurance Company Inc., Writing Company, NBS002",
+    "Nationwide Brokerage Solutions, Brokerage Company, NBS",
+    "NBS, Writing Company, NBS001",
+    "Penn Star Insurance Company, Writing Company, NBS007",
+    "Scottsdale Insurance Company, Writing Company, NBS003",
+    "Seaview Insurance Company, Writing Company, NBS005",
+    "United States Liability Insurance Company, Writing Company, NBS006"
+  ],
+  "Navigators Insurance Co., Brokerage Company, NAV": [
+    "Navigators Insurance Co., Brokerage Company, NAV"
+  ],
+  "NCCI, Brokerage Company, NCC": [
+    "Liberty Mutual, Writing Company, NCC003",
+    "NCCI, Brokerage Company, NCC",
+    "SAIF, Writing Company, NCC002",
+    "Travelers Property Casualty Company of America, Writing Company",
+    "Wellfleet New York Insurance Company, Writing Company, NCC004"
+  ],
+  "NCIP - Natural Catastrophe Insurance Program, Brokerage Company": [
+    "Certain Underwriters at Lloyds of London, Writing Company, NCI001",
+    "NCIP - Natural Catastrophe Insurance Program, Brokerage Company"
+  ],
+  "New Age Underwriter's Agency, Inc, Brokerage Company, NAU": [
+    "Certain Underwriters at Lloyd's, Writing Company, NAU001",
+    "Knight Specialty Insurance, Writing Company, NAU002",
+    "New Age Underwriter's Agency, Inc, Brokerage Company, NAU"
+  ],
+  "NIF Group, Brokerage Company, NIF": [
+    "Mesa Underwriters Specialty, Writing Company, NIF002",
+    "Nautilus Insurance Company, Writing Company, NIF001",
+    "NIF Group, Brokerage Company, NIF"
+  ],
+  "Novatae Risk Group, Brokerage Company, NVT": [
+    "Atlantic Casualty Insurance Company, Writing Company, NVT008",
+    "Century Surety Company, Writing Company, NVT007",
+    "certain Underwriters at Lloyd's, Writing Company, NVT002",
+    "Evanston Insurance Company, Writing Company, NVT009",
+    "HDI Global Specialty SE, Writing Company, NVT003",
+    "James River Insurance Company, Writing Company, NVT010",
+    "Kinsale Insurance Company, Writing Company, NVT006",
+    "Nautilus Insurance Company, Writing Company, NVT004",
+    "Northfield Insurance Company, Writing Company, NVT005",
+    "Novatae Risk Group, Brokerage Company, NVT",
+    "Seneca Specialty Insurance Company, Writing Company, NVT001"
+  ],
+  "Novus Underwriters, Inc., Brokerage Company, NOV": [
+    "Accredited Specialty Insurance Company, Writing Company, NOV008",
+    "AmGuard Insurance Company, Writing Company, NOV004",
+    "Century Surety Company, Writing Company, NOV011",
+    "CHUBB, Writing Company, NOV003",
+    "Crum & Forster Specialty Insurance Company, Writing Company, NOV010",
+    "Evanston Insurance Company, Writing Company, NOV002",
+    "Hamilton Select Insurance Inc, Writing Company, NOV012",
+    "James River Insurance, Writing Company, NOV005",
+    "Liberty Mutual, Writing Company, NOV007",
+    "Lloyds of London, Writing Company, NOV006",
+    "Novus Underwriters, Inc., Brokerage Company, NOV",
+    "Richmond National Insurance Company, Writing Company, NOV001",
+    "Seneca Insurance Company Inc., Writing Company, NOV009"
+  ],
+  "One80, Brokerage Company, One80": [
+    "AmTrust E&S Ins Services, Inc., Writing Company, One801",
+    "One80, Brokerage Company, One80"
+  ],
+  "Osprey Underwriters Inc., Brokerage Company, OSP": [
+    "Adriatic Ins Co, Writing Company, OSP001",
+    "Great American Insurance Company, Writing Company, OSP003",
+    "Osprey Underwriters Inc., Brokerage Company, OSP",
+    "United Specialty Insurance Company, Writing Company, OSP002"
+  ],
+  "Pacific Coast E&S, Brokerage Company, PCE": [
+    "Benchmark Insurance Company, Writing Company, PCE005",
+    "Lloyd's of London, Writing Company, PCE006",
+    "Mesa Underwriters Specialty, Writing Company, PCE003",
+    "Nautilus Insurance Company, Writing Company, PCE002",
+    "Pacific Coast E&S, Brokerage Company, PCE",
+    "Scottsdale Insurance Company, Writing Company, PCE001",
+    "United States Liability Insurance Co., Writing Company, PCE004"
+  ],
+  "Pacific Excess Insurance Marketing Inc, Brokerage Company, PEX": [
+    "Pacific Excess Insurance Marketing Inc, Brokerage Company, PEX",
+    "Zenith Insurance Company, Writing Company, PEX001"
+  ],
+  "Paragon Insurance Holdings, Brokerage Company, PAR": [
+    "Hadron Specialty Insurance Company, Writing Company, PAR001",
+    "Mesa Underwriters Specialty Insurance Company, Writing Company",
+    "Paragon Insurance Holdings, Brokerage Company, PAR"
+  ],
+  "PersonalUmbrella.com, Brokerage Company, PUM": [
+    "American Alternative Insurance Corporation, Writing Company, PUM002",
+    "Markel Insurance Company, Writing Company, PUM001",
+    "PersonalUmbrella.com, Brokerage Company, PUM"
+  ],
+  "Primex Insurance Brokers, Brokerage Company, PIB": [
+    "Capitol Specialty Insurance Corporation, Writing Company, PIB001",
+    "Columbia Insurance Company, Writing Company, PIB008",
+    "National Liability & Fire Ins. Co., Writing Company, PIB006",
+    "Nautilus Insurance Company, Writing Company, PIB005",
+    "Northfield Insurance Company, Writing Company, PIB003",
+    "Primex Insurance Brokers, Brokerage Company, PIB",
+    "Scottsdale Insurance Company, Writing Company, PIB004",
+    "Underwriters at Lloyd's London, Writing Company, PIB002",
+    "Western World Insurance Group, Writing Company, PIB007"
+  ],
+  "Professional Program Insurance Brokerage, Brokerage Company": [
+    "Canopius Us Ins, Writing Company, PPI003",
+    "Certain Underwriters at Lloyds of London, Writing Company, PPI001",
+    "Lloyds of London, Writing Company, PPI002",
+    "Professional Program Insurance Brokerage, Brokerage Company, PPI"
+  ],
+  "R.E. Chaix & Associates, Brokerage Company, REC": [
+    "Allied World Surplus Lines, Writing Company, REC010",
+    "Atlantic Casualty Insurance Company, Writing Company, REC014",
+    "Berkeley Assurance Company, Writing Company, REC007",
+    "Burlington Insurance Company, Writing Company, REC005",
+    "Capitol Specialty Insurance Corporation, Writing Company, REC002",
+    "Century Surety Company, Writing Company, REC012",
+    "Certain Underwriters at Lloyds, Writing Company, REC003",
+    "Evanston Insurance Company, Writing Company, REC001",
+    "Kinsale Insurance Company, Writing Company, REC011",
+    "Maxum Indemnity Company, Writing Company, REC008",
+    "Mesa Underwriters Specialty Insurance Company, Writing Company",
+    "Mount Vernon Fire Insurance Company, Writing Company, REC013",
+    "Palomar Excess and Surplus Insurance Company, Writing Company",
+    "R.E. Chaix & Associates, Brokerage Company, REC",
+    "U.S. Specialty Insurance Company, Writing Company, REC009",
+    "United States Liability Insurance Company, Writing Company, REC006"
+  ],
+  "RIC Insurance General Agency Inc., Brokerage Company, RIC": [
+    "ACE Property & Casualty Insurance Company, Writing Company, RIC002",
+    "Admiral Insurance Company, Writing Company, RIC004",
+    "Amguard Ins Co, Writing Company, RIC020",
+    "Berkley Assur Co, Writing Company, RIC011",
+    "Canopius Us Ins, Writing Company, RIC019",
+    "Contractors Bonding and Insurance Company, Writing Company, RIC022",
+    "Employer's Preferred Ins Co., Writing Company, RIC013",
+    "Evanston Insurance Company, Writing Company, RIC003",
+    "Great American Insurance Company, Writing Company, RIC010",
+    "Houston Specialty Insurance Company, Writing Company, RIC007",
+    "James River Insurance Company, Writing Company, RIC018",
+    "Kinsale Insurance Company, Writing Company, RIC016",
+    "Liberty Mutual Insurance Company, Writing Company, RIC008",
+    "Lloyds of London, Writing Company, RIC009",
+    "Mount Vernon Fire Insurance Company, Writing Company, RIC021",
+    "National Fire & Marine Ins Co, Writing Company, RIC001",
+    "National Liability & Fire Ins. Co., Writing Company, RIC024",
+    "Penn-Star Insurance Company, Writing Company, RIC023",
+    "RIC Insurance General Agency Inc., Brokerage Company, RIC",
+    "Scottsdale Insurance Company, Writing Company, RIC005",
+    "Seneca Insurance Company, Inc., Writing Company, RIC017",
+    "State Compensation Insurance Fund of CA, Writing Company, RIC012",
+    "The Burlington Insurance Company, Writing Company, RIC006",
+    "United Specialty Insurance Company, Writing Company, RIC015",
+    "United States Liability Insurance Co., Writing Company, RIC014"
+  ],
+  "Risk Exchange Insurance Services, Inc., Brokerage Company, REX": [
+    "Atlanta Intl Ins Co, Writing Company, REX001",
+    "Risk Exchange Insurance Services, Inc., Brokerage Company, REX"
+  ],
+  "Risk Placement Services, Inc, Brokerage Company, RPS": [
+    "Accredited Surety & Casualty Co, Writing Company, RPS003",
+    "Associated Industries Ins Co Inc, Writing Company, RPS007",
+    "ATLANTIC SPECIALTY INSURANCE COMPANY, Writing Company",
+    "Century Surety Insurance Company, Writing Company, RPS001",
+    "Hanover Insurance Company, Writing Company, RPS014",
+    "Lloyds of London, Writing Company, RPS010",
+    "Mesa Underwriters Specialty Insurance Company, Writing Company",
+    "Nautilus Insurance Company, Writing Company, RPS011",
+    "Northfield Insurance Company, Writing Company, RPS012",
+    "Penn-Star Insurance Company, Writing Company, RPS009",
+    "Republic-Vanguard Insurance, Writing Company, RPS015",
+    "Risk Placement Services, Inc, Brokerage Company, RPS",
+    "Rockingham Specialty, Inc., Writing Company, RPS008",
+    "Scottsdale Insurance Company, Writing Company, RPS002",
+    "Trisura Specialty Insurance Company, Writing Company, RPS006",
+    "United States Liability Insurance Co., Writing Company, RPS013"
+  ],
+  "River Valley Underwriters (RVU), Brokerage Company, RVU": [
+    "Champlain Specialty Ins Co, Writing Company, RVU003",
+    "Crum & Forster Specialty Ins Co, Writing Company, RVU001",
+    "River Valley Underwriters (RVU), Brokerage Company, RVU",
+    "Scottsdale Insurance Co, Writing Company, RVU002",
+    "StarStone Specialty Insurance Company, Writing Company, RBU004"
+  ],
+  "Rivington, Brokerage Company, RIV": [
+    "American Modern Prop & Cas Ins Co, Writing Company, RIV002",
+    "Rivington, Brokerage Company, RIV",
+    "Texas Insurance Company, Writing Company, RIV001"
+  ],
+  "Robert Moreno Insurance Services (CA), Brokerage Company, RC": [
+    "Harco National Insurance Company, Writing Company, ROB001",
+    "Robert Moreno Insurance Services (CA), Brokerage Company, ROB",
+    "Sutter Ins Co, Writing Company, ROB002"
+  ],
+  "RSG National Specialty Programs, Brokerage Company, RSG": [
+    "Ace Fire Underwriters Ins Co, Writing Company, RSG006",
+    "Canopius US Insurance, Inc, Writing Company, RSG007",
+    "Great American E & S Insurance Company, Writing Company, RSG005",
+    "Guide One National Insurance Company, Writing Company, RSG002",
+    "Hudson Excess Insurance Company, Writing Company, RSG004",
+    "Mesa Underwriters Specialty Insurance, Writing Company, RSG008",
+    "RSG National Specialty Programs, Brokerage Company, RSG",
+    "Technology Insurance Company, Writing Company, RSG001"
+  ],
+  "RSI, Brokerage Company, RSI": [
+    "Allianz Global Corporate & Specialty SE, Writing Company, RSI005",
+    "Certain Underwriters at Lloyds London, Writing Company, RSI004",
+    "Evanston Insurance Co, Writing Company, RSI001",
+    "Mesa Underwriting Specialty Ins Co, Writing Company, RSI002",
+    "RSI, Brokerage Company, RSI",
+    "United States Liability Insurance Company, Writing Company, RSI003"
+  ],
+  "RT- Specialty, Brokerage Company, RTS": [
+    "AmTrust Insurance Company, Writing Company, RTS003",
+    "Ategrity Specialty Insurance Co., Writing Company, RTS015",
+    "Axis Surplus Insurance Company, Writing Company, RTS022",
+    "Berkley Assurance Company, Writing Company, RTS020",
+    "Canopius US Insurance Inc, Writing Company, RTS018",
+    "Capitol Specialty Insurance, Writing Company, RTS023",
+    "Century Surety Company, Writing Company, RTS025",
+    "Certain Underwriters at Lloyd's, Writing Company, RTS016",
+    "Champlain Specialty Insurance Company, Writing Company, RTS021",
+    "Clear Blue Specialty Insurance Company, Writing Company, RTS011",
+    "Covington Specialty Insurance Company, Writing Company, RTS002",
+    "Evanston Insurance Company, Writing Company, RTS005",
+    "Gotham Insurance Company, Writing Company, RTS007",
+    "Guide One National Insurance Company, Writing Company, RTS014",
+    "HDI Global Specialty SE, Writing Company, RTS008",
+    "Hudson Excess Insurance Company, Writing Company, RTS027",
+    "Kinsale Insurance Company, Writing Company, RTS024",
+    "Mesa Underwriters Specialty Insurance Company, Writing Company",
+    "National Liability & Fire Insurance Company, Writing Company, RTS010",
+    "Nautilus Insurance Company, Writing Company, RTS026",
+    "Northfield Insurance Company, Writing Company, RTS019",
+    "Pie Insurance, Writing Company, RTS017",
+    "RT- Specialty, Brokerage Company, RTS",
+    "Scottsdale Insurance Company, Writing Company, RTS009",
+    "Sirius America Insurance Company, Writing Company, RTS012",
+    "Technology Insurance Company, Writing Company, RTS004",
+    "United States Fire Insurance Company, Writing Company, RTS001",
+    "Western World Insurance Company, Writing Company, RTS006"
+  ],
+  "S Phillips Surety, Brokerage Company, SPS": [
+    "Great American Insurance Company, Writing Company, SPS002",
+    "Merchants Bonding Company, Writing Company, SPS003",
+    "Philadelphia Indemnity Insurance Company, Writing Company, SPS006",
+    "Platte River Insurance Company, Writing Company, SPS001",
+    "S Phillips Surety, Brokerage Company, SPS",
+    "Swiss Re Corporate Solutions Insurance, Writing Company, SPS005",
+    "Texas Bonding Company, Writing Company, SPS008",
+    "The North River Insurance Company, Writing Company, SPS007",
+    "Western Surety Company, Writing Company, SPS004"
+  ],
+  "Scottish American, Brokerage Company, SAM": [
+    "Atlantic Casualty Insurance Company, Writing Company, SAM005",
+    "Crum & Forster Specialty Ins. Co., Writing Company, SAM003",
+    "Evanston Insurance Company, Writing Company, SAM001",
+    "Gemini Insurance, Writing Company, SAM002",
+    "Lloyd's of London, Writing Company, SAM004",
+    "Mount Vernon Fire Insurance Co, Writing Company, SAM006",
+    "Scottish American, Brokerage Company, SAM"
+  ],
+  "Shield Commercial Insurance Services, Brokerage Company, SHI": [
+    "AGCS Marine Insurance Company, Writing Company, SHI005",
+    "Evanston Insurance Company, Writing Company, SHI002",
+    "Nationwide, Writing Company, SHI004",
+    "Palms Insurance Company, Writing Company, SHI001",
+    "Scottsdale Insurance Company, Writing Company, SHI003",
+    "Shield Commercial Insurance Services, Brokerage Company, SHI"
+  ],
+  "SIAA, Brokerage Company, SIA": [
+    "Aegis, Writing Company, SIA004",
+    "Alliance United, Writing Company, SIA007",
+    "Dairyland, Writing Company, SIA011",
+    "Foremost/Bristol West, Writing Company, SIA003",
+    "Infinity, Writing Company, SIA010",
+    "Kemper, Writing Company, SIA009",
+    "Mapfre, Writing Company, SIA008",
+    "National General, Writing Company, SIA002",
+    "Pacific Specialty, Writing Company, SIA001",
+    "RMIS, Writing Company, SIA005",
+    "SIAA, Brokerage Company, SIA",
+    "Third Coast Insurance Company, Writing Company, SIA012",
+    "Travelers, Writing Company, SIA006"
+  ],
+  "SIS, Brokerage Company, SIS": [
+    "Accident Fund General Insurance Company, Writing Company, SIS006",
+    "AIX Specialty Insurance Company, Writing Company, SIS003",
+    "Certain Underwriters at Lloyd's, London, Writing Company, SIS009",
+    "Interstate Fire & Casualty Company, Writing Company, SIS001",
+    "Kemper (Interstate Insurance Agency), Writing Company, SIS014",
+    "Lloyd's London Insurance Company, Writing Company, SIS011",
+    "Nova Casualty Company, Writing Company, SIS007",
+    "Obsidian Specialty Insurance Company, Writing Company, SIS002",
+    "PCIC, Writing Company, SIS004",
+    "Prospect, Writing Company, SIS015",
+    "Safebuilt Insurance SVCS , LLC, Writing Company, SIS013",
+    "SIS, Brokerage Company, SIS",
+    "Sutton Specialty Insurance Company, Writing Company, SIS010",
+    "Third Coast Insurance Company, Writing Company, SIS005",
+    "Trisura Specialty Insurance Company, Writing Company, SIS008",
+    "United Specialty Insurance Company, Writing Company, SIS012"
+  ],
+  "Sterling Insurance Services LLC, Brokerage Company, SISL": [
+    "Kinsale Insurance Company, Writing Company, SISL01",
+    "Richmond National Insurance Company, Writing Company, SISL02",
+    "Sterling Insurance Services LLC, Brokerage Company, SISL"
+  ],
+  "Superior Access/Bolt Access, Brokerage Company, SUP": [
+    "Allied Insurance Company, Writing Company, SUP009",
+    "AmTrust North America, Writing Company, SUP001",
+    "Arrowhead General Insurance, Writing Company, SUP012",
+    "Liberty Mutual Insurance, Writing Company, SUP006",
+    "Nationwide General Ins Co, Writing Company, SUP010",
+    "Nationwide Insurance Company of America, Writing Company",
+    "Ohio Security Insurance Company - a stock company, Writing Company",
+    "Safeco, Writing Company, SUP002",
+    "Sequoia Insurance Co, Writing Company, SUP007",
+    "Spinnaker Insurance Company, Writing Company, SUP013",
+    "Superior Access/Bolt Access, Brokerage Company, SUP",
+    "The Charter Oak Fire Insurance Company, Writing Company, SUP008",
+    "The Hartford, Writing Company, SUP003",
+    "The Travelers Indemnity Company of Connecticut, Writing Company",
+    "Unitrin, Writing Company, SUP011",
+    "Wellfleet Insurance Company, Writing Company, SUP004"
+  ],
+  "Supression Pro Insurance Services, Brokerage Company, SPP": [
+    "Certain Underwriters at Lloyd's of London, Writing Company, SPP001",
+    "Lloyd's of London, Writing Company, SPP002",
+    "Supression Pro Insurance Services, Brokerage Company, SPP"
+  ],
+  "TCB Insurance Programs, Brokerage Company, TCB": [
+    "Loyds of London, Writing Company, TCB001",
+    "TCB Insurance Programs, Brokerage Company, TCB"
+  ],
+  "Texas Security General Insurance Agency, LLC, Brokerage Compa": [
+    "Century Surety Company, Writing Company, TSGI02",
+    "Nautilus Insurance Company, Writing Company, TSGI01",
+    "Texas Security General Insurance Agency, LLC, Brokerage Company"
+  ],
+  "The Mechanic Group, Brokerage Company, TMG": [
+    "Allied World Surplus Lines Insurance Company, Writing Company, TMG001",
+    "The Mechanic Group, Brokerage Company, TMG"
+  ],
+  "Underwriters at Lloyd's London, Brokerage Company, ULL": [
+    "Underwriters at Lloyd's London, Brokerage Company, ULL"
+  ],
+  "Union General Insurance Services, Inc., Brokerage Company, UG": [
+    "Benchmark Insurance Company, Writing Company, UGI005",
+    "Capitol Specialty Insurance Corporation, Writing Company, UGI003",
+    "Contractors Bonding and Insurance Company, Writing Company",
+    "Great American Insurance Group, Writing Company, UGI009",
+    "Northfield Insurance Company, Writing Company, UGI006",
+    "RLI Insurance Company, Writing Company, UGI008",
+    "Scottsdale Insurance Company, Writing Company, UGI004",
+    "Union General Insurance Services, Inc., Brokerage Company, UGI",
+    "United States Fire Insurance Company, Writing Company, UGI001"
+  ],
+  "USG, Brokerage Company, USG1": [
+    "Acceptance Casualty Insurance Company, Writing Company",
+    "Allied World Surplus Lines Insurance Company, Writing Company",
+    "AmGuard Insurance Company, Writing Company, USG106",
+    "Ategrity Specialty Insurance Company, Writing Company, USG114",
+    "Atlantic Casualty Insurance Company, Writing Company, USG123",
+    "Berkshire Hathaway Guard, Writing Company, USG119",
+    "Burlington Insurance Company, Writing Company, USG113",
+    "Canopius US Insurance, Inc., Writing Company, USG124",
+    "Century Surety Insurance, Writing Company, USG112",
+    "Colony Insurance Company, Writing Company, USG102",
+    "Crum & Forster Specialty Ins Co, Writing Company, USG125",
+    "Evanston Insurance Company, Writing Company, USG104",
+    "General Star Indemnity Company, Writing Company, USG108",
+    "Great American Insurance Company, Writing Company, USG115",
+    "GuideOne National Insurance Company, Writing Company, USG111",
+    "Houston Specialty Insurance Company, Writing Company, USG109",
+    "Kinsale Insurance Company, Writing Company, USG126",
+    "Lloyd's of London, Writing Company, USG122",
+    "Mesa Underwriters Specialty Insurance Company, Writing Company",
+    "Mt. Hawley Insurance Co, Writing Company, USG118",
+    "National Union Fire Ins, Writing Company, USG120",
+    "NorGuard Insurance Company, Writing Company, USG110",
+    "Northfield Insurance Company, Writing Company, USG117",
+    "Richmond National, Writing Company, USG127",
+    "Twin City Fire Insurance Company, Writing Company, USG116",
+    "USG, Brokerage Company, USG1",
+    "Westchester Fire Insurance Company, Writing Company, USG103",
+    "Western World Insurance Co., Writing Company, USG121"
+  ],
+  "Western Security Surplus Brokerage, Brokerage Company, WSS": [
+    "Western Security Surplus Brokerage, Brokerage Company, WSS"
+  ],
+  "Wholesure Solutions, LLC ( Appalachians ), Brokerage Company": [
+    "Accident Insurance Company, Writing Company, APP023",
+    "Accredited Specialty Insurance Company, Writing Company",
+    "Accredited Surety and Casualty Company, Inc., Writing Company",
+    "American Builders Insurance Company RRG, Inc., Writing Company",
+    "AmTrust Insurance Company, Writing Company, APP008",
+    "Berkshire Hathaway Direct Insurance Company, Writing Company",
+    "Biberk Business Insurance, Writing Company, APP020",
+    "Carolina Casualty Insurance Company, Writing Company, APP004",
+    "Clear Spring Prop & Casualty Co, Writing Company, APP009",
+    "Crum & Forster Specialty Insurance Company, Writing Company",
+    "Evanston Insurance Company, Writing Company, APP010",
+    "Hamilton Select Insurance Inc, Writing Company, APP030",
+    "Homesite Insurance Company of Florida, Writing Company",
+    "Kinsale Insurance Company, Writing Company, APP024",
+    "LIO Specialty Insurance Company, Writing Company, APP013",
+    "Markel Insurance Company, Writing Company, APP005",
+    "Maxum Indemnity Company, Writing Company, APP016",
+    "MidSouth Mutual Insurance Company, Writing Company, APP011",
+    "Midwest Employers Casualty Company, Writing Company, APP003",
+    "National Liability & Fire Ins. Co., Writing Company, APP002",
+    "Nautilus Insurance Company, Writing Company, APP014",
+    "Next Insurance US Company, Writing Company, APP026",
+    "Northfield Insurance Company, Writing Company, APP022",
+    "Penn-Star Insurance Company, Writing Company, APP029",
+    "Sirius America Insurance Company, Writing Company, APP015",
+    "StarStone National Insurance Company, Writing Company",
+    "The Burlington Insurance Company, Writing Company, APP001",
+    "The Pie Insurance Company, Writing Company, APP007",
+    "Underwriters at Lloyd's London, Writing Company, APP006",
+    "United National Insurance Company, Writing Company, APP019",
+    "Wellfleet New York Insurance Company, Writing Company",
+    "Wholesure Solutions, LLC ( Appalachians ), Brokerage Company"
+  ],
+  "Word and Brown, Brokerage Company, WAB": [
+    "Sutter Hith Plan, Writing Company, WAB001",
+    "Word and Brown, Brokerage Company, WAB"
+  ],
+  "Worldwide Facilities, Inc., Brokerage Company, WOR": [
+    "Atlantic Casualty Insurance Company, Writing Company, WOR010",
+    "Bankers Standard Ins Co, Writing Company, WOR003",
+    "Century Surety, Writing Company, WOR002",
+    "Covington Specialty Ins Co, Writing Company, WOR001",
+    "Evanston Insurance Company, Writing Company, WOR004",
+    "Kinsale Insurance Company, Writing Company, WOR008",
+    "Mount Vernon Fire Insurance Company, Writing Company, WOR009",
+    "Scottsdale Insurance Company, Writing Company, WOR005",
+    "The Burlington Insurance Company, Writing Company, WOR006",
+    "Westchester Surplus Lines Insurance Company, Writing Company",
+    "Worldwide Facilities, Inc., Brokerage Company, WOR"
+  ],
+  "XS Specialty LLC, Brokerage Company, XSS": [
+    "AIG Specialty Insurance Company, Writing Company, XSS015",
+    "AM Specialty Insurance Company, Writing Company, XSS020",
+    "Canopius US Insurance, Inc, Writing Company, XSS011",
+    "Capitol Specialty Insurance Corporation, Writing Company, XSS004",
+    "Certain Underwriters at Lloyd's London, Writing Company, XSS009",
+    "Champlain Specialty Insurance Company, Writing Company, XSS014",
+    "Clear Blue Specialty Insurance, Writing Company, XSS010",
+    "Commerce & Industry Insurance Company, Writing Company",
+    "Concert Specialty Insurance Company, Writing Company, XSS002",
+    "CUMIS Specialty Insurance Company, Writing Company, XSS013",
+    "Gemini Insurance, Writing Company, XSS006",
+    "Houston Specialty Insurance Company, Writing Company, XSS007",
+    "James River Insurance Co., Writing Company, XSS018",
+    "Kinsale Insurance Company, Writing Company, XSS017",
+    "National Union Fire Ins, Writing Company, XSS016",
+    "Obsidian Specialty Insurance Company, Writing Company, XSS003",
+    "Richmond National Insurance Company, Writing Company, XSS001",
+    "Summit Specialty Insurance Company, Writing Company, XSS005",
+    "United National Insurance Company, Writing Company, XSS012",
+    "United Specialty Insurance Co, Writing Company, XSS008",
+    "XS Specialty LLC, Brokerage Company, XSS"
+  ]
+};
+
 export default function NewPolicyPage() {
   const params = useParams();
   const router = useRouter();
@@ -1146,6 +2240,13 @@ export default function NewPolicyPage() {
   useEffect(() => {
     if (companyType === "Insurance") {
       const companies = INSURANCE_WRITING_COMPANIES[parentCompany];
+      if (companies && companies.length > 0) {
+        setWritingCompany(companies[0]);
+      } else {
+        setWritingCompany(parentCompany);
+      }
+    } else if (companyType === "Brokerage") {
+      const companies = BROKERAGE_WRITING_COMPANIES[parentCompany];
       if (companies && companies.length > 0) {
         setWritingCompany(companies[0]);
       } else {
@@ -1710,7 +2811,10 @@ export default function NewPolicyPage() {
                       {companyType === "Insurance" && INSURANCE_PARENT_COMPANIES.map((company) => (
                         <option key={company} value={company}>{company}</option>
                       ))}
-                      {companyType !== "Insurance" && (
+                      {companyType === "Brokerage" && BROKERAGE_PARENT_COMPANIES.map((company) => (
+                        <option key={company} value={company}>{company}</option>
+                      ))}
+                      {companyType === "Subscription" && (
                         <>
                           <option value="Progressive">Progressive</option>
                           <option value="Travelers">Travelers</option>
@@ -1733,6 +2837,12 @@ export default function NewPolicyPage() {
                           <option key={company} value={company}>{company}</option>
                         ))
                       ) : companyType === "Insurance" ? (
+                        <option value={parentCompany}>{parentCompany}</option>
+                      ) : companyType === "Brokerage" && BROKERAGE_WRITING_COMPANIES[parentCompany] ? (
+                        BROKERAGE_WRITING_COMPANIES[parentCompany].map((company) => (
+                          <option key={company} value={company}>{company}</option>
+                        ))
+                      ) : companyType === "Brokerage" ? (
                         <option value={parentCompany}>{parentCompany}</option>
                       ) : (
                         <>

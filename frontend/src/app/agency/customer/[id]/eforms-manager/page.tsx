@@ -4,7 +4,7 @@
   import React, { useState, useEffect, useCallback, useRef } from "react";
   import { useRouter, useParams } from "next/navigation";
   import { API_BASE_URL } from "../../../../../lib/config";
-import { confirmDialog } from "@/components/ToastProvider";
+import { confirmDialog, showToast } from "@/components/ToastProvider";
   import Acord25Form from "../../../../../services/pdf/Acord25Form";
   import Header from "../../../../../components/Header";
   import RightDrawer from "../../../../../components/RightDrawer";
@@ -942,7 +942,7 @@ export default function EFormsManagerPage() {
       const certToCopy = certs.find((c: any) => String(c.id) === certDbId);
 
       if (!certToCopy) {
-        alert("Certificate not found");
+        showToast("Certificate not found", "error");
         return;
       }
 
@@ -1019,7 +1019,7 @@ export default function EFormsManagerPage() {
       await fetchData();
     } catch (err) {
       console.error(err);
-      alert("Error copying certificate");
+      showToast("Error copying certificate", "error");
     }
   };
 
@@ -1042,7 +1042,7 @@ export default function EFormsManagerPage() {
       }
     } catch (err) {
       console.error(err);
-      alert("Error deleting certificate");
+      showToast("Error deleting certificate", "error");
     }
   };
 
@@ -1078,7 +1078,7 @@ export default function EFormsManagerPage() {
 
   const handleUploadAttachment = async () => {
     if (!attachmentFile) {
-      alert("Please select a file to attach.");
+      showToast("Please select a file to attach.", "warning");
       return;
     }
     setIsUploading(true);
@@ -1105,12 +1105,12 @@ export default function EFormsManagerPage() {
         throw new Error("Failed to upload document");
       }
 
-      alert("Attachment uploaded successfully to live server.");
+      showToast("Attachment uploaded successfully to live server.", "success");
       setAttachmentModalOpen(false);
       await fetchData();
     } catch (err) {
       console.error(err);
-      alert("Error uploading attachment.");
+      showToast("Error uploading attachment.", "error");
     } finally {
       setIsUploading(false);
     }

@@ -73,16 +73,6 @@ export default function ToastProvider() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      // Override native alert calls
-      window.alert = (msg?: any) => {
-        const text = String(msg || "");
-        const isError =
-          text.toLowerCase().includes("error") ||
-          text.toLowerCase().includes("fail") ||
-          text.toLowerCase().includes("invalid");
-        addToast(text, isError ? "error" : "success");
-      };
-
       const handleToastEvent = (e: Event) => {
         const customEvent = e as CustomEvent<{ message: string; type: "success" | "error" | "info" | "warning" }>;
         if (customEvent.detail && customEvent.detail.message) {

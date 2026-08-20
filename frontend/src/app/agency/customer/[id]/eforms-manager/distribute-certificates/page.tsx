@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useParams } from "next/navigation";
 import { API_BASE_URL } from "@/lib/config";
+import { showToast } from "@/components/ToastProvider";
 import {
   X,
   FileText,
@@ -176,7 +177,7 @@ export default function DistributeCertificatesPage() {
   // ── Distribute ──
   const handleDistribute = async () => {
     if (selectedHolderIds.size === 0) {
-      alert("Please select at least one holder to distribute to.");
+      showToast("Please select at least one holder to distribute to.", "warning");
       return;
     }
     setDistributing(true);
@@ -186,7 +187,7 @@ export default function DistributeCertificatesPage() {
       setDistributeSuccess(true);
       setTimeout(() => setDistributeSuccess(false), 3000);
     } catch (e) {
-      alert("Distribution failed. Please try again.");
+      showToast("Distribution failed. Please try again.", "error");
     } finally {
       setDistributing(false);
     }

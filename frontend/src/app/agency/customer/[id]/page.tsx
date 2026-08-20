@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { API_BASE_URL } from "../../../../lib/config";
-import { confirmDialog } from "@/components/ToastProvider";
+import { confirmDialog, showToast } from "@/components/ToastProvider";
 import {
   ArrowLeft,
   User,
@@ -338,7 +338,7 @@ export default function CustomerProfilePage() {
 
       setPendingFile(null);
     } catch (err: any) {
-      alert("Document upload failed: " + err.message);
+      showToast("Document upload failed: " + err.message, "error");
     }
   };
 
@@ -702,14 +702,14 @@ export default function CustomerProfilePage() {
               </button>
 
               <button
-                onClick={() => alert("Renew policy initiated for selected policy.")}
+                onClick={() => showToast("Renew policy initiated for selected policy.", "success")}
                 className="h-8 px-4 bg-white border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#2d2a26] text-xs font-bold rounded-full transition-all cursor-pointer shadow-2xs"
               >
                 Renew
               </button>
 
               <button
-                onClick={() => alert("Rewrite policy initiated for selected policy.")}
+                onClick={() => showToast("Rewrite policy initiated for selected policy.", "success")}
                 className="h-8 px-4 bg-white border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#2d2a26] text-xs font-bold rounded-full transition-all cursor-pointer shadow-2xs"
               >
                 Rewrite
@@ -718,7 +718,7 @@ export default function CustomerProfilePage() {
               <button
                 onClick={async () => {
                   if (await confirmDialog("Are you sure you want to cancel the selected policy?", "Cancel Policy")) {
-                    alert("Cancellation request submitted.");
+                    showToast("Cancellation request submitted.", "success");
                   }
                 }}
                 className="h-8 px-4 bg-white border border-[#e5ddd5] hover:bg-red-50 hover:text-red-700 text-[#2d2a26] text-xs font-bold rounded-full transition-all cursor-pointer shadow-2xs"
