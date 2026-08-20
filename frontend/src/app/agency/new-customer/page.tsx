@@ -195,13 +195,13 @@ export default function NewCustomerPage() {
         "Additional Customer Info",
         "Service Groups",
         "Contacts",
-        "Dependents",
-        "Loss History",
-        "Agency Defined Fields",
-        "Cross References",
-        "Expiration Dates",
-        "Accounting Options",
-        "Benefits Information",
+        // "Dependents",
+        // "Loss History",
+        // "Agency Defined Fields",
+        // "Cross References",
+        // "Expiration Dates",
+        // "Accounting Options",
+        // "Benefits Information",
     ];
 
     const set = (patch: Partial<FormState>) => setF(prev => ({ ...prev, ...patch }));
