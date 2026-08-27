@@ -5,7 +5,8 @@ import { API_BASE_URL } from "@/lib/config";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { showToast } from "@/components/ToastProvider";
 import {
-  X, Printer, CheckSquare, Square, MinusSquare, PlusSquare, FileText, Loader2
+  X, Mail, Send, FileText, CheckSquare, Square, MinusSquare, PlusSquare, 
+  Loader2, Download, Eye, Paperclip, Check
 } from "lucide-react";
 import { PDFDocument } from "pdf-lib";
 import html2canvas from "html2canvas";
@@ -70,17 +71,24 @@ function formatLimit(val: any): string {
   return '';
 }
 
-function PrintOptionsContent() {
+function EmailOptionsContent() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
   const customerId = params?.id as string;
   const initialSelected = searchParams?.get("selected") || "";
-  const [customer, setCustomer] = useState<any>(null);
 
+  const [customer, setCustomer] = useState<any>(null);
   const [printOption, setPrintOption] = useState("formOnly");
   const [separatePdf, setSeparatePdf] = useState(false);
-  
+
+  // Email form state
+  const [toEmail, setToEmail] = useState("");
+  const [ccEmail, setCcEmail] = useState("");
+  const [bccEmail, setBccEmail] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+
   // Coverages state
   const [policyCoveragesMap, setPolicyCoveragesMap] = useState<Record<string, { effDate: string, expDate: string, insurerName: string, gl: any[], umb: any[], wc: any, ba: any[] }>>({});
 
@@ -90,6 +98,7 @@ function PrintOptionsContent() {
   const [checkedNodes, setCheckedNodes] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState("Generating PDF...");
 
   // ── Fetch Data ──
   const fetchData = useCallback(async () => {
@@ -108,8 +117,11 @@ function PrintOptionsContent() {
         fetch(`${API_BASE_URL}/api/customers/${customerId}/policies`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
 
-      if (!custRes.ok) throw new Error("Failed to load customer");
-      setCustomer(await custRes.json());
+      let custData: any = null;
+      if (custRes.ok) {
+        custData = await custRes.json();
+        setCustomer(custData);
+      }
 
       if (polRes.ok) {
         const polData = await polRes.json();
@@ -119,7 +131,6 @@ function PrintOptionsContent() {
         let wcResultsAll: any[] = [];
         let baResultsAll: any[][] = [];
 
-        // Fetch limits for GL, Umbrella, and WC just like in eforms-manager
         try {
           const fetchPromises = polData.map((p: any) => 
             fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/general-liability`, {
@@ -129,8 +140,7 @@ function PrintOptionsContent() {
               try { return await res.json(); } catch { return []; }
             })
           );
-          const results = await Promise.all(fetchPromises);
-          glResultsAll = results;
+          glResultsAll = await Promise.all(fetchPromises);
         } catch (e) { console.error("GL Error", e); }
         
         try {
@@ -142,8 +152,7 @@ function PrintOptionsContent() {
               try { return await res.json(); } catch { return []; }
             })
           );
-          const umbResults = await Promise.all(umbPromises);
-          umbResultsAll = umbResults;
+          umbResultsAll = await Promise.all(umbPromises);
         } catch (e) { console.error("Umb Error", e); }
         
         try {
@@ -155,8 +164,7 @@ function PrintOptionsContent() {
               try { return await res.json(); } catch { return null; }
             })
           );
-          const wcResults = await Promise.all(wcPromises);
-          wcResultsAll = wcResults;
+          wcResultsAll = await Promise.all(wcPromises);
         } catch (e) { console.error("WC Error", e); }
 
         try {
@@ -168,8 +176,7 @@ function PrintOptionsContent() {
               try { return await res.json(); } catch { return []; }
             })
           );
-          const baResults = await Promise.all(baPromises);
-          baResultsAll = baResults;
+          baResultsAll = await Promise.all(baPromises);
         } catch (e) { console.error("BA Error", e); }
         
         const pMap: Record<string, { effDate: string, expDate: string, insurerName: string, gl: any[], umb: any[], wc: any, ba: any[] }> = {};
@@ -191,6 +198,8 @@ function PrintOptionsContent() {
 
       let allDocuments: any[] = [];
       if (docRes && docRes.ok) allDocuments = await docRes.json();
+
+      let detectedRecipientEmail = custData?.email || "";
 
       if (certRes.ok) {
         const certData = await certRes.json();
@@ -214,6 +223,12 @@ function PrintOptionsContent() {
                   const hChildren: TreeNode[] = hDocs.map(d => ({
                     id: `doc-${d.id}`, label: d.file_name, type: "file", documentData: d, formType: "Certificates"
                   }));
+
+                  // If this holder was initially selected, capture their email
+                  if (initialSelected === hId && h.email) {
+                    detectedRecipientEmail = h.email;
+                  }
+
                   return {
                     id: hId,
                     label: [h.name, h.address, [h.city, h.state, h.zip].filter(Boolean).join(', ')].filter(Boolean).join(', '),
@@ -245,8 +260,10 @@ function PrintOptionsContent() {
         );
         setTreeData(formattedCerts);
 
+        // Pre-select initial node if provided
         if (initialSelected) {
           setCheckedNodes(new Set([initialSelected]));
+          // Expand parent certificate folders
           const nextExpanded = new Set(["root"]);
           formattedCerts.forEach((c: TreeNode) => {
             if (c.id === initialSelected || c.children?.some((ch: TreeNode) => ch.id === initialSelected)) {
@@ -255,10 +272,17 @@ function PrintOptionsContent() {
           });
           setExpandedNodes(nextExpanded);
         } else if (formattedCerts.length > 0) {
+          // Default select first item
           const firstNode = formattedCerts[0].children?.[0] || formattedCerts[0];
           setCheckedNodes(new Set([firstNode.id]));
           setExpandedNodes(new Set(["root", formattedCerts[0].id]));
         }
+
+        // Set default email values
+        setToEmail(detectedRecipientEmail);
+        const custName = custData?.name || "Customer";
+        setSubject(`Certificate of Liability Insurance - ${custName}`);
+        setMessage(`Please find attached the Certificate of Liability Insurance document for ${custName}.\n\nThank you,\nGamaty Insurance Agency LLC`);
       }
     } catch (err) {
       console.error(err);
@@ -268,7 +292,7 @@ function PrintOptionsContent() {
   }, [customerId, router, initialSelected]);
 
   useEffect(() => {
-    document.title = "eForm Manager Print Options";
+    document.title = "eForm Manager Email Options";
     fetchData();
   }, [fetchData]);
 
@@ -293,11 +317,9 @@ function PrintOptionsContent() {
     const next = new Set(checkedNodes);
     const isChecked = next.has(node.id);
     
-    // Toggle current node
     if (isChecked) next.delete(node.id);
     else next.add(node.id);
 
-    // If folder, toggle all children to match
     if (node.children) {
       const descendantIds = getAllDescendantIds(node.children);
       for (const id of descendantIds) {
@@ -307,13 +329,16 @@ function PrintOptionsContent() {
     }
 
     setCheckedNodes(next);
+
+    // If a holder is checked, update To email if available
+    if (!isChecked && node.holderData?.email) {
+      setToEmail(node.holderData.email);
+    }
   };
 
   // ── PDF Generation Logic ──
   const getSelectedItems = () => {
     const items: { type: "master" | "holder", url: string, name: string, id: string, attachments: TreeNode[] }[] = [];
-    
-    // If "allMasterHolder" is selected, we pretend all Masters and Holders are checked
     const isAllChecked = printOption === "allMasterHolder";
 
     const traverse = (nodes: TreeNode[], parentMaster?: TreeNode) => {
@@ -326,7 +351,6 @@ function PrintOptionsContent() {
           if (activeCert) {
             const rowSelections = activeCert.form_data?.rowSelections || {};
             
-            // 0: General Liability
             const glSelectedPol = rowSelections[0];
             const glMap = glSelectedPol ? policyCoveragesMap[glSelectedPol] : null;
             const localGlCoverages = glMap?.gl || [];
@@ -334,7 +358,6 @@ function PrintOptionsContent() {
             const localGlEffDate = glMap?.effDate || '';
             const localGlExpDate = glMap?.expDate || '';
 
-            // 1: Automobile
             const autoSelectedPol = rowSelections[1];
             const autoMap = autoSelectedPol ? policyCoveragesMap[autoSelectedPol] : null;
             const localBaCoverages = autoMap?.ba || [];
@@ -342,7 +365,6 @@ function PrintOptionsContent() {
             const localAutoEffDate = autoMap?.effDate || '';
             const localAutoExpDate = autoMap?.expDate || '';
 
-            // 7: Umbrella
             const umbSelectedPol = rowSelections[7];
             const umbMap = umbSelectedPol ? policyCoveragesMap[umbSelectedPol] : null;
             const localUmbCoverages = umbMap?.umb || [];
@@ -350,7 +372,6 @@ function PrintOptionsContent() {
             const localUmbEffDate = umbMap?.effDate || '';
             const localUmbExpDate = umbMap?.expDate || '';
 
-            // 4: Workers Comp
             const wcSelectedPol = rowSelections[4];
             const wcMap = wcSelectedPol ? policyCoveragesMap[wcSelectedPol] : null;
             const localWcPart2 = wcMap?.wc || null;
@@ -385,7 +406,6 @@ function PrintOptionsContent() {
               propertyDamage: findLimit(localBaCoverages, "property damage", "property danage"),
             };
 
-            // Assign INSR LTR letters A/B/C/D sequentially without grouping (GL -> Umbrella -> Auto -> WC)
             const insrMapping = (() => {
               const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
               let currentLetterIdx = 0;
@@ -583,15 +603,11 @@ function PrintOptionsContent() {
   };
 
   const processItemIntoPdf = async (item: any, targetPdf: PDFDocument, includeAttachments: boolean) => {
-    // 1. Convert form iframe directly to PDF ArrayBuffer via client-side html2canvas & jsPDF
     const formPdfBuffer = await getPdfBufferFromIframe(item.url);
-    
-    // 2. Load Form PDF and copy pages
     const formPdf = await PDFDocument.load(formPdfBuffer);
     const copiedPages = await targetPdf.copyPages(formPdf, formPdf.getPageIndices());
     copiedPages.forEach((page: any) => targetPdf.addPage(page));
 
-    // 3. Attachments
     if (includeAttachments && item.attachments.length > 0) {
       for (const att of item.attachments) {
         try {
@@ -615,96 +631,116 @@ function PrintOptionsContent() {
     }
   };
 
-  const handleSavePdf = async () => {
+  // ── Build Combined or Single PDF Blob ──
+  const generatePdfBlob = async (): Promise<{ blob: Blob, fileName: string }> => {
     const items = getSelectedItems();
-    console.log("handleSavePdf -> items:", items);
-    
-    if (items.length === 0) { showToast("Please select at least one form to print.", "warning"); return; }
-    
-    setIsProcessing(true);
-    const includeAttachments = printOption === "overflow";
+    if (items.length === 0) throw new Error("No items selected");
 
+    const includeAttachments = printOption === "overflow";
+    const combinedPdf = await PDFDocument.create();
+
+    for (const item of items) {
+      await processItemIntoPdf(item, combinedPdf, includeAttachments);
+    }
+
+    const pdfBytes = await combinedPdf.save();
+    const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
+    const firstItemName = items[0]?.name?.replace(/[^a-z0-9]/gi, '_') || 'Certificate';
+    const fileName = items.length === 1 
+      ? `Certificate_${firstItemName}.pdf`
+      : `Combined_Certificates_${customer?.name?.replace(/[^a-z0-9]/gi, '_') || 'Customer'}.pdf`;
+
+    return { blob, fileName };
+  };
+
+  // ── Action: Open PDF Directly in Browser Tab ──
+  const handleOpenPdf = async () => {
+    const items = getSelectedItems();
+    if (items.length === 0) {
+      showToast("Please select at least one form to view.", "warning");
+      return;
+    }
+
+    setIsProcessing(true);
+    setProcessingStatus("Generating PDF for preview...");
     try {
-      if (separatePdf) {
-        // Generate separate PDFs
-        for (const item of items) {
-          const pdf = await PDFDocument.create();
-          await processItemIntoPdf(item, pdf, includeAttachments);
-          const pdfBytes = await pdf.save();
-          const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `${item.name.replace(/[^a-z0-9]/gi, '_')}.pdf`;
-          a.click();
-          URL.revokeObjectURL(url);
-        }
-      } else {
-        // Combined PDF
-        const combinedPdf = await PDFDocument.create();
-        for (const item of items) {
-          await processItemIntoPdf(item, combinedPdf, includeAttachments);
-        }
-        const pdfBytes = await combinedPdf.save();
-        const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `Combined_Certificates_${customer?.name?.replace(/[^a-z0-9]/gi, '_') || 'Customer'}.pdf`;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-      
-      // Auto close after successful Save
-      setTimeout(() => window.close(), 1000);
-      
+      const { blob } = await generatePdfBlob();
+      const pdfUrl = URL.createObjectURL(blob);
+      window.open(pdfUrl, "_blank");
+      showToast("Opened selected PDF in new tab", "success");
     } catch (err) {
       console.error(err);
-      showToast("Error generating PDF. Check console for details.", "error");
+      showToast("Error generating PDF. Please try again.", "error");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handlePrint = async () => {
+  // ── Action: Save/Download PDF ──
+  const handleSavePdf = async () => {
     const items = getSelectedItems();
-    console.log("handlePrint -> items:", items);
-    
-    if (items.length === 0) { showToast("Please select at least one form to print.", "warning"); return; }
-    
-    // For native print, open all URLs in a single hidden iframe separated by page breaks
-    const printWindow = window.open("", "_blank", "width=850,height=1100");
-    if (!printWindow) { showToast("Popup blocked!", "error"); return; }
-    
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Print Forms</title>
-          <style>
-            body { margin: 0; padding: 0; }
-            iframe { width: 100%; height: 1100px; border: none; display: block; }
-            .page-break { page-break-after: always; }
-          </style>
-        </head>
-        <body>
-          ${items.map((item, idx) => `
-            <iframe src="${window.location.origin}${item.url}"></iframe>
-            ${idx < items.length - 1 ? '<div class="page-break"></div>' : ''}
-          `).join('')}
-          <script>
-            window.onload = () => {
-              setTimeout(() => {
-                window.print();
-                setTimeout(() => window.close(), 500);
-                // Also close the parent print-options window
-                window.opener?.close();
-              }, 3500); // give iframes plenty of time to load data
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+    if (items.length === 0) {
+      showToast("Please select at least one form to download.", "warning");
+      return;
+    }
+
+    setIsProcessing(true);
+    setProcessingStatus("Downloading PDF...");
+    try {
+      const { blob, fileName } = await generatePdfBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`Downloaded ${fileName}`, "success");
+    } catch (err) {
+      console.error(err);
+      showToast("Error downloading PDF.", "error");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // ── Action: Send Email (Downloads PDF & Opens Email Client with Clean Message) ──
+  const handleSendEmail = async () => {
+    const items = getSelectedItems();
+    if (items.length === 0) {
+      showToast("Please select at least one form to email.", "warning");
+      return;
+    }
+
+    setIsProcessing(true);
+    setProcessingStatus("Preparing PDF attachment & launching email...");
+    try {
+      // 1. Generate & download the PDF so the user has the exact file to attach
+      const { blob, fileName } = await generatePdfBlob();
+      const pdfUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = pdfUrl;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(pdfUrl);
+
+      // 2. Format mailto link with standard percent-encoding (avoids '+' symbols in Outlook/Mail clients)
+      const mailtoParams: string[] = [];
+      if (ccEmail) mailtoParams.push(`cc=${encodeURIComponent(ccEmail)}`);
+      if (bccEmail) mailtoParams.push(`bcc=${encodeURIComponent(bccEmail)}`);
+      if (subject) mailtoParams.push(`subject=${encodeURIComponent(subject)}`);
+      if (message) mailtoParams.push(`body=${encodeURIComponent(message)}`);
+
+      const queryString = mailtoParams.length > 0 ? `?${mailtoParams.join("&")}` : "";
+      const mailtoUrl = `mailto:${encodeURIComponent(toEmail)}${queryString}`;
+      window.open(mailtoUrl, "_blank");
+
+      showToast(`PDF "${fileName}" saved to Downloads! Attach it to your email.`, "success");
+    } catch (err) {
+      console.error(err);
+      showToast("Error preparing email. Check console.", "error");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const renderTree = (nodes: TreeNode[], depth = 0) => {
@@ -713,7 +749,7 @@ function PrintOptionsContent() {
         <div key={node.id}>
           <div className="flex items-center gap-1.5 py-1" style={{ paddingLeft: `${depth * 16}px` }}>
             {node.type === "folder" ? (
-              <button onClick={() => toggleExpand(node.id)} className="w-4 h-4 shrink-0 flex items-center justify-center border border-border-main bg-white hover:bg-secondary/50 rounded-sm">
+              <button onClick={() => toggleExpand(node.id)} className="w-4 h-4 shrink-0 flex items-center justify-center border border-border-main bg-white hover:bg-secondary/50 rounded-sm cursor-pointer">
                 {expandedNodes.has(node.id) ? <MinusSquare size={12} /> : <PlusSquare size={12} />}
               </button>
             ) : (
@@ -726,7 +762,7 @@ function PrintOptionsContent() {
               onChange={() => toggleCheck(node)} 
               className="w-3.5 h-3.5 shrink-0 accent-primary rounded-sm cursor-pointer disabled:opacity-50" 
             />
-            <span className="truncate" title={node.label}>{node.label}</span>
+            <span className="truncate text-xs font-semibold" title={node.label}>{node.label}</span>
           </div>
           {node.type === "folder" && expandedNodes.has(node.id) && node.children && (
             <div className="border-l border-dotted border-border-main ml-2 flex flex-col">
@@ -738,24 +774,28 @@ function PrintOptionsContent() {
     });
   };
 
+  const selectedCount = printOption === "allMasterHolder" 
+    ? treeData.reduce((acc, c) => acc + 1 + (c.children?.length || 0), 0)
+    : checkedNodes.size;
+
   return (
     <div className="flex flex-col h-screen bg-bg-base font-sans overflow-hidden select-none relative">
       
       {/* ── Processing Overlay ── */}
       {isProcessing && (
-        <div className="absolute inset-0 z-50 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center">
-          <Loader2 size={32} className="animate-spin text-primary mb-3" />
-          <p className="text-sm font-bold text-text-main">Generating PDFs...</p>
-          <p className="text-xs text-text-muted mt-1">Please wait, this may take a moment.</p>
+        <div className="absolute inset-0 z-50 bg-white/85 backdrop-blur-sm flex flex-col items-center justify-center">
+          <Loader2 size={36} className="animate-spin text-primary mb-3" />
+          <p className="text-sm font-bold text-text-main">{processingStatus}</p>
+          <p className="text-xs text-text-muted mt-1">Rendering forms into high quality PDF, please wait...</p>
         </div>
       )}
 
-      {/* ── Modern Form Header ── */}
-      <div className="bg-white border-b border-border-main px-6 py-4 flex justify-between items-center shrink-0 shadow-sm z-10">
+      {/* ── Header ── */}
+      <div className="bg-white border-b border-border-main px-6 py-3.5 flex justify-between items-center shrink-0 shadow-sm z-10">
         <div>
           <h2 className="text-base font-extrabold text-text-main tracking-tight flex items-center gap-2">
             <span className="w-6 h-6 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-xs">360</span>
-            eForm Manager Print Options
+            eForm Manager Email Options
           </h2>
         </div>
         <div className="flex items-center gap-2">
@@ -766,47 +806,130 @@ function PrintOptionsContent() {
       </div>
 
       {/* ── Main Content ── */}
-      <div className="flex-1 p-6 flex gap-6 overflow-hidden min-h-0 bg-slate-50/50">
+      <div className="flex-1 p-5 flex gap-5 overflow-hidden min-h-0 bg-slate-50/50">
         
-        {/* LEFT COLUMN - OPTIONS */}
-        <div className="w-[320px] flex flex-col gap-6 overflow-y-auto custom-scrollbar shrink-0">
+        {/* LEFT COLUMN - EMAIL COMPOSER & OPTIONS */}
+        <div className="w-[420px] flex flex-col gap-4 overflow-y-auto custom-scrollbar shrink-0">
           
-          {/* Print Selection Options */}
-          <div className="bg-white border border-border-main p-5 rounded-2xl shadow-sm flex flex-col gap-3">
-            <h3 className="text-[11px] font-bold text-text-muted uppercase tracking-widest border-b border-border-main/50 pb-2">Print Selection Options</h3>
-            <label className="flex items-center gap-2 text-[13px] font-semibold text-text-main cursor-pointer mt-1">
-              <input type="radio" name="printOpt" checked={printOption === "formOnly"} onChange={() => setPrintOption("formOnly")} className="accent-primary w-4 h-4" />
+          {/* Email Recipient Card */}
+          <div className="bg-white border border-border-main p-4 rounded-2xl shadow-sm flex flex-col gap-3">
+            <h3 className="text-[11px] font-bold text-text-muted uppercase tracking-widest border-b border-border-main/50 pb-2 flex items-center gap-1.5">
+              <Mail size={13} className="text-primary" />
+              Email Recipients
+            </h3>
+            
+            <div className="flex flex-col gap-2.5">
+              <div>
+                <label className="text-[11px] font-bold text-text-muted mb-1 block">To Email:</label>
+                <input 
+                  type="email" 
+                  value={toEmail} 
+                  onChange={e => setToEmail(e.target.value)} 
+                  placeholder="recipient@example.com"
+                  className="w-full h-8 px-3 text-xs font-semibold bg-bg-base border border-border-main rounded-lg outline-none focus:border-primary focus:bg-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[11px] font-bold text-text-muted mb-1 block">Cc:</label>
+                  <input 
+                    type="email" 
+                    value={ccEmail} 
+                    onChange={e => setCcEmail(e.target.value)} 
+                    placeholder="cc@example.com"
+                    className="w-full h-8 px-3 text-xs font-semibold bg-bg-base border border-border-main rounded-lg outline-none focus:border-primary focus:bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-text-muted mb-1 block">Bcc:</label>
+                  <input 
+                    type="email" 
+                    value={bccEmail} 
+                    onChange={e => setBccEmail(e.target.value)} 
+                    placeholder="bcc@example.com"
+                    className="w-full h-8 px-3 text-xs font-semibold bg-bg-base border border-border-main rounded-lg outline-none focus:border-primary focus:bg-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-text-muted mb-1 block">Subject:</label>
+                <input 
+                  type="text" 
+                  value={subject} 
+                  onChange={e => setSubject(e.target.value)} 
+                  className="w-full h-8 px-3 text-xs font-semibold bg-bg-base border border-border-main rounded-lg outline-none focus:border-primary focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-text-muted mb-1 block">Message:</label>
+                <textarea 
+                  value={message} 
+                  onChange={e => setMessage(e.target.value)} 
+                  rows={3}
+                  className="w-full p-2 text-xs font-medium bg-bg-base border border-border-main rounded-lg outline-none focus:border-primary focus:bg-white resize-none"
+                />
+              </div>
+
+              {/* Attachment Preview Card */}
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-2.5 flex items-center justify-between">
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <div className="w-7 h-7 rounded-lg bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                    <FileText size={14} />
+                  </div>
+                  <div className="truncate">
+                    <p className="text-[11px] font-bold text-text-main truncate">
+                      {selectedCount > 1 ? `Combined_Certificates (${selectedCount} forms).pdf` : `Certificate_${customer?.name || 'Document'}.pdf`}
+                    </p>
+                    <p className="text-[10px] text-primary font-semibold">Auto-downloads to your Downloads folder to attach in Outlook</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={handleOpenPdf}
+                  title="Preview PDF"
+                  className="text-xs font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer shrink-0 ml-2"
+                >
+                  <Eye size={12} />
+                  <span>View</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Selection Options */}
+          <div className="bg-white border border-border-main p-4 rounded-2xl shadow-sm flex flex-col gap-2.5">
+            <h3 className="text-[11px] font-bold text-text-muted uppercase tracking-widest border-b border-border-main/50 pb-2">Form Selection Options</h3>
+            <label className="flex items-center gap-2 text-xs font-semibold text-text-main cursor-pointer mt-1">
+              <input type="radio" name="printOpt" checked={printOption === "formOnly"} onChange={() => setPrintOption("formOnly")} className="accent-primary w-3.5 h-3.5" />
               Form Only
             </label>
-            <label className="flex items-center gap-2 text-[13px] font-semibold text-text-main cursor-pointer">
-              <input type="radio" name="printOpt" checked={printOption === "overflow"} onChange={() => setPrintOption("overflow")} className="accent-primary w-4 h-4" />
+            <label className="flex items-center gap-2 text-xs font-semibold text-text-main cursor-pointer">
+              <input type="radio" name="printOpt" checked={printOption === "overflow"} onChange={() => setPrintOption("overflow")} className="accent-primary w-3.5 h-3.5" />
               Form, Overflow Pages, and Attachments
             </label>
-            <label className="flex items-center gap-2 text-[13px] font-semibold text-text-main cursor-pointer">
-              <input type="radio" name="printOpt" checked={printOption === "allMasterHolder"} onChange={() => setPrintOption("allMasterHolder")} className="accent-primary w-4 h-4" />
+            <label className="flex items-center gap-2 text-xs font-semibold text-text-main cursor-pointer">
+              <input type="radio" name="printOpt" checked={printOption === "allMasterHolder"} onChange={() => setPrintOption("allMasterHolder")} className="accent-primary w-3.5 h-3.5" />
               All Master and Holder
             </label>
           </div>
 
-          {/* Grouping Options */}
-          <div className="bg-white border border-border-main p-5 rounded-2xl shadow-sm flex flex-col gap-3">
-            <h3 className="text-[11px] font-bold text-text-muted uppercase tracking-widest border-b border-border-main/50 pb-2">Grouping Options</h3>
-            <label className="flex items-center gap-2 text-[13px] font-semibold text-text-main cursor-pointer mt-1">
-              <input type="checkbox" checked={separatePdf} onChange={e => setSeparatePdf(e.target.checked)} className="accent-primary w-4 h-4 rounded" />
-              Create separate PDF file(s)
-            </label>
-          </div>
         </div>
 
-        {/* RIGHT COLUMN - TREE */}
+        {/* RIGHT COLUMN - TREE OF CERTIFICATES & HOLDERS */}
         <div className="flex-1 bg-white border border-border-main rounded-2xl shadow-sm flex flex-col min-h-0 overflow-hidden">
+          <div className="px-4 py-3 border-b border-border-main/50 bg-slate-50/50 flex justify-between items-center shrink-0">
+            <span className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Select Forms to Include</span>
+            <span className="text-xs font-bold text-primary">{selectedCount} Selected</span>
+          </div>
+
           <div className="flex-1 overflow-auto p-4 custom-scrollbar">
-            
             <div className="flex flex-col text-[13px] font-medium text-text-main whitespace-nowrap">
               
               {/* Root */}
               <div className="flex items-center gap-1.5 py-1 mb-1 border-b border-border-main/50 pb-2">
-                <button onClick={() => toggleExpand("root")} className="w-4 h-4 flex items-center justify-center border border-border-main bg-white hover:bg-secondary/50 rounded-sm">
+                <button onClick={() => toggleExpand("root")} className="w-4 h-4 flex items-center justify-center border border-border-main bg-white hover:bg-secondary/50 rounded-sm cursor-pointer">
                   {expandedNodes.has("root") ? <MinusSquare size={12} /> : <PlusSquare size={12} />}
                 </button>
                 <input 
@@ -823,7 +946,7 @@ function PrintOptionsContent() {
                   }}
                   className="w-3.5 h-3.5 accent-primary rounded-sm cursor-pointer disabled:opacity-50" 
                 />
-                <span className="font-bold">Certificate, Last 2 year(s)</span>
+                <span className="font-bold text-xs">Certificate, Last 2 year(s)</span>
               </div>
               
               {/* Children of Root */}
@@ -841,23 +964,52 @@ function PrintOptionsContent() {
                 </div>
               )}
             </div>
-            
           </div>
         </div>
 
       </div>
 
       {/* ── Footer Actions ── */}
-      <div className="bg-white border-t border-border-main px-6 py-4 flex items-center justify-between shrink-0 shadow-[0_-1px_3px_rgba(0,0,0,0.04)] z-10">
-        <span className="text-[12px] font-bold text-red-600">Ready</span>
-        <div className="flex items-center gap-3">
-          <button onClick={handlePrint} className="h-8 px-8 bg-white border border-border-main hover:bg-secondary/50 text-text-main text-xs font-bold rounded-xl transition-all cursor-pointer">
-            Print
+      <div className="bg-white border-t border-border-main px-6 py-3.5 flex items-center justify-between shrink-0 shadow-[0_-1px_3px_rgba(0,0,0,0.04)] z-10">
+        <span className="text-[12px] font-bold text-green-600 flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+          Ready
+        </span>
+        <div className="flex items-center gap-2.5">
+          {/* Open PDF directly */}
+          <button 
+            onClick={handleOpenPdf} 
+            disabled={isProcessing} 
+            className="h-8 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+          >
+            <Eye size={13} />
+            <span>Open Selected PDF</span>
           </button>
-          <button onClick={handleSavePdf} disabled={isProcessing} className="h-8 px-8 bg-primary hover:bg-primary/90 disabled:bg-primary/50 text-white shadow-sm shadow-primary/20 text-xs font-bold rounded-xl transition-all cursor-pointer">
-            Save as PDF
+
+          {/* Download PDF */}
+          <button 
+            onClick={handleSavePdf} 
+            disabled={isProcessing} 
+            className="h-8 px-4 bg-white border border-border-main hover:bg-secondary/50 text-text-main text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            <Download size={13} />
+            <span>Save as PDF</span>
           </button>
-          <button onClick={() => window.close()} className="h-8 px-6 bg-white border border-border-main hover:bg-red-50 text-text-muted hover:text-red-600 text-xs font-bold rounded-xl transition-all cursor-pointer">
+
+          {/* Send Email */}
+          <button 
+            onClick={handleSendEmail} 
+            disabled={isProcessing} 
+            className="h-8 px-5 bg-primary hover:bg-primary/90 disabled:opacity-50 text-white shadow-sm shadow-primary/20 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            <Send size={13} />
+            <span>Send Email</span>
+          </button>
+
+          <button 
+            onClick={() => window.close()} 
+            className="h-8 px-4 bg-white border border-border-main hover:bg-red-50 text-text-muted hover:text-red-600 text-xs font-bold rounded-xl transition-all cursor-pointer"
+          >
             Cancel
           </button>
         </div>
@@ -872,10 +1024,10 @@ function PrintOptionsContent() {
   );
 }
 
-export default function PrintOptionsPage() {
+export default function EmailOptionsPage() {
   return (
     <Suspense fallback={<div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-primary" size={32} /></div>}>
-      <PrintOptionsContent />
+      <EmailOptionsContent />
     </Suspense>
   );
 }

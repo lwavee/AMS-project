@@ -1557,12 +1557,11 @@ export default function EFormsManagerPage() {
               <button
                 title="Email Forms"
                 onClick={() => {
-                  const panel = document.getElementById("eform-preview-panel");
-                  const iframe = panel?.querySelector("iframe") as HTMLIFrameElement | null;
-                  const url = iframe?.src || window.location.href;
-                  const subject = encodeURIComponent("eForms Document");
-                  const body = encodeURIComponent(`Please find the attached eForms document.\n\nForm URL: ${url}`);
-                  window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
+                  window.open(
+                    `/agency/customer/${customerId}/eforms-manager/email-options?selected=${encodeURIComponent(selectedNode || "")}`,
+                    "_blank",
+                    "width=920,height=680,menubar=no,toolbar=no,location=no,status=no"
+                  );
                 }}
                 className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
               >
@@ -1574,7 +1573,11 @@ export default function EFormsManagerPage() {
               <button
                 title="Print Forms"
                 onClick={() => {
-                  window.open(`/agency/customer/${customerId}/eforms-manager/print-options`, "_blank", "width=850,height=600,menubar=no,toolbar=no,location=no,status=no");
+                  window.open(
+                    `/agency/customer/${customerId}/eforms-manager/print-options?selected=${encodeURIComponent(selectedNode || "")}`,
+                    "_blank",
+                    "width=850,height=600,menubar=no,toolbar=no,location=no,status=no"
+                  );
                 }}
                 className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
               >
