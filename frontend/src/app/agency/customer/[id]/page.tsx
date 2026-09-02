@@ -32,7 +32,12 @@ import {
   ChevronDown,
   Edit3,
   ExternalLink,
-  Briefcase
+  Briefcase,
+  CloudUpload,
+  FileArchive,
+  Image as ImageIcon,
+  File as FileIcon,
+  X
 } from "lucide-react";
 
 export default function CustomerProfilePage() {
@@ -74,6 +79,7 @@ export default function CustomerProfilePage() {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [docAction, setDocAction] = useState("Upload");
   const [docDescription, setDocDescription] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Notes State
@@ -166,7 +172,7 @@ export default function CustomerProfilePage() {
           action: d.action,
           description: d.description,
           refNum: d.ref_num,
-          url: d.url,
+          url: d.url ? (d.url.startsWith("http") ? d.url : `${API_BASE_URL}${d.url.startsWith("/") ? "" : "/"}${d.url}`) : "",
           author: d.author,
           createdAt: d.created_at || new Date().toISOString().split("T")[0],
         }));
@@ -301,6 +307,7 @@ export default function CustomerProfilePage() {
 
   const handleSaveDocument = async () => {
     if (!pendingFile) return;
+    setIsUploading(true);
     try {
       const token = localStorage.getItem("token");
       const formData = new FormData();
@@ -337,8 +344,13 @@ export default function CustomerProfilePage() {
       setActivities(updated);
 
       setPendingFile(null);
+      setDocDescription("");
+      setDocAction("Upload");
+      if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err: any) {
       showToast("Document upload failed: " + err.message, "error");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -833,7 +845,7 @@ export default function CustomerProfilePage() {
               onDrop={handleFileDrop}
               onClick={() => fileInputRef.current?.click()}
               className={`lg:col-span-8 border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${isDragOver
-                  ? "border-[#9A8B7A] bg-[#f5f1eb]"
+                  ? "border-[#795C46] bg-[#795C46]/5 scale-[0.99]"
                   : "border-[#e5ddd5] hover:border-[#9A8B7A] bg-[#FAF8F5]"
                 }`}
             >
@@ -843,14 +855,14 @@ export default function CustomerProfilePage() {
                 onChange={handleFileInputChange}
                 className="hidden"
               />
-              <div className="h-12 w-12 rounded-full bg-white border border-[#e5ddd5] flex items-center justify-center text-[#795C46] mb-3 shadow-xs">
-                <Upload size={22} />
+              <div className={`h-14 w-14 rounded-full flex items-center justify-center mb-4 transition-all shadow-xs ${isDragOver ? 'bg-[#795C46] text-white' : 'bg-white border border-[#e5ddd5] text-[#795C46]'}`}>
+                <CloudUpload size={28} />
               </div>
-              <p className="text-xs font-bold text-[#2d2a26]">
-                Click or drag files here to upload
+              <p className="text-sm font-bold text-[#2d2a26] mb-1">
+                Click to browse or drag files here
               </p>
-              <p className="text-[11px] text-[#6b5e52] mt-1">
-                Support for PDF, DOC, ZIP up to 10MB
+              <p className="text-[11px] font-medium text-[#6b5e52]">
+                Support for PDF, DOCX, PNG, ZIP up to 10MB
               </p>
             </div>
 
@@ -874,41 +886,69 @@ export default function CustomerProfilePage() {
               <thead className="bg-[#FAF8F5] text-[#6b5e52] font-bold border-b border-[#e5ddd5]">
                 <tr>
                   <th className="px-4 py-2.5">Filename</th>
+                  <th className="px-4 py-2.5">Category</th>
+                  <th className="px-4 py-2.5">Description</th>
                   <th className="px-4 py-2.5">Uploaded On</th>
-                  <th className="px-4 py-2.5 text-center">Action</th>
+                  <th className="px-4 py-2.5 text-center">Manage</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#e5ddd5]">
                 {docLoading ? (
                   <tr>
-                    <td colSpan={3} className="px-4 py-6 text-center text-[#6b5e52]">
+                    <td colSpan={5} className="px-4 py-6 text-center text-[#6b5e52]">
                       <Loader2 className="animate-spin text-[#9A8B7A] mx-auto size-5 mb-1" />
                       Loading files...
                     </td>
                   </tr>
                 ) : documents.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="px-4 py-8 text-center text-[#6b5e52]/70 font-medium">
+                    <td colSpan={5} className="px-4 py-8 text-center text-[#6b5e52]/70 font-medium">
                       No documents uploaded yet
                     </td>
                   </tr>
                 ) : (
                   documents.map((doc) => (
-                    <tr key={doc.id} className="hover:bg-[#FAF8F5] transition-colors">
-                      <td className="px-4 py-3 font-semibold text-[#2d2a26]">
-                        {doc.fileName || doc.description}
+                    <tr key={doc.id} className="hover:bg-[#FAF8F5] transition-colors group">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-lg bg-white border border-[#e5ddd5] flex items-center justify-center text-[#9A8B7A] shrink-0 shadow-2xs group-hover:border-[#795C46] group-hover:text-[#795C46] transition-colors">
+                            {doc.fileName?.toLowerCase().endsWith('.pdf') ? <FileText size={15} /> : 
+                             doc.fileName?.toLowerCase().match(/\.(jpg|jpeg|png)$/) ? <ImageIcon size={15} /> :
+                             doc.fileName?.toLowerCase().endsWith('.zip') ? <FileArchive size={15} /> : 
+                             <FileIcon size={15} />}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-[#2d2a26] text-xs max-w-[200px] truncate" title={doc.fileName}>
+                              {doc.fileName || "Document"}
+                            </span>
+                            {doc.ext && <span className="text-[9px] uppercase tracking-wider text-[#9A8B7A] font-bold">{doc.ext.replace('.', '')}</span>}
+                          </div>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-[#6b5e52]">
+                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
+                          doc.action === 'Policy Attachment' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                          doc.action === 'Loss Runs' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                          doc.action === 'Signed Binder' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                          'bg-[#f5f1eb] text-[#6b5e52] border-[#e5ddd5]'
+                        }`}>
+                          {doc.action || "Upload"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-[#6b5e52] max-w-[200px] truncate font-medium text-[11px]" title={doc.description}>
+                        {doc.description || "—"}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-[#6b5e52] text-[11px]">
                         {doc.createdAt}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
                           {doc.url && (
                             <a
                               href={doc.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="p-1 rounded text-[#6b5e52] hover:text-[#9A8B7A] hover:bg-[#f5f1eb]"
+                              className="p-1.5 rounded-lg text-[#6b5e52] hover:text-[#795C46] hover:bg-white border border-transparent hover:border-[#e5ddd5] hover:shadow-2xs transition-all"
                               title="View Document"
                             >
                               <Eye size={14} />
@@ -916,7 +956,7 @@ export default function CustomerProfilePage() {
                           )}
                           <button
                             onClick={() => handleDeleteDocument(doc.id)}
-                            className="p-1 rounded text-[#6b5e52] hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                            className="p-1.5 rounded-lg text-[#6b5e52] hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 transition-all cursor-pointer"
                             title="Delete Document"
                           >
                             <Trash2 size={14} />
@@ -1337,59 +1377,103 @@ export default function CustomerProfilePage() {
 
       {/* ── Document Upload Modal ── */}
       {showDocModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-[#e5ddd5] space-y-4 animate-in fade-in zoom-in-95">
-            <h3 className="text-sm font-bold text-[#2d2a26] border-b border-[#e5ddd5] pb-3">
-              Upload Customer Document
-            </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2d2a26]/40 backdrop-blur-sm p-4">
+          <div className="bg-[#FAF8F5] rounded-3xl shadow-2xl w-full max-w-md border border-[#e5ddd5] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="px-6 py-4 bg-white border-b border-[#e5ddd5] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-[#f5f1eb] text-[#795C46] flex items-center justify-center">
+                  <CloudUpload size={16} />
+                </div>
+                <h3 className="text-sm font-extrabold text-[#2d2a26]">
+                  Upload Document
+                </h3>
+              </div>
+              <button onClick={() => {
+                setShowDocModal(false);
+                setPendingFile(null);
+                setDocDescription("");
+                setDocAction("Upload");
+                if (fileInputRef.current) fileInputRef.current.value = "";
+              }} className="text-[#9A8B7A] hover:text-[#2d2a26] transition-colors p-1 rounded-full hover:bg-[#f5f1eb] cursor-pointer">
+                <X size={18} />
+              </button>
+            </div>
 
-            <div>
-              <label className="block text-[10px] font-bold uppercase text-[#6b5e52] mb-1">Selected File</label>
-              <div className="p-2.5 bg-[#FAF8F5] border border-[#e5ddd5] rounded-xl text-xs font-semibold text-[#2d2a26] truncate">
-                {pendingFile?.name}
+            {/* Body */}
+            <div className="p-6 space-y-5">
+              {/* File Attachment Card */}
+              <div className="p-3.5 bg-white border border-[#e5ddd5] rounded-2xl flex items-center gap-3 shadow-2xs">
+                <div className="h-10 w-10 bg-[#f5f1eb] rounded-xl flex items-center justify-center text-[#795C46] shrink-0">
+                  <FileText size={20} />
+                </div>
+                <div className="flex flex-col overflow-hidden">
+                  <span className="text-xs font-bold text-[#2d2a26] truncate">{pendingFile?.name}</span>
+                  <span className="text-[10px] font-bold text-[#9A8B7A] uppercase tracking-wider">{(pendingFile?.size ? (pendingFile.size / 1024 / 1024).toFixed(2) : "0.00")} MB</span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6b5e52] mb-1.5 ml-1">Action / Category</label>
+                  <select
+                    value={docAction}
+                    onChange={(e) => setDocAction(e.target.value)}
+                    className="w-full px-4 py-2.5 border border-[#e5ddd5] rounded-xl text-xs font-bold text-[#2d2a26] outline-none focus:border-[#795C46] focus:ring-4 focus:ring-[#795C46]/10 bg-white transition-all shadow-2xs cursor-pointer appearance-none"
+                    style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%239A8B7A%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem top 50%', backgroundSize: '0.65rem auto' }}
+                  >
+                    <option value="Upload">Standard Upload</option>
+                    <option value="Policy Attachment">Policy Attachment</option>
+                    <option value="Customer File">Customer File</option>
+                    <option value="Loss Runs">Loss Runs</option>
+                    <option value="Signed Binder">Signed Binder</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6b5e52] mb-1.5 ml-1">Document Description</label>
+                  <input
+                    type="text"
+                    value={docDescription}
+                    onChange={(e) => setDocDescription(e.target.value)}
+                    placeholder="E.g. 2026 Loss Runs for GL Policy"
+                    className="w-full px-4 py-2.5 border border-[#e5ddd5] rounded-xl text-xs font-semibold text-[#2d2a26] outline-none focus:border-[#795C46] focus:ring-4 focus:ring-[#795C46]/10 bg-white transition-all shadow-2xs placeholder:text-[#e5ddd5]"
+                  />
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className="block text-[10px] font-bold uppercase text-[#6b5e52] mb-1">Document Description</label>
-              <input
-                type="text"
-                value={docDescription}
-                onChange={(e) => setDocDescription(e.target.value)}
-                className="w-full px-3 py-2 border border-[#e5ddd5] rounded-xl text-xs font-medium outline-none focus:border-[#9A8B7A]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-bold uppercase text-[#6b5e52] mb-1">Action / Category</label>
-              <select
-                value={docAction}
-                onChange={(e) => setDocAction(e.target.value)}
-                className="w-full px-3 py-2 border border-[#e5ddd5] rounded-xl text-xs font-medium outline-none focus:border-[#9A8B7A] bg-white"
-              >
-                <option value="Upload">Upload</option>
-                <option value="Policy Attachment">Policy Attachment</option>
-                <option value="Customer File">Customer File</option>
-                <option value="Loss Runs">Loss Runs</option>
-                <option value="Signed Binder">Signed Binder</option>
-              </select>
-            </div>
-
-            <div className="flex justify-end gap-2.5 pt-2 border-t border-[#e5ddd5]">
+            {/* Footer */}
+            <div className="px-6 py-4 bg-white border-t border-[#e5ddd5] flex items-center justify-end gap-3">
               <button
                 onClick={() => {
                   setShowDocModal(false);
                   setPendingFile(null);
+                  setDocDescription("");
+                  setDocAction("Upload");
+                  if (fileInputRef.current) fileInputRef.current.value = "";
                 }}
-                className="px-4 py-2 border border-[#e5ddd5] rounded-xl text-xs font-bold text-[#6b5e52] hover:bg-[#f5f1eb] cursor-pointer"
+                disabled={isUploading}
+                className="px-5 py-2.5 border border-[#e5ddd5] rounded-xl text-xs font-bold text-[#6b5e52] hover:bg-[#f5f1eb] hover:text-[#2d2a26] transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveDocument}
-                className="px-5 py-2 bg-[#795C46] hover:bg-[#634b39] text-white rounded-xl text-xs font-bold cursor-pointer shadow-sm"
+                disabled={isUploading}
+                className="px-6 py-2.5 bg-[#795C46] hover:bg-[#634b39] text-white rounded-xl text-xs font-bold transition-all shadow-md hover:shadow-lg active:scale-95 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                Upload File
+                {isUploading ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <CloudUpload size={14} />
+                    Confirm Upload
+                  </>
+                )}
               </button>
             </div>
           </div>
