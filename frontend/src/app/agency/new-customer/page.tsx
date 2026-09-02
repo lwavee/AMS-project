@@ -1,8 +1,8 @@
 /* eslint-disable */
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Info } from "lucide-react";
 import { API_BASE_URL } from "../../../lib/config";
 import { showToast } from "@/components/ToastProvider";
@@ -18,25 +18,35 @@ const sectionCls = "font-extrabold text-xs text-primary border-b border-border-m
 const checkCls = "accent-primary w-4 h-4 rounded border-border-main cursor-pointer";
 
 // Stacked Field: label on top, control below
-function Field({ label, required, children, className }: { label: string; required?: boolean; children: React.ReactNode; className?: string }) {
+function Field({ label, required, error, children, className }: { label: string; required?: boolean; error?: string; children: React.ReactNode; className?: string }) {
     return (
         <div className={`flex flex-col ${className || ""}`}>
             <label className={labelCls}>
                 {label}{required && <span className="text-red-500 ml-0.5">*</span>}
             </label>
-            {children}
+            {React.isValidElement(children)
+                ? React.cloneElement(children as any, {
+                    className: `${(children.props as any).className || ""} ${error ? "!border-red-500 focus:!ring-red-500/20" : ""}`
+                })
+                : children}
+            {error && <span className="text-[10px] text-red-500 mt-1">{error}</span>}
         </div>
     );
 }
 
 // Custom PhoneRow: inline horizontal — label | main input | Ext | ext input (matches reference layout)
-function PhoneRow({ label, value, ext, onChange, onExtChange }: { label: string; value: string; ext: string; onChange: (v: string) => void; onExtChange: (v: string) => void }) {
+function PhoneRow({ label, value, ext, required, error, onChange, onExtChange }: { label: string; value: string; ext: string; required?: boolean; error?: string; onChange: (v: string) => void; onExtChange: (v: string) => void }) {
     return (
-        <div className="flex items-center gap-2">
-            <span style={{ minWidth: 72 }} className="text-[11px] font-bold text-slate-500 text-right shrink-0">{label}:</span>
-            <input className={inputCls} style={{ flex: 1 }} value={value} onChange={e => onChange(e.target.value)} />
-            <span className="text-[11px] font-bold text-slate-500 shrink-0 ml-1">Ext:</span>
-            <input className={inputCls} style={{ width: 72 }} value={ext} onChange={e => onExtChange(e.target.value)} />
+        <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+                <span style={{ minWidth: 72 }} className={`text-[11px] font-bold text-right shrink-0 ${error ? "text-red-500" : "text-slate-500"}`}>
+                    {label}:{required && <span className="text-red-500 ml-0.5">*</span>}
+                </span>
+                <input className={`${inputCls} ${error ? "!border-red-500 focus:!ring-red-500/20" : ""}`} style={{ flex: 1 }} value={value} onChange={e => onChange(e.target.value)} />
+                <span className="text-[11px] font-bold text-slate-500 shrink-0 ml-1">Ext:</span>
+                <input className={inputCls} style={{ width: 72 }} value={ext} onChange={e => onExtChange(e.target.value)} />
+            </div>
+            {error && <span className="text-[10px] text-red-500 pl-[80px]">{error}</span>}
         </div>
     );
 }
@@ -149,7 +159,7 @@ function buildPayload(f: FormState) {
         computedName = "Unnamed Customer";
     }
     out.name = computedName;
-    
+
     // ensure match_code is unique by appending random chars if not provided manually
     let computedMatchCode = f.matchCode;
     if (!computedMatchCode) {
@@ -162,6 +172,12 @@ function buildPayload(f: FormState) {
     out.status = f.status || "Active";
     out.primary_exec = f.primaryExec || f.executive || "Unassigned";
     out.type = f.type || "Commercial";
+    
+    // Ensure the primary 'phone' field is populated for the dashboard table
+    if (!out.phone) {
+        out.phone = f.cell || f.phoneBusiness || f.phoneResidence || f.phoneOther || null;
+    }
+
     return out;
 }
 
@@ -170,9 +186,41 @@ function buildPayload(f: FormState) {
 // ═══════════════════════════════════════════════════════════
 export default function NewCustomerPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const editId = searchParams?.get("edit");
+    const [pageLoading, setPageLoading] = useState(!!editId);
+
     const [f, setF] = useState<FormState>({ ...defaultForm });
+
+    useEffect(() => {
+        if (!editId) return;
+        const fetchCustomer = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/customers/${editId}`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const mappedData: any = {};
+                    for (const [k, v] of Object.entries(data)) {
+                        const camelKey = k.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+                        if (v !== null && v !== undefined) {
+                            mappedData[camelKey] = v;
+                        }
+                    }
+                    setF(prev => ({ ...prev, ...mappedData }));
+                }
+            } catch (err) {
+                console.error("Failed to load customer", err);
+            } finally {
+                setPageLoading(false);
+            }
+        };
+        fetchCustomer();
+    }, [editId]);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
+    const [errors, setErrors] = useState<Record<string, string>>({});
     const [activeSection, setActiveSection] = useState("Customer Setup");
 
     // Local lists for grid tables
@@ -204,22 +252,72 @@ export default function NewCustomerPage() {
         // "Benefits Information",
     ];
 
-    const set = (patch: Partial<FormState>) => setF(prev => ({ ...prev, ...patch }));
+    const set = (patch: Partial<FormState>) => {
+        setF(prev => ({ ...prev, ...patch }));
+        if (Object.keys(errors).length > 0) {
+            setErrors(prev => {
+                const next = { ...prev };
+                let changed = false;
+                Object.keys(patch).forEach(k => {
+                    if (next[k]) {
+                        delete next[k];
+                        changed = true;
+                    }
+                });
+                return changed ? next : prev;
+            });
+        }
+    };
 
     // ── Submit ──
     const handleSave = async (andClose: boolean) => {
         setError("");
-        // Validate email format if provided
+        setErrors({});
+
+        const newErrors: Record<string, string> = {};
+
+        if (f.nameType === "Business") {
+            if (!f.firmName?.trim()) newErrors.firmName = "Company Name is required";
+        } else {
+            if (!f.firstName?.trim()) newErrors.firstName = "First Name is required";
+            if (!f.lastName?.trim()) newErrors.lastName = "Last Name is required";
+        }
+
+        if (!f.executive?.trim()) newErrors.executive = "Executive is required";
+        if (!f.representative?.trim()) newErrors.representative = "Representative is required";
+        if (!f.division?.trim()) newErrors.division = "Division is required";
+        if (!f.branch?.trim()) newErrors.branch = "Branch is required";
+        if (!f.department?.trim()) newErrors.department = "Department is required";
+        if (!f.customerAddedDate?.trim()) newErrors.customerAddedDate = "Customer Added Date is required";
+
+        if (!f.address?.trim()) newErrors.address = "Address is required";
+        if (!f.city?.trim()) newErrors.city = "City is required";
+        if (!f.state?.trim()) newErrors.state = "State is required";
+        if (!f.country?.trim()) newErrors.country = "Country is required";
+        if (!f.zip?.trim()) newErrors.zip = "ZIP Code is required";
+        if (!f.email?.trim()) newErrors.email = "Email is required";
+        if (!f.cell?.trim()) newErrors.cell = "Cell Phone is required";
+
         if (f.email && !f.email.includes("@")) {
-            setError("Please enter a valid email address containing an '@' sign.");
+            newErrors.email = "Please enter a valid email address.";
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            setError("Please fill out all required fields in the Customer Setup section.");
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
-        
+
         setSaving(true);
         try {
             const payload = buildPayload(f);
-            const res = await fetch(`${API_BASE_URL}/api/customers/`, {
-                method: "POST",
+            const isEdit = !!editId;
+            const url = isEdit ? `${API_BASE_URL}/api/customers/${editId}` : `${API_BASE_URL}/api/customers/`;
+            const method = isEdit ? "PUT" : "POST";
+
+            const res = await fetch(url, {
+                method,
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${localStorage.getItem("token")}`
@@ -241,9 +339,10 @@ export default function NewCustomerPage() {
                 setError(errMsg);
                 return;
             }
-            if (andClose) router.push("/agency/dashboard");
-            else {
-                showToast("Customer saved successfully!", "success");
+            if (andClose) {
+                router.push(isEdit ? `/agency/customer/${editId}` : "/agency/dashboard");
+            } else {
+                showToast(isEdit ? "Customer updated successfully!" : "Customer saved successfully!", "success");
                 setF({ ...defaultForm });
                 setServiceGroups([]);
                 setContacts([]);
@@ -315,10 +414,10 @@ export default function NewCustomerPage() {
                                     ))}
                                 </div>
                                 <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-                                    <Field label="First Name"><input className={inputCls} value={f.firstName} onChange={e => set({ firstName: e.target.value })} /></Field>
-                                    <Field label="Middle Name"><input className={inputCls} value={f.middleName} onChange={e => set({ middleName: e.target.value })} /></Field>
-                                    <Field label="Last Name"><input className={inputCls} value={f.lastName} onChange={e => set({ lastName: e.target.value })} /></Field>
-                                    <Field label="Firm Name"><input className={inputCls} value={f.firmName} onChange={e => set({ firmName: e.target.value })} /></Field>
+                                    <Field label="First Name" required={f.nameType !== "Business"} error={errors.firstName}><input className={inputCls} value={f.firstName} onChange={e => set({ firstName: e.target.value })} /></Field>
+                                    {/* <Field label="Middle Name"><input className={inputCls} value={f.middleName} onChange={e => set({ middleName: e.target.value })} /></Field> */}
+                                    <Field label="Last Name" required={f.nameType !== "Business"} error={errors.lastName}><input className={inputCls} value={f.lastName} onChange={e => set({ lastName: e.target.value })} /></Field>
+                                    <Field label="Company Name" className="col-span-2" required={f.nameType === "Business"} error={errors.firmName}><input className={inputCls} value={f.firmName} onChange={e => set({ firmName: e.target.value })} /></Field>
                                     <Field label="DBA" className="col-span-2"><input className={inputCls} value={f.dba} onChange={e => set({ dba: e.target.value })} /></Field>
                                 </div>
                             </div>
@@ -340,16 +439,16 @@ export default function NewCustomerPage() {
                             <div>
                                 <h3 className={sectionCls}>Addresses</h3>
                                 <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-                                    <Field label="Address" className="col-span-2"><input className={inputCls} value={f.address} onChange={e => set({ address: e.target.value })} /></Field>
+                                    <Field label="Address" className="col-span-2" required error={errors.address}><input className={inputCls} value={f.address} onChange={e => set({ address: e.target.value })} /></Field>
                                     <Field label="Address 2" className="col-span-2"><input className={inputCls} value={f.address2} onChange={e => set({ address2: e.target.value })} /></Field>
-                                    <Field label="City"><input className={inputCls} value={f.city} onChange={e => set({ city: e.target.value })} /></Field>
-                                    <Field label="State">
+                                    <Field label="City" required error={errors.city}><input className={inputCls} value={f.city} onChange={e => set({ city: e.target.value })} /></Field>
+                                    <Field label="State" required error={errors.state}>
                                         <select className={selectCls} value={f.state} onChange={e => set({ state: e.target.value })}>
                                             <option value="">--</option>
                                             {["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"].map(s => <option key={s} value={s}>{s}</option>)}
                                         </select>
                                     </Field>
-                                    <Field label="Country">
+                                    <Field label="Country" required error={errors.country}>
                                         <select className={selectCls} value={f.country} onChange={e => set({ country: e.target.value })}>
                                             <option value="">--</option>
                                             <option value="US">United States</option>
@@ -358,7 +457,7 @@ export default function NewCustomerPage() {
                                             <option value="UK">United Kingdom</option>
                                         </select>
                                     </Field>
-                                    <Field label="ZIP Code"><input className={inputCls} value={f.zip} onChange={e => set({ zip: e.target.value })} /></Field>
+                                    <Field label="ZIP Code" required error={errors.zip}><input className={inputCls} value={f.zip} onChange={e => set({ zip: e.target.value })} /></Field>
                                     <Field label="County" className="col-span-2"><input className={inputCls} value={f.county} onChange={e => set({ county: e.target.value })} /></Field>
                                     <Field label="Latitude"><input className={inputCls} value={f.latitude} onChange={e => set({ latitude: e.target.value })} /></Field>
                                     <Field label="Longitude"><input className={inputCls} value={f.longitude} onChange={e => set({ longitude: e.target.value })} /></Field>
@@ -383,7 +482,7 @@ export default function NewCustomerPage() {
                             </div>
 
                             {/* -- Contact Preferences -- */}
-                            <div>
+                            {/* <div>
                                 <h3 className={sectionCls}>Contact Preferences</h3>
                                 <div className="grid grid-cols-2 gap-x-4 gap-y-4">
                                     <Field label="Preferred Method">
@@ -424,7 +523,7 @@ export default function NewCustomerPage() {
                                         <input className={inputCls} value={f.notes} onChange={e => set({ notes: e.target.value })} />
                                     </Field>
                                 </div>
-                            </div>
+                            </div> */}
 
                         </div>
 
@@ -435,7 +534,7 @@ export default function NewCustomerPage() {
                             <div>
                                 <h3 className={sectionCls}>Agency Personnel</h3>
                                 <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-                                    <Field label="Executive" required>
+                                    <Field label="Executive" required error={errors.executive}>
                                         <select className={selectCls} value={f.executive} onChange={e => set({ executive: e.target.value })}>
                                             <option value=""> </option>
                                             <option value="Akva, Jonathan">Akva, Jonathan</option>
@@ -456,7 +555,7 @@ export default function NewCustomerPage() {
                                             <option value="Weiner, Jake">Weiner, Jake</option>
                                         </select>
                                     </Field>
-                                    <Field label="Representative" required>
+                                    <Field label="Representative" required error={errors.representative}>
                                         <select className={selectCls} value={f.representative} onChange={e => set({ representative: e.target.value })}>
                                             <option value=""> </option>
                                             <option value="Akva, Jonathan">Akva, Jonathan</option>
@@ -499,12 +598,12 @@ export default function NewCustomerPage() {
                             <div>
                                 <h3 className={sectionCls}>Business Unit</h3>
                                 <div className="grid grid-cols-3 gap-x-4 gap-y-4">
-                                    <Field label="Division" required>
+                                    <Field label="Division" required error={errors.division}>
                                         <select className={selectCls} value={f.division} onChange={e => set({ division: e.target.value })}>
                                             <option value="Gamaty Insurance Agency">Gamaty Insurance Agency</option>
                                         </select>
                                     </Field>
-                                    <Field label="Branch" required>
+                                    <Field label="Branch" required error={errors.branch}>
                                         <select className={selectCls} value={f.branch} onChange={e => set({ branch: e.target.value })}>
                                             <option value=""></option>
                                             <option value="Armar Insurance">Armar Insurance</option>
@@ -515,7 +614,7 @@ export default function NewCustomerPage() {
                                             <option value="WCFL Insurance Services">WCFL Insurance Services</option>
                                         </select>
                                     </Field>
-                                    <Field label="Department" required>
+                                    <Field label="Department" required error={errors.department}>
                                         <select className={selectCls} value={f.department} onChange={e => set({ department: e.target.value })}>
                                             <option value=""> </option>
                                             <option value="Commercial">Commercial</option>
@@ -526,26 +625,20 @@ export default function NewCustomerPage() {
                                 </div>
                             </div>
 
-                            {/* -- Phone Numbers -- */}
+                            {/* -- Contact Information -- */}
                             <div>
-                                <h3 className={sectionCls}>Phone Numbers</h3>
-                                <div className="space-y-2.5">
-                                    <PhoneRow label="Residence" value={f.phoneResidence} ext={f.phoneResidenceExt} onChange={v => set({ phoneResidence: v })} onExtChange={v => set({ phoneResidenceExt: v })} />
-                                    <PhoneRow label="Business" value={f.phoneBusiness} ext={f.phoneBusinessExt} onChange={v => set({ phoneBusiness: v })} onExtChange={v => set({ phoneBusinessExt: v })} />
-                                    <PhoneRow label="Fax" value={f.fax} ext={f.faxExt} onChange={v => set({ fax: v })} onExtChange={v => set({ faxExt: v })} />
-                                    <PhoneRow label="Cell" value={f.cell} ext={f.cellExt} onChange={v => set({ cell: v })} onExtChange={v => set({ cellExt: v })} />
-                                    <PhoneRow label="Pager" value={f.pager} ext={f.pagerExt} onChange={v => set({ pager: v })} onExtChange={v => set({ pagerExt: v })} />
-                                    <PhoneRow label="Other" value={f.phoneOther} ext={f.phoneOtherExt} onChange={v => set({ phoneOther: v })} onExtChange={v => set({ phoneOtherExt: v })} />
-                                </div>
-                            </div>
-
-                            {/* -- Internet -- */}
-                            <div>
-                                <h3 className={sectionCls}>Internet</h3>
-                                <div className="grid grid-cols-3 gap-x-4 gap-y-4">
-                                    <Field label="Email"><input type="email" className={inputCls} value={f.email} onChange={e => set({ email: e.target.value })} /></Field>
-                                    <Field label="Email 2"><input type="email" className={inputCls} value={f.email2} onChange={e => set({ email2: e.target.value })} /></Field>
-                                    <Field label="Web"><input className={inputCls} value={f.web} onChange={e => set({ web: e.target.value })} /></Field>
+                                <h3 className={sectionCls}>Contact Information</h3>
+                                <div className="space-y-5">
+                                    <div className="space-y-2.5">
+                                        <PhoneRow label="Cell" value={f.cell} ext={f.cellExt} required error={errors.cell} onChange={v => set({ cell: v })} onExtChange={v => set({ cellExt: v })} />
+                                        <PhoneRow label="Business" value={f.phoneBusiness} ext={f.phoneBusinessExt} onChange={v => set({ phoneBusiness: v })} onExtChange={v => set({ phoneBusinessExt: v })} />
+                                        <PhoneRow label="Other" value={f.phoneOther} ext={f.phoneOtherExt} onChange={v => set({ phoneOther: v })} onExtChange={v => set({ phoneOtherExt: v })} />
+                                    </div>
+                                    <div className="flex flex-col gap-4 pt-2">
+                                        <Field label="Primary Email" required error={errors.email}><input type="email" className={inputCls} value={f.email} onChange={e => set({ email: e.target.value })} /></Field>
+                                        <Field label="Alternate Email"><input type="email" className={inputCls} value={f.email2} onChange={e => set({ email2: e.target.value })} /></Field>
+                                        <Field label="Website"><input className={inputCls} value={f.web} onChange={e => set({ web: e.target.value })} /></Field>
+                                    </div>
                                 </div>
                             </div>
 
@@ -569,14 +662,14 @@ export default function NewCustomerPage() {
                                             <option value="Online">Online</option>
                                         </select>
                                     </Field>
-                                    <Field label="Customer Added Date" required>
+                                    <Field label="Customer Added Date" required error={errors.customerAddedDate}>
                                         <input type="date" className={inputCls} value={f.customerAddedDate} onChange={e => set({ customerAddedDate: e.target.value })} />
                                     </Field>
                                 </div>
                             </div>
 
                             {/* -- Referrals -- */}
-                            <div>
+                            {/* <div>
                                 <h3 className={sectionCls}>Referrals</h3>
                                 <div className="grid grid-cols-2 gap-x-4 gap-y-4">
                                     <Field label="Name">
@@ -590,7 +683,7 @@ export default function NewCustomerPage() {
                                         </select>
                                     </Field>
                                 </div>
-                            </div>
+                            </div> */}
 
                             {/* -- Policy Auto-Check -- */}
                             <div>
@@ -620,7 +713,7 @@ export default function NewCustomerPage() {
                             </div>
 
                             {/* -- Known & Notation -- */}
-                            <div>
+                            {/* <div>
                                 <h3 className={sectionCls}>Known & Notation</h3>
                                 <div className="grid grid-cols-2 gap-x-4 gap-y-4">
                                     <Field label="Known Since Year"><input className={inputCls} value={f.knownSinceYear} onChange={e => set({ knownSinceYear: e.target.value })} /></Field>
@@ -631,10 +724,10 @@ export default function NewCustomerPage() {
                                         </select>
                                     </Field>
                                 </div>
-                            </div>
+                            </div> */}
 
                             {/* -- Multiple Entity -- */}
-                            <div>
+                            {/* <div>
                                 <h3 className={sectionCls}>Multiple Entity Account Information</h3>
                                 <Field label="Customer Type">
                                     <select className={selectCls} value={f.multipleEntityCustomerType} onChange={e => set({ multipleEntityCustomerType: e.target.value })}>
@@ -643,7 +736,7 @@ export default function NewCustomerPage() {
                                         <option value="Sub-customer/Multiple Entities">Sub-customer/Multiple Entities</option>
                                     </select>
                                 </Field>
-                            </div>
+                            </div> */}
 
                             {/* -- International Phone 1 & 2 -- */}
                             <div>
@@ -672,7 +765,7 @@ export default function NewCustomerPage() {
                                     </div>
 
                                     {/* Intl Phone 2 */}
-                                    <div className="border border-border-main/50 rounded-xl p-4 bg-secondary/10">
+                                    {/* <div className="border border-border-main/50 rounded-xl p-4 bg-secondary/10">
                                         <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-3">Number 2</span>
                                         <div className="grid grid-cols-2 gap-x-4 gap-y-3">
                                             <Field label="Phone Type">
@@ -690,7 +783,7 @@ export default function NewCustomerPage() {
                                             <Field label="Number" className="col-span-2"><input className={inputCls} value={f.intlPhone2Number} onChange={e => set({ intlPhone2Number: e.target.value })} /></Field>
                                             <Field label="Ext"><input className={inputCls} value={f.intlPhone2Ext} onChange={e => set({ intlPhone2Ext: e.target.value })} /></Field>
                                         </div>
-                                    </div>
+                                    </div> */}
 
                                 </div>
                             </div>
@@ -1228,7 +1321,7 @@ export default function NewCustomerPage() {
             <div className="bg-white border-b border-border-main px-6 py-4 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
                     <h1 className="page-title">
-                        New Customer Setup
+                        {editId ? "Edit Customer Properties" : "New Customer Setup"}
                     </h1>
                 </div>
                 <div className="text-xs text-slate-400 font-bold tracking-wider">
@@ -1244,7 +1337,7 @@ export default function NewCustomerPage() {
                     disabled={saving}
                     className="h-8 px-3.5 text-xs font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98] border shadow-sm bg-white border-border-main text-text-main hover:bg-secondary/60 hover:text-primary"
                 >
-                    Save Folder
+                    {editId ? "Update Folder" : "Save Folder"}
                 </button>
                 <button
                     type="submit"
@@ -1252,7 +1345,7 @@ export default function NewCustomerPage() {
                     disabled={saving}
                     className="h-8 px-3.5 text-xs font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98] border shadow-sm bg-primary border-primary text-white shadow-primary/20 hover:bg-primary/95"
                 >
-                    Save and Close
+                    {editId ? "Update and Close" : "Save and Close"}
                 </button>
                 <button
                     type="button"
@@ -1312,7 +1405,7 @@ export default function NewCustomerPage() {
                 </div>
 
                 {/* Right Form Content Area */}
-                <form 
+                <form
                     id="customer-form"
                     onSubmit={(e: any) => {
                         e.preventDefault();

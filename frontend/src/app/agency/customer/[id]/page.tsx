@@ -633,7 +633,7 @@ export default function CustomerProfilePage() {
 
               {/* Edit Customer */}
               <button
-                onClick={() => router.push(`/agency/new-customer`)}
+                onClick={() => router.push(`/agency/new-customer?edit=${customerId}`)}
                 className="h-9 px-4 bg-white border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#2d2a26] text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
               >
                 <Edit3 size={13} className="text-[#6b5e52]" />
