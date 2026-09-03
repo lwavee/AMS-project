@@ -1,7 +1,7 @@
 /* eslint-disable */
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Info } from "lucide-react";
 import { API_BASE_URL } from "../../../lib/config";
@@ -184,7 +184,7 @@ function buildPayload(f: FormState) {
 // ═══════════════════════════════════════════════════════════
 //  PAGE COMPONENT
 // ═══════════════════════════════════════════════════════════
-export default function NewCustomerPage() {
+function NewCustomerContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const editId = searchParams?.get("edit");
@@ -1422,5 +1422,13 @@ export default function NewCustomerPage() {
             </div>
 
         </div>
+    );
+}
+
+export default function NewCustomerPage() {
+    return (
+        <Suspense fallback={<div className="p-8 flex justify-center"><div className="animate-pulse text-[#9A8B7A] font-bold">Loading customer data...</div></div>}>
+            <NewCustomerContent />
+        </Suspense>
     );
 }
