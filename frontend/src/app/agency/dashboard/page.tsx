@@ -249,8 +249,7 @@ export default function Page() {
 
   const handleEditClick = () => {
     if (selectedCustomers.length === 1) {
-      setFormCustomer({ ...selectedCustomers[0] });
-      setIsEditModalOpen(true);
+      router.push(`/agency/new-customer?edit=${selectedCustomers[0].id}`);
     }
   };
 
@@ -866,62 +865,6 @@ export default function Page() {
         </Modal>
       )}
 
-      {/* ==================== MODERN EDIT CUSTOMER DIALOG ==================== */}
-      {isEditModalOpen && (
-        <Modal>
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl border border-border-main shadow-2xl w-full max-w-lg overflow-hidden flex flex-col font-sans animate-in zoom-in-95 duration-200">
-
-              {/* Header */}
-              <div className="bg-secondary/40 px-5 py-4 border-b border-border-main flex justify-between items-center">
-                <span className="card-title">Edit Customer Properties</span>
-                <button
-                  onClick={() => setIsEditModalOpen(false)}
-                  className="bg-white hover:bg-secondary text-text-muted hover:text-text-main border border-border-main h-7 w-7 flex items-center justify-center rounded-xl transition-all font-bold text-xs cursor-pointer shadow-sm"
-                >
-                  X
-                </button>
-              </div>
-
-              {/* Form */}
-              <form onSubmit={handleEditCustomerSubmit} className="p-5 space-y-5 flex-1 overflow-y-auto">
-                <div className="space-y-4">
-
-                  {/* Name field */}
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider">Customer Name <span className="text-danger">*</span></label>
-                    <input
-                      type="text"
-                      required
-                      value={formCustomer.name}
-                      onChange={(e) => setFormCustomer({ ...formCustomer, name: e.target.value })}
-                      className="w-full h-10 px-3.5 border border-border-main rounded-xl text-sm bg-white text-text-main focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all shadow-sm"
-                    />
-                  </div>
-
-                </div>
-
-                {/* Footer Buttons */}
-                <div className="pt-4 border-t border-border-main flex justify-end gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setIsEditModalOpen(false)}
-                    className="h-10 px-5 border border-border-main bg-white hover:bg-secondary/60 text-text-main font-bold text-xs rounded-xl cursor-pointer active:scale-98 transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="h-10 px-6 bg-primary hover:bg-primary/95 text-white font-bold text-xs rounded-xl shadow-md shadow-primary/20 cursor-pointer active:scale-98 transition-all"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </Modal>
-      )}
 
       {/* ==================== MODERN CUSTOMER DETAILS DIALOG ==================== */}
       {isOpenModalOpen && activeCustomer && (
