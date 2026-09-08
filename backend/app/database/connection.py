@@ -72,9 +72,8 @@ def get_db():
     """
     global active_db_mode
     db: Session | None = None
-    used_backup = False
 
-    # Try Primary first
+    # 1. Acquire connection (with failover if primary unreachable)
     try:
         db = PrimarySessionLocal()
         # Verify connection with a quick ping
@@ -82,13 +81,13 @@ def get_db():
         if active_db_mode != "primary":
             logger.info("🟢 Restored connection to Primary Supabase DB!")
             active_db_mode = "primary"
-        yield db
     except (OperationalError, DatabaseError, Exception) as primary_err:
         if db:
             try:
                 db.close()
             except Exception:
                 pass
+            db = None
 
         if BackupSessionLocal:
             logger.warning(
@@ -96,17 +95,20 @@ def get_db():
                 f"Switching to Backup Supabase DB..."
             )
             active_db_mode = "backup"
-            used_backup = True
-            backup_db = BackupSessionLocal()
             try:
-                yield backup_db
-            finally:
-                backup_db.close()
+                db = BackupSessionLocal()
+            except Exception as backup_err:
+                logger.error(f"❌ Backup DB connection failed: {backup_err}")
+                raise backup_err
         else:
             logger.error(f"❌ Primary DB failed and no Backup DB configured: {primary_err}")
             raise primary_err
+
+    # 2. Yield session to endpoint and ensure cleanup
+    try:
+        yield db
     finally:
-        if db and not used_backup:
+        if db:
             db.close()
 
 def get_db_status():

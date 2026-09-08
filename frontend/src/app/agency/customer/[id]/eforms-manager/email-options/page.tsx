@@ -24,6 +24,7 @@ interface TreeNode {
   holderData?: any;
   isMaster?: boolean;
   masterData?: any;
+  overrides?: Record<string, string>;
 }
 
 // Helper: Find limit1 for a specific coverage name (case-insensitive, partial match)
@@ -210,6 +211,18 @@ function EmailOptionsContent() {
             const certDbId = String(c.id);
             const certNumber = `${year}${certDbId.padStart(2, '0')}`;
             let holderChildren: TreeNode[] = [];
+            let certOverrides: Record<string, string> = {};
+
+            // Fetch overrides for this master certificate
+            try {
+              const ovRes = await fetch(`${API_BASE_URL}/api/eforms/${certDbId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
+              if (ovRes.ok) {
+                const ovData = await ovRes.json();
+                if (ovData.overrides) certOverrides = ovData.overrides;
+              }
+            } catch (_) {}
             
             try {
               const hRes = await fetch(`${API_BASE_URL}/api/customers/${customerId}/certificates/${certDbId}/holders`, {
@@ -254,6 +267,7 @@ function EmailOptionsContent() {
               certNumber,
               certDbId,
               masterData: c,
+              overrides: certOverrides,
               children: [...holderChildren, ...docChildren],
             };
           })
@@ -471,7 +485,12 @@ function EmailOptionsContent() {
             };
 
             if (n.isMaster) {
-              const params = new URLSearchParams({ customerId, masterDesc: n.label || "", ...limitsObj });
+              const params = new URLSearchParams({
+                customerId,
+                masterDesc: n.label || "",
+                ...limitsObj,
+                overrides: JSON.stringify(n.overrides || {})
+              });
               const attachments = n.children?.filter(c => c.id.startsWith("doc-") && (isAllChecked || checkedNodes.has(c.id))) || [];
               items.push({
                 type: "master", id: n.id, name: n.label || "Master", url: `/acord-form.html?${params.toString()}`, attachments
@@ -492,7 +511,8 @@ function EmailOptionsContent() {
                 masterDesc: parentMaster?.label || "",
                 additionalInsured: JSON.stringify(h.additional_insured || {}),
                 waiverSubrogation: JSON.stringify(h.waiver_subrogation || {}),
-                ...limitsObj
+                ...limitsObj,
+                overrides: JSON.stringify(parentMaster?.overrides || {})
               });
               const attachments = n.children?.filter(c => c.id.startsWith("doc-") && (isAllChecked || checkedNodes.has(c.id))) || [];
               items.push({

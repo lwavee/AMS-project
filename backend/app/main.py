@@ -15,10 +15,21 @@ from fastapi.staticfiles import StaticFiles
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Validation 1: Environment Variables
+    # Validation 1: Environment Variables & Security Checks
     if not settings.DATABASE_URL:
         print(" CRITICAL: DATABASE_URL not found in environment!")
         os._exit(1)
+
+    is_production = settings.APP_ENV.lower() in ("production", "prod")
+    if is_production:
+        if not settings.SECRET_KEY or settings.SECRET_KEY in settings.INSECURE_SECRET_KEYS or len(settings.SECRET_KEY) < 32:
+            print("==================================================================")
+            print(" CRITICAL SECURITY ERROR: Weak or default SECRET_KEY in production!")
+            print(" Startup aborted. You must set a strong, random SECRET_KEY (min 32 chars).")
+            print("==================================================================")
+            os._exit(1)
+    elif not settings.SECRET_KEY or settings.SECRET_KEY in settings.INSECURE_SECRET_KEYS:
+        print(" [SECURITY WARNING] Insecure or default SECRET_KEY in non-production. Ensure a strong key is set in production.")
 
     db_status = "Disconnected"
     api_status = "Unhealthy"

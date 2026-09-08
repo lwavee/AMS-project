@@ -528,10 +528,21 @@ export default function EFormsManagerPage() {
   const pendingSelectRef = useRef<string | null>(null);
 
   useEffect(() => {
+    let masterCertId: string | null = null;
     if (selectedNode && selectedNode.startsWith("cert-file-master-")) {
-      const id = selectedNode.replace("cert-file-master-", "");
+      masterCertId = selectedNode.replace("cert-file-master-", "");
+    } else if (selectedNode && selectedNode.startsWith("holder-")) {
+      const parentCert = createdCertificates.find(c => 
+        c.children && c.children.some((child: any) => child.id === selectedNode)
+      );
+      if (parentCert) {
+        masterCertId = parentCert.id.replace("cert-file-master-", "");
+      }
+    }
+
+    if (masterCertId) {
       const token = localStorage.getItem("token");
-      fetch(`${API_BASE_URL}/api/eforms/${id}`, {
+      fetch(`${API_BASE_URL}/api/eforms/${masterCertId}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -555,7 +566,7 @@ export default function EFormsManagerPage() {
       setIsEditing(false);
       setIframeKey('');
     }
-  }, [selectedNode]);
+  }, [selectedNode, createdCertificates]);
 
   // Listen for FIELD_EDITED messages from the iframe (no re-key on field edit)
   useEffect(() => {
@@ -1982,6 +1993,7 @@ export default function EFormsManagerPage() {
                     baLimitBodilyInjuryPerson: baLimits.bodilyInjuryPerson,
                     baLimitBodilyInjuryAccident: baLimits.bodilyInjuryAccident,
                     baLimitPropertyDamage: baLimits.propertyDamage,
+                    overrides: JSON.stringify(overrides),
                   });
                   return <iframe key={params.toString()} src={`/acord-form.html?${params.toString()}`} className="w-full h-full border-none bg-white" />;
                 } else if (isMasterNode) {

@@ -9,7 +9,9 @@ security = HTTPBearer()
 
 import jwt
 
-SECRET_KEY = os.getenv("SECRET_KEY", "change_this_to_random_secret_key")
+from app.core.config import settings
+
+SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
