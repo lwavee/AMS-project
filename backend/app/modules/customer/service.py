@@ -548,9 +548,9 @@ def get_coverages_bundle(db: Session, customer_id: int) -> dict:
         Policy, GeneralLiabilityCoverage, UmbrellaCoverage, WorkersCompPart2, BusinessAutoCoverage
     )
 
-    def _to_dict(model_obj):
+    def _to_dict(model_obj) -> dict:
         if not model_obj:
-            return None
+            return {}
         res = {}
         for col in model_obj.__table__.columns:
             val = getattr(model_obj, col.name)
@@ -578,19 +578,27 @@ def get_coverages_bundle(db: Session, customer_id: int) -> dict:
 
     gl_by_pid = {}
     for item in all_gl:
-        gl_by_pid.setdefault(item.policy_id, []).append(_to_dict(item))
+        d = _to_dict(item)
+        if d:
+            gl_by_pid.setdefault(item.policy_id, []).append(d)
 
     umb_by_pid = {}
     for item in all_umb:
-        umb_by_pid.setdefault(item.policy_id, []).append(_to_dict(item))
+        d = _to_dict(item)
+        if d:
+            umb_by_pid.setdefault(item.policy_id, []).append(d)
 
     wc_by_pid = {}
     for item in all_wc:
-        wc_by_pid[item.policy_id] = _to_dict(item)
+        d = _to_dict(item)
+        if d:
+            wc_by_pid[item.policy_id] = d
 
     ba_by_pid = {}
     for item in all_ba:
-        ba_by_pid.setdefault(item.policy_id, []).append(_to_dict(item))
+        d = _to_dict(item)
+        if d:
+            ba_by_pid.setdefault(item.policy_id, []).append(d)
 
     formatted_policies = []
     policy_coverages_map = {}
@@ -630,21 +638,21 @@ def get_coverages_bundle(db: Session, customer_id: int) -> dict:
             }
 
         # Select first matching active items with actual limits
-        if not first_gl and any(c.get("limit1") for c in pol_gl):
+        if not first_gl and any(c.get("limit1") for c in pol_gl if isinstance(c, dict)):
             first_gl = {
                 "policyNo": p_dict["policyNum"],
                 "effDate": p_dict["effDate"],
                 "expDate": p_dict["expDate"],
                 "coverages": pol_gl,
             }
-        if not first_umb and any(c.get("limit1") for c in pol_umb):
+        if not first_umb and any(c.get("limit1") for c in pol_umb if isinstance(c, dict)):
             first_umb = {
                 "policyNo": p_dict["policyNum"],
                 "effDate": p_dict["effDate"],
                 "expDate": p_dict["expDate"],
                 "coverages": pol_umb,
             }
-        if not first_wc and pol_wc and (pol_wc.get("eachAccidentLimit") or pol_wc.get("diseasePolicyLimit")):
+        if not first_wc and isinstance(pol_wc, dict) and (pol_wc.get("eachAccidentLimit") or pol_wc.get("diseasePolicyLimit")):
             first_wc = {
                 "policyNo": p_dict["policyNum"],
                 "effDate": p_dict["effDate"],
