@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sterling AMS — Comprehensive System Documentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #0284c7;
+      --primary-dark: #0369a1;
+      --primary-light: #e0f2fe;
+      --accent: #d97706;
+      --surface: #ffffff;
+      --background: #f8fafc;
+      --border: #e2e8f0;
+      --border-dark: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --sidebar-width: 280px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-main);
+      background: var(--background);
+      line-height: 1.6;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar Navigation */
+    aside.sidebar {
+      width: var(--sidebar-width);
+      background: #0f172a;
+      color: #e2e8f0;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      overflow-y: auto;
+      padding: 28px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .brand-badge {
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      color: white;
+      font-weight: 800;
+      font-size: 14px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .nav-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nav-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #64748b;
+      margin-bottom: 4px;
+      padding-left: 8px;
+    }
+
+    .nav-link {
+      display: block;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 500;
+      padding: 8px 12px;
+      border-radius: 8px;
+      transition: all 0.15s ease;
+    }
+
+    .nav-link:hover {
+      background: #1e293b;
+      color: #38bdf8;
+      transform: translateX(3px);
+    }
+
+    .print-button {
+      margin-top: auto;
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: white;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+      transition: all 0.2s ease;
+    }
+
+    .print-button:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    /* Main Content */
+    main.content {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      padding: 40px 60px 80px 60px;
+      max-width: 1200px;
+    }
+
+    /* Typography & Sections */
+    header.hero {
+      background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+      border: 1px solid var(--border);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+      margin-bottom: 40px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-weight: 700;
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 100px;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    h1 {
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1.2;
+      color: #0f172a;
+      margin-bottom: 14px;
+    }
+
+    .hero-subtitle {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 800px;
+      line-height: 1.6;
+    }
+
+    .meta-row {
+      display: flex;
+      gap: 24px;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .meta-item strong {
+      color: var(--text-main);
+    }
+
+    section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px 40px;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.02);
+    }
+
+    h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--background);
+    }
+
+    h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 24px 0 10px 0;
+    }
+
+    p {
+      color: #334155;
+      font-size: 14.5px;
+      margin-bottom: 14px;
+    }
+
+    ul, ol {
+      margin-left: 20px;
+      margin-bottom: 16px;
+      color: #334155;
+      font-size: 14.5px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    /* Cards Grid */
+    .grid-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      margin: 20px 0;
+    }
+
+    .card {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      padding: 20px;
+      border-radius: 12px;
+      transition: all 0.2s;
+    }
+
+    .card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.04);
+    }
+
+    .card-title {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--primary-dark);
+      margin-bottom: 6px;
+    }
+
+    .card-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin: 16px 0 24px 0;
+      font-size: 13.5px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      color: #334155;
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: #f8fafc;
+    }
+
+    /* Code & Callouts */
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 16px 20px;
+      border-radius: 10px;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      margin: 14px 0 20px 0;
+      line-height: 1.5;
+    }
+
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      background: #f1f5f9;
+      color: var(--primary-dark);
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    .callout {
+      border-left: 4px solid var(--primary);
+      background: var(--primary-light);
+      padding: 16px 20px;
+      border-radius: 0 10px 10px 0;
+      margin: 18px 0;
+      font-size: 14px;
+      color: #0369a1;
+    }
+
+    .callout.warning {
+      border-left-color: var(--accent);
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .callout.success {
+      border-left-color: var(--success);
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    /* Tag badges */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    .badge.get { background: #e0f2fe; color: #0369a1; }
+    .badge.post { background: #dcfce7; color: #15803d; }
+    .badge.put { background: #fef3c7; color: #b45309; }
+    .badge.delete { background: #fee2e2; color: #b91c1c; }
+
+    /* Print Stylesheet for flawless PDF output */
+    @media print {
+      body {
+        background: white;
+        color: black;
+      }
+      aside.sidebar {
+        display: none !important;
+      }
+      main.content {
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+      }
+      section, header.hero {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 16px 0 !important;
+        margin-bottom: 20px !important;
+        page-break-inside: avoid;
+      }
+      .print-button {
+        display: none !important;
+      }
+      pre {
+        background: #f8fafc !important;
+        color: black !important;
+        border: 1px solid #cbd5e1 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-badge">AMS</span>
+      <div class="brand-title">Sterling AMS 360</div>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-label">Overview</span>
+      <a href="#overview" class="nav-link">Project Executive Summary</a>
+      <a href="#tech-stack" class="nav-link">Technology Stack</a>
+      <a href="#architecture" class="nav-link">System Architecture</a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-label">Core Modules</span>
+      <a href="#customer-center" class="nav-link">Customer Center & Profiles</a>
+      <a href="#policy-management" class="nav-link">Policy Management (GL/Auto/Umb/WC)</a>
+      <a href="#eforms-manager" class="nav-link">eForms Manager & Certificates</a>
+      <a href="#pdf-pipeline" class="nav-link">PDF Generation & Print Pipeline</a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-label">Engineering</span>
+      <a href="#api-reference" class="nav-link">API Specification</a>
+      <a href="#database-schema" class="nav-link">Database Schema & Models</a>
+      <a href="#setup-guide" class="nav-link">Local Setup & Deployment</a>
+    </div>
+
+    <button class="print-button" onclick="window.print()">
+      🖨️ Export Documentation to PDF
+    </button>
+  </aside>
+
+  <!-- Content -->
+  <main class="content">
+
+    <!-- Hero -->
+    <header class="hero" id="overview">
+      <span class="hero-badge">Official Architecture & Operational Manual</span>
+      <h1>Sterling AMS 360 — Insurance Management Platform</h1>
+      <p class="hero-subtitle">
+        A modern, comprehensive Insurance Agency Management System (AMS) built with Next.js 15, FastAPI, PostgreSQL/Supabase, and an advanced ACORD 25 Certificate Engine with native vector PDF generation.
+      </p>
+      <div class="meta-row">
+        <div class="meta-item">Version: <strong>2.4.0-Production</strong></div>
+        <div class="meta-item">Target Industry: <strong>Property & Casualty Insurance</strong></div>
+        <div class="meta-item">Last Documented: <strong>September 2026</strong></div>
+      </div>
+    </header>
+
+    <!-- Project Overview -->
+    <section>
+      <h2>🌟 1. Project Executive Summary</h2>
+      <p>
+        <strong>Sterling AMS</strong> is a full-featured, enterprise-grade cloud agency management solution engineered for independent commercial and personal lines insurance brokerages. It unifies customer relationship management (CRM), policy administration across four primary commercial lines, hierarchical certificate management (eForms Manager), and pixel-perfect document rendering.
+      </p>
+
+      <div class="grid-cards">
+        <div class="card">
+          <div class="card-title">🏢 Multi-Role Security</div>
+          <div class="card-desc">Fine-grained RBAC separating Agency Operators, Account Managers, Producers, and Platform Administrators with JWT auth.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">📜 ACORD 25 Standard</div>
+          <div class="card-desc">Automated generation and inline interactive editing of industry-standard Certificate of Liability Insurance forms.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🌳 eForms Tree Manager</div>
+          <div class="card-desc">Hierarchical master-to-holder tracking, document attachments, certificate copying, and multi-recipient email distribution.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">⚡ High-Fidelity PDF Engine</div>
+          <div class="card-desc">Native browser SVG foreignObject vector compilation (via html-to-image + jsPDF + pdf-lib) eliminating font-shift errors.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tech Stack -->
+    <section id="tech-stack">
+      <h2>🛠️ 2. Technology Stack</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Layer</th>
+            <th>Technology</th>
+            <th>Role / Responsibility</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Frontend Framework</strong></td>
+            <td><code>Next.js 15.1 (App Router)</code></td>
+            <td>Server and client component rendering, dynamic routing, layout orchestration.</td>
+          </tr>
+          <tr>
+            <td><strong>Language</strong></td>
+            <td><code>TypeScript 5.x</code></td>
+            <td>Type safety, shared domain interfaces, strict prop contracts.</td>
+          </tr>
+          <tr>
+            <td><strong>Styling & UI</strong></td>
+            <td><code>TailwindCSS v4 + Lucide Icons</code></td>
+            <td>Responsive layouts, Sterling brand palette, micro-interactions, modal drawers.</td>
+          </tr>
+          <tr>
+            <td><strong>Table State</strong></td>
+            <td><code>@tanstack/react-table v8</code></td>
+            <td>Customer filtering, multi-column sorting, pagination, and row selection.</td>
+          </tr>
+          <tr>
+            <td><strong>PDF Generation</strong></td>
+            <td><code>html-to-image + jsPDF + pdf-lib</code></td>
+            <td>DOM-to-vector canvas conversion, multi-document concatenation, attachment injection.</td>
+          </tr>
+          <tr>
+            <td><strong>Backend API</strong></td>
+            <td><code>FastAPI (Python 3.11+)</code></td>
+            <td>High-throughput asynchronous REST endpoints with Pydantic validation.</td>
+          </tr>
+          <tr>
+            <td><strong>Database / ORM</strong></td>
+            <td><code>PostgreSQL / Supabase + SQLAlchemy 2.0</code></td>
+            <td>Relational storage, connection pooling, complex customer & policy schemas.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Architecture -->
+    <section id="architecture">
+      <h2>📐 3. System Architecture</h2>
+      <p>
+        The platform enforces a strict unidirectional decoupled architecture. The frontend defines the functional requirements and acts as the source of truth for all user interactions, while the FastAPI backend provides domain-driven modules.
+      </p>
+
+      <pre><code>[ Browser Client / Next.js 15 App ]
+   │
+   ├── eForms Manager (Tree Browser: Masters -> Holders -> Docs)
+   ├── Interactive ACORD 25 View / Inline Overrides
+   └── Print & Email Pipeline (html-to-image -> jsPDF -> pdf-lib)
+         │
+         │ REST API calls (Bearer JWT Tokens)
+         ▼
+[ FastAPI Backend / Python 3.11 ]
+   │
+   ├── api/v1/router.py (Route Aggregator)
+   ├── modules/customer/  (CRUD, 79+ profile fields)
+   ├── modules/policy/    (GL, Business Auto, Umbrella, Workers Comp)
+   ├── modules/eforms/    (Certificates, Holders, Document Attachments)
+   └── modules/auth/      (JWT validation & Role-Based Access Control)
+         │
+         ▼
+[ PostgreSQL / Supabase Database ]
+   ├── customers, customer_policies
+   ├── certificate_masters, certificate_holders
+   ├── policy_gl_coverages, policy_ba_coverages, policy_wc_part2
+   └── customer_documents (Attachments & uploads)</code></pre>
+    </section>
+
+    <!-- Customer Center -->
+    <section id="customer-center">
+      <h2>👥 4. Customer Center & Profiles</h2>
+      <p>
+        The customer profile system models real-world commercial brokerage data with over 79 discrete fields. Customer records support both Commercial and Personal lines classifications.
+      </p>
+
+      <h3>Key Profile Sections</h3>
+      <ul>
+        <li><strong>Basic & Contact Info:</strong> Customer name, DBA, address, city, state, zip, phone, primary email, website, tax ID / EIN.</li>
+        <li><strong>Classification:</strong> Type (Commercial, Personal, Life/Health), Status (Active, Prospect, Inactive), Source, Account Exec.</li>
+        <li><strong>Dynamic Nested Collections:</strong>
+          <ul>
+            <li><strong>Service Groups:</strong> Dedicated account servicing teams and branch assignments.</li>
+            <li><strong>Contacts:</strong> Multiple customer contacts with direct dials, cell numbers, and email addresses.</li>
+            <li><strong>Dependents / Locations:</strong> Subsidiary locations and covered entities.</li>
+            <li><strong>Loss History:</strong> Historical claim logs with carrier notes, reserves, and amounts paid.</li>
+          </ul>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Policy Management -->
+    <section id="policy-management">
+      <h2>🛡️ 5. Commercial Policy Management</h2>
+      <p>
+        Policies are modeled with granular coverage limits directly tied to standard ACORD rating schedules:
+      </p>
+
+      <div class="grid-cards">
+        <div class="card">
+          <div class="card-title">Commercial General Liability (CGL)</div>
+          <div class="card-desc">Tracks Each Occurrence ($1M), Damage to Rented Premises ($50k), Medical Expense ($5k), Personal & Adv Injury ($1M), General Aggregate ($2M), and Products/Completed Ops ($2M).</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Business Automobile (BAP)</div>
+          <div class="card-desc">Tracks Combined Single Limit (CSL), Bodily Injury per Person/Accident, Property Damage, and vehicle coverage symbols (Any Auto, Owned, Scheduled, Hired, Non-Owned).</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Commercial Umbrella / Excess</div>
+          <div class="card-desc">Tracks Occurrence and Aggregate excess liability limits above underlying General Liability and Auto policies.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Workers' Compensation & Employers Liability</div>
+          <div class="card-desc">Tracks Part 1 Statutory limits and Part 2 Employers Liability: Each Accident, Disease - Each Employee, and Disease - Policy Limit.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- eForms Manager -->
+    <section id="eforms-manager">
+      <h2>📁 6. eForms Manager & Certificates</h2>
+      <p>
+        The eForms Manager (located at <code>/agency/customer/[id]/eforms-manager</code>) is a replica of the industry standard AMS360 eForms suite.
+      </p>
+
+      <h3>Core Capabilities:</h3>
+      <ul>
+        <li><strong>Master-Holder Hierarchy:</strong> Create master certificates representing overall coverage. Attach unlimited Certificate Holders (contractors, lenders, landlords) with customized descriptions of operations and written notice days.</li>
+        <li><strong>Interactive ACORD 25 Preview:</strong> View the certificate exactly as it appears in print. Toggle <em>Edit Mode</em> to modify individual fields or toggle checkboxes (Claims-Made vs Occur, Additional Insured, Subrogation Waived).</li>
+        <li><strong>Document Attachment Management:</strong> Upload additional endorsements (e.g., CG 20 10, CG 24 04) directly under any Master or Holder node.</li>
+        <li><strong>Distribution Workflows:</strong>
+          <ul>
+            <li><strong>Print Forms:</strong> Select any combination of masters, holders, and attachments to merge into a single download or separate PDF packages.</li>
+            <li><strong>Email Forms:</strong> Select holders, auto-populate email templates, attach generated certificates, and send directly via agency SMTP.</li>
+          </ul>
+        </li>
+      </ul>
+    </section>
+
+    <!-- PDF Pipeline -->
+    <section id="pdf-pipeline">
+      <h2>📄 7. PDF Generation & Print Pipeline</h2>
+      <p>
+        To ensure certificates print with 100% legal precision, Sterling AMS uses a dual-layer rendering system:
+      </p>
+
+      <div class="callout success">
+        <strong>Native SVG Vector Rendering:</strong> By replacing legacy <code>html2canvas</code> text measurement with <code>html-to-image</code>, the browser's native Blink engine rasterizes fonts and table borders via SVG <code>&lt;foreignObject&gt;</code>. This completely eliminates vertical font drift, overlapping cell borders, and missing table lines.
+      </div>
+
+      <h3>Generation Process Flow:</h3>
+      <ol>
+        <li>An invisible viewport-aligned iframe loads the ACORD template with active policy parameters.</li>
+        <li>Dynamic CSS overrides enforce clean table separation (<code>border-collapse: separate; border-spacing: 0;</code>) and vertical alignment.</li>
+        <li><code>html-to-image</code> rasterizes the rendered <code>.page</code> element at <code>pixelRatio: 2</code> (High DPI 300+ print resolution).</li>
+        <li><code>jsPDF</code> converts the vector canvas image into a clean Letter-sized PDF page.</li>
+        <li><code>pdf-lib</code> concatenates the certificate with any attached endorsement PDFs into the final unified file.</li>
+      </ol>
+    </section>
+
+    <!-- API Reference -->
+    <section id="api-reference">
+      <h2>🔌 8. REST API Specification</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Endpoint</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge post">POST</span></td>
+            <td><code>/api/auth/login</code></td>
+            <td>Authenticate user and return JWT bearer token.</td>
+          </tr>
+          <tr>
+            <td><span class="badge get">GET</span></td>
+            <td><code>/api/customers/</code></td>
+            <td>Retrieve paginated list of agency customers with search & filter.</td>
+          </tr>
+          <tr>
+            <td><span class="badge post">POST</span></td>
+            <td><code>/api/customers/</code></td>
+            <td>Create a new customer profile with 79+ supported fields.</td>
+          </tr>
+          <tr>
+            <td><span class="badge get">GET</span></td>
+            <td><code>/api/customers/{id}</code></td>
+            <td>Retrieve detailed customer profile by ID.</td>
+          </tr>
+          <tr>
+            <td><span class="badge put">PUT</span></td>
+            <td><code>/api/customers/{id}</code></td>
+            <td>Update customer details, nested contacts, and servicing groups.</td>
+          </tr>
+          <tr>
+            <td><span class="badge get">GET</span></td>
+            <td><code>/api/customers/{id}/policies</code></td>
+            <td>List all active and historical policies for customer.</td>
+          </tr>
+          <tr>
+            <td><span class="badge get">GET</span></td>
+            <td><code>/api/customers/{id}/certificates</code></td>
+            <td>List certificate masters for customer.</td>
+          </tr>
+          <tr>
+            <td><span class="badge post">POST</span></td>
+            <td><code>/api/customers/{id}/certificates</code></td>
+            <td>Create a new certificate master.</td>
+          </tr>
+          <tr>
+            <td><span class="badge get">GET</span></td>
+            <td><code>/api/customers/{id}/certificates/{certId}/holders</code></td>
+            <td>List certificate holders under a specific certificate master.</td>
+          </tr>
+          <tr>
+            <td><span class="badge post">POST</span></td>
+            <td><code>/api/customers/{id}/certificates/{certId}/holders</code></td>
+            <td>Add a certificate holder with AI/WOS endorsement flags.</td>
+          </tr>
+          <tr>
+            <td><span class="badge get">GET</span></td>
+            <td><code>/api/customers/{id}/documents</code></td>
+            <td>List uploaded documents and attachments.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Local Setup -->
+    <section id="setup-guide">
+      <h2>🚀 9. Setup & Development Guide</h2>
+
+      <h3>Prerequisites</h3>
+      <ul>
+        <li>Node.js 18+ (Node 20+ recommended)</li>
+        <li>Python 3.11+ and <code>pip</code></li>
+        <li>PostgreSQL or Supabase project URL</li>
+      </ul>
+
+      <h3>1. Frontend Setup</h3>
+      <pre><code>cd frontend
+npm install
+npm run dev
+# Application starts at http://localhost:3000</code></pre>
+
+      <h3>2. Backend Setup</h3>
+      <pre><code>cd backend
+python -m venv venv
+# On Windows:
+.\venv\Scripts\activate
+# On Linux/macOS:
+source venv/bin/activate
+
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+# API docs available at http://localhost:8000/docs</code></pre>
+
+      <h3>3. Environment Variables (<code>frontend/.env.local</code>)</h3>
+      <pre><code>NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_APP_NAME="Sterling AMS"</code></pre>
+
+      <h3>4. Environment Variables (<code>backend/.env</code>)</h3>
+      <pre><code>DATABASE_URL=postgresql://user:password@localhost:5432/ams_db
+SECRET_KEY=your_production_secret_key_here
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your_supabase_anon_key</code></pre>
+    </section>
+
+  </main>
+
+</body>
+</html>
