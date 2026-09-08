@@ -8,7 +8,7 @@ import {
   X, Printer, CheckSquare, Square, MinusSquare, PlusSquare, FileText, Loader2
 } from "lucide-react";
 import { PDFDocument } from "pdf-lib";
-import html2canvas from "html2canvas";
+import { toJpeg } from "html-to-image";
 import jsPDF from "jspdf";
 
 interface TreeNode {
@@ -493,10 +493,13 @@ function PrintOptionsContent() {
     return new Promise((resolve, reject) => {
       const iframe = document.createElement("iframe");
       iframe.style.position = "fixed";
-      iframe.style.top = "-9999px";
-      iframe.style.left = "-9999px";
+      iframe.style.top = "0px";
+      iframe.style.left = "0px";
       iframe.style.width = "850px";
       iframe.style.height = "1100px";
+      iframe.style.zIndex = "-99999";
+      iframe.style.opacity = "0";
+      iframe.style.pointerEvents = "none";
       iframe.src = url;
 
       let isFinished = false;
@@ -520,15 +523,12 @@ function PrintOptionsContent() {
             )
           );
 
-          const canvas = await html2canvas(doc.body, {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            width: 850,
-            windowWidth: 850,
+          const targetEl = (doc.querySelector(".page") as HTMLElement) || doc.body;
+          const imgData = await toJpeg(targetEl, {
+            quality: 0.98,
+            pixelRatio: 2,
           });
 
-          const imgData = canvas.toDataURL("image/jpeg", 0.95);
           const pdf = new jsPDF({
             orientation: "portrait",
             unit: "pt",
