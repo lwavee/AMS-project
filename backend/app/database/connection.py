@@ -22,28 +22,46 @@ else:
     primary_engine = create_engine(
         settings.DATABASE_URL,
         pool_pre_ping=True,
-        pool_size=10,
-        max_overflow=20,
-        pool_timeout=5,
-        pool_recycle=1800,
-        connect_args={"connect_timeout": 5},
+        pool_size=20,
+        max_overflow=10,
+        pool_timeout=30,
+        pool_recycle=300,  # Recycles connection every 5 minutes to prevent stale PgBouncer sockets
+        connect_args={
+            "connect_timeout": 15,
+            "keepalives": 1,
+            "keepalives_idle": 30,
+            "keepalives_interval": 10,
+            "keepalives_count": 5,
+        },
     )
 
-# 2. Backup Engine Setup (Secondary Supabase Instance)
+# 2. Backup Engine Setup (Secondary Supabase Instance - validated on load)
 backup_engine = None
 BackupSessionLocal = None
 
 if settings.BACKUP_DATABASE_URL:
-    backup_engine = create_engine(
-        settings.BACKUP_DATABASE_URL,
-        pool_pre_ping=True,
-        pool_size=10,
-        max_overflow=20,
-        pool_timeout=5,
-        pool_recycle=1800,
-        connect_args={"connect_timeout": 5},
-    )
-    BackupSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=backup_engine)
+    try:
+        temp_backup_engine = create_engine(
+            settings.BACKUP_DATABASE_URL,
+            pool_pre_ping=True,
+            pool_size=5,
+            max_overflow=5,
+            pool_timeout=10,
+            pool_recycle=300,
+            connect_args={"connect_timeout": 5},
+        )
+        with temp_backup_engine.connect() as test_conn:
+            test_conn.execute(text("SELECT 1"))
+        backup_engine = temp_backup_engine
+        BackupSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=backup_engine)
+        logger.info("🟢 Backup Supabase DB connection verified and ready.")
+    except Exception as e:
+        logger.warning(
+            f"⚠️ Backup DB configured but unreachable ({e}). "
+            "Disabled backup failover to prevent application crashes."
+        )
+        backup_engine = None
+        BackupSessionLocal = None
 
 PrimarySessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=primary_engine)
 
@@ -67,19 +85,16 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
 def get_db():
     """
     High-Availability Session Generator:
-    Yields a session from Primary Supabase DB.
-    If Primary is down or unreachable, automatically fails over to Backup Supabase DB!
+    Yields a session from Primary Supabase DB with zero redundant roundtrips.
+    pool_pre_ping handles reconnection automatically.
     """
     global active_db_mode
     db: Session | None = None
 
-    # 1. Acquire connection (with failover if primary unreachable)
+    # 1. Acquire connection (fast, pool_pre_ping verified)
     try:
         db = PrimarySessionLocal()
-        # Verify connection with a quick ping
-        db.execute(text("SELECT 1"))
         if active_db_mode != "primary":
-            logger.info("🟢 Restored connection to Primary Supabase DB!")
             active_db_mode = "primary"
     except (OperationalError, DatabaseError, Exception) as primary_err:
         if db:
@@ -92,16 +107,17 @@ def get_db():
         if BackupSessionLocal:
             logger.warning(
                 f"[FAILOVER] Primary Supabase DB error ({primary_err}). "
-                f"Switching to Backup Supabase DB..."
+                "Switching to Backup Supabase DB..."
             )
-            active_db_mode = "backup"
             try:
                 db = BackupSessionLocal()
+                active_db_mode = "backup"
             except Exception as backup_err:
                 logger.error(f"❌ Backup DB connection failed: {backup_err}")
+                active_db_mode = "primary"
                 raise backup_err
         else:
-            logger.error(f"❌ Primary DB failed and no Backup DB configured: {primary_err}")
+            logger.error(f"❌ Primary DB failed and no valid Backup DB available: {primary_err}")
             raise primary_err
 
     # 2. Yield session to endpoint and ensure cleanup

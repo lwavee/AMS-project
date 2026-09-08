@@ -81,45 +81,52 @@ export default function Page() {
   const [agentFormSuccess, setAgentFormSuccess] = useState("");
 
 
-  // Fetch customers from FastAPI
+  // Fetch customers from FastAPI with retry resilience
   const fetchCustomers = async () => {
     setIsLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        router.push("/login");
-        return;
-      }
-
-      const response = await fetch(API_BASE_URL + "/api/customers/", {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-
-      if (response.status === 401) {
-        localStorage.removeItem("token");
-        router.push("/login");
-        return;
-      }
-
-      if (!response.ok) throw new Error("Failed to fetch customers");
-      const data = await response.json();
-
-      // Map API fields (snake_case) to Frontend fields (camelCase)
-      const mappedData = data.map((c: any) => ({
-        ...c,
-        matchCode: c.match_code,
-        createdDate: c.created_date,
-        primaryExec: c.primary_exec
-      }));
-
-      setCustomers(mappedData);
-    } catch (error) {
-      console.error("Error fetching customers:", error);
-    } finally {
-      setIsLoading(false);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
     }
+
+    const maxRetries = 2;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch(API_BASE_URL + "/api/customers/", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (response.status === 401) {
+          localStorage.removeItem("token");
+          router.push("/login");
+          return;
+        }
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+
+        // Map API fields (snake_case) to Frontend fields (camelCase)
+        const mappedData = data.map((c: any) => ({
+          ...c,
+          matchCode: c.match_code,
+          createdDate: c.created_date,
+          primaryExec: c.primary_exec
+        }));
+
+        setCustomers(mappedData);
+        setIsLoading(false);
+        return;
+      } catch (error) {
+        console.warn(`Attempt ${attempt + 1} fetching customers failed:`, error);
+        if (attempt < maxRetries) {
+          await new Promise((res) => setTimeout(res, 1200));
+        }
+      }
+    }
+    setIsLoading(false);
   };
 
   const fetchAgencyProfile = async () => {

@@ -649,11 +649,11 @@ export default function EFormsManagerPage() {
         return;
       }
 
-      const [custRes, polRes, certRes, docRes] = await Promise.all([
+      const [custRes, bundleRes, certRes, docRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/customers/${customerId}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`${API_BASE_URL}/api/customers/${customerId}/policies`, {
+        fetch(`${API_BASE_URL}/api/customers/${customerId}/coverages-bundle`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch(`${API_BASE_URL}/api/customers/${customerId}/certificates`, {
@@ -673,18 +673,9 @@ export default function EFormsManagerPage() {
       const custData = await custRes.json();
       setCustomer(custData);
 
-      if (polRes.ok) {
-        const polData = await polRes.json();
-        const formatted = polData.map((p: any) => ({
-          id: p.id.toString(),
-          policyNum: p.policy_num,
-          effDate: p.eff_date,
-          expDate: p.exp_date,
-          type: p.description || "",
-          status: p.status,
-          term: p.term,
-          company: p.writing_company || p.parent_company || p.company || "",
-        }));
+      if (bundleRes.ok) {
+        const bundle = await bundleRes.json();
+        const formatted = bundle.policies || [];
         setPolicies(formatted);
         if (formatted.length > 0) {
           setSelectedPolicy(formatted[0].policyNum);
@@ -693,138 +684,32 @@ export default function EFormsManagerPage() {
           );
         }
 
-        // Fetch GL Coverages for ALL policies until we find one with data, 
-        // because the policy description might not explicitly contain "liability" (e.g. "Binder Billable")
-        let glResultsAll: any[][] = [];
-        let umbResultsAll: any[][] = [];
-        let wcResultsAll: any[] = [];
-        let baResultsAll: any[][] = [];
-        if (formatted.length > 0) {
-          try {
-            const fetchPromises = formatted.map((p: any) => 
-              fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/general-liability`, {
-                headers: { Authorization: `Bearer ${token}` }
-              }).then(async res => {
-                if (!res.ok || res.status === 204) return [];
-                try { return await res.json(); } catch { return []; }
-              })
-            );
-            
-            const results = await Promise.all(fetchPromises);
-            glResultsAll = results;
-            // Use the first GL policy that actually has coverages with limits defined
-            const validIdx = results.findIndex(data => data && data.length > 0 && data.some((c: any) => c.limit1 && String(c.limit1).trim() !== ''));
-            if (validIdx !== -1) {
-              setGlCoverages(results[validIdx]);
-              const matchedPol = formatted[validIdx];
-              if (matchedPol) {
-                setGlPolicyNo(matchedPol.policyNum || '');
-                setGlEffDate(matchedPol.effDate || '');
-                setGlExpDate(matchedPol.expDate || '');
-              }
-            }
-          } catch (e) {
-            console.error("Failed to fetch GL coverages for certificate", e);
-          }
-          
-          try {
-            const umbPromises = formatted.map((p: any) => 
-              fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/umbrella`, {
-                headers: { Authorization: `Bearer ${token}` }
-              }).then(async res => {
-                if (!res.ok || res.status === 204) return [];
-                try { return await res.json(); } catch { return []; }
-              })
-            );
-            
-            const umbResults = await Promise.all(umbPromises);
-            umbResultsAll = umbResults;
-            // Use the first Umbrella policy that actually has coverages with limits defined
-            const validUmbIdx = umbResults.findIndex(data => data && data.length > 0 && data.some((c: any) => c.limit1 && String(c.limit1).trim() !== ''));
-            if (validUmbIdx !== -1) {
-              setUmbCoverages(umbResults[validUmbIdx]);
-              const matchedUmb = formatted[validUmbIdx];
-              if (matchedUmb) {
-                setUmbPolicyNo(matchedUmb.policyNum || '');
-                setUmbEffDate(matchedUmb.effDate || '');
-                setUmbExpDate(matchedUmb.expDate || '');
-              }
-            }
-          } catch (e) {
-            console.error("Failed to fetch Umbrella coverages for certificate", e);
-          }
-
-          try {
-            const wcPromises = formatted.map((p: any) => 
-              fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/workers-comp/part2`, {
-                headers: { Authorization: `Bearer ${token}` }
-              }).then(async res => {
-                if (!res.ok || res.status === 204) return null;
-                try { return await res.json(); } catch { return null; }
-              })
-            );
-            
-            const wcResults = await Promise.all(wcPromises);
-            wcResultsAll = wcResults;
-            // Use the first WC policy that actually has limits defined
-            const validWcIdx = wcResults.findIndex(data => data && (data.eachAccidentLimit || data.diseaseEachEmployee || data.diseasePolicyLimit));
-            if (validWcIdx !== -1) {
-              setWcPart2(wcResults[validWcIdx]);
-              const matchedWc = formatted[validWcIdx];
-              if (matchedWc) {
-                setWcPolicyNo(matchedWc.policyNum || '');
-                setWcEffDate(matchedWc.effDate || '');
-                setWcExpDate(matchedWc.expDate || '');
-              }
-            }
-          } catch (e) {
-            console.error("Failed to fetch Workers Comp part 2 for certificate", e);
-          }
-
-          try {
-            const baPromises = formatted.map((p: any) => 
-              fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/business-auto`, {
-                headers: { Authorization: `Bearer ${token}` }
-              }).then(async res => {
-                if (!res.ok || res.status === 204) return [];
-                try { return await res.json(); } catch { return []; }
-              })
-            );
-            
-            const baResults = await Promise.all(baPromises);
-            baResultsAll = baResults;
-            // Use the first BA policy that actually has coverages with limits defined
-            const validBaIdx = baResults.findIndex(data => data && data.length > 0 && data.some((c: any) => c.limit1 && String(c.limit1).trim() !== ''));
-            if (validBaIdx !== -1) {
-              setBaCoverages(baResults[validBaIdx]);
-              const matchedBa = formatted[validBaIdx];
-              if (matchedBa) {
-                setAutoPolicyNo(matchedBa.policyNum || '');
-                setAutoEffDate(matchedBa.effDate || '');
-                setAutoExpDate(matchedBa.expDate || '');
-              }
-            }
-          } catch (e) {
-            console.error("Failed to fetch Business Auto coverages for certificate", e);
-          }
-
-          // Build policyCoveragesMap
-          const pMap: Record<string, { effDate: string, expDate: string, insurerName: string, gl: any[], umb: any[], wc: any, ba: any[] }> = {};
-          formatted.forEach((p: any, i: number) => {
-            if (p.policyNum) {
-              pMap[p.policyNum] = {
-                effDate: p.effDate || '',
-                expDate: p.expDate || '',
-                insurerName: p.company || '',
-                gl: glResultsAll[i] || [],
-                umb: umbResultsAll[i] || [],
-                wc: wcResultsAll[i] || null,
-                ba: baResultsAll[i] || []
-              };
-            }
-          });
-          setPolicyCoveragesMap(pMap);
+        if (bundle.firstGl) {
+          setGlCoverages(bundle.firstGl.coverages || []);
+          setGlPolicyNo(bundle.firstGl.policyNo || '');
+          setGlEffDate(bundle.firstGl.effDate || '');
+          setGlExpDate(bundle.firstGl.expDate || '');
         }
+        if (bundle.firstUmb) {
+          setUmbCoverages(bundle.firstUmb.coverages || []);
+          setUmbPolicyNo(bundle.firstUmb.policyNo || '');
+          setUmbEffDate(bundle.firstUmb.effDate || '');
+          setUmbExpDate(bundle.firstUmb.expDate || '');
+        }
+        if (bundle.firstWc) {
+          setWcPart2(bundle.firstWc.part2 || null);
+          setWcPolicyNo(bundle.firstWc.policyNo || '');
+          setWcEffDate(bundle.firstWc.effDate || '');
+          setWcExpDate(bundle.firstWc.expDate || '');
+        }
+        if (bundle.firstBa) {
+          setBaCoverages(bundle.firstBa.coverages || []);
+          setAutoPolicyNo(bundle.firstBa.policyNo || '');
+          setAutoEffDate(bundle.firstBa.effDate || '');
+          setAutoExpDate(bundle.firstBa.expDate || '');
+        }
+
+        setPolicyCoveragesMap(bundle.policyCoveragesMap || {});
       }
 
       let allDocuments: any[] = [];

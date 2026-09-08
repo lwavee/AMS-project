@@ -254,6 +254,13 @@ def get_umbrella_info(
         return Response(status_code=status.HTTP_204_NO_CONTENT)
     return info
 
+@router.get("/{customer_id}/coverages-bundle")
+def get_customer_coverages_bundle(
+    customer_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)
+):
+    """Returns all policies, coverages, and indexed policyCoveragesMap in a single instant query."""
+    return customer_service.get_coverages_bundle(db, customer_id)
+
 @router.get("/{customer_id}/documents", response_model=List[schema.CustomerDocument])
 def list_customer_documents(
     customer_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)

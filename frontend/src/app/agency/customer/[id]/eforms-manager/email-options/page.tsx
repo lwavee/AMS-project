@@ -111,11 +111,11 @@ function EmailOptionsContent() {
         return;
       }
 
-      const [custRes, certRes, docRes, polRes] = await Promise.all([
+      const [custRes, certRes, docRes, bundleRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/customers/${customerId}`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API_BASE_URL}/api/customers/${customerId}/certificates`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API_BASE_URL}/api/customers/${customerId}/documents`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_BASE_URL}/api/customers/${customerId}/policies`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_BASE_URL}/api/customers/${customerId}/coverages-bundle`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
 
       let custData: any = null;
@@ -124,77 +124,9 @@ function EmailOptionsContent() {
         setCustomer(custData);
       }
 
-      if (polRes.ok) {
-        const polData = await polRes.json();
-        
-        let glResultsAll: any[][] = [];
-        let umbResultsAll: any[][] = [];
-        let wcResultsAll: any[] = [];
-        let baResultsAll: any[][] = [];
-
-        try {
-          const fetchPromises = polData.map((p: any) => 
-            fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/general-liability`, {
-              headers: { Authorization: `Bearer ${token}` }
-            }).then(async res => {
-              if (!res.ok || res.status === 204) return [];
-              try { return await res.json(); } catch { return []; }
-            })
-          );
-          glResultsAll = await Promise.all(fetchPromises);
-        } catch (e) { console.error("GL Error", e); }
-        
-        try {
-          const umbPromises = polData.map((p: any) => 
-            fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/umbrella`, {
-              headers: { Authorization: `Bearer ${token}` }
-            }).then(async res => {
-              if (!res.ok || res.status === 204) return [];
-              try { return await res.json(); } catch { return []; }
-            })
-          );
-          umbResultsAll = await Promise.all(umbPromises);
-        } catch (e) { console.error("Umb Error", e); }
-        
-        try {
-          const wcPromises = polData.map((p: any) => 
-            fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/workers-comp/part2`, {
-              headers: { Authorization: `Bearer ${token}` }
-            }).then(async res => {
-              if (!res.ok || res.status === 204) return null;
-              try { return await res.json(); } catch { return null; }
-            })
-          );
-          wcResultsAll = await Promise.all(wcPromises);
-        } catch (e) { console.error("WC Error", e); }
-
-        try {
-          const baPromises = polData.map((p: any) => 
-            fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${p.id}/business-auto`, {
-              headers: { Authorization: `Bearer ${token}` }
-            }).then(async res => {
-              if (!res.ok || res.status === 204) return [];
-              try { return await res.json(); } catch { return []; }
-            })
-          );
-          baResultsAll = await Promise.all(baPromises);
-        } catch (e) { console.error("BA Error", e); }
-        
-        const pMap: Record<string, { effDate: string, expDate: string, insurerName: string, gl: any[], umb: any[], wc: any, ba: any[] }> = {};
-        polData.forEach((p: any, i: number) => {
-          if (p.policy_num) {
-            pMap[p.policy_num] = {
-              effDate: p.eff_date || '',
-              expDate: p.exp_date || '',
-              insurerName: p.writing_company || p.parent_company || p.company || '',
-              gl: glResultsAll[i] || [],
-              umb: umbResultsAll[i] || [],
-              wc: wcResultsAll[i] || null,
-              ba: baResultsAll[i] || []
-            };
-          }
-        });
-        setPolicyCoveragesMap(pMap);
+      if (bundleRes.ok) {
+        const bundle = await bundleRes.json();
+        setPolicyCoveragesMap(bundle.policyCoveragesMap || {});
       }
 
       let allDocuments: any[] = [];

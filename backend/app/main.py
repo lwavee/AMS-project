@@ -13,6 +13,40 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+import asyncio
+import time
+import httpx
+import logging
+
+logger = logging.getLogger("ams360.server")
+START_TIME = time.time()
+
+async def background_keepalive():
+    """
+    Continuous background keepalive (heartbeat) running every 4 minutes:
+    - Pings primary database to prevent Supabase PgBouncer pooler and database from sleeping.
+    - Pings external server URL (if on cloud like Render) to prevent idle server shutdown.
+    """
+    await asyncio.sleep(15)  # initial wait after startup
+    while True:
+        try:
+            # 1. Keep database connection alive and warm
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+        except Exception as e:
+            logger.warning(f"Database keepalive ping exception: {e}")
+
+        # 2. Keep cloud server alive (Render, Railway, etc.)
+        external_url = os.getenv("RENDER_EXTERNAL_URL") or os.getenv("SERVER_URL")
+        if external_url:
+            try:
+                async with httpx.AsyncClient() as client:
+                    await client.get(f"{external_url.rstrip('/')}/health/", timeout=10.0)
+            except Exception:
+                pass
+
+        await asyncio.sleep(240)  # repeat every 4 minutes
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Validation 1: Environment Variables & Security Checks
@@ -56,7 +90,13 @@ async def lifespan(app: FastAPI):
     if db_status == "Connected":
         print("[OK] Database Connected")
     
+    # Validation 3: Background Keep-Alive Task
+    # Runs every 4 minutes to keep Supabase PgBouncer and cloud hosting servers awake permanently
+    keepalive_task = asyncio.create_task(background_keepalive())
+
     yield
+
+    keepalive_task.cancel()
 
 app = FastAPI(
     title=settings.APP_NAME,

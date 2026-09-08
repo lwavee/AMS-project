@@ -536,3 +536,134 @@ def delete_certificate_holder(db: Session, customer_id: int, holder_id: int):
     if not deleted:
         raise HTTPException(status_code=404, detail="Certificate holder not found")
     logger.info(f"delete_certificate_holder: deleted Holder ID {holder_id}")
+
+
+def get_coverages_bundle(db: Session, customer_id: int) -> dict:
+    """
+    High-Performance Coverages Bundle:
+    Returns all policies, their formatted coverages (GL, Umbrella, WC, Auto),
+    and pre-indexed policyCoveragesMap in 4 fast batch queries instead of 25+ cascading HTTP calls.
+    """
+    from app.modules.customer.model import (
+        Policy, GeneralLiabilityCoverage, UmbrellaCoverage, WorkersCompPart2, BusinessAutoCoverage
+    )
+
+    def _to_dict(model_obj):
+        if not model_obj:
+            return None
+        res = {}
+        for col in model_obj.__table__.columns:
+            val = getattr(model_obj, col.name)
+            res[col.name] = val
+        return res
+
+    policies = db.query(Policy).filter(Policy.customer_id == customer_id).all()
+    if not policies:
+        return {
+            "policies": [],
+            "policyCoveragesMap": {},
+            "firstGl": None,
+            "firstUmb": None,
+            "firstWc": None,
+            "firstBa": None,
+        }
+
+    policy_ids = [p.id for p in policies]
+
+    # Query coverages for all policies in 4 parallel/batch queries
+    all_gl = db.query(GeneralLiabilityCoverage).filter(GeneralLiabilityCoverage.policy_id.in_(policy_ids)).order_by(GeneralLiabilityCoverage.sortOrder).all()
+    all_umb = db.query(UmbrellaCoverage).filter(UmbrellaCoverage.policy_id.in_(policy_ids)).order_by(UmbrellaCoverage.id).all()
+    all_wc = db.query(WorkersCompPart2).filter(WorkersCompPart2.policy_id.in_(policy_ids)).all()
+    all_ba = db.query(BusinessAutoCoverage).filter(BusinessAutoCoverage.policy_id.in_(policy_ids)).order_by(BusinessAutoCoverage.id).all()
+
+    gl_by_pid = {}
+    for item in all_gl:
+        gl_by_pid.setdefault(item.policy_id, []).append(_to_dict(item))
+
+    umb_by_pid = {}
+    for item in all_umb:
+        umb_by_pid.setdefault(item.policy_id, []).append(_to_dict(item))
+
+    wc_by_pid = {}
+    for item in all_wc:
+        wc_by_pid[item.policy_id] = _to_dict(item)
+
+    ba_by_pid = {}
+    for item in all_ba:
+        ba_by_pid.setdefault(item.policy_id, []).append(_to_dict(item))
+
+    formatted_policies = []
+    policy_coverages_map = {}
+
+    first_gl = None
+    first_umb = None
+    first_wc = None
+    first_ba = None
+
+    for p in policies:
+        p_dict = {
+            "id": str(p.id),
+            "policyNum": p.policy_num or "",
+            "effDate": p.eff_date or "",
+            "expDate": p.exp_date or "",
+            "type": p.description or p.type or "",
+            "status": p.status or "Active",
+            "term": p.term or "1 Year",
+            "company": p.writing_company or p.parent_company or p.company or "",
+        }
+        formatted_policies.append(p_dict)
+
+        pol_gl = gl_by_pid.get(p.id, [])
+        pol_umb = umb_by_pid.get(p.id, [])
+        pol_wc = wc_by_pid.get(p.id, None)
+        pol_ba = ba_by_pid.get(p.id, [])
+
+        if p.policy_num:
+            policy_coverages_map[p.policy_num] = {
+                "effDate": p_dict["effDate"],
+                "expDate": p_dict["expDate"],
+                "insurerName": p_dict["company"],
+                "gl": pol_gl,
+                "umb": pol_umb,
+                "wc": pol_wc,
+                "ba": pol_ba,
+            }
+
+        # Select first matching active items with actual limits
+        if not first_gl and any(c.get("limit1") for c in pol_gl):
+            first_gl = {
+                "policyNo": p_dict["policyNum"],
+                "effDate": p_dict["effDate"],
+                "expDate": p_dict["expDate"],
+                "coverages": pol_gl,
+            }
+        if not first_umb and any(c.get("limit1") for c in pol_umb):
+            first_umb = {
+                "policyNo": p_dict["policyNum"],
+                "effDate": p_dict["effDate"],
+                "expDate": p_dict["expDate"],
+                "coverages": pol_umb,
+            }
+        if not first_wc and pol_wc and (pol_wc.get("eachAccidentLimit") or pol_wc.get("diseasePolicyLimit")):
+            first_wc = {
+                "policyNo": p_dict["policyNum"],
+                "effDate": p_dict["effDate"],
+                "expDate": p_dict["expDate"],
+                "part2": pol_wc,
+            }
+        if not first_ba and pol_ba:
+            first_ba = {
+                "policyNo": p_dict["policyNum"],
+                "effDate": p_dict["effDate"],
+                "expDate": p_dict["expDate"],
+                "coverages": pol_ba,
+            }
+
+    return {
+        "policies": formatted_policies,
+        "policyCoveragesMap": policy_coverages_map,
+        "firstGl": first_gl,
+        "firstUmb": first_umb,
+        "firstWc": first_wc,
+        "firstBa": first_ba,
+    }

@@ -34,7 +34,8 @@ from datetime import datetime, timedelta, timezone
 
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
+# 30-day token lifetime (43,200 minutes) to prevent users from being logged out unexpectedly
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "43200"))
 
 # Rate limiter tracking failed login attempts per client IP (sliding window of 60 seconds)
 # Max 5 failed attempts per IP within a 60-second window
