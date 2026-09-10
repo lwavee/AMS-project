@@ -82,12 +82,30 @@ export default function Page() {
 
 
   // Fetch customers from FastAPI with retry resilience
+  // Fetch customers from FastAPI with instant cache hydration & background revalidation
   const fetchCustomers = async () => {
-    setIsLoading(true);
     const token = localStorage.getItem("token");
     if (!token) {
       router.push("/login");
       return;
+    }
+
+    // Instant Hydration: display cached data immediately if available (0ms loading time)
+    try {
+      const cached = sessionStorage.getItem("cached_customers");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setCustomers(parsed);
+          setIsLoading(false);
+        } else {
+          setIsLoading(true);
+        }
+      } else {
+        setIsLoading(true);
+      }
+    } catch {
+      setIsLoading(true);
     }
 
     const maxRetries = 2;
@@ -117,6 +135,9 @@ export default function Page() {
         }));
 
         setCustomers(mappedData);
+        try {
+          sessionStorage.setItem("cached_customers", JSON.stringify(mappedData));
+        } catch {}
         setIsLoading(false);
         return;
       } catch (error) {
@@ -682,8 +703,8 @@ export default function Page() {
       />
       <RightDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
-      {/* Sleek Modern Loading Overlay */}
-      {isLoading && (
+      {/* Sleek Modern Loading Overlay (only blocks if no cached customers yet) */}
+      {isLoading && customers.length === 0 && (
         <div className="absolute inset-0 bg-white/70 backdrop-blur-xs z-[9999] flex items-center justify-center animate-in fade-in duration-200">
           <div className="bg-white px-8 py-6 rounded-2xl border border-border-main shadow-xl flex flex-col items-center gap-3">
             <Loader2 className="animate-spin text-primary" size={32} />

@@ -11,14 +11,18 @@ Endpoints:
   PUT    /api/customers/{id}    → update customer
   DELETE /api/customers/{id}    → delete customer
 """
-from fastapi import APIRouter, Depends, Response, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, Response, status, UploadFile, File, Form
+from fastapi.responses import FileResponse, StreamingResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from typing import List
+import os
+import requests
 from starlette.concurrency import run_in_threadpool
 
 from app.database.connection import get_db
 from app.modules.auth.deps import get_current_user
 from app.core.b2 import upload_file_to_b2
+from app.modules.customer import schema
 from app.modules.customer.schema import (
     CustomerCreate,
     CustomerUpdate,
@@ -267,8 +271,6 @@ def list_customer_documents(
 ):
     return customer_service.list_customer_documents(db, customer_id)
 
-from fastapi.responses import RedirectResponse
-
 @router.get("/{customer_id}/documents/{doc_id}/download")
 def download_customer_document(
     customer_id: int, 
@@ -277,11 +279,10 @@ def download_customer_document(
     current_user: dict = Depends(get_current_user)
 ):
     doc = customer_service.get_customer_document(db, customer_id, doc_id)
-    if not doc:
-        from fastapi import HTTPException
+    if not doc or not doc.url:
         raise HTTPException(status_code=404, detail="Document not found")
         
-    url = doc.url
+    url: str = str(doc.url)
     if "backblazeb2.com" in url:
         from app.core.b2 import get_b2_api, _b2_bucket_name
         b2_api = get_b2_api()
@@ -295,18 +296,13 @@ def download_customer_document(
                 print(f"Error generating B2 authorization: {e}")
                 
     # Proxy the download to bypass CORS
-    import requests
-    from fastapi.responses import StreamingResponse
-    
     try:
         # If it's a relative local URL, resolve it to the local server
         if url.startswith("/"):
             # For local files, we can just return a FileResponse
-            from fastapi.responses import FileResponse
-            import os
             local_path = url.lstrip("/")
             if os.path.exists(local_path):
-                return FileResponse(local_path, filename=doc.file_name)
+                return FileResponse(local_path, filename=str(doc.file_name))
             raise HTTPException(status_code=404, detail="Local file not found")
             
         # For B2, fetch the file from B2 and stream it back to the client
@@ -325,8 +321,9 @@ def download_customer_document(
                 "Content-Disposition": f'inline; filename="{doc.file_name}"'
             }
         )
+    except HTTPException:
+        raise
     except Exception as e:
-        from fastapi import HTTPException
         raise HTTPException(status_code=500, detail=f"Failed to stream document: {str(e)}")
 
 @router.post("/{customer_id}/documents", response_model=schema.CustomerDocument, status_code=status.HTTP_201_CREATED)

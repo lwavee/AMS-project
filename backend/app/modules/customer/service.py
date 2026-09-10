@@ -17,26 +17,51 @@ from app.modules.customer import repository as repo
 logger = logging.getLogger(__name__)
 
 
-def get_contact_person_for_customer(db: Session, customer: Customer) -> dict:
+def _get_agent_and_agency_cache(db: Session):
     from app.modules.customer.model import Agent, Agency
-    
-    # Try to find the agent by name matching primary_exec or executive
-    agent_name = customer.primary_exec or customer.executive
+    try:
+        agents = db.query(Agent).all()
+    except Exception:
+        agents = []
+    try:
+        agencies = {a.id: a for a in db.query(Agency).all()}
+    except Exception:
+        agencies = {}
+
+    agents_map = {}
+    for a in agents:
+        if not a.name:
+            continue
+        agents_map[a.name.strip().lower()] = a
+        if ',' in a.name:
+            parts = [p.strip() for p in a.name.split(',')]
+            if len(parts) >= 2:
+                agents_map[f"{parts[1]} {parts[0]}".strip().lower()] = a
+                agents_map[f"{parts[0]}, {parts[1]}".strip().lower()] = a
+                agents_map[f"{parts[0]} {parts[1]}".strip().lower()] = a
+
+    default_agent = agents[0] if agents else None
+    return agents_map, agencies, default_agent
+
+
+def get_contact_person_for_customer(db: Session, customer: Customer, cache=None) -> dict:
+    if cache is None:
+        cache = _get_agent_and_agency_cache(db)
+    agents_map, agencies, default_agent = cache
+
+    agent_name = (customer.primary_exec or customer.executive or "").strip()
     agent = None
     if agent_name:
-        agent = db.query(Agent).filter(Agent.name == agent_name).first()
-        if not agent:
-            # Try to resolve reverse name format e.g. "Solender, Ben" to "Ben Solender"
-            if ',' in agent_name:
-                parts = [p.strip() for p in agent_name.split(',')]
-                if len(parts) >= 2:
-                    alt_name = f"{parts[1]} {parts[0]}"
-                    agent = db.query(Agent).filter(Agent.name == alt_name).first()
-    
-    # Fallback to the first agent if not found
+        agent = agents_map.get(agent_name.lower())
+        if not agent and ',' in agent_name:
+            parts = [p.strip() for p in agent_name.split(',')]
+            if len(parts) >= 2:
+                alt_name = f"{parts[1]} {parts[0]}".strip().lower()
+                agent = agents_map.get(alt_name)
+
     if not agent:
-        agent = db.query(Agent).first()
-        
+        agent = default_agent
+
     if not agent:
         return {
             "name": "Ben Solender",
@@ -44,10 +69,9 @@ def get_contact_person_for_customer(db: Session, customer: Customer) -> dict:
             "email": "ben@capcoinsurance.com",
             "fax": "(310) 525-5292"
         }
-        
-    # Get the agency details
-    agency = db.query(Agency).filter(Agency.id == agent.agency_id).first()
-    
+
+    agency = agencies.get(agent.agency_id) if agent.agency_id else None
+
     return {
         "name": agent.name,
         "phone": agency.phone if (agency and agency.phone) else "(310) 492-2007",
@@ -57,12 +81,13 @@ def get_contact_person_for_customer(db: Session, customer: Customer) -> dict:
 
 
 def list_customers(db: Session) -> list[Customer]:
-    """Fetch all customers. Returns empty list on error."""
+    """Fetch all customers. Pre-caches agents to eliminate N+1 roundtrips."""
     try:
         customers = repo.get_all(db)
         logger.info(f"list_customers: found {len(customers)} records")
+        cache = _get_agent_and_agency_cache(db)
         for customer in customers:
-            customer.contact_person = get_contact_person_for_customer(db, customer)
+            customer.contact_person = get_contact_person_for_customer(db, customer, cache=cache)
         return customers
     except Exception as e:
         logger.error(f"list_customers failed: {e}")

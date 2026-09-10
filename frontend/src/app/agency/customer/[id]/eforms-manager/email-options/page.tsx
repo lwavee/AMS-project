@@ -654,7 +654,7 @@ function EmailOptionsContent() {
     }
   };
 
-  // ── Action: Send Email (Downloads PDF & Opens Email Client with Clean Message) ──
+  // ── Action: Send Email (Opens Email Client with PDF Attached or Downloads PDF & Opens Mailto) ──
   const handleSendEmail = async () => {
     const items = getSelectedItems();
     if (items.length === 0) {
@@ -665,8 +665,33 @@ function EmailOptionsContent() {
     setIsProcessing(true);
     setProcessingStatus("Preparing PDF attachment & launching email...");
     try {
-      // 1. Generate & download the PDF so the user has the exact file to attach
+      // 1. Generate the PDF blob and create a File object
       const { blob, fileName } = await generatePdfBlob();
+      const file = new File([blob], fileName, { type: "application/pdf" });
+
+      // 2. Attempt to use the Web Share API (Level 2)
+      // When supported (Edge, Chrome, Windows 10/11, macOS), this opens the OS share sheet
+      // where clicking Mail or Outlook creates a new email WITH the PDF file attached!
+      if (typeof navigator !== "undefined" && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: subject || "Certificate of Insurance",
+            text: message || "",
+          });
+          showToast("Email opened with attached PDF!", "success");
+          return;
+        } catch (shareErr: any) {
+          // If the user cancelled the dialog, do not force the fallback mailto
+          if (shareErr?.name === "AbortError") {
+            return;
+          }
+          console.warn("Native share failed, falling back to mailto:", shareErr);
+        }
+      }
+
+      // 3. Fallback for browsers/environments where Web Share with files is unavailable:
+      // Download the PDF so the user has it ready, and open the mailto: client
       const pdfUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = pdfUrl;
@@ -674,7 +699,7 @@ function EmailOptionsContent() {
       a.click();
       URL.revokeObjectURL(pdfUrl);
 
-      // 2. Format mailto link with standard percent-encoding (avoids '+' symbols in Outlook/Mail clients)
+      // Format mailto link with standard percent-encoding
       const mailtoParams: string[] = [];
       if (ccEmail) mailtoParams.push(`cc=${encodeURIComponent(ccEmail)}`);
       if (bccEmail) mailtoParams.push(`bcc=${encodeURIComponent(bccEmail)}`);
