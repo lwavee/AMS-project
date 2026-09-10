@@ -276,7 +276,8 @@ def delete_customer_document(db: Session, doc) -> None:
 
 def get_master_certificates_by_customer_id(db: Session, customer_id: int) -> list:
     from app.modules.customer.model import MasterCertificate
-    return db.query(MasterCertificate).filter(MasterCertificate.customer_id == customer_id).order_by(MasterCertificate.id.desc()).all()
+    from sqlalchemy.orm import joinedload
+    return db.query(MasterCertificate).options(joinedload(MasterCertificate.holders)).filter(MasterCertificate.customer_id == customer_id).order_by(MasterCertificate.id.desc()).all()
 
 
 def create_master_certificate(db: Session, customer_id: int, data: dict):

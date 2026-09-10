@@ -638,9 +638,31 @@ export default function EFormsManagerPage() {
   };
 
 
-  // ── Fetch customer and policies ──
+  // ── Fetch customer and policies (Instant Cache + 1-shot API sync) ──
   const fetchData = useCallback(async () => {
-    setLoading(true);
+    const cacheKey = `cached_eforms_${customerId}`;
+    
+    // Fast-path: display cached eForms data immediately if available (0ms load time)
+    try {
+      const cachedStr = sessionStorage.getItem(cacheKey);
+      if (cachedStr) {
+        const cached = JSON.parse(cachedStr);
+        if (cached && cached.customer) {
+          setCustomer(cached.customer);
+          if (cached.policies) setPolicies(cached.policies);
+          if (cached.policyCoveragesMap) setPolicyCoveragesMap(cached.policyCoveragesMap);
+          if (cached.createdCertificates) setCreatedCertificates(cached.createdCertificates);
+          setLoading(false);
+        } else {
+          setLoading(true);
+        }
+      } else {
+        setLoading(true);
+      }
+    } catch {
+      setLoading(true);
+    }
+
     setError(null);
     try {
       const token = localStorage.getItem("token");
@@ -673,8 +695,10 @@ export default function EFormsManagerPage() {
       const custData = await custRes.json();
       setCustomer(custData);
 
+      let bundleData: any = {};
       if (bundleRes.ok) {
         const bundle = await bundleRes.json();
+        bundleData = bundle;
         const formatted = bundle.policies || [];
         setPolicies(formatted);
         if (formatted.length > 0) {
@@ -717,65 +741,20 @@ export default function EFormsManagerPage() {
         allDocuments = await docRes.json();
       }
 
+      let formattedCerts: any[] = [];
       if (certRes.ok) {
         const certData = await certRes.json();
         const year = new Date().getFullYear();
-        // Fetch holders for each certificate in parallel
-        const formattedCerts = await Promise.all(
-          certData.map(async (c: any) => {
-            const certDbId = String(c.id);
-            const certNumber = `${year}${certDbId.padStart(2, '0')}`;
-            // Fetch holders for this cert
-            let holderChildren: TreeNode[] = [];
-            try {
-              const hRes = await fetch(
-                `${API_BASE_URL}/api/customers/${customerId}/certificates/${certDbId}/holders`,
-                { headers: { Authorization: `Bearer ${token}` } }
-              );
-              if (hRes.ok) {
-                const holders = await hRes.json();
-                holderChildren = holders.map((h: any) => {
-                  const hId = `holder-${h.id}`;
-                  const hDocs = allDocuments.filter(d => d.ref_num === hId);
-                  const hChildren: TreeNode[] = hDocs.map(d => ({
-                    id: `doc-${d.id}`,
-                    label: d.file_name,
-                    type: "file",
-                    documentData: d,
-                    formType: "Certificates"
-                  }));
+        // Zero extra HTTP calls: holders are pre-joined in each cert!
+        formattedCerts = certData.map((c: any) => {
+          const certDbId = String(c.id);
+          const certNumber = `${year}${certDbId.padStart(2, '0')}`;
+          const holders = c.holders || [];
 
-                  return {
-                    id: hId,
-                    label: [
-                      h.name,
-                      h.address,
-                      [h.city, h.state, h.zip].filter(Boolean).join(', ')
-                    ].filter(Boolean).join(', '),
-                    type: hChildren.length > 0 ? "folder" : "file",
-                    children: hChildren.length > 0 ? hChildren : undefined,
-                    formType: "Certificates",
-                    holderData: {
-                      name: h.name || '',
-                      address: h.address || '',
-                      address2: h.address2 || '',
-                      city: h.city || '',
-                      state: h.state || '',
-                      zip: h.zip || '',
-                      desc_of_ops: h.desc_of_ops || '',
-                      issue_date: h.issue_date || '',
-                      written_notice_days: h.written_notice_days ?? 10,
-                      dbId: h.id,
-                      additional_insured: h.additional_insured || {},
-                      waiver_subrogation: h.waiver_subrogation || {},
-                    },
-                  };
-                });
-              }
-            } catch (_) {}
-            const certNodeId = `cert-file-master-${c.id}`;
-            const certDocs = allDocuments.filter(d => d.ref_num === certNodeId);
-            const docChildren: TreeNode[] = certDocs.map(d => ({
+          const holderChildren: TreeNode[] = holders.map((h: any) => {
+            const hId = `holder-${h.id}`;
+            const hDocs = allDocuments.filter(d => d.ref_num === hId);
+            const hChildren: TreeNode[] = hDocs.map(d => ({
               id: `doc-${d.id}`,
               label: d.file_name,
               type: "file",
@@ -784,18 +763,55 @@ export default function EFormsManagerPage() {
             }));
 
             return {
-              id: certNodeId,
-              label: c.description || certNumber,
-              type: "folder" as const,
+              id: hId,
+              label: [
+                h.name,
+                h.address,
+                [h.city, h.state, h.zip].filter(Boolean).join(', ')
+              ].filter(Boolean).join(', '),
+              type: hChildren.length > 0 ? "folder" : "file",
+              children: hChildren.length > 0 ? hChildren : undefined,
               formType: "Certificates",
-              isMaster: true,
-              masterData: c,
-              certNumber,
-              certDbId,
-              children: [...holderChildren, ...docChildren],
+              holderData: {
+                name: h.name || '',
+                address: h.address || '',
+                address2: h.address2 || '',
+                city: h.city || '',
+                state: h.state || '',
+                zip: h.zip || '',
+                desc_of_ops: h.desc_of_ops || '',
+                issue_date: h.issue_date || '',
+                written_notice_days: h.written_notice_days ?? 10,
+                dbId: h.id,
+                additional_insured: h.additional_insured || {},
+                waiver_subrogation: h.waiver_subrogation || {},
+              },
             };
-          })
-        );
+          });
+
+          const certNodeId = `cert-file-master-${c.id}`;
+          const certDocs = allDocuments.filter(d => d.ref_num === certNodeId);
+          const docChildren: TreeNode[] = certDocs.map(d => ({
+            id: `doc-${d.id}`,
+            label: d.file_name,
+            type: "file",
+            documentData: d,
+            formType: "Certificates"
+          }));
+
+          return {
+            id: certNodeId,
+            label: c.description || certNumber,
+            type: "folder" as const,
+            formType: "Certificates",
+            isMaster: true,
+            masterData: c,
+            certNumber,
+            certDbId,
+            children: [...holderChildren, ...docChildren],
+          };
+        });
+
         setCreatedCertificates(formattedCerts);
 
         // ── Auto-select a newly-created master certificate if one is pending ──
@@ -816,6 +832,17 @@ export default function EFormsManagerPage() {
           }
         }
       }
+
+      // Save fresh payload to session cache for instant future loads
+      try {
+        sessionStorage.setItem(cacheKey, JSON.stringify({
+          customer: custData,
+          policies: bundleData.policies || [],
+          policyCoveragesMap: bundleData.policyCoveragesMap || {},
+          createdCertificates: formattedCerts
+        }));
+      } catch {}
+
     } catch (err: any) {
       setError(err.message || "Failed to load data");
     } finally {

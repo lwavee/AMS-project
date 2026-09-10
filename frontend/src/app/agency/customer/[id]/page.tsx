@@ -93,9 +93,26 @@ export default function CustomerProfilePage() {
   // Action Menu Dropdown
   const [actionMenuOpen, setActionMenuOpen] = useState(false);
 
-  // ── Fetch Customer Data ──
+  // ── Fetch Customer Data (Instant Cache Hydration) ──
   const fetchCustomer = useCallback(async () => {
-    setLoading(true);
+    const cacheKey = `cached_cust_${customerId}`;
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && parsed.id) {
+          setCustomer(parsed);
+          setLoading(false);
+        } else {
+          setLoading(true);
+        }
+      } else {
+        setLoading(true);
+      }
+    } catch {
+      setLoading(true);
+    }
+
     setError(null);
     try {
       const token = localStorage.getItem("token");
@@ -120,6 +137,9 @@ export default function CustomerProfilePage() {
 
       const data = await res.json();
       setCustomer(data);
+      try {
+        sessionStorage.setItem(cacheKey, JSON.stringify(data));
+      } catch {}
     } catch (err: any) {
       setError(err.message || "Failed to load customer profile.");
     } finally {

@@ -491,24 +491,6 @@ class CustomerDocument(CustomerDocumentBase):
     class Config:
         from_attributes = True
 
-class MasterCertificateBase(BaseModel):
-    description: Optional[str] = None
-    form_type: Optional[str] = None
-    form_data: Optional[Any] = None
-
-class MasterCertificateCreate(MasterCertificateBase):
-    pass
-
-class MasterCertificateResponse(MasterCertificateBase):
-    id: int
-    customer_id: int
-    created_date: Optional[Any] = None
-
-    class Config:
-        from_attributes = True
-
-
-
 # ── Certificate Holders ────────────────────────────────────────────────────────
 
 class CertificateHolderCreate(BaseModel):
@@ -544,6 +526,24 @@ class CertificateHolderResponse(CertificateHolderCreate):
     certificate_id: int
     customer_id: int
     created_at: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class MasterCertificateBase(BaseModel):
+    description: Optional[str] = None
+    form_type: Optional[str] = None
+    form_data: Optional[Any] = None
+
+class MasterCertificateCreate(MasterCertificateBase):
+    pass
+
+class MasterCertificateResponse(MasterCertificateBase):
+    id: int
+    customer_id: int
+    created_date: Optional[Any] = None
+    holders: Optional[List[CertificateHolderResponse]] = []
 
     class Config:
         from_attributes = True
