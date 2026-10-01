@@ -137,7 +137,7 @@ export default function Page() {
         setCustomers(mappedData);
         try {
           sessionStorage.setItem("cached_customers", JSON.stringify(mappedData));
-        } catch {}
+        } catch { }
         setIsLoading(false);
         return;
       } catch (error) {
@@ -690,7 +690,7 @@ export default function Page() {
   };
 
   return (
-    <div className="flex flex-col bg-bg-base min-h-screen text-text-main font-sans select-none h-screen relative">
+    <div className="flex flex-col bg-[#f5f1eb] min-h-screen text-text-main font-sans select-none relative">
 
       {/* Modern Top Header (DashboardHeader) */}
       <Header
@@ -713,69 +713,46 @@ export default function Page() {
         </div>
       )}
 
-      {/* Clean Premium Workspace Header Sub-band */}
-      {/* <div className="bg-white border-b border-border-main h-10 flex items-center px-6 shrink-0 select-none">
-        <span className="text-primary font-bold text-[10px] uppercase tracking-widest">Active Workspace / Customer Center</span>
-      </div> */}
+      {/* Main Workspace Card Container (Matching Sterling Portal Layout & Spacing) */}
+      <div className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-8 pb-12 pt-2 flex flex-col">
+        <div className="bg-white rounded-2xl border border-[#e5ddd5] shadow-sm flex flex-col flex-1 p-5 sm:p-7 space-y-4">
+          {currentTab === "Agent Control" && userRole === "agency" ? (
+            renderAgentControlView()
+          ) : (
+            <>
+              {/* Searchbar Component */}
+              <SearchBar
+                filters={filterState}
+                setFilters={setFilterState}
+                totalCount={filteredCustomers.length}
+              />
 
-      {/* 2. Main Area Split (Sidebar + Right Workspace) */}
-      <div className="flex flex-1 overflow-hidden">
+              {/* Toolbar Actions Component */}
+              <CustomerToolbar
+                selectedCount={selectedCustomers.length}
+                onNewCustomer={handleNewCustomerClick}
+                onEdit={handleEditClick}
+                onOpen={handleOpenClick}
+                onDelete={handleDeleteClick}
+                onRefresh={handleRefresh}
+                onExport={handleExport}
+                canDelete={userRole !== "agent"}
+              />
 
-        {/* Sidebar */}
-        <Sidebar currentTab={currentTab} onTabChange={setCurrentTab} userRole={userRole} />
-
-        {/* Right Workspace Frame */}
-        <main className="flex-1 flex flex-col min-w-0 bg-bg-base overflow-hidden">
-
-          {/* Premium Page Title Bar */}
-          <div className="px-3 sm:px-6 pt-2 pb-2 flex items-center justify-between shrink-0 select-none">
-            <h1 className="text-lg font-bold text-text-main">
-              {currentTab === "Agent Control" && userRole === "agency" ? "Agency Profile & Agent Control" : "Customer Center"}
-            </h1>
-          </div>
-
-          {/* Main Tab Content */}
-          <div className="flex-1 px-3 sm:px-6 pb-6 pt-0 overflow-y-auto space-y-2 min-h-0">
-            {currentTab === "Agent Control" && userRole === "agency" ? (
-              renderAgentControlView()
-            ) : (
-              <>
-                {/* Searchbar Component */}
-                <SearchBar
-                  filters={filterState}
-                  setFilters={setFilterState}
-                  totalCount={filteredCustomers.length}
-                />
-
-                {/* Toolbar Actions Component */}
-                <CustomerToolbar
-                  selectedCount={selectedCustomers.length}
-                  onNewCustomer={handleNewCustomerClick}
-                  onEdit={handleEditClick}
-                  onOpen={handleOpenClick}
-                  onDelete={handleDeleteClick}
+              {/* Customers Table Component */}
+              <div className="min-h-0 flex-1">
+                <CustomerTable
+                  data={filteredCustomers}
+                  selectedRowIds={selectedRowIds}
+                  setSelectedRowIds={setSelectedRowIds}
+                  onRowClick={(customer) => { }}
                   onRefresh={handleRefresh}
-                  onExport={handleExport}
-                  canDelete={userRole !== "agent"}
+                  inactiveColor={filterState.inactiveColor}
                 />
-
-                {/* Customers Table Component */}
-                <div className="min-h-0 flex-1">
-                  <CustomerTable
-                    data={filteredCustomers}
-                    selectedRowIds={selectedRowIds}
-                    setSelectedRowIds={setSelectedRowIds}
-                    onRowClick={(customer) => { }}
-                    onRefresh={handleRefresh}
-                    inactiveColor={filterState.inactiveColor}
-                  />
-                </div>
-              </>
-            )}
-          </div>
-
-        </main>
-
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* ==================== MODERN ADD CUSTOMER DIALOG ==================== */}

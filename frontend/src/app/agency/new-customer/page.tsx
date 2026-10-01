@@ -3,50 +3,129 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Info } from "lucide-react";
+import { Info, Plus, Trash2, CheckCircle2, FileText, ChevronDown, ArrowLeft } from "lucide-react";
 import { API_BASE_URL } from "../../../lib/config";
 import { showToast } from "@/components/ToastProvider";
 
-
-// ─── Helpers ────────────────────────────────────────────────
+// ─── Sterling Style Tokens ───────────────────────────────────
 const inputCls =
-    "h-9 px-3 border border-border-main rounded-xl outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 bg-white text-xs text-text-main transition-all shadow-sm w-full";
-const selectCls =
-    "h-9 px-3 border border-border-main rounded-xl outline-none bg-white text-xs text-text-main transition-all shadow-sm w-full appearance-none";
-const labelCls = "text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1 block";
-const sectionCls = "font-extrabold text-xs text-primary border-b border-border-main pb-2 mb-4 uppercase tracking-widest";
-const checkCls = "accent-primary w-4 h-4 rounded border-border-main cursor-pointer";
+    "h-[40px] px-3.5 border border-[#D1D5DB] rounded bg-white text-sm text-[#1F2937] placeholder-[#9CA3AF] transition-colors outline-none focus:border-[#7A6F64] focus:ring-1 focus:ring-[#7A6F64] w-full disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]";
 
-// Stacked Field: label on top, control below
-function Field({ label, required, error, children, className }: { label: string; required?: boolean; error?: string; children: React.ReactNode; className?: string }) {
+const selectCls =
+    "h-[40px] px-3.5 border border-[#D1D5DB] rounded bg-white text-sm text-[#1F2937] transition-colors outline-none focus:border-[#7A6F64] focus:ring-1 focus:ring-[#7A6F64] w-full bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20fill%3D%22%231F2937%22%20d%3D%22M5.293%207.293a1%201%200%20011.414%200L10%2010.586l3.293-3.293a1%201%200%20111.414%201.414l-4%204a1%201%200%2001-1.414%200l-4-4a1%201%200%20010-1.414z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:18px] bg-[right_10px_center] bg-no-repeat pr-9 appearance-none";
+
+const checkCls =
+    "accent-[#7A6F64] w-[18px] h-[18px] rounded border-[#D1D5DB] cursor-pointer shrink-0";
+
+// Clean Sterling Card with solid taupe header and expandable accordion dropdown
+function SectionCard({
+    title,
+    children,
+    isOpen = true,
+    onToggle,
+    className = ""
+}: {
+    title: string;
+    children: React.ReactNode;
+    isOpen?: boolean;
+    onToggle?: () => void;
+    className?: string;
+}) {
     return (
-        <div className={`flex flex-col ${className || ""}`}>
-            <label className={labelCls}>
-                {label}{required && <span className="text-red-500 ml-0.5">*</span>}
-            </label>
-            {React.isValidElement(children)
-                ? React.cloneElement(children as any, {
-                    className: `${(children.props as any).className || ""} ${error ? "!border-red-500 focus:!ring-red-500/20" : ""}`
-                })
-                : children}
-            {error && <span className="text-[10px] text-red-500 mt-1">{error}</span>}
+        <div className={`bg-white border border-[#D9D5D0] rounded shadow-sm overflow-hidden transition-all duration-200 ${className}`}>
+            <button
+                type="button"
+                onClick={onToggle}
+                className="w-full bg-[#7A6F64] hover:bg-[#6e6358] active:bg-[#63594e] text-white px-6 py-3.5 font-semibold text-[15px] tracking-wide flex items-center justify-between cursor-pointer transition-colors text-left select-none"
+            >
+                <span>{title}</span>
+                <ChevronDown
+                    className={`size-5 text-white/90 transition-transform duration-300 ${
+                        isOpen ? "rotate-180" : ""
+                    }`}
+                />
+            </button>
+            {isOpen && (
+                <div className="p-6 sm:p-8 space-y-4 bg-white animate-in slide-in-from-top-1 fade-in duration-200">
+                    {children}
+                </div>
+            )}
         </div>
     );
 }
 
-// Custom PhoneRow: inline horizontal — label | main input | Ext | ext input (matches reference layout)
-function PhoneRow({ label, value, ext, required, error, onChange, onExtChange }: { label: string; value: string; ext: string; required?: boolean; error?: string; onChange: (v: string) => void; onExtChange: (v: string) => void }) {
+// Clean Form Row (Label on Left, Control on Right matching Sterling Form)
+function FormRow({
+    label,
+    required,
+    error,
+    children,
+    className = ""
+}: {
+    label: string;
+    required?: boolean;
+    error?: string;
+    children: React.ReactNode;
+    className?: string;
+}) {
     return (
-        <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-                <span style={{ minWidth: 72 }} className={`text-[11px] font-bold text-right shrink-0 ${error ? "text-red-500" : "text-slate-500"}`}>
-                    {label}:{required && <span className="text-red-500 ml-0.5">*</span>}
-                </span>
-                <input className={`${inputCls} ${error ? "!border-red-500 focus:!ring-red-500/20" : ""}`} style={{ flex: 1 }} value={value} onChange={e => onChange(e.target.value)} />
-                <span className="text-[11px] font-bold text-slate-500 shrink-0 ml-1">Ext:</span>
-                <input className={inputCls} style={{ width: 72 }} value={ext} onChange={e => onExtChange(e.target.value)} />
+        <div className={`grid grid-cols-1 sm:grid-cols-12 items-center gap-3 py-2.5 border-b border-[#F3F4F6] last:border-b-0 ${className}`}>
+            <label className="sm:col-span-5 text-sm font-medium text-[#1F2937]">
+                {label}{required && <span className="text-red-500 ml-1 font-bold">*</span>}
+            </label>
+            <div className="sm:col-span-7 flex flex-col">
+                {React.isValidElement(children)
+                    ? React.cloneElement(children as any, {
+                        className: `${(children.props as any).className || ""} ${
+                            error ? "!border-red-500 focus:!ring-red-500/20 focus:!border-red-500" : ""
+                        }`
+                    })
+                    : children}
+                {error && <span className="text-xs text-red-600 font-medium mt-1">{error}</span>}
             </div>
-            {error && <span className="text-[10px] text-red-500 pl-[80px]">{error}</span>}
+        </div>
+    );
+}
+
+// Inline Phone Row with Ext matching Sterling Form layout
+function PhoneRow({
+    label,
+    value,
+    ext,
+    required,
+    error,
+    onChange,
+    onExtChange
+}: {
+    label: string;
+    value: string;
+    ext: string;
+    required?: boolean;
+    error?: string;
+    onChange: (v: string) => void;
+    onExtChange: (v: string) => void;
+}) {
+    return (
+        <div className="grid grid-cols-1 sm:grid-cols-12 items-center gap-3 py-2.5 border-b border-[#F3F4F6] last:border-b-0">
+            <label className={`sm:col-span-5 text-sm font-medium ${error ? "text-red-600 font-semibold" : "text-[#1F2937]"}`}>
+                {label}:{required && <span className="text-red-500 ml-1 font-bold">*</span>}
+            </label>
+            <div className="sm:col-span-7 flex flex-col">
+                <div className="flex items-center gap-2">
+                    <input
+                        className={`${inputCls} flex-1 ${error ? "!border-red-500 focus:!ring-red-500/20 focus:!border-red-500" : ""}`}
+                        value={value}
+                        onChange={e => onChange(e.target.value)}
+                    />
+                    <span className="text-xs font-medium text-[#6B7280] shrink-0">Ext:</span>
+                    <input
+                        className={`${inputCls} w-20 text-center shrink-0`}
+                        value={ext}
+                        onChange={e => onExtChange(e.target.value)}
+                    />
+                </div>
+                {error && <span className="text-xs text-red-600 font-medium mt-1">{error}</span>}
+            </div>
         </div>
     );
 }
@@ -96,7 +175,6 @@ const defaultForm = {
     // Other
     knownSinceYear: "", notation: "",
 
-    // --- NEW FIELDS FROM SCREENSHOTS ---
     // Multiple Entity
     multipleEntityCustomerType: "Standard",
     // International Phone 1
@@ -104,7 +182,7 @@ const defaultForm = {
     // International Phone 2
     intlPhone2Type: "", intlPhone2CountryCode: "", intlPhone2Number: "", intlPhone2Ext: "",
 
-    // Additional Customer Information (Screenshot 3)
+    // Additional Customer Information
     ssn: "",
     maritalStatus: "",
     educationLevel: "",
@@ -182,15 +260,22 @@ function buildPayload(f: FormState) {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  PAGE COMPONENT
+//  PAGE COMPONENT (Clean Single Page Form)
 // ═══════════════════════════════════════════════════════════
 function NewCustomerContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const editId = searchParams?.get("edit");
+    const [currentEditId, setCurrentEditId] = useState<string | null>(editId || null);
     const [pageLoading, setPageLoading] = useState(!!editId);
 
     const [f, setF] = useState<FormState>({ ...defaultForm });
+
+    useEffect(() => {
+        if (editId) {
+            setCurrentEditId(editId);
+        }
+    }, [editId]);
 
     useEffect(() => {
         if (!editId) return;
@@ -218,10 +303,10 @@ function NewCustomerContent() {
         };
         fetchCustomer();
     }, [editId]);
+
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const [activeSection, setActiveSection] = useState("Customer Setup");
 
     // Local lists for grid tables
     const [serviceGroups, setServiceGroups] = useState<any[]>([]);
@@ -238,19 +323,24 @@ function NewCustomerContent() {
         { type: "Commercial Lines", field: "Finance Account", answer: "", placeholder: "Alphanumeric (A - Z) (0 - 9); Max length: 80" },
     ]);
 
-    const sections = [
-        "Customer Setup",
-        "Additional Customer Info",
-        "Service Groups",
-        "Contacts",
-        // "Dependents",
-        // "Loss History",
-        // "Agency Defined Fields",
-        // "Cross References",
-        // "Expiration Dates",
-        // "Accounting Options",
-        // "Benefits Information",
-    ];
+    // Collapsible sections state
+    const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+        "Application Information": true,
+        "Addresses": false,
+        "Agency Personnel & Business Unit": false,
+        "Contact Information": false,
+        "Business with Agency & Policy Checks": false,
+        "Additional Customer Information": false,
+        "Service Groups": false,
+        "Contacts": false,
+    });
+
+    const toggleSection = (title: string) => {
+        setOpenSections(prev => ({
+            ...prev,
+            [title]: !prev[title]
+        }));
+    };
 
     const set = (patch: Partial<FormState>) => {
         setF(prev => ({ ...prev, ...patch }));
@@ -304,7 +394,15 @@ function NewCustomerContent() {
 
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
-            setError("Please fill out all required fields in the Customer Setup section.");
+            setError("Please fill out all required fields before submitting.");
+            setOpenSections(prev => ({
+                ...prev,
+                "Application Information": prev["Application Information"] || !!(newErrors.firmName || newErrors.firstName || newErrors.lastName),
+                "Addresses": prev["Addresses"] || !!(newErrors.address || newErrors.city || newErrors.state || newErrors.country || newErrors.zip),
+                "Agency Personnel & Business Unit": prev["Agency Personnel & Business Unit"] || !!(newErrors.executive || newErrors.representative || newErrors.division || newErrors.branch || newErrors.department),
+                "Contact Information": prev["Contact Information"] || !!(newErrors.cell || newErrors.email),
+                "Business with Agency & Policy Checks": prev["Business with Agency & Policy Checks"] || !!newErrors.customerAddedDate,
+            }));
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
@@ -312,8 +410,8 @@ function NewCustomerContent() {
         setSaving(true);
         try {
             const payload = buildPayload(f);
-            const isEdit = !!editId;
-            const url = isEdit ? `${API_BASE_URL}/api/customers/${editId}` : `${API_BASE_URL}/api/customers/`;
+            const isEdit = !!currentEditId;
+            const url = isEdit ? `${API_BASE_URL}/api/customers/${currentEditId}` : `${API_BASE_URL}/api/customers/`;
             const method = isEdit ? "PUT" : "POST";
 
             const res = await fetch(url, {
@@ -337,541 +435,636 @@ function NewCustomerContent() {
                     }
                 }
                 setError(errMsg);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
                 return;
             }
+
+            const data = await res.json().catch(() => ({}));
+            const customerId = data?.id || data?._id || currentEditId || editId;
+
             if (andClose) {
-                router.push(isEdit ? `/agency/customer/${editId}` : "/agency/dashboard");
+                showToast(isEdit ? "Customer updated successfully!" : "Customer created successfully!", "success");
+                if (customerId) {
+                    router.push(`/agency/customer/${customerId}`);
+                } else {
+                    router.push("/agency/dashboard");
+                }
             } else {
                 showToast(isEdit ? "Customer updated successfully!" : "Customer saved successfully!", "success");
-                setF({ ...defaultForm });
-                setServiceGroups([]);
-                setContacts([]);
-                setDependents([]);
-                setLossHistory([]);
-                setCrossReferences([]);
-                setAgencyDefinedFields([
-                    { type: "Commercial Lines", field: "Addtl Finance Acc.", answer: "", placeholder: "Alphanumeric (A - Z) (0 - 9); Max length: 80" },
-                    { type: "Commercial Lines", field: "Contractors License", answer: "", placeholder: "Alphanumeric (A - Z) (0 - 9); Max length: 80" },
-                    { type: "Commercial Lines", field: "FEIN", answer: "", placeholder: "Text (any character); Max length: 80" },
-                    { type: "Commercial Lines", field: "Finance Account", answer: "", placeholder: "Alphanumeric (A - Z) (0 - 9); Max length: 80" },
-                ]);
-                setActiveSection("Customer Setup");
+                if (!isEdit && customerId) {
+                    setCurrentEditId(String(customerId));
+                    window.history.replaceState(null, "", `/agency/new-customer?edit=${customerId}`);
+                }
             }
         } catch (err: any) {
             setError(err.message || "An unexpected error occurred while saving the customer.");
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } finally {
             setSaving(false);
         }
     };
 
-    // ── Content Render ──
-    const renderSectionContent = () => {
-        switch (activeSection) {
-            case "Customer Setup":
-                return (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 max-w-6xl mx-auto bg-white p-1" style={{ fontSize: "11px" }}>
+    if (pageLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#7A6F64] mb-3"></div>
+                <p className="text-sm font-semibold text-[#7A6F64]">Loading customer data...</p>
+            </div>
+        );
+    }
 
-                        {/* ════════════════ LEFT COLUMN ════════════════ */}
-                        <div className="space-y-7">
+    return (
+        <div className="min-h-screen bg-[#F7F6F4] text-[#1F2937] py-8 px-4 sm:px-6 lg:px-8 font-sans">
 
-                            {/* -- Type -- */}
-                            <div>
-                                <h3 className={sectionCls}>Type <span className="text-red-500">*</span></h3>
-                                <div className="flex gap-6">
-                                    {["Customer", "Prospect", "Suspect"].map(t => (
-                                        <label key={t} className="flex items-center gap-2 cursor-pointer text-xs font-semibold">
-                                            <input type="radio" name="customerType" className={checkCls} checked={f.customerType === t} onChange={() => set({ customerType: t })} />
-                                            <span>{t}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* -- Settings -- */}
-                            <div>
-                                <h3 className={sectionCls}>Settings</h3>
-                                <div className="flex flex-col gap-2.5">
-                                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold">
-                                        <input type="checkbox" className={checkCls} checked={f.excludeTargetList} onChange={e => set({ excludeTargetList: e.target.checked })} />
-                                        <span>Exclude from target list</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold">
-                                        <input type="checkbox" className={checkCls} checked={f.excludePurge} onChange={e => set({ excludePurge: e.target.checked })} />
-                                        <span>Exclude from Purge</span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            {/* -- Names -- */}
-                            <div>
-                                <h3 className={sectionCls}>Names <span className="text-red-500">*</span></h3>
-                                <div className="flex gap-6 mb-4">
-                                    {["Individual", "Family", "Business"].map(t => (
-                                        <label key={t} className="flex items-center gap-2 cursor-pointer text-xs font-semibold">
-                                            <input type="radio" name="nameType" className={checkCls} checked={f.nameType === t} onChange={() => set({ nameType: t })} />
-                                            <span>{t}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-                                    <Field label="First Name" required={f.nameType !== "Business"} error={errors.firstName}><input className={inputCls} value={f.firstName} onChange={e => set({ firstName: e.target.value })} /></Field>
-                                    {/* <Field label="Middle Name"><input className={inputCls} value={f.middleName} onChange={e => set({ middleName: e.target.value })} /></Field> */}
-                                    <Field label="Last Name" required={f.nameType !== "Business"} error={errors.lastName}><input className={inputCls} value={f.lastName} onChange={e => set({ lastName: e.target.value })} /></Field>
-                                    <Field label="Company Name" className="col-span-2" required={f.nameType === "Business"} error={errors.firmName}><input className={inputCls} value={f.firmName} onChange={e => set({ firmName: e.target.value })} /></Field>
-                                    <Field label="DBA" className="col-span-2"><input className={inputCls} value={f.dba} onChange={e => set({ dba: e.target.value })} /></Field>
-                                </div>
-                            </div>
-
-                            {/* -- Salutation -- */}
-                            <div>
-                                <h3 className={sectionCls}>Salutation</h3>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-                                    <Field label="Formal Salutation"><input className={inputCls} value={f.formalSalutation} onChange={e => set({ formalSalutation: e.target.value })} /></Field>
-                                    <Field label="Informal Salutation"><input className={inputCls} value={f.informalSalutation} onChange={e => set({ informalSalutation: e.target.value })} /></Field>
-                                    <label className="flex items-center gap-2 cursor-pointer col-span-2 text-xs font-semibold mt-1">
-                                        <input type="checkbox" className={checkCls} checked={f.altNameBilling} onChange={e => set({ altNameBilling: e.target.checked })} />
-                                        <span>Use alternate name for billing</span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            {/* -- Addresses -- */}
-                            <div>
-                                <h3 className={sectionCls}>Addresses</h3>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-                                    <Field label="Address" className="col-span-2" required error={errors.address}><input className={inputCls} value={f.address} onChange={e => set({ address: e.target.value })} /></Field>
-                                    <Field label="Address 2" className="col-span-2"><input className={inputCls} value={f.address2} onChange={e => set({ address2: e.target.value })} /></Field>
-                                    <Field label="City" required error={errors.city}><input className={inputCls} value={f.city} onChange={e => set({ city: e.target.value })} /></Field>
-                                    <Field label="State" required error={errors.state}>
-                                        <select className={selectCls} value={f.state} onChange={e => set({ state: e.target.value })}>
-                                            <option value="">--</option>
-                                            {["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"].map(s => <option key={s} value={s}>{s}</option>)}
-                                        </select>
-                                    </Field>
-                                    <Field label="Country" required error={errors.country}>
-                                        <select className={selectCls} value={f.country} onChange={e => set({ country: e.target.value })}>
-                                            <option value="">--</option>
-                                            <option value="US">United States</option>
-                                            <option value="CA">Canada</option>
-                                            <option value="IN">India</option>
-                                            <option value="UK">United Kingdom</option>
-                                        </select>
-                                    </Field>
-                                    <Field label="ZIP Code" required error={errors.zip}><input className={inputCls} value={f.zip} onChange={e => set({ zip: e.target.value })} /></Field>
-                                    <Field label="County" className="col-span-2"><input className={inputCls} value={f.county} onChange={e => set({ county: e.target.value })} /></Field>
-                                    <Field label="Latitude"><input className={inputCls} value={f.latitude} onChange={e => set({ latitude: e.target.value })} /></Field>
-                                    <Field label="Longitude"><input className={inputCls} value={f.longitude} onChange={e => set({ longitude: e.target.value })} /></Field>
-                                    <label className="flex items-center gap-2 cursor-pointer col-span-2 text-xs font-semibold mt-1">
-                                        <input type="checkbox" className={checkCls} checked={f.altAddressBilling} onChange={e => set({ altAddressBilling: e.target.checked })} />
-                                        <span>Use alternate address for billing</span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            {/* -- Distribution -- */}
-                            <div>
-                                <h3 className={sectionCls}>Distribution</h3>
-                                <Field label="Preferred Method of Distribution">
-                                    <select className={selectCls} value={f.preferredDistribution} onChange={e => set({ preferredDistribution: e.target.value })}>
-                                        <option value="">--</option>
-                                        <option value="Mail">Mail</option>
-                                        <option value="Email">Email</option>
-                                        <option value="Fax">Fax</option>
-                                    </select>
-                                </Field>
-                            </div>
-
-                            {/* -- Contact Preferences -- */}
-                            {/* <div>
-                                <h3 className={sectionCls}>Contact Preferences</h3>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-                                    <Field label="Preferred Method">
-                                        <select className={selectCls} value={f.preferredMethod} onChange={e => set({ preferredMethod: e.target.value })}>
-                                            <option value=""> </option>
-                                            <option value="Business Phone">Business Phone</option>
-                                            <option value="Cell">Cell</option>
-                                            <option value="Customer Address">Customer Address</option>
-                                            <option value="Email #1">Email #1</option>
-                                            <option value="Email #2">Email #2</option>
-                                            <option value="Fax">Fax</option>
-                                            <option value="InsurLink">InsurLink</option>
-                                            <option value="Intl Phone #1">Intl Phone #1</option>
-                                            <option value="Intl Phone #2">Intl Phone #2</option>
-                                            <option value="Other">Other</option>
-                                            <option value="Pager">Pager</option>
-                                            <option value="Residence Phone">Residence Phone</option>
-                                            <option value="Text Message">Text Message</option>
-                                        </select>
-                                    </Field>
-                                    <Field label="Marketing / Solicitation">
-                                        <select className={selectCls} value={f.marketingSolicitation} onChange={e => set({ marketingSolicitation: e.target.value })}>
-                                            <option value=""> </option>
-                                            <option value="Do not market/solicit">Do not market/solicit</option>
-                                            <option value="Ok to email">Ok to email</option>
-                                            <option value="Ok to email and mail">Ok to email and mail</option>
-                                            <option value="Ok to mail">Ok to mail</option>
-                                        </select>
-                                    </Field>
-                                    <Field label="Electronic Delivery" className="col-span-2">
-                                        <select className={selectCls} value={f.electronicDelivery} onChange={e => set({ electronicDelivery: e.target.value })}>
-                                            <option value=""> </option>
-                                            <option value="Do not send documents">Do not send documents</option>
-                                            <option value="Ok to send documents">Ok to send documents</option>
-                                        </select>
-                                    </Field>
-                                    <Field label="Notes" className="col-span-2">
-                                        <input className={inputCls} value={f.notes} onChange={e => set({ notes: e.target.value })} />
-                                    </Field>
-                                </div>
-                            </div> */}
-
-                        </div>
-
-                        {/* ════════════════ RIGHT COLUMN ════════════════ */}
-                        <div className="space-y-7">
-
-                            {/* -- Agency Personnel -- */}
-                            <div>
-                                <h3 className={sectionCls}>Agency Personnel</h3>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-                                    <Field label="Executive" required error={errors.executive}>
-                                        <select className={selectCls} value={f.executive} onChange={e => set({ executive: e.target.value })}>
-                                            <option value=""> </option>
-                                            <option value="Akva, Jonathan">Akva, Jonathan</option>
-                                            <option value="Anatian, Yoav">Anatian, Yoav</option>
-                                            <option value="Buckanaga, Shania">Buckanaga, Shania</option>
-                                            <option value="Cohen, Judah">Cohen, Judah</option>
-                                            <option value="Drucker, Aaron">Drucker, Aaron</option>
-                                            <option value="Gamaty, Eidan">Gamaty, Eidan</option>
-                                            <option value="Gamaty, Joseph">Gamaty, Joseph</option>
-                                            <option value="Gamaty, Michael">Gamaty, Michael</option>
-                                            <option value="Gamaty, Moshe">Gamaty, Moshe</option>
-                                            <option value="Harel, Eli">Harel, Eli</option>
-                                            <option value="HOUSE">HOUSE</option>
-                                            <option value="Kraut, Michal">Kraut, Michal</option>
-                                            <option value="Service, Customer">Service, Customer</option>
-                                            <option value="Short, Linda">Short, Linda</option>
-                                            <option value="Solender, Ben">Solender, Ben</option>
-                                            <option value="Weiner, Jake">Weiner, Jake</option>
-                                        </select>
-                                    </Field>
-                                    <Field label="Representative" required error={errors.representative}>
-                                        <select className={selectCls} value={f.representative} onChange={e => set({ representative: e.target.value })}>
-                                            <option value=""> </option>
-                                            <option value="Akva, Jonathan">Akva, Jonathan</option>
-                                            <option value="Anatian, Yoav">Anatian, Yoav</option>
-                                            <option value="Buckanaga, Shania">Buckanaga, Shania</option>
-                                            <option value="Cohen, Judah">Cohen, Judah</option>
-                                            <option value="CS, Certificates">CS, Certificates</option>
-                                            <option value="Drucker, Aaron">Drucker, Aaron</option>
-                                            <option value="Gamaty, Eidan">Gamaty, Eidan</option>
-                                            <option value="Gamaty, Joseph">Gamaty, Joseph</option>
-                                            <option value="Gamaty, Michael">Gamaty, Michael</option>
-                                            <option value="Gamaty, Moshe">Gamaty, Moshe</option>
-                                            <option value="Harel, Eli">Harel, Eli</option>
-                                            <option value="HOUSE">HOUSE</option>
-                                            <option value="Johnson, Chalia">Johnson, Chalia</option>
-                                            <option value="Kraut, Michal">Kraut, Michal</option>
-                                            <option value="Mormytoa, Keila">Mormytoa, Keila</option>
-                                            <option value="Parungo, Joana">Parungo, Joana</option>
-                                            <option value="Service, Customer">Service, Customer</option>
-                                            <option value="Short, Linda">Short, Linda</option>
-                                            <option value="Solender, Ben">Solender, Ben</option>
-                                            <option value="Weiner, Jake">Weiner, Jake</option>
-                                        </select>
-                                    </Field>
-                                    <div className="col-span-2 flex flex-col gap-2.5 pt-1">
-                                        <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold">
-                                            <input type="checkbox" className={checkCls} checked={f.brokersCustomer} onChange={e => set({ brokersCustomer: e.target.checked })} />
-                                            <span>Broker&apos;s Customer</span>
-                                        </label>
-                                        <Field label="Broker">
-                                            <select className={selectCls} value={f.broker} onChange={e => set({ broker: e.target.value })}>
-                                                <option value="">--</option>
-                                            </select>
-                                        </Field>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* -- Business Unit -- */}
-                            <div>
-                                <h3 className={sectionCls}>Business Unit</h3>
-                                <div className="grid grid-cols-3 gap-x-4 gap-y-4">
-                                    <Field label="Division" required error={errors.division}>
-                                        <select className={selectCls} value={f.division} onChange={e => set({ division: e.target.value })}>
-                                            <option value="Gamaty Insurance Agency">Gamaty Insurance Agency</option>
-                                        </select>
-                                    </Field>
-                                    <Field label="Branch" required error={errors.branch}>
-                                        <select className={selectCls} value={f.branch} onChange={e => set({ branch: e.target.value })}>
-                                            <option value=""></option>
-                                            <option value="Armar Insurance">Armar Insurance</option>
-                                            <option value="CapCo Florida">CapCo Florida</option>
-                                            <option value="Capital & Co">Capital & Co</option>
-                                            <option value="JMB - DO NOT SERVICE">JMB - DO NOT SERVICE</option>
-                                            <option value="Pregill Insurance">Pregill Insurance</option>
-                                            <option value="WCFL Insurance Services">WCFL Insurance Services</option>
-                                        </select>
-                                    </Field>
-                                    <Field label="Department" required error={errors.department}>
-                                        <select className={selectCls} value={f.department} onChange={e => set({ department: e.target.value })}>
-                                            <option value=""> </option>
-                                            <option value="Commercial">Commercial</option>
-                                            <option value="Health">Health</option>
-                                            <option value="Personal">Personal</option>
-                                        </select>
-                                    </Field>
-                                </div>
-                            </div>
-
-                            {/* -- Contact Information -- */}
-                            <div>
-                                <h3 className={sectionCls}>Contact Information</h3>
-                                <div className="space-y-5">
-                                    <div className="space-y-2.5">
-                                        <PhoneRow label="Cell" value={f.cell} ext={f.cellExt} required error={errors.cell} onChange={v => set({ cell: v })} onExtChange={v => set({ cellExt: v })} />
-                                        <PhoneRow label="Business" value={f.phoneBusiness} ext={f.phoneBusinessExt} onChange={v => set({ phoneBusiness: v })} onExtChange={v => set({ phoneBusinessExt: v })} />
-                                        <PhoneRow label="Other" value={f.phoneOther} ext={f.phoneOtherExt} onChange={v => set({ phoneOther: v })} onExtChange={v => set({ phoneOtherExt: v })} />
-                                    </div>
-                                    <div className="flex flex-col gap-4 pt-2">
-                                        <Field label="Primary Email" required error={errors.email}><input type="email" className={inputCls} value={f.email} onChange={e => set({ email: e.target.value })} /></Field>
-                                        <Field label="Alternate Email"><input type="email" className={inputCls} value={f.email2} onChange={e => set({ email2: e.target.value })} /></Field>
-                                        <Field label="Website"><input className={inputCls} value={f.web} onChange={e => set({ web: e.target.value })} /></Field>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* -- Business with Agency -- */}
-                            <div>
-                                <h3 className={sectionCls}>Business with Agency</h3>
-                                <div className="grid grid-cols-3 gap-x-4 gap-y-4">
-                                    <Field label="Acquisition">
-                                        <select className={selectCls} value={f.acquisition} onChange={e => set({ acquisition: e.target.value })}>
-                                            <option value="">--</option>
-                                            <option value="Direct">Direct</option>
-                                            <option value="Referral">Referral</option>
-                                            <option value="Web">Web</option>
-                                        </select>
-                                    </Field>
-                                    <Field label="Business Origin">
-                                        <select className={selectCls} value={f.businessOrigin} onChange={e => set({ businessOrigin: e.target.value })}>
-                                            <option value="">--</option>
-                                            <option value="Walk-in">Walk-in</option>
-                                            <option value="Call">Call</option>
-                                            <option value="Online">Online</option>
-                                        </select>
-                                    </Field>
-                                    <Field label="Customer Added Date" required error={errors.customerAddedDate}>
-                                        <input type="date" className={inputCls} value={f.customerAddedDate} onChange={e => set({ customerAddedDate: e.target.value })} />
-                                    </Field>
-                                </div>
-                            </div>
-
-                            {/* -- Referrals -- */}
-                            {/* <div>
-                                <h3 className={sectionCls}>Referrals</h3>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-                                    <Field label="Name">
-                                        <select className={selectCls} value={f.referralName} onChange={e => set({ referralName: e.target.value })}>
-                                            <option value="">--</option>
-                                        </select>
-                                    </Field>
-                                    <Field label="Location">
-                                        <select className={selectCls} value={f.referralLocation} onChange={e => set({ referralLocation: e.target.value })}>
-                                            <option value="">--</option>
-                                        </select>
-                                    </Field>
-                                </div>
-                            </div> */}
-
-                            {/* -- Policy Auto-Check -- */}
-                            <div>
-                                <h3 className={sectionCls}>Policy Auto-Check</h3>
-                                <div className="space-y-3">
-                                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold">
-                                        <input type="checkbox" className={checkCls} checked={f.autoCheckPolicies} onChange={e => set({ autoCheckPolicies: e.target.checked })} />
-                                        <span>Automatically check based on active policies</span>
-                                    </label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {([
-                                            ["checkPersonal", "Personal"],
-                                            ["checkHealth", "Health"],
-                                            ["checkCommercial", "Commercial"],
-                                            ["checkNonPc", "Non P&C"],
-                                            ["checkLife", "Life"],
-                                            ["checkFinancial", "Financial Services"],
-                                            ["checkBenefits", "Benefits"],
-                                        ] as [keyof FormState, string][]).map(([key, label]) => (
-                                            <label key={key} className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded-lg hover:bg-secondary/40 border border-transparent transition-all">
-                                                <input type="checkbox" className={checkCls} checked={!!f[key]} onChange={e => set({ [key]: e.target.checked } as any)} />
-                                                <span className="text-[11px] font-bold text-text-main">{label}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* -- Known & Notation -- */}
-                            {/* <div>
-                                <h3 className={sectionCls}>Known & Notation</h3>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-                                    <Field label="Known Since Year"><input className={inputCls} value={f.knownSinceYear} onChange={e => set({ knownSinceYear: e.target.value })} /></Field>
-                                    <Field label="Notation">
-                                        <select className={selectCls} value={f.notation} onChange={e => set({ notation: e.target.value })}>
-                                            <option value="">--</option>
-                                            <option value="VIP">VIP</option>
-                                        </select>
-                                    </Field>
-                                </div>
-                            </div> */}
-
-                            {/* -- Multiple Entity -- */}
-                            {/* <div>
-                                <h3 className={sectionCls}>Multiple Entity Account Information</h3>
-                                <Field label="Customer Type">
-                                    <select className={selectCls} value={f.multipleEntityCustomerType} onChange={e => set({ multipleEntityCustomerType: e.target.value })}>
-                                        <option value="Master/Multiple Entities">Master/Multiple Entities</option>
-                                        <option value="Standard">Standard</option>
-                                        <option value="Sub-customer/Multiple Entities">Sub-customer/Multiple Entities</option>
-                                    </select>
-                                </Field>
-                            </div> */}
-
-                            {/* -- International Phone 1 & 2 -- */}
-                            <div>
-                                <h3 className={sectionCls}>International Phone Numbers</h3>
-                                <div className="space-y-4">
-
-                                    {/* Intl Phone 1 */}
-                                    <div className="border border-border-main/50 rounded-xl p-4 bg-secondary/10">
-                                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-3">Number 1</span>
-                                        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                                            <Field label="Phone Type">
-                                                <select className={selectCls} value={f.intlPhone1Type} onChange={e => set({ intlPhone1Type: e.target.value })}>
-                                                    <option value=""> </option>
-                                                    <option value="Business">Business</option>
-                                                    <option value="Cell">Cell</option>
-                                                    <option value="Fax">Fax</option>
-                                                    <option value="Other">Other</option>
-                                                    <option value="Pager">Pager</option>
-                                                    <option value="Residence">Residence</option>
-                                                </select>
-                                            </Field>
-                                            <Field label="Country Code"><input className={inputCls} placeholder="e.g. +1" value={f.intlPhone1CountryCode} onChange={e => set({ intlPhone1CountryCode: e.target.value })} /></Field>
-                                            <Field label="Number" className="col-span-2"><input className={inputCls} value={f.intlPhone1Number} onChange={e => set({ intlPhone1Number: e.target.value })} /></Field>
-                                            <Field label="Ext"><input className={inputCls} value={f.intlPhone1Ext} onChange={e => set({ intlPhone1Ext: e.target.value })} /></Field>
-                                        </div>
-                                    </div>
-
-                                    {/* Intl Phone 2 */}
-                                    {/* <div className="border border-border-main/50 rounded-xl p-4 bg-secondary/10">
-                                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-3">Number 2</span>
-                                        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                                            <Field label="Phone Type">
-                                                <select className={selectCls} value={f.intlPhone2Type} onChange={e => set({ intlPhone2Type: e.target.value })}>
-                                                    <option value=""> </option>
-                                                    <option value="Business">Business</option>
-                                                    <option value="Cell">Cell</option>
-                                                    <option value="Fax">Fax</option>
-                                                    <option value="Other">Other</option>
-                                                    <option value="Pager">Pager</option>
-                                                    <option value="Residence">Residence</option>
-                                                </select>
-                                            </Field>
-                                            <Field label="Country Code"><input className={inputCls} placeholder="e.g. +1" value={f.intlPhone2CountryCode} onChange={e => set({ intlPhone2CountryCode: e.target.value })} /></Field>
-                                            <Field label="Number" className="col-span-2"><input className={inputCls} value={f.intlPhone2Number} onChange={e => set({ intlPhone2Number: e.target.value })} /></Field>
-                                            <Field label="Ext"><input className={inputCls} value={f.intlPhone2Ext} onChange={e => set({ intlPhone2Ext: e.target.value })} /></Field>
-                                        </div>
-                                    </div> */}
-
-                                </div>
-                            </div>
-
-                        </div>
-
-                    </div>
-                );
-            case "Additional Customer Info":
-                return (
-                    <div className="max-w-4xl mx-auto bg-white p-1" style={{ fontSize: "11px" }}>
-                        <h3 className={sectionCls}>Additional Customer Information</h3>
-                        <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                            <Field label="SSN"><input className={inputCls} value={f.ssn} onChange={e => set({ ssn: e.target.value })} /></Field>
-                            <Field label="Marital Status">
-                                <select className={selectCls} value={f.maritalStatus} onChange={e => set({ maritalStatus: e.target.value })}>
-                                    <option value="">--</option>
-                                    <option value="Single">Single</option>
-                                    <option value="Married">Married</option>
-                                    <option value="Divorced">Divorced</option>
-                                    <option value="Widowed">Widowed</option>
-                                </select>
-                            </Field>
-                            <Field label="Education Level">
-                                <select className={selectCls} value={f.educationLevel} onChange={e => set({ educationLevel: e.target.value })}>
-                                    <option value="">--</option>
-                                    <option value="High School">High School</option>
-                                    <option value="Associate Degree">Associate Degree</option>
-                                    <option value="Bachelor's Degree">Bachelor&apos;s Degree</option>
-                                    <option value="Master's Degree">Master&apos;s Degree</option>
-                                    <option value="Doctorate">Doctorate</option>
-                                </select>
-                            </Field>
-                            <Field label="Date of Birth"><input type="date" className={inputCls} value={f.dateOfBirth} onChange={e => set({ dateOfBirth: e.target.value })} /></Field>
-                            <Field label="Drivers License"><input className={inputCls} value={f.driversLicense} onChange={e => set({ driversLicense: e.target.value })} /></Field>
-                            <Field label="Occupation"><input className={inputCls} value={f.occupation} onChange={e => set({ occupation: e.target.value })} /></Field>
-                            <Field label="Year Employed"><input className={inputCls} value={f.yearEmployed} onChange={e => set({ yearEmployed: e.target.value })} /></Field>
-                            <Field label="Agency Business Classification" className="col-span-2">
-                                <select className={selectCls} value={f.agencyBusinessClassification} onChange={e => set({ agencyBusinessClassification: e.target.value })}>
-                                    <option value="">--</option>
-                                    <option value="Agriculture">Agriculture</option>
-                                    <option value="Construction">Construction</option>
-                                    <option value="Manufacturing">Manufacturing</option>
-                                    <option value="Retail Trade">Retail Trade</option>
-                                    <option value="Finance & Insurance">Finance & Insurance</option>
-                                    <option value="Services">Services</option>
-                                </select>
-                            </Field>
-                            <Field label="Business Entity">
-                                <select className={selectCls} value={f.businessEntity} onChange={e => set({ businessEntity: e.target.value })}>
-                                    <option value="">--</option>
-                                    <option value="Individual">Individual</option>
-                                    <option value="Partnership">Partnership</option>
-                                    <option value="Corporation">Corporation</option>
-                                    <option value="LLC">LLC</option>
-                                </select>
-                            </Field>
-                            <Field label="In Business Since"><input className={inputCls} placeholder="e.g. 2004" value={f.inBusinessSince} onChange={e => set({ inBusinessSince: e.target.value })} /></Field>
-                            <Field label="GL Code #"><input className={inputCls} value={f.glCode} onChange={e => set({ glCode: e.target.value })} /></Field>
-                            <Field label="Federal ID #"><input className={inputCls} value={f.federalId} onChange={e => set({ federalId: e.target.value })} /></Field>
-                            <Field label="DUNS #"><input className={inputCls} value={f.duns} onChange={e => set({ duns: e.target.value })} /></Field>
-                            <Field label="NAICS #" className="col-span-2">
-                                <select className={selectCls} value={f.naics} onChange={e => set({ naics: e.target.value })}>
-                                    <option value="">--</option>
-                                    <option value="524126">524126 - Direct Property & Casualty Insurance Carriers</option>
-                                    <option value="524210">524210 - Insurance Agencies and Brokerages</option>
-                                </select>
-                            </Field>
-                            <Field label="NAICS Sub-Description" className="col-span-2">
-                                <select className={selectCls} value={f.naicsSubDescription} onChange={e => set({ naicsSubDescription: e.target.value })}>
-                                    <option value="">--</option>
-                                    <option value="Primary Agency">Primary Agency Operations</option>
-                                </select>
-                            </Field>
-                            <Field label="SIC #" className="col-span-2">
-                                <select className={selectCls} value={f.sic} onChange={e => set({ sic: e.target.value })}>
-                                    <option value="">--</option>
-                                    <option value="6411">6411 - Insurance Agents, Brokers & Service</option>
-                                </select>
-                            </Field>
+            {/* Top Breadcrumb & Title Section */}
+            <div className="max-w-4xl mx-auto mb-8">
+                <div className="flex items-center gap-2 text-xs text-[#6B7280] mb-2">
+                    <span className="font-medium text-[#4B5563]">Customer</span>
+                    <span className="text-[#D9D5D0]">/</span>
+                    <span className="text-[#7A6F64] font-semibold">{editId ? "Edit Customer Properties" : "New Customer Setup"}</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-[#E5E2DE] pb-4">
+                    <div className="flex items-center gap-3.5">
+                        <button
+                            type="button"
+                            onClick={() => router.push("/agency/dashboard")}
+                            className="size-9 rounded-full bg-white hover:bg-[#FAF8F5] border border-[#D9D5D0] flex items-center justify-center text-[#7A6F64] hover:text-[#2d2a26] transition-all shadow-xs cursor-pointer shrink-0 group active:scale-95"
+                            title="Back to Dashboard"
+                        >
+                            <ArrowLeft className="size-4.5 transition-transform group-hover:-translate-x-0.5" />
+                        </button>
+                        <div>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-[#1F2937] tracking-tight">
+                                {editId ? "Edit Customer Properties" : "New Customer Setup"}
+                            </h1>
+                            <p className="text-xs text-[#6B7280] mt-1">
+                                Complete customer profile, contact information, and business unit details.
+                            </p>
                         </div>
                     </div>
-                );
-            case "Service Groups":
-                return (
-                    <div className="space-y-4 max-w-4xl mx-auto">
-                        <h3 className={sectionCls}>Service Groups</h3>
-                        <div className="flex items-center gap-2 border-b border-border-main pb-2">
+                </div>
+
+                {/* Validation Error Feedback Alert */}
+                {error && (
+                    <div className="bg-[#FEF2F2] border border-[#FCA5A5] rounded text-[#991B1B] p-4 mt-4 flex items-center gap-3 animate-in slide-in-from-top-2 duration-200">
+                        <Info className="size-5 text-[#DC2626] shrink-0" />
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-[#991B1B]">Validation Error</p>
+                            <p className="text-xs font-medium text-[#B91C1C] mt-0.5">{error}</p>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Main Single Page Form */}
+            <form id="customer-form" onSubmit={(e: any) => { e.preventDefault(); }} className="max-w-4xl mx-auto space-y-8">
+
+                {/* ── CARD 1: Application Information ── */}
+                <SectionCard
+                    title="Application Information"
+                    isOpen={openSections["Application Information"]}
+                    onToggle={() => toggleSection("Application Information")}
+                >
+                    {/* Customer Type */}
+                    <div className="grid grid-cols-1 sm:grid-cols-12 items-center gap-3 py-2.5 border-b border-[#F3F4F6]">
+                        <label className="sm:col-span-5 text-sm font-medium text-[#1F2937]">
+                            Customer Type <span className="text-red-500 font-bold">*</span>
+                        </label>
+                        <div className="sm:col-span-7 flex flex-wrap gap-6">
+                            {["Customer", "Prospect", "Suspect"].map(t => (
+                                <label key={t} className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
+                                    <input
+                                        type="radio"
+                                        name="customerType"
+                                        className={checkCls}
+                                        checked={f.customerType === t}
+                                        onChange={() => set({ customerType: t })}
+                                    />
+                                    <span>{t}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Settings */}
+                    <div className="grid grid-cols-1 sm:grid-cols-12 items-center gap-3 py-2.5 border-b border-[#F3F4F6]">
+                        <label className="sm:col-span-5 text-sm font-medium text-[#1F2937]">
+                            Settings
+                        </label>
+                        <div className="sm:col-span-7 flex flex-wrap gap-6">
+                            <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
+                                <input
+                                    type="checkbox"
+                                    className={checkCls}
+                                    checked={f.excludeTargetList}
+                                    onChange={e => set({ excludeTargetList: e.target.checked })}
+                                />
+                                <span>Exclude from target list</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
+                                <input
+                                    type="checkbox"
+                                    className={checkCls}
+                                    checked={f.excludePurge}
+                                    onChange={e => set({ excludePurge: e.target.checked })}
+                                />
+                                <span>Exclude from Purge</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Entity Classification */}
+                    <div className="grid grid-cols-1 sm:grid-cols-12 items-center gap-3 py-2.5 border-b border-[#F3F4F6]">
+                        <label className="sm:col-span-5 text-sm font-medium text-[#1F2937]">
+                            Entity Classification <span className="text-red-500 font-bold">*</span>
+                        </label>
+                        <div className="sm:col-span-7 flex flex-wrap gap-6">
+                            {["Individual", "Family", "Business"].map(t => (
+                                <label key={t} className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
+                                    <input
+                                        type="radio"
+                                        name="nameType"
+                                        className={checkCls}
+                                        checked={f.nameType === t}
+                                        onChange={() => set({ nameType: t })}
+                                    />
+                                    <span>{t}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* First Name & Last Name (or Company Name) */}
+                    <FormRow label="First Name" required={f.nameType !== "Business"} error={errors.firstName}>
+                        <input className={inputCls} value={f.firstName} onChange={e => set({ firstName: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="Last Name" required={f.nameType !== "Business"} error={errors.lastName}>
+                        <input className={inputCls} value={f.lastName} onChange={e => set({ lastName: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="Company Name" required={f.nameType === "Business"} error={errors.firmName}>
+                        <input className={inputCls} value={f.firmName} onChange={e => set({ firmName: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="DBA">
+                        <input className={inputCls} value={f.dba} onChange={e => set({ dba: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="Formal Salutation">
+                        <input className={inputCls} value={f.formalSalutation} onChange={e => set({ formalSalutation: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="Informal Salutation">
+                        <input className={inputCls} value={f.informalSalutation} onChange={e => set({ informalSalutation: e.target.value })} />
+                    </FormRow>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-12 items-center gap-3 py-2.5">
+                        <div className="sm:col-start-6 sm:col-span-7">
+                            <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
+                                <input
+                                    type="checkbox"
+                                    className={checkCls}
+                                    checked={f.altNameBilling}
+                                    onChange={e => set({ altNameBilling: e.target.checked })}
+                                />
+                                <span>Use alternate name for billing</span>
+                            </label>
+                        </div>
+                    </div>
+                </SectionCard>
+
+                {/* ── CARD 2: Addresses ── */}
+                <SectionCard
+                    title="Addresses"
+                    isOpen={openSections["Addresses"]}
+                    onToggle={() => toggleSection("Addresses")}
+                >
+                    <FormRow label="Address" required error={errors.address}>
+                        <input className={inputCls} value={f.address} onChange={e => set({ address: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="Address 2">
+                        <input className={inputCls} value={f.address2} onChange={e => set({ address2: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="City" required error={errors.city}>
+                        <input className={inputCls} value={f.city} onChange={e => set({ city: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="State" required error={errors.state}>
+                        <select className={selectCls} value={f.state} onChange={e => set({ state: e.target.value })}>
+                            <option value="">-- Select State --</option>
+                            {["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"].map(s => (
+                                <option key={s} value={s}>{s}</option>
+                            ))}
+                        </select>
+                    </FormRow>
+
+                    <FormRow label="Country" required error={errors.country}>
+                        <select className={selectCls} value={f.country} onChange={e => set({ country: e.target.value })}>
+                            <option value="">-- Select Country --</option>
+                            <option value="US">United States</option>
+                            <option value="CA">Canada</option>
+                            <option value="IN">India</option>
+                            <option value="UK">United Kingdom</option>
+                        </select>
+                    </FormRow>
+
+                    <FormRow label="ZIP Code" required error={errors.zip}>
+                        <input className={inputCls} value={f.zip} onChange={e => set({ zip: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="County">
+                        <input className={inputCls} value={f.county} onChange={e => set({ county: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="Latitude">
+                        <input className={inputCls} value={f.latitude} onChange={e => set({ latitude: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="Longitude">
+                        <input className={inputCls} value={f.longitude} onChange={e => set({ longitude: e.target.value })} />
+                    </FormRow>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-12 items-center gap-3 py-2.5">
+                        <div className="sm:col-start-6 sm:col-span-7">
+                            <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
+                                <input
+                                    type="checkbox"
+                                    className={checkCls}
+                                    checked={f.altAddressBilling}
+                                    onChange={e => set({ altAddressBilling: e.target.checked })}
+                                />
+                                <span>Use alternate address for billing</span>
+                            </label>
+                        </div>
+                    </div>
+                </SectionCard>
+
+                {/* ── CARD 3: Agency Personnel & Business Unit ── */}
+                <SectionCard
+                    title="Agency Personnel & Business Unit"
+                    isOpen={openSections["Agency Personnel & Business Unit"]}
+                    onToggle={() => toggleSection("Agency Personnel & Business Unit")}
+                >
+                    <FormRow label="Executive" required error={errors.executive}>
+                        <select className={selectCls} value={f.executive} onChange={e => set({ executive: e.target.value })}>
+                            <option value="">Select Executive</option>
+                            <option value="Akva, Jonathan">Akva, Jonathan</option>
+                            <option value="Anatian, Yoav">Anatian, Yoav</option>
+                            <option value="Buckanaga, Shania">Buckanaga, Shania</option>
+                            <option value="Cohen, Judah">Cohen, Judah</option>
+                            <option value="Drucker, Aaron">Drucker, Aaron</option>
+                            <option value="Gamaty, Eidan">Gamaty, Eidan</option>
+                            <option value="Gamaty, Joseph">Gamaty, Joseph</option>
+                            <option value="Gamaty, Michael">Gamaty, Michael</option>
+                            <option value="Gamaty, Moshe">Gamaty, Moshe</option>
+                            <option value="Harel, Eli">Harel, Eli</option>
+                            <option value="HOUSE">HOUSE</option>
+                            <option value="Kraut, Michal">Kraut, Michal</option>
+                            <option value="Service, Customer">Service, Customer</option>
+                            <option value="Short, Linda">Short, Linda</option>
+                            <option value="Solender, Ben">Solender, Ben</option>
+                            <option value="Weiner, Jake">Weiner, Jake</option>
+                        </select>
+                    </FormRow>
+
+                    <FormRow label="Representative" required error={errors.representative}>
+                        <select className={selectCls} value={f.representative} onChange={e => set({ representative: e.target.value })}>
+                            <option value="">Select Representative</option>
+                            <option value="Akva, Jonathan">Akva, Jonathan</option>
+                            <option value="Anatian, Yoav">Anatian, Yoav</option>
+                            <option value="Buckanaga, Shania">Buckanaga, Shania</option>
+                            <option value="Cohen, Judah">Cohen, Judah</option>
+                            <option value="CS, Certificates">CS, Certificates</option>
+                            <option value="Drucker, Aaron">Drucker, Aaron</option>
+                            <option value="Gamaty, Eidan">Gamaty, Eidan</option>
+                            <option value="Gamaty, Joseph">Gamaty, Joseph</option>
+                            <option value="Gamaty, Michael">Gamaty, Michael</option>
+                            <option value="Gamaty, Moshe">Gamaty, Moshe</option>
+                            <option value="Harel, Eli">Harel, Eli</option>
+                            <option value="HOUSE">HOUSE</option>
+                            <option value="Johnson, Chalia">Johnson, Chalia</option>
+                            <option value="Kraut, Michal">Kraut, Michal</option>
+                            <option value="Mormytoa, Keila">Mormytoa, Keila</option>
+                            <option value="Parungo, Joana">Parungo, Joana</option>
+                            <option value="Service, Customer">Service, Customer</option>
+                            <option value="Short, Linda">Short, Linda</option>
+                            <option value="Solender, Ben">Solender, Ben</option>
+                            <option value="Weiner, Jake">Weiner, Jake</option>
+                        </select>
+                    </FormRow>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-12 items-center gap-3 py-2.5 border-b border-[#F3F4F6]">
+                        <div className="sm:col-start-6 sm:col-span-7">
+                            <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
+                                <input
+                                    type="checkbox"
+                                    className={checkCls}
+                                    checked={f.brokersCustomer}
+                                    onChange={e => set({ brokersCustomer: e.target.checked })}
+                                />
+                                <span>Broker&apos;s Customer</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <FormRow label="Broker">
+                        <select className={selectCls} value={f.broker} onChange={e => set({ broker: e.target.value })}>
+                            <option value="">-- None --</option>
+                        </select>
+                    </FormRow>
+
+                    <FormRow label="Division" required error={errors.division}>
+                        <select className={selectCls} value={f.division} onChange={e => set({ division: e.target.value })}>
+                            <option value="Gamaty Insurance Agency">Gamaty Insurance Agency</option>
+                        </select>
+                    </FormRow>
+
+                    <FormRow label="Branch" required error={errors.branch}>
+                        <select className={selectCls} value={f.branch} onChange={e => set({ branch: e.target.value })}>
+                            <option value="">Select Branch</option>
+                            <option value="Armar Insurance">Armar Insurance</option>
+                            <option value="CapCo Florida">CapCo Florida</option>
+                            <option value="Capital & Co">Capital & Co</option>
+                            <option value="JMB - DO NOT SERVICE">JMB - DO NOT SERVICE</option>
+                            <option value="Pregill Insurance">Pregill Insurance</option>
+                            <option value="WCFL Insurance Services">WCFL Insurance Services</option>
+                        </select>
+                    </FormRow>
+
+                    <FormRow label="Department" required error={errors.department}>
+                        <select className={selectCls} value={f.department} onChange={e => set({ department: e.target.value })}>
+                            <option value="">Select Department</option>
+                            <option value="Commercial">Commercial</option>
+                            <option value="Health">Health</option>
+                            <option value="Personal">Personal</option>
+                        </select>
+                    </FormRow>
+                </SectionCard>
+
+                {/* ── CARD 4: Contact Information ── */}
+                <SectionCard
+                    title="Contact Information"
+                    isOpen={openSections["Contact Information"]}
+                    onToggle={() => toggleSection("Contact Information")}
+                >
+                    <PhoneRow
+                        label="Cell Phone"
+                        value={f.cell}
+                        ext={f.cellExt}
+                        required
+                        error={errors.cell}
+                        onChange={v => set({ cell: v })}
+                        onExtChange={v => set({ cellExt: v })}
+                    />
+                    <PhoneRow
+                        label="Business Phone"
+                        value={f.phoneBusiness}
+                        ext={f.phoneBusinessExt}
+                        onChange={v => set({ phoneBusiness: v })}
+                        onExtChange={v => set({ phoneBusinessExt: v })}
+                    />
+                    <PhoneRow
+                        label="Other Phone"
+                        value={f.phoneOther}
+                        ext={f.phoneOtherExt}
+                        onChange={v => set({ phoneOther: v })}
+                        onExtChange={v => set({ phoneOtherExt: v })}
+                    />
+
+                    <FormRow label="Primary Email" required error={errors.email}>
+                        <input type="email" className={inputCls} value={f.email} onChange={e => set({ email: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="Alternate Email">
+                        <input type="email" className={inputCls} value={f.email2} onChange={e => set({ email2: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="Website">
+                        <input className={inputCls} value={f.web} onChange={e => set({ web: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="Preferred Method of Distribution">
+                        <select className={selectCls} value={f.preferredDistribution} onChange={e => set({ preferredDistribution: e.target.value })}>
+                            <option value="">-- Select Method --</option>
+                            <option value="Mail">Mail</option>
+                            <option value="Email">Email</option>
+                            <option value="Fax">Fax</option>
+                        </select>
+                    </FormRow>
+                </SectionCard>
+
+                {/* ── CARD 5: Business with Agency & Policy Checks ── */}
+                <SectionCard
+                    title="Business with Agency & Policy Checks"
+                    isOpen={openSections["Business with Agency & Policy Checks"]}
+                    onToggle={() => toggleSection("Business with Agency & Policy Checks")}
+                >
+                    <FormRow label="Acquisition">
+                        <select className={selectCls} value={f.acquisition} onChange={e => set({ acquisition: e.target.value })}>
+                            <option value="">-- Select Acquisition --</option>
+                            <option value="Direct">Direct</option>
+                            <option value="Referral">Referral</option>
+                            <option value="Web">Web</option>
+                        </select>
+                    </FormRow>
+
+                    <FormRow label="Business Origin">
+                        <select className={selectCls} value={f.businessOrigin} onChange={e => set({ businessOrigin: e.target.value })}>
+                            <option value="">-- Select Origin --</option>
+                            <option value="Walk-in">Walk-in</option>
+                            <option value="Call">Call</option>
+                            <option value="Online">Online</option>
+                        </select>
+                    </FormRow>
+
+                    <FormRow label="Customer Added Date" required error={errors.customerAddedDate}>
+                        <input type="date" className={inputCls} value={f.customerAddedDate} onChange={e => set({ customerAddedDate: e.target.value })} />
+                    </FormRow>
+
+                    {/* Policy Checks */}
+                    <div className="py-3 border-b border-[#F3F4F6] space-y-3">
+                        <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-[#1F2937]">
+                            <input
+                                type="checkbox"
+                                className={checkCls}
+                                checked={f.autoCheckPolicies}
+                                onChange={e => set({ autoCheckPolicies: e.target.checked })}
+                            />
+                            <span>Automatically check based on active policies</span>
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                            {([
+                                ["checkPersonal", "Personal"],
+                                ["checkHealth", "Health"],
+                                ["checkCommercial", "Commercial"],
+                                ["checkNonPc", "Non P&C"],
+                                ["checkLife", "Life"],
+                                ["checkFinancial", "Financial Services"],
+                                ["checkBenefits", "Benefits"],
+                            ] as [keyof FormState, string][]).map(([key, label]) => (
+                                <label key={key} className="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-[#F9FAFB] transition-colors">
+                                    <input
+                                        type="checkbox"
+                                        className={checkCls}
+                                        checked={!!f[key]}
+                                        onChange={e => set({ [key]: e.target.checked } as any)}
+                                    />
+                                    <span className="text-xs sm:text-sm text-[#1F2937] font-medium">{label}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* International Phone */}
+                    <div className="pt-2 space-y-3">
+                        <label className="text-sm font-semibold text-[#1F2937] block">International Phone 1</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-[#F9FAFB] p-4 rounded border border-[#E5E2DE]">
+                            <div>
+                                <span className="text-xs text-[#6B7280] block mb-1">Type</span>
+                                <select className={selectCls} value={f.intlPhone1Type} onChange={e => set({ intlPhone1Type: e.target.value })}>
+                                    <option value=""> </option>
+                                    <option value="Business">Business</option>
+                                    <option value="Cell">Cell</option>
+                                    <option value="Fax">Fax</option>
+                                    <option value="Other">Other</option>
+                                    <option value="Pager">Pager</option>
+                                    <option value="Residence">Residence</option>
+                                </select>
+                            </div>
+                            <div>
+                                <span className="text-xs text-[#6B7280] block mb-1">Country Code</span>
+                                <input className={inputCls} placeholder="e.g. +1" value={f.intlPhone1CountryCode} onChange={e => set({ intlPhone1CountryCode: e.target.value })} />
+                            </div>
+                            <div className="sm:col-span-2">
+                                <span className="text-xs text-[#6B7280] block mb-1">Number & Ext</span>
+                                <div className="flex items-center gap-2">
+                                    <input className={inputCls} placeholder="Phone number" value={f.intlPhone1Number} onChange={e => set({ intlPhone1Number: e.target.value })} />
+                                    <input className={`${inputCls} w-20 text-center`} placeholder="Ext" value={f.intlPhone1Ext} onChange={e => set({ intlPhone1Ext: e.target.value })} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </SectionCard>
+
+                {/* ── CARD 6: Additional Customer Information ── */}
+                <SectionCard
+                    title="Additional Customer Information"
+                    isOpen={openSections["Additional Customer Information"]}
+                    onToggle={() => toggleSection("Additional Customer Information")}
+                >
+                    <FormRow label="SSN">
+                        <input className={inputCls} value={f.ssn} onChange={e => set({ ssn: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="Marital Status">
+                        <select className={selectCls} value={f.maritalStatus} onChange={e => set({ maritalStatus: e.target.value })}>
+                            <option value="">-- Select --</option>
+                            <option value="Single">Single</option>
+                            <option value="Married">Married</option>
+                            <option value="Divorced">Divorced</option>
+                            <option value="Widowed">Widowed</option>
+                        </select>
+                    </FormRow>
+
+                    <FormRow label="Education Level">
+                        <select className={selectCls} value={f.educationLevel} onChange={e => set({ educationLevel: e.target.value })}>
+                            <option value="">-- Select --</option>
+                            <option value="High School">High School</option>
+                            <option value="Associate Degree">Associate Degree</option>
+                            <option value="Bachelor's Degree">Bachelor&apos;s Degree</option>
+                            <option value="Master's Degree">Master&apos;s Degree</option>
+                            <option value="Doctorate">Doctorate</option>
+                        </select>
+                    </FormRow>
+
+                    <FormRow label="Date of Birth">
+                        <input type="date" className={inputCls} value={f.dateOfBirth} onChange={e => set({ dateOfBirth: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="Drivers License">
+                        <input className={inputCls} value={f.driversLicense} onChange={e => set({ driversLicense: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="Occupation">
+                        <input className={inputCls} value={f.occupation} onChange={e => set({ occupation: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="Year Employed">
+                        <input className={inputCls} value={f.yearEmployed} onChange={e => set({ yearEmployed: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="Agency Business Classification">
+                        <select className={selectCls} value={f.agencyBusinessClassification} onChange={e => set({ agencyBusinessClassification: e.target.value })}>
+                            <option value="">-- Select --</option>
+                            <option value="Agriculture">Agriculture</option>
+                            <option value="Construction">Construction</option>
+                            <option value="Manufacturing">Manufacturing</option>
+                            <option value="Retail Trade">Retail Trade</option>
+                            <option value="Finance & Insurance">Finance & Insurance</option>
+                            <option value="Services">Services</option>
+                        </select>
+                    </FormRow>
+
+                    <FormRow label="Business Entity">
+                        <select className={selectCls} value={f.businessEntity} onChange={e => set({ businessEntity: e.target.value })}>
+                            <option value="">-- Select --</option>
+                            <option value="Individual">Individual</option>
+                            <option value="Partnership">Partnership</option>
+                            <option value="Corporation">Corporation</option>
+                            <option value="LLC">LLC</option>
+                        </select>
+                    </FormRow>
+
+                    <FormRow label="In Business Since">
+                        <input className={inputCls} placeholder="e.g. 2004" value={f.inBusinessSince} onChange={e => set({ inBusinessSince: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="GL Code #">
+                        <input className={inputCls} value={f.glCode} onChange={e => set({ glCode: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="Federal ID #">
+                        <input className={inputCls} value={f.federalId} onChange={e => set({ federalId: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="DUNS #">
+                        <input className={inputCls} value={f.duns} onChange={e => set({ duns: e.target.value })} />
+                    </FormRow>
+
+                    <FormRow label="NAICS #">
+                        <select className={selectCls} value={f.naics} onChange={e => set({ naics: e.target.value })}>
+                            <option value="">-- Select --</option>
+                            <option value="524126">524126 - Direct Property & Casualty Insurance Carriers</option>
+                            <option value="524210">524210 - Insurance Agencies and Brokerages</option>
+                        </select>
+                    </FormRow>
+
+                    <FormRow label="NAICS Sub-Description">
+                        <select className={selectCls} value={f.naicsSubDescription} onChange={e => set({ naicsSubDescription: e.target.value })}>
+                            <option value="">-- Select --</option>
+                            <option value="Primary Agency">Primary Agency Operations</option>
+                        </select>
+                    </FormRow>
+
+                    <FormRow label="SIC #">
+                        <select className={selectCls} value={f.sic} onChange={e => set({ sic: e.target.value })}>
+                            <option value="">-- Select --</option>
+                            <option value="6411">6411 - Insurance Agents, Brokers & Service</option>
+                        </select>
+                    </FormRow>
+                </SectionCard>
+
+                {/* ── CARD 7: Service Groups ── */}
+                <SectionCard
+                    title="Service Groups"
+                    isOpen={openSections["Service Groups"]}
+                    onToggle={() => toggleSection("Service Groups")}
+                >
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3 pb-3 border-b border-[#E5E2DE]">
                             <button
                                 type="button"
                                 onClick={() => {
@@ -885,47 +1078,51 @@ function NewCustomerContent() {
                                     };
                                     setServiceGroups([...serviceGroups, newGroup]);
                                 }}
-                                className="h-7 px-3 text-[10px] font-bold rounded-lg bg-primary text-white hover:bg-primary/95 transition-all shadow-sm cursor-pointer"
+                                className="h-9 px-4 text-xs font-semibold rounded bg-[#7A6F64] hover:bg-[#5A4F44] text-white transition-colors shadow-sm cursor-pointer flex items-center gap-1.5"
                             >
-                                + New
+                                <Plus className="size-3.5" />
+                                <span>New Group</span>
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setServiceGroups([])}
                                 disabled={serviceGroups.length === 0}
-                                className="h-7 px-3 text-[10px] font-bold rounded-lg bg-white border border-border-main text-text-main hover:bg-secondary/60 hover:text-primary transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                                className="h-9 px-4 text-xs font-semibold rounded bg-white border border-[#D9D5D0] text-[#4B5563] hover:bg-[#FAFAF9] hover:text-[#1F2937] transition-colors shadow-sm cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                             >
-                                Remove All
+                                <Trash2 className="size-3.5" />
+                                <span>Remove All</span>
                             </button>
                         </div>
 
-                        <div className="border border-border-main rounded-xl overflow-hidden shadow-xs">
-                            <table className="premium-table">
-                                <thead className="bg-secondary/40 border-b border-border-main text-slate-400 font-bold uppercase tracking-wider">
+                        <div className="border border-[#D9D5D0] rounded overflow-hidden shadow-xs bg-white">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-[#FAFAF9] border-b border-[#E5E2DE] text-[#4B5563] text-xs font-semibold uppercase tracking-wider">
                                     <tr>
-                                        <th className="py-2.5 px-4 w-16">Type</th>
-                                        <th className="py-2.5 px-4">Title</th>
-                                        <th className="py-2.5 px-4">Name</th>
-                                        <th className="py-2.5 px-4">Type of Business</th>
-                                        <th className="py-2.5 px-4 text-center">Primary</th>
+                                        <th className="py-3 px-4 w-24">Type</th>
+                                        <th className="py-3 px-4">Title</th>
+                                        <th className="py-3 px-4">Name</th>
+                                        <th className="py-3 px-4">Type of Business</th>
+                                        <th className="py-3 px-4 text-center w-24">Primary</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="divide-y divide-[#E5E2DE] text-sm text-[#1F2937]">
                                     {serviceGroups.length === 0 ? (
                                         <tr>
-                                            <td colSpan={5} className="py-12 text-center text-slate-400 font-medium italic">
+                                            <td colSpan={5} className="py-10 text-center text-[#6B7280] italic">
                                                 There are no records found.
                                             </td>
                                         </tr>
                                     ) : (
                                         serviceGroups.map((group) => (
-                                            <tr key={group.id} className="border-b border-border-main/50 last:border-none hover:bg-secondary/20 transition-all font-semibold">
-                                                <td className="py-2 px-4 text-slate-500">{group.type}</td>
-                                                <td className="py-2 px-4">{group.title}</td>
-                                                <td className="py-2 px-4">{group.name}</td>
-                                                <td className="py-2 px-4">{group.businessType}</td>
-                                                <td className="py-2 px-4 text-center">
-                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${group.primary ? "bg-success/10 text-success" : "bg-slate-100 text-slate-400"}`}>
+                                            <tr key={group.id} className="hover:bg-[#F7F6F4] transition-colors">
+                                                <td className="py-3 px-4 text-[#6B7280] font-medium">{group.type}</td>
+                                                <td className="py-3 px-4 font-medium">{group.title}</td>
+                                                <td className="py-3 px-4">{group.name}</td>
+                                                <td className="py-3 px-4">{group.businessType}</td>
+                                                <td className="py-3 px-4 text-center">
+                                                    <span className={`inline-block px-2.5 py-0.5 rounded text-xs font-semibold ${
+                                                        group.primary ? "bg-[#7A6F64]/10 text-[#7A6F64] border border-[#7A6F64]/20" : "bg-[#F3F4F6] text-[#6B7280]"
+                                                    }`}>
                                                         {group.primary ? "Yes" : "No"}
                                                     </span>
                                                 </td>
@@ -936,12 +1133,16 @@ function NewCustomerContent() {
                             </table>
                         </div>
                     </div>
-                );
-            case "Contacts":
-                return (
-                    <div className="space-y-4 max-w-4xl mx-auto">
-                        <h3 className={sectionCls}>Contacts</h3>
-                        <div className="flex items-center gap-2 border-b border-border-main pb-2">
+                </SectionCard>
+
+                {/* ── CARD 8: Contacts ── */}
+                <SectionCard
+                    title="Contacts"
+                    isOpen={openSections["Contacts"]}
+                    onToggle={() => toggleSection("Contacts")}
+                >
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3 pb-3 border-b border-[#E5E2DE]">
                             <button
                                 type="button"
                                 onClick={() => {
@@ -953,42 +1154,44 @@ function NewCustomerContent() {
                                     };
                                     setContacts([...contacts, newContact]);
                                 }}
-                                className="h-7 px-3 text-[10px] font-bold rounded-lg bg-primary text-white hover:bg-primary/95 transition-all shadow-sm cursor-pointer"
+                                className="h-9 px-4 text-xs font-semibold rounded bg-[#7A6F64] hover:bg-[#5A4F44] text-white transition-colors shadow-sm cursor-pointer flex items-center gap-1.5"
                             >
-                                + New
+                                <Plus className="size-3.5" />
+                                <span>New Contact</span>
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setContacts([])}
                                 disabled={contacts.length === 0}
-                                className="h-7 px-3 text-[10px] font-bold rounded-lg bg-white border border-border-main text-text-main hover:bg-secondary/60 hover:text-primary transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                                className="h-9 px-4 text-xs font-semibold rounded bg-white border border-[#D9D5D0] text-[#4B5563] hover:bg-[#FAFAF9] hover:text-[#1F2937] transition-colors shadow-sm cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                             >
-                                Remove All
+                                <Trash2 className="size-3.5" />
+                                <span>Remove All</span>
                             </button>
                         </div>
 
-                        <div className="border border-border-main rounded-xl overflow-hidden shadow-xs">
-                            <table className="premium-table">
-                                <thead className="bg-secondary/40 border-b border-border-main text-slate-400 font-bold uppercase tracking-wider">
+                        <div className="border border-[#D9D5D0] rounded overflow-hidden shadow-xs bg-white">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-[#FAFAF9] border-b border-[#E5E2DE] text-[#4B5563] text-xs font-semibold uppercase tracking-wider">
                                     <tr>
-                                        <th className="py-2.5 px-4">Name <span className="text-red-600">*</span></th>
-                                        <th className="py-2.5 px-4">Title</th>
-                                        <th className="py-2.5 px-4">Responsibilities</th>
+                                        <th className="py-3 px-4">Name <span className="text-red-600">*</span></th>
+                                        <th className="py-3 px-4">Title</th>
+                                        <th className="py-3 px-4">Responsibilities</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="divide-y divide-[#E5E2DE] text-sm text-[#1F2937]">
                                     {contacts.length === 0 ? (
                                         <tr>
-                                            <td colSpan={3} className="py-12 text-center text-slate-400 font-medium italic">
+                                            <td colSpan={3} className="py-10 text-center text-[#6B7280] italic">
                                                 There are no records found.
                                             </td>
                                         </tr>
                                     ) : (
                                         contacts.map((contact) => (
-                                            <tr key={contact.id} className="border-b border-border-main/50 last:border-none hover:bg-secondary/20 transition-all font-semibold">
-                                                <td className="py-2 px-4">{contact.name}</td>
-                                                <td className="py-2 px-4">{contact.title}</td>
-                                                <td className="py-2 px-4">{contact.responsibilities}</td>
+                                            <tr key={contact.id} className="hover:bg-[#F7F6F4] transition-colors">
+                                                <td className="py-3 px-4 font-semibold text-[#1F2937]">{contact.name}</td>
+                                                <td className="py-3 px-4 text-[#4B5563]">{contact.title}</td>
+                                                <td className="py-3 px-4 text-[#4B5563]">{contact.responsibilities}</td>
                                             </tr>
                                         ))
                                     )}
@@ -996,430 +1199,46 @@ function NewCustomerContent() {
                             </table>
                         </div>
                     </div>
-                );
-            case "Dependents":
-                return (
-                    <div className="space-y-4 max-w-4xl mx-auto">
-                        <h3 className={sectionCls}>Dependents</h3>
-                        <div className="flex items-center gap-2 border-b border-border-main pb-2">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    const newDep = {
-                                        id: Date.now(),
-                                        first: "Dependent",
-                                        last: "Lastname " + (dependents.length + 1),
-                                        relationship: "Spouse"
-                                    };
-                                    setDependents([...dependents, newDep]);
-                                }}
-                                className="h-7 px-3 text-[10px] font-bold rounded-lg bg-primary text-white hover:bg-primary/95 transition-all shadow-sm cursor-pointer"
-                            >
-                                + New
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setDependents([])}
-                                disabled={dependents.length === 0}
-                                className="h-7 px-3 text-[10px] font-bold rounded-lg bg-white border border-border-main text-text-main hover:bg-secondary/60 hover:text-primary transition-all shadow-sm cursor-pointer disabled:opacity-50"
-                            >
-                                Remove All
-                            </button>
-                        </div>
+                </SectionCard>
 
-                        <div className="border border-border-main rounded-xl overflow-hidden shadow-xs">
-                            <table className="premium-table">
-                                <thead className="bg-secondary/40 border-b border-border-main text-slate-400 font-bold uppercase tracking-wider">
-                                    <tr>
-                                        <th className="py-2.5 px-4">First</th>
-                                        <th className="py-2.5 px-4">Last <span className="text-red-600">*</span></th>
-                                        <th className="py-2.5 px-4">Relationship</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {dependents.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={3} className="py-12 text-center text-slate-400 font-medium italic">
-                                                There are no records found.
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        dependents.map((dep) => (
-                                            <tr key={dep.id} className="border-b border-border-main/50 last:border-none hover:bg-secondary/20 transition-all font-semibold">
-                                                <td className="py-2 px-4">{dep.first}</td>
-                                                <td className="py-2 px-4">{dep.last}</td>
-                                                <td className="py-2 px-4">{dep.relationship}</td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                {/* ── CARD 9: Bottom Actions (Exact Sterling 3-button layout matching Screenshot 3) ── */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 pb-16 border-t border-[#D9D5D0]">
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        {/* Return to Dashboard (= Exit Folder) */}
+                        <button
+                            type="button"
+                            onClick={() => router.push("/agency/dashboard")}
+                            className="w-full sm:w-auto h-11 px-5 text-sm font-medium rounded border border-[#D1D5DB] bg-white text-[#374151] hover:bg-[#F9FAFB] transition-colors shadow-xs cursor-pointer"
+                        >
+                            Exit To Folder
+                        </button>
                     </div>
-                );
-            case "Loss History":
-                return (
-                    <div className="space-y-4 max-w-4xl mx-auto">
-                        <h3 className={sectionCls}>Loss History</h3>
-                        <div className="flex items-center gap-2 border-b border-border-main pb-2">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    const newLoss = {
-                                        id: Date.now(),
-                                        company: "Carrier Co",
-                                        dateOfLoss: new Date().toISOString().split("T")[0],
-                                        status: "Closed",
-                                        kindOfLoss: "Water Damage"
-                                    };
-                                    setLossHistory([...lossHistory, newLoss]);
-                                }}
-                                className="h-7 px-3 text-[10px] font-bold rounded-lg bg-primary text-white hover:bg-primary/95 transition-all shadow-sm cursor-pointer"
-                            >
-                                + New
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setLossHistory([])}
-                                disabled={lossHistory.length === 0}
-                                className="h-7 px-3 text-[10px] font-bold rounded-lg bg-white border border-border-main text-text-main hover:bg-secondary/60 hover:text-primary transition-all shadow-sm cursor-pointer disabled:opacity-50"
-                            >
-                                Remove All
-                            </button>
-                        </div>
 
-                        <div className="border border-border-main rounded-xl overflow-hidden shadow-xs">
-                            <table className="premium-table">
-                                <thead className="bg-secondary/40 border-b border-border-main text-slate-400 font-bold uppercase tracking-wider">
-                                    <tr>
-                                        <th className="py-2.5 px-4">Company <span className="text-red-600">*</span></th>
-                                        <th className="py-2.5 px-4">Date of loss</th>
-                                        <th className="py-2.5 px-4">Status</th>
-                                        <th className="py-2.5 px-4">Kind of loss</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {lossHistory.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={4} className="py-12 text-center text-slate-400 font-medium italic">
-                                                There are no records found.
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        lossHistory.map((loss) => (
-                                            <tr key={loss.id} className="border-b border-border-main/50 last:border-none hover:bg-secondary/20 transition-all font-semibold">
-                                                <td className="py-2 px-4">{loss.company}</td>
-                                                <td className="py-2 px-4">{loss.dateOfLoss}</td>
-                                                <td className="py-2 px-4">{loss.status}</td>
-                                                <td className="py-2 px-4">{loss.kindOfLoss}</td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                );
-            case "Agency Defined Fields":
-                return (
-                    <div className="space-y-4 max-w-4xl mx-auto">
-                        <h3 className={sectionCls}>Agency Defined Fields</h3>
+                    <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                        {/* Save Folder */}
+                        <button
+                            type="button"
+                            onClick={() => handleSave(false)}
+                            disabled={saving}
+                            className="w-full sm:w-auto h-11 px-5 text-sm font-medium rounded border border-[#D1D5DB] bg-white text-[#374151] hover:bg-[#F9FAFB] transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                            <span>Save Folder</span>
+                        </button>
 
-                        <div className="border border-border-main rounded-xl overflow-hidden shadow-xs">
-                            <table className="premium-table">
-                                <thead className="bg-secondary/40 border-b border-border-main text-slate-400 font-bold uppercase tracking-wider">
-                                    <tr>
-                                        <th className="py-2.5 px-4">Type of Business</th>
-                                        <th className="py-2.5 px-4">Agency Defined Field</th>
-                                        <th className="py-2.5 px-4 w-1/2">Answer</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {agencyDefinedFields.map((field, idx) => (
-                                        <tr key={idx} className="border-b border-border-main/50 last:border-none hover:bg-secondary/20 transition-all font-semibold">
-                                            <td className="py-3 px-4 text-slate-500">{field.type}</td>
-                                            <td className="py-3 px-4 text-primary">{field.field}</td>
-                                            <td className="py-3 px-4">
-                                                <input
-                                                    type="text"
-                                                    className={inputCls}
-                                                    placeholder={field.placeholder}
-                                                    value={field.answer}
-                                                    onChange={(e) => {
-                                                        const updated = [...agencyDefinedFields];
-                                                        updated[idx].answer = e.target.value;
-                                                        setAgencyDefinedFields(updated);
-                                                    }}
-                                                />
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                );
-            case "Cross References":
-                return (
-                    <div className="space-y-4 max-w-4xl mx-auto">
-                        <h3 className={sectionCls}>Cross References</h3>
-                        <div className="flex items-center gap-2 border-b border-border-main pb-2">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    const newRef = {
-                                        id: Date.now(),
-                                        type: "Parent Company",
-                                        crossReference: "Ref Customer " + (crossReferences.length + 1)
-                                    };
-                                    setCrossReferences([...crossReferences, newRef]);
-                                }}
-                                className="h-7 px-3 text-[10px] font-bold rounded-lg bg-primary text-white hover:bg-primary/95 transition-all shadow-sm cursor-pointer"
-                            >
-                                + New
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setCrossReferences([])}
-                                disabled={crossReferences.length === 0}
-                                className="h-7 px-3 text-[10px] font-bold rounded-lg bg-white border border-border-main text-text-main hover:bg-secondary/60 hover:text-primary transition-all shadow-sm cursor-pointer disabled:opacity-50"
-                            >
-                                Remove All
-                            </button>
-                        </div>
-
-                        <div className="border border-border-main rounded-xl overflow-hidden shadow-xs">
-                            <table className="premium-table">
-                                <thead className="bg-secondary/40 border-b border-border-main text-slate-400 font-bold uppercase tracking-wider">
-                                    <tr>
-                                        <th className="py-2.5 px-4">Type <span className="text-red-600">*</span></th>
-                                        <th className="py-2.5 px-4">Cross Reference <span className="text-red-600">*</span></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {crossReferences.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={2} className="py-12 text-center text-slate-400 font-medium italic">
-                                                There are no records found.
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        crossReferences.map((ref) => (
-                                            <tr key={ref.id} className="border-b border-border-main/50 last:border-none hover:bg-secondary/20 transition-all font-semibold">
-                                                <td className="py-2 px-4">{ref.type}</td>
-                                                <td className="py-2 px-4">{ref.crossReference}</td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                );
-            case "Expiration Dates":
-                return (
-                    <div className="space-y-4 max-w-4xl mx-auto">
-                        <h3 className={sectionCls}>Expiration Dates</h3>
-                        <div className="border border-border-main rounded-xl overflow-hidden shadow-xs">
-                            <table className="premium-table">
-                                <thead className="bg-secondary/40 border-b border-border-main text-slate-400 font-bold uppercase tracking-wider">
-                                    <tr>
-                                        <th className="py-2.5 px-4">Date Description</th>
-                                        <th className="py-2.5 px-4">Expiration Date</th>
-                                        <th className="py-2.5 px-4">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td colSpan={3} className="py-12 text-center text-slate-400 font-medium italic">
-                                            There are no records found.
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                );
-            case "Accounting Options":
-                return (
-                    <div className="space-y-4 max-w-4xl mx-auto">
-                        <h3 className={sectionCls}>Accounting Options</h3>
-                        <div className="border border-border-main rounded-xl overflow-hidden shadow-xs">
-                            <table className="premium-table">
-                                <thead className="bg-secondary/40 border-b border-border-main text-slate-400 font-bold uppercase tracking-wider">
-                                    <tr>
-                                        <th className="py-2.5 px-4">Option Name</th>
-                                        <th className="py-2.5 px-4">Setting Value</th>
-                                        <th className="py-2.5 px-4">Last Modified</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td colSpan={3} className="py-12 text-center text-slate-400 font-medium italic">
-                                            There are no records found.
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                );
-            case "Benefits Information":
-                return (
-                    <div className="space-y-4 max-w-4xl mx-auto">
-                        <h3 className={sectionCls}>Benefits Information</h3>
-                        <div className="border border-border-main rounded-xl overflow-hidden shadow-xs">
-                            <table className="premium-table">
-                                <thead className="bg-secondary/40 border-b border-border-main text-slate-400 font-bold uppercase tracking-wider">
-                                    <tr>
-                                        <th className="py-2.5 px-4">Benefit Type</th>
-                                        <th className="py-2.5 px-4">Carrier</th>
-                                        <th className="py-2.5 px-4">Coverage Amount</th>
-                                        <th className="py-2.5 px-4">Active</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td colSpan={4} className="py-12 text-center text-slate-400 font-medium italic">
-                                            There are no records found.
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                );
-            default:
-                return (
-                    <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-border-main/70 rounded-2xl bg-secondary/10">
-                        <h4 className="font-extrabold text-xs text-primary mb-1 uppercase tracking-wider">{activeSection}</h4>
-                        <p className="text-xs text-slate-400 max-w-sm mt-1">No additional settings or records are defined for this section in the customer folder.</p>
-                    </div>
-                );
-        }
-    };
-
-    // ═══════════════════════════════════════════════════════════
-    //  RENDER
-    // ═══════════════════════════════════════════════════════════
-    return (
-        <div className="flex flex-col bg-bg-base h-screen overflow-hidden font-sans select-none text-text-main">
-
-            {/* Breadcrumbs Sub-band */}
-            <div className="bg-white border-b border-border-main h-10 flex items-center justify-between px-6 shrink-0 select-none">
-                <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest flex items-center gap-1.5">
-                    <span>Customer</span>
-                    <span className="text-slate-300 font-medium">/</span>
-                    <span className="text-primary">Customer Setup (New)</span>
-                </span>
-                <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                    {f.division || "Gamaty Insurance Agency"}
-                </span>
-            </div>
-
-            {/* Title Bar */}
-            <div className="bg-white border-b border-border-main px-6 py-4 flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-2">
-                    <h1 className="page-title">
-                        {editId ? "Edit Customer Properties" : "New Customer Setup"}
-                    </h1>
-                </div>
-                <div className="text-xs text-slate-400 font-bold tracking-wider">
-                    v1.0.0
-                </div>
-            </div>
-
-            {/* Actions Toolbar */}
-            <div className="bg-white border-b border-border-main px-6 py-3 flex items-center gap-2.5 shrink-0 shadow-sm">
-                <button
-                    type="submit"
-                    form="customer-form"
-                    disabled={saving}
-                    className="h-8 px-3.5 text-xs font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98] border shadow-sm bg-white border-border-main text-text-main hover:bg-secondary/60 hover:text-primary"
-                >
-                    {editId ? "Update Folder" : "Save Folder"}
-                </button>
-                <button
-                    type="submit"
-                    form="customer-form"
-                    disabled={saving}
-                    className="h-8 px-3.5 text-xs font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98] border shadow-sm bg-primary border-primary text-white shadow-primary/20 hover:bg-primary/95"
-                >
-                    {editId ? "Update and Close" : "Save and Close"}
-                </button>
-                <button
-                    type="button"
-                    onClick={() => router.push("/agency/dashboard")}
-                    disabled={saving}
-                    className="h-8 px-3.5 text-xs font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98] border shadow-sm bg-white border-border-main text-text-main hover:bg-secondary/60 hover:text-primary"
-                >
-                    Exit Folder
-                </button>
-                <button
-                    type="button"
-                    onClick={() => set({ status: "Inactive" })}
-                    disabled={saving}
-                    className="h-8 px-3.5 text-xs font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98] border shadow-sm bg-white border-border-main text-text-main hover:bg-secondary/60 hover:text-primary"
-                >
-                    Make Inactive
-                </button>
-            </div>
-
-            {/* Global Error Feedback Card */}
-            {error && (
-                <div className="bg-danger/5 border-b border-danger/20 text-danger px-6 py-3 flex items-center gap-3 shrink-0 animate-in slide-in-from-top-2 duration-200">
-                    <Info className="size-5 text-danger shrink-0" />
-                    <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-danger">Validation Error</p>
-                        <p className="text-[11px] font-semibold text-danger/80">{error}</p>
-                    </div>
-                </div>
-            )}
-
-            {/* Flex Container for Sidebar + Form Content */}
-            <div className="flex flex-1 overflow-hidden">
-                {/* Left Form Sections Sidebar */}
-                <div className="w-64 bg-white border-r border-border-main flex flex-col shrink-0 select-none">
-                    <div className="px-5 py-4 border-b border-border-main bg-secondary/35 shrink-0">
-                        <span className="font-extrabold text-[10px] uppercase tracking-widest text-slate-400">Form Sections</span>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-3 space-y-1">
-                        {sections.map(sec => {
-                            const isActive = activeSection === sec;
-                            return (
-                                <button
-                                    key={sec}
-                                    type="button"
-                                    onClick={() => setActiveSection(sec)}
-                                    className={`w-full text-left px-3.5 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-between group ${isActive
-                                        ? "bg-primary text-white font-bold shadow-md shadow-primary/25"
-                                        : "text-text-main hover:bg-secondary/55 hover:text-primary border border-transparent hover:border-border-main/50"
-                                        }`}
-                                >
-                                    <span>{sec}</span>
-                                    {isActive && <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse"></span>}
-                                </button>
-                            );
-                        })}
+                        {/* Save And Close */}
+                        <button
+                            type="button"
+                            onClick={() => handleSave(true)}
+                            disabled={saving}
+                            className="w-full sm:w-auto h-11 px-6 text-sm font-semibold rounded bg-[#7A6F64] hover:bg-[#5A4F44] text-white transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.99]"
+                        >
+                            <CheckCircle2 className="size-4" />
+                            <span>{saving ? "Saving..." : "Save And Close"}</span>
+                        </button>
                     </div>
                 </div>
 
-                {/* Right Form Content Area */}
-                <form
-                    id="customer-form"
-                    onSubmit={(e: any) => {
-                        e.preventDefault();
-                        const submitter = e.nativeEvent.submitter;
-                        const isClose = submitter?.innerText.includes("Close");
-                        handleSave(isClose);
-                    }}
-                    className="flex-1 overflow-y-auto p-6 md:p-8 bg-bg-base"
-                >
-                    <div className="max-w-6xl mx-auto bg-white rounded-2xl border border-border-main p-6 md:p-8 shadow-sm">
-                        {renderSectionContent()}
-                    </div>
-                </form>
-            </div>
+            </form>
 
         </div>
     );
@@ -1427,7 +1246,7 @@ function NewCustomerContent() {
 
 export default function NewCustomerPage() {
     return (
-        <Suspense fallback={<div className="p-8 flex justify-center"><div className="animate-pulse text-[#9A8B7A] font-bold">Loading customer data...</div></div>}>
+        <Suspense fallback={<div className="p-8 flex justify-center"><div className="animate-pulse text-[#7A6F64] font-semibold text-sm">Loading customer data...</div></div>}>
             <NewCustomerContent />
         </Suspense>
     );

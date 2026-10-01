@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/config";
 import { useParams } from "next/navigation";
-import { Save } from "lucide-react";
+import { Save, ChevronDown } from "lucide-react";
 
 interface Policy { id: number; policy_number?: string; policy_num?: string; term?: string; type?: string; status?: string; lobs?: any[]; eff_date?: string; exp_date?: string; effDate?: string; expDate?: string; }
 
@@ -85,7 +85,28 @@ export default function NewCertPropPage() {
           description: description || certNum,
           form_type: "Certificates",
           certType: "Property",
-          form_data: { specialConditions, noteMessage, certNum, selectedPropPolicy },
+          form_data: {
+            certNum,
+            assignNumber,
+            description,
+            showToInsured,
+            selectedPropPolicy,
+            propDetailDate,
+            selectedPropRows: Array.from(selectedPropRows),
+            inlandMarinePolicy,
+            inlandMarineDate,
+            inlandMarineSection,
+            crimePolicy,
+            crimeDate,
+            boilerPolicy,
+            boilerDate,
+            otherPolicy,
+            otherDate,
+            specialConditions,
+            noteMessage,
+            printNote,
+            authRep,
+          },
         }),
       });
       const newCert = await res.json();
@@ -189,7 +210,7 @@ export default function NewCertPropPage() {
             </div>
 
             {/* PROPERTY */}
-            <div className="p-5 border-b border-border-main/40">
+            <div className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[12px] font-bold text-primary uppercase tracking-wide">Property</span>
                 <span className="text-[11px] font-semibold text-text-muted">Get detail based on:</span>
@@ -233,54 +254,124 @@ export default function NewCertPropPage() {
                 </table>
               </div>
             </div>
-
-            {/* INLAND MARINE */}
-            <div className="p-5 border-b border-border-main/40 bg-bg-base/30">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-[12px] font-bold text-text-main uppercase tracking-wide">Inland Marine</span>
-                <span className="text-[11px] font-semibold text-text-muted">Get detail based on:</span>
-              </div>
-              <div className="grid grid-cols-[120px_1fr_100px] gap-x-3 gap-y-3 items-center">
-                <label className="text-[13px] font-semibold text-text-main">Policy #:</label>
-                <select value={inlandMarinePolicy} onChange={e => setInlandMarinePolicy(e.target.value)} className="w-full text-[13px] font-semibold text-text-main bg-white border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary appearance-none cursor-pointer">
-                  <option value="">—</option>{policyOptions}
-                </select>
-                <input type="text" value={inlandMarineDate} onChange={e => setInlandMarineDate(e.target.value)} className="w-full text-[13px] font-semibold bg-white border border-border-main rounded-xl px-2 py-2 outline-none focus:border-primary text-center" placeholder="Date" />
-
-                <label className="text-[13px] font-semibold text-text-main leading-tight">Data Entry Section:</label>
-                <select value={inlandMarineSection} onChange={e => setInlandMarineSection(e.target.value)} className="w-full text-[13px] font-semibold text-text-main bg-white border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary appearance-none cursor-pointer">
-                  <option value="">—</option>
-                </select>
-                <div />
-              </div>
-            </div>
-
-            {/* CRIME / BOILER / OTHER */}
-            <div className="p-5">
-              <div className="grid grid-cols-[120px_1fr_100px] gap-x-3 gap-y-0 mb-3 items-end">
-                <span />
-                <span className="text-[11px] font-semibold text-text-muted uppercase tracking-widest text-center">Policy #</span>
-                <span className="text-[11px] font-semibold text-text-muted uppercase tracking-widest text-center leading-tight">Get detail<br />based on:</span>
-              </div>
-              {[
-                { label: "Crime", policy: crimePolicy, setPolicy: setCrimePolicy, date: crimeDate, setDate: setCrimeDate },
-                { label: "Boiler & Machinery", policy: boilerPolicy, setPolicy: setBoilerPolicy, date: boilerDate, setDate: setBoilerDate },
-                { label: "Other", policy: otherPolicy, setPolicy: setOtherPolicy, date: otherDate, setDate: setOtherDate },
-              ].map(({ label, policy, setPolicy, date, setDate }) => (
-                <div key={label} className="grid grid-cols-[120px_1fr_100px] gap-x-3 gap-y-0 mt-3 items-center">
-                  <label className="text-[13px] font-semibold text-text-main">{label}:</label>
-                  <select value={policy} onChange={e => setPolicy(e.target.value)} className="w-full text-[13px] font-semibold text-text-main bg-bg-base border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary appearance-none cursor-pointer">
-                    <option value="">—</option>{policyOptions}
-                  </select>
-                  <input type="text" value={date} onChange={e => setDate(e.target.value)} className="w-full text-[13px] font-semibold bg-bg-base border border-border-main rounded-xl px-2 py-2 outline-none focus:border-primary text-center" placeholder="Date" />
-                </div>
-              ))}
-            </div>
           </div>
         </div>
 
         {/* RIGHT COLUMN */}
         <div className="flex-1 flex flex-col gap-6 max-w-[500px]">
+
+          {/* Inland Marine, Crime, Boiler & Machinery, Other (Before Special Conditions) */}
+          <div className="bg-white border border-border-main p-5 rounded-2xl shadow-sm flex flex-col gap-4">
+            
+            {/* Inland Marine Section Box */}
+            <div className="border border-border-main/80 rounded-xl p-3.5 bg-bg-base/20 flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[12px] font-bold text-text-main">Inland Marine</span>
+                <span className="text-[11px] font-semibold text-text-muted">Get detail based on:</span>
+              </div>
+
+              {/* Row 1: Policy # and Get detail based on */}
+              <div className="grid grid-cols-[125px_1fr_120px] gap-2.5 items-center">
+                <label className="text-[12px] font-semibold text-text-main">Policy #:</label>
+                <div className="relative">
+                  <select
+                    value={inlandMarinePolicy}
+                    onChange={e => setInlandMarinePolicy(e.target.value)}
+                    className="w-full text-[12px] font-semibold text-text-main bg-white border border-border-main rounded-xl px-3 py-1.5 pr-7 outline-none focus:border-primary appearance-none cursor-pointer"
+                  >
+                    <option value="">Select policy...</option>
+                    {policyOptions}
+                  </select>
+                  <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+                </div>
+                <div className="relative">
+                  <select
+                    value={inlandMarineDate}
+                    onChange={e => setInlandMarineDate(e.target.value)}
+                    className="w-full text-[12px] font-semibold text-text-main bg-white border border-border-main rounded-xl px-2.5 py-1.5 pr-6 outline-none focus:border-primary appearance-none cursor-pointer text-center"
+                  >
+                    <option value="">—</option>
+                    <option value="7/2/2026">7/2/2026</option>
+                    {policies.map(p => {
+                      const d = p.eff_date || p.effDate;
+                      return d ? <option key={p.id} value={d}>{d}</option> : null;
+                    })}
+                  </select>
+                  <ChevronDown size={13} className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Row 2: Data Entry Section */}
+              <div className="grid grid-cols-[125px_1fr] gap-2.5 items-center">
+                <label className="text-[12px] font-semibold text-text-main leading-tight">Data Entry Section:</label>
+                <div className="relative">
+                  <select
+                    value={inlandMarineSection}
+                    onChange={e => setInlandMarineSection(e.target.value)}
+                    className="w-full text-[12px] font-semibold text-text-main bg-white border border-border-main rounded-xl px-3 py-1.5 pr-7 outline-none focus:border-primary appearance-none cursor-pointer"
+                  >
+                    <option value="">Select section...</option>
+                    <option value="Accounts Receivable">Accounts Receivable</option>
+                    <option value="Commercial Articles">Commercial Articles</option>
+                    <option value="Equipment Floater">Equipment Floater</option>
+                    <option value="Installation Floater">Installation Floater</option>
+                    <option value="Valuable Papers">Valuable Papers</option>
+                    <option value="EDP / Computer">EDP / Computer</option>
+                    <option value="Miscellaneous Floater">Miscellaneous Floater</option>
+                  </select>
+                  <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+                </div>
+              </div>
+            </div>
+
+            {/* Crime / Boiler & Machinery / Other Section */}
+            <div className="flex flex-col gap-2.5 pt-1">
+              {/* Header row */}
+              <div className="grid grid-cols-[125px_1fr_120px] gap-2.5 items-center">
+                <span />
+                <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider text-center">Policy #</span>
+                <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider text-center leading-tight">Get detail based on:</span>
+              </div>
+
+              {/* Rows */}
+              {[
+                { label: "Crime", policy: crimePolicy, setPolicy: setCrimePolicy, date: crimeDate, setDate: setCrimeDate },
+                { label: "Boiler & Machinery", policy: boilerPolicy, setPolicy: setBoilerPolicy, date: boilerDate, setDate: setBoilerDate },
+                { label: "Other", policy: otherPolicy, setPolicy: setOtherPolicy, date: otherDate, setDate: setOtherDate },
+              ].map(({ label, policy, setPolicy, date, setDate }) => (
+                <div key={label} className="grid grid-cols-[125px_1fr_120px] gap-2.5 items-center">
+                  <label className="text-[12px] font-semibold text-text-main">{label}:</label>
+                  <div className="relative">
+                    <select
+                      value={policy}
+                      onChange={e => setPolicy(e.target.value)}
+                      className="w-full text-[12px] font-semibold text-text-main bg-white border border-border-main rounded-xl px-3 py-1.5 pr-7 outline-none focus:border-primary appearance-none cursor-pointer"
+                    >
+                      <option value="">Select policy...</option>
+                      {policyOptions}
+                    </select>
+                    <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+                  </div>
+                  <div className="relative">
+                    <select
+                      value={date}
+                      onChange={e => setDate(e.target.value)}
+                      className="w-full text-[12px] font-semibold text-text-main bg-white border border-border-main rounded-xl px-2.5 py-1.5 pr-6 outline-none focus:border-primary appearance-none cursor-pointer text-center"
+                    >
+                      <option value="">—</option>
+                      <option value="7/2/2026">7/2/2026</option>
+                      {policies.map(p => {
+                        const d = p.eff_date || p.effDate;
+                        return d ? <option key={p.id} value={d}>{d}</option> : null;
+                      })}
+                    </select>
+                    <ChevronDown size={13} className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          </div>
 
           {/* Special Conditions */}
           <div className="bg-white border border-border-main p-5 rounded-2xl shadow-sm flex flex-col flex-1 min-h-[240px]">
