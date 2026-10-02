@@ -139,7 +139,7 @@ export default function CustomerProfilePage() {
       setCustomer(data);
       try {
         sessionStorage.setItem(cacheKey, JSON.stringify(data));
-      } catch {}
+      } catch { }
     } catch (err: any) {
       setError(err.message || "Failed to load customer profile.");
     } finally {
@@ -510,9 +510,11 @@ export default function CustomerProfilePage() {
   }
 
   // Display Fields
-  const displayName = customer.name || customer.firm_name || [customer.first_name, customer.last_name].filter(Boolean).join(" ") || "Bell Welding & Construction LLC";
+  const displayName = customer.firm_name || customer.firmName || customer.company_name || customer.companyName || customer.dba || customer.name || [customer.first_name, customer.last_name].filter(Boolean).join(" ") || "Bell Welding & Construction LLC";
   const customerIdFormatted = customer.id || "26";
   const primaryExec = customer.primary_exec || customer.representative || "Travis Bell";
+  const customerFullName = [customer.first_name || customer.firstName, customer.last_name || customer.lastName].filter(Boolean).join(" ") || (customer.name && customer.name !== (customer.firm_name || customer.firmName) ? customer.name : "") || primaryExec || "Travis Bell";
+  const agentName = customer.agent || customer.agent_name || customer.agentName || customer.representative || customer.executive || customer.primary_exec || "Parungao, Joana";
   const fullAddress = [customer.address, customer.address2, customer.city, customer.state, customer.zip].filter(Boolean).join(", ") || "1325 Woodbine Cliff Dr, Fort Worth, Texas, 76179";
   const displayPhone = customer.phone || customer.phone_business || customer.cell || "(682) 351-8069";
   const displayEmail = customer.email || customer.email2 || "bellwelding1@gmail.com";
@@ -596,8 +598,8 @@ export default function CustomerProfilePage() {
                   {displayName}
                 </h1>
                 <span className={`px-2.5 py-0.5 border text-[11px] font-bold uppercase rounded-md tracking-wider ${customerStatus === "ACTIVE"
-                    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                    : "bg-[#f5f1eb] text-[#6b5e52] border-[#e5ddd5]"
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                  : "bg-[#f5f1eb] text-[#6b5e52] border-[#e5ddd5]"
                   }`}>
                   {customerStatus}
                 </span>
@@ -620,7 +622,7 @@ export default function CustomerProfilePage() {
           <div className="flex items-center gap-6 flex-wrap text-xs text-[#6b5e52] pt-1">
             <div className="flex items-center gap-1.5 font-medium">
               <User size={14} className="text-[#9A8B7A]" />
-              <span>{primaryExec}</span>
+              <span>{customerFullName}</span>
             </div>
 
             <div className="flex items-center gap-1.5 font-medium">
@@ -700,9 +702,14 @@ export default function CustomerProfilePage() {
               <p className="text-sm font-semibold text-[#2d2a26] mt-0.5">{primaryExec}</p>
             </div>
 
-            <div className="sm:col-span-2 lg:col-span-4 pt-1">
+            <div>
               <p className="text-xs font-bold text-[#6b5e52]">Delivery Preference:</p>
               <p className="text-sm font-semibold text-[#2d2a26] mt-0.5">{preferredMethod}</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-bold text-[#6b5e52]">Agent Name:</p>
+              <p className="text-sm font-semibold text-[#2d2a26] mt-0.5">{agentName}</p>
             </div>
           </div>
 
@@ -865,8 +872,8 @@ export default function CustomerProfilePage() {
               onDrop={handleFileDrop}
               onClick={() => fileInputRef.current?.click()}
               className={`lg:col-span-8 border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${isDragOver
-                  ? "border-[#795C46] bg-[#795C46]/5 scale-[0.99]"
-                  : "border-[#e5ddd5] hover:border-[#9A8B7A] bg-[#FAF8F5]"
+                ? "border-[#795C46] bg-[#795C46]/5 scale-[0.99]"
+                : "border-[#e5ddd5] hover:border-[#9A8B7A] bg-[#FAF8F5]"
                 }`}
             >
               <input
@@ -932,10 +939,10 @@ export default function CustomerProfilePage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <div className="h-8 w-8 rounded-lg bg-white border border-[#e5ddd5] flex items-center justify-center text-[#9A8B7A] shrink-0 shadow-2xs group-hover:border-[#795C46] group-hover:text-[#795C46] transition-colors">
-                            {doc.fileName?.toLowerCase().endsWith('.pdf') ? <FileText size={15} /> : 
-                             doc.fileName?.toLowerCase().match(/\.(jpg|jpeg|png)$/) ? <ImageIcon size={15} /> :
-                             doc.fileName?.toLowerCase().endsWith('.zip') ? <FileArchive size={15} /> : 
-                             <FileIcon size={15} />}
+                            {doc.fileName?.toLowerCase().endsWith('.pdf') ? <FileText size={15} /> :
+                              doc.fileName?.toLowerCase().match(/\.(jpg|jpeg|png)$/) ? <ImageIcon size={15} /> :
+                                doc.fileName?.toLowerCase().endsWith('.zip') ? <FileArchive size={15} /> :
+                                  <FileIcon size={15} />}
                           </div>
                           <div className="flex flex-col">
                             <span className="font-bold text-[#2d2a26] text-xs max-w-[200px] truncate" title={doc.fileName}>
@@ -946,12 +953,11 @@ export default function CustomerProfilePage() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-[#6b5e52]">
-                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
-                          doc.action === 'Policy Attachment' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                          doc.action === 'Loss Runs' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                          doc.action === 'Signed Binder' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                          'bg-[#f5f1eb] text-[#6b5e52] border-[#e5ddd5]'
-                        }`}>
+                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${doc.action === 'Policy Attachment' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                            doc.action === 'Loss Runs' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                              doc.action === 'Signed Binder' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                'bg-[#f5f1eb] text-[#6b5e52] border-[#e5ddd5]'
+                          }`}>
                           {doc.action || "Upload"}
                         </span>
                       </td>
@@ -1000,8 +1006,8 @@ export default function CustomerProfilePage() {
             <button
               onClick={() => setActiveTab("notes")}
               className={`pb-3 font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${activeTab === "notes"
-                  ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
-                  : "text-[#6b5e52] hover:text-[#2d2a26]"
+                ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
+                : "text-[#6b5e52] hover:text-[#2d2a26]"
                 }`}
             >
               Notes
@@ -1010,8 +1016,8 @@ export default function CustomerProfilePage() {
             <button
               onClick={() => setActiveTab("status_history")}
               className={`pb-3 font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${activeTab === "status_history"
-                  ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
-                  : "text-[#6b5e52] hover:text-[#2d2a26]"
+                ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
+                : "text-[#6b5e52] hover:text-[#2d2a26]"
                 }`}
             >
               Status History
@@ -1020,8 +1026,8 @@ export default function CustomerProfilePage() {
             <button
               onClick={() => setActiveTab("contact_info")}
               className={`pb-3 font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${activeTab === "contact_info"
-                  ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
-                  : "text-[#6b5e52] hover:text-[#2d2a26]"
+                ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
+                : "text-[#6b5e52] hover:text-[#2d2a26]"
                 }`}
             >
               Contact Information
@@ -1030,8 +1036,8 @@ export default function CustomerProfilePage() {
             <button
               onClick={() => setActiveTab("rating_info")}
               className={`pb-3 font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${activeTab === "rating_info"
-                  ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
-                  : "text-[#6b5e52] hover:text-[#2d2a26]"
+                ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
+                : "text-[#6b5e52] hover:text-[#2d2a26]"
                 }`}
             >
               Rating Information
@@ -1040,8 +1046,8 @@ export default function CustomerProfilePage() {
             <button
               onClick={() => setActiveTab("all_policies")}
               className={`pb-3 font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${activeTab === "all_policies"
-                  ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
-                  : "text-[#6b5e52] hover:text-[#2d2a26]"
+                ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
+                : "text-[#6b5e52] hover:text-[#2d2a26]"
                 }`}
             >
               All Policies ({policies.length})
@@ -1050,8 +1056,8 @@ export default function CustomerProfilePage() {
             <button
               onClick={() => setActiveTab("eforms")}
               className={`pb-3 font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${activeTab === "eforms"
-                  ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
-                  : "text-[#6b5e52] hover:text-[#2d2a26]"
+                ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
+                : "text-[#6b5e52] hover:text-[#2d2a26]"
                 }`}
             >
               eForms Library
@@ -1082,8 +1088,8 @@ export default function CustomerProfilePage() {
                       key={item}
                       onClick={() => toggleNoteFilter(item)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${noteFilters.includes(item)
-                          ? "bg-black text-white border-black"
-                          : "bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200"
+                        ? "bg-black text-white border-black"
+                        : "bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200"
                         }`}
                     >
                       {item}

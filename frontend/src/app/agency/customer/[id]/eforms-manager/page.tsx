@@ -1207,6 +1207,11 @@ export default function EFormsManagerPage() {
   }
 
   const customerName =
+    customer.firm_name ||
+    customer.firmName ||
+    customer.company_name ||
+    customer.companyName ||
+    customer.dba ||
     customer.name ||
     [customer.first_name, customer.last_name].filter(Boolean).join(" ") ||
     "Unknown";

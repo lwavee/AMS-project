@@ -4,18 +4,91 @@ import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { API_BASE_URL } from "../../../../../lib/config";
 import {
-  Plus,
-  Check,
-  X,
-  Shield,
-  Calendar,
-  Building2,
-  CreditCard,
-  Users,
   Info,
-  CheckCircle,
-  FileText
+  CheckCircle2,
+  ChevronDown,
+  ArrowLeft
 } from "lucide-react";
+
+// ─── Sterling Style Tokens ───────────────────────────────────
+const inputCls =
+  "h-[40px] px-3.5 border border-[#D1D5DB] rounded bg-white text-sm text-[#1F2937] placeholder-[#9CA3AF] transition-colors outline-none focus:border-[#7A6F64] focus:ring-1 focus:ring-[#7A6F64] w-full disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]";
+
+const selectCls =
+  "h-[40px] px-3.5 border border-[#D1D5DB] rounded bg-white text-sm text-[#1F2937] transition-colors outline-none focus:border-[#7A6F64] focus:ring-1 focus:ring-[#7A6F64] w-full bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20fill%3D%22%231F2937%22%20d%3D%22M5.293%207.293a1%201%200%20011.414%200L10%2010.586l3.293-3.293a1%201%200%20111.414%201.414l-4%204a1%201%200%2001-1.414%200l-4-4a1%201%200%20010-1.414z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:18px] bg-[right_10px_center] bg-no-repeat pr-9 appearance-none";
+
+const checkCls =
+  "accent-[#7A6F64] w-[18px] h-[18px] rounded border-[#D1D5DB] cursor-pointer shrink-0";
+
+// Clean Sterling Card with solid taupe header and expandable accordion dropdown
+function SectionCard({
+  title,
+  children,
+  isOpen = true,
+  onToggle,
+  className = ""
+}: {
+  title: string;
+  children: React.ReactNode;
+  isOpen?: boolean;
+  onToggle?: () => void;
+  className?: string;
+}) {
+  return (
+    <div className={`bg-white border border-[#D9D5D0] rounded shadow-sm overflow-hidden transition-all duration-200 ${className}`}>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full bg-[#7A6F64] hover:bg-[#6e6358] active:bg-[#63594e] text-white px-6 py-3.5 font-semibold text-[15px] tracking-wide flex items-center justify-between cursor-pointer transition-colors text-left select-none"
+      >
+        <span>{title}</span>
+        <ChevronDown
+          className={`size-5 text-white/90 transition-transform duration-300 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+      {isOpen && (
+        <div className="p-6 sm:p-8 space-y-4 bg-white animate-in slide-in-from-top-1 fade-in duration-200">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Clean Form Row (Label on Left, Control on Right matching Sterling Form)
+function FormRow({
+  label,
+  required,
+  error,
+  children,
+  className = ""
+}: {
+  label: string;
+  required?: boolean;
+  error?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`grid grid-cols-1 sm:grid-cols-12 items-center gap-3 py-2.5 border-b border-[#F3F4F6] last:border-b-0 ${className}`}>
+      <label className="sm:col-span-5 text-sm font-medium text-[#1F2937]">
+        {label}{required && <span className="text-red-500 ml-1 font-bold">*</span>}
+      </label>
+      <div className="sm:col-span-7 flex flex-col">
+        {React.isValidElement(children)
+          ? React.cloneElement(children as any, {
+              className: `${(children.props as any).className || ""} ${
+                error ? "!border-red-500 focus:!ring-red-500/20 focus:!border-red-500" : ""
+              }`
+            })
+          : children}
+        {error && <span className="text-xs text-red-600 font-medium mt-1">{error}</span>}
+      </div>
+    </div>
+  );
+}
 
 const INSURANCE_PARENT_COMPANIES = [
   "(CA), Insurance Company, (CA)",
@@ -2236,6 +2309,20 @@ export default function NewPolicyPage() {
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Section Accordion State
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    "Customer & Submission": true,
+    "Policy Specifications": true,
+    "Company Setup": true,
+    "Internal Business Unit": true,
+    "Billing & Agency Personnel": true,
+    "Options & Customer Defaults": true,
+  });
+
+  const toggleSection = (title: string) => {
+    setOpenSections((prev) => ({ ...prev, [title]: !prev[title] }));
+  };
+
   // Sync writing company when parent company or company type changes
   useEffect(() => {
     if (companyType === "Insurance") {
@@ -2379,10 +2466,11 @@ export default function NewPolicyPage() {
       }
 
       const createdPolicy = await res.json();
+      const newPolicyId = createdPolicy?.id || createdPolicy?._id;
 
       // Keep localStorage as quick local backup cache data
       const formattedPolicy = {
-        id: createdPolicy.id.toString(),
+        id: (newPolicyId || "").toString(),
         policyNum: createdPolicy.policy_num,
         status: createdPolicy.status,
         term: createdPolicy.term,
@@ -2392,7 +2480,7 @@ export default function NewPolicyPage() {
         description: createdPolicy.description,
         effDate: createdPolicy.eff_date,
         expDate: createdPolicy.exp_date,
-        createdDate: new Date(createdPolicy.created_date).toLocaleDateString()
+        createdDate: new Date(createdPolicy.created_date || Date.now()).toLocaleDateString()
       };
 
       const currentPoliciesStr = localStorage.getItem(`policies_${customerId}`);
@@ -2404,13 +2492,33 @@ export default function NewPolicyPage() {
       window.dispatchEvent(new Event("storage"));
 
       setSuccess(true);
-      setTimeout(() => {
+
+      const policyUrl = newPolicyId
+        ? `/agency/customer/${customerId}/policy/${newPolicyId}`
+        : `/agency/customer/${customerId}`;
+      const customerUrl = `/agency/customer/${customerId}`;
+
+      // 1. Open newly created policy in a new window (matching screenshot)
+      window.open(policyUrl, "_blank", "width=1320,height=860,resizable=yes,scrollbars=yes");
+
+      // 2. Update opener to customer details page if it exists
+      if (typeof window !== "undefined" && window.opener && !window.opener.closed) {
+        try {
+          window.opener.location.href = customerUrl;
+          window.opener.focus();
+        } catch (e) {}
         try {
           window.close();
-        } catch (e) {
-          router.push(`/agency/customer/${customerId}`);
-        }
-      }, 1500);
+        } catch (e) {}
+      } else {
+        // If opened in full tab without opener, navigate current tab to customer page
+        router.push(customerUrl);
+      }
+
+      // Fallback: If window.close() is blocked, navigate current tab to customer page
+      setTimeout(() => {
+        router.push(customerUrl);
+      }, 300);
     } catch (err: any) {
       setError(err.message || "Failed to save policy to database. Please try again.");
     } finally {
@@ -2420,705 +2528,655 @@ export default function NewPolicyPage() {
 
   const handleCancel = () => {
     try {
+      if (typeof window !== "undefined" && window.opener && !window.opener.closed) {
+        window.opener.focus();
+      }
       window.close();
-    } catch (e) {
-      router.push(`/agency/customer/${customerId}`);
-    }
+    } catch (e) {}
+    router.push(`/agency/customer/${customerId}`);
   };
 
   if (!mounted) return null;
 
   return (
-    <div suppressHydrationWarning className="min-h-screen bg-bg-base font-sans select-none text-text-main pb-24">
-      {/* ── Top Window Bar ── */}
-      <header className="bg-white/85 backdrop-blur-md border-b border-border-main h-16 px-4 sm:px-6 flex items-center justify-between shrink-0 shadow-sm sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-md shadow-primary/20 shrink-0">
-            <span className="text-white font-bold text-xl tracking-wider font-sans">S</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-sm sm:text-base tracking-tight text-text-main leading-tight font-sans">Sterling Insurance Services</span>
-            <span className="text-[9px] uppercase tracking-wider text-primary font-bold leading-none mt-0.5">Create New Policy</span>
-          </div>
+    <div suppressHydrationWarning className="min-h-screen bg-[#F7F6F4] text-[#1F2937] py-8 px-4 sm:px-6 lg:px-8 font-sans">
+      {/* ── Top Breadcrumb & Title Section ── */}
+      <div className="max-w-4xl mx-auto mb-8">
+        <div className="flex items-center gap-2 text-xs text-[#6B7280] mb-2">
+          <span className="font-medium text-[#4B5563]">Customer</span>
+          <span className="text-[#D9D5D0]">/</span>
+          <span className="text-[#7A6F64] font-semibold">New Policy Setup</span>
         </div>
-
-        <button
-          onClick={handleCancel}
-          className="h-8 w-8 flex items-center justify-center rounded-xl border border-border-main bg-white hover:bg-slate-50 transition-all text-slate-400 hover:text-slate-800 cursor-pointer"
-          title="Cancel and Close"
-        >
-          <X size={15} />
-        </button>
-      </header>
-
-      {/* ── Descriptive Instruction Box ── */}
-      <div className="max-w-5xl mx-auto px-3 sm:px-6 mt-4 sm:mt-6">
-        <div className="bg-secondary/40 border border-border-main rounded-2xl p-4 flex gap-3.5 items-start">
-          <Info className="size-5 text-primary shrink-0 mt-0.5" />
-          <div className="text-xs text-slate-600 space-y-1 font-medium">
-            <p className="font-bold text-text-main">Enter the Basic Policy Information or select a Submission to create the new Policy.</p>
-            <p>To create a Policy for an existing Submission, select Submission # and Effective Date. The most current Application version(s) will default.</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-5xl mx-auto px-3 sm:px-6 mt-4 sm:mt-6">
-
-        {/* Success Feedback Card */}
-        {success && (
-          <div className="bg-success/5 border border-success/20 text-success p-4 rounded-2xl mb-6 flex items-center gap-3 animate-in fade-in slide-in-from-top-3 duration-200">
-            <CheckCircle className="size-5 text-success shrink-0" />
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-success">Policy Created Successfully!</p>
-              <p className="text-[11px] font-semibold text-success/80 mt-0.5">Saving details and closing window...</p>
-            </div>
-          </div>
-        )}
-
-        {/* Error Feedback Card */}
-        {error && (
-          <div className="bg-danger/5 border border-danger/20 text-danger p-4 rounded-2xl mb-6 flex items-center gap-3 animate-in fade-in slide-in-from-top-3 duration-200">
-            <Info className="size-5 text-danger shrink-0" />
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-danger">Validation Error</p>
-              <p className="text-[11px] font-semibold text-danger/80 mt-0.5">{error}</p>
-            </div>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-
-          {/* ─ GRID CONTAINER ─ */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-            {/* CARD 1: Submission & Customer */}
-            <div className="bg-white border border-border-main rounded-2xl p-5 shadow-sm space-y-4">
-              <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest border-b border-border-main pb-2 flex items-center gap-1.5">
-                <Users size={12} className="text-primary" />
-                Customer & Submission
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Customer Name</label>
-                  <input
-                    type="text"
-                    value={customerName}
-                    disabled
-                    className="w-full h-10 px-3.5 bg-secondary/35 border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none opacity-80"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Submission #</label>
-                    <select
-                      value={submissionId}
-                      onChange={(e) => setSubmissionId(e.target.value)}
-                      className="w-full h-10 px-3 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                    >
-                      <option value="">-- Select --</option>
-                      <option value="SUB-2026-001">SUB-2026-001</option>
-                      <option value="SUB-2026-002">SUB-2026-002</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Sub. Eff Date</label>
-                    <input
-                      type="date"
-                      value={subEffDate}
-                      onChange={(e) => setSubEffDate(e.target.value)}
-                      className="w-full h-10 px-3 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* CARD 2: Policy Parameters */}
-            <div className="bg-white border border-border-main rounded-2xl p-5 shadow-sm space-y-4 md:row-span-2">
-              <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest border-b border-border-main pb-2 flex items-center gap-1.5">
-                <Shield size={12} className="text-primary" />
-                Policy Specifications
-              </div>
-
-              <div className="space-y-4">
-
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
-                    Policy # <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Enter Policy Number"
-                    value={policyNum}
-                    onChange={(e) => setPolicyNum(e.target.value)}
-                    className="w-full h-10 px-3.5 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                        Effective Date <span className="text-danger">*</span>
-                      </label>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (effDate) {
-                              const dateObj = new Date(effDate);
-                              dateObj.setMonth(dateObj.getMonth() + 6);
-                              setExpDate(dateObj.toISOString().split('T')[0]);
-                            }
-                          }}
-                          className="px-2 py-0.5 text-[10px] font-bold border border-primary/30 text-primary rounded bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer"
-                        >
-                          6 months
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (effDate) {
-                              const dateObj = new Date(effDate);
-                              dateObj.setFullYear(dateObj.getFullYear() + 1);
-                              setExpDate(dateObj.toISOString().split('T')[0]);
-                            }
-                          }}
-                          className="px-2 py-0.5 text-[10px] font-bold border border-primary/30 text-primary rounded bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer"
-                        >
-                          12 months
-                        </button>
-                      </div>
-                    </div>
-                    <input
-                      type="date"
-                      required
-                      value={effDate}
-                      onChange={(e) => {
-                        const newEffDate = e.target.value;
-                        setEffDate(newEffDate);
-                        if (newEffDate) {
-                          const dateObj = new Date(newEffDate);
-                          dateObj.setFullYear(dateObj.getFullYear() + 1);
-                          setExpDate(dateObj.toISOString().split('T')[0]);
-                        } else {
-                          setExpDate("");
-                        }
-                      }}
-                      className="w-full h-10 px-3 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Expiration Date</label>
-                    <input
-                      type="date"
-                      value={expDate}
-                      onChange={(e) => setExpDate(e.target.value)}
-                      disabled={isContinuous}
-                      className="w-full h-10 px-3 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary disabled:bg-secondary/45"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex gap-4 pt-1">
-                  <label className="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isContinuous}
-                      onChange={(e) => {
-                        setIsContinuous(e.target.checked);
-                        if (e.target.checked) setExpDate("");
-                      }}
-                      className="rounded border-border-main text-primary focus:ring-primary/20"
-                    />
-                    Continuous
-                  </label>
-                  <label className="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isNotRenewable}
-                      onChange={(e) => setIsNotRenewable(e.target.checked)}
-                      className="rounded border-border-main text-primary focus:ring-primary/20"
-                    />
-                    Not Renewable
-                  </label>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="col-span-2">
-                    <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Carrier Status</label>
-                    <select
-                      value={carrierStatus}
-                      onChange={(e) => setCarrierStatus(e.target.value)}
-                      className="w-full h-10 px-3 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                    >
-                      <option value="Active">Active</option>
-                      <option value="Pending">Pending</option>
-                      <option value="Cancelled">Cancelled</option>
-                      <option value="Expired">Expired</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Issue State</label>
-                    <select
-                      value={issueState}
-                      onChange={(e) => setIssueState(e.target.value)}
-                      className="w-full h-10 px-3 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                    >
-                      <option value="FL">FL</option>
-                      <option value="NY">NY</option>
-                      <option value="CA">CA</option>
-                      <option value="TX">TX</option>
-                      <option value="GA">GA</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Renewal/Term</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={term}
-                      onChange={(e) => setTerm(e.target.value)}
-                      className="w-full h-10 px-3.5 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                    />
-                  </div>
-                  <div className="col-span-2 flex items-end pb-2.5">
-                    <label className="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={isReinsurance}
-                        onChange={(e) => setIsReinsurance(e.target.checked)}
-                        className="rounded border-border-main text-primary focus:ring-primary/20"
-                      />
-                      Reinsurance Check
-                    </label>
-                  </div>
-                </div>
-
-                <div className="border-t border-border-main/50 pt-4 space-y-4">
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Type of Business</label>
-                    <select
-                      value={businessType}
-                      onChange={(e) => setBusinessType(e.target.value)}
-                      className="w-full h-10 px-3 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                    >
-                      <option value="Benefits">Benefits</option>
-                      <option value="Commercial Lines">Commercial Lines</option>
-                      <option value="Financial Services">Financial Services</option>
-                      <option value="Health">Health</option>
-                      <option value="Life">Life</option>
-                      <option value="Non Property & Casualty">Non Property & Casualty</option>
-                      <option value="Personal Lines">Personal Lines</option>
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Transaction</label>
-                      <select
-                        value={transaction}
-                        onChange={(e) => {
-                          setTransaction(e.target.value);
-                          setDescription(e.target.value);
-                        }}
-                        className="w-full h-10 px-3 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                      >
-                        <option value="Anniversary re-rate">Anniversary re-rate</option>
-                        <option value="Binder Billable">Binder Billable</option>
-                        <option value="Binder Endorsement">Binder Endorsement</option>
-                        <option value="Binder New Business">Binder New Business</option>
-                        <option value="Binder Renewal">Binder Renewal</option>
-                        <option value="Cancellation confirmation">Cancellation confirmation</option>
-                        <option value="Cancellation request">Cancellation request</option>
-                        <option value="New business">New business</option>
-                        <option value="New business quote">New business quote</option>
-                        <option value="Non-renewal notified Agency">Non-renewal notified Agency</option>
-                        <option value="Non-renewal notified PolHolder">Non-renewal notified PolHolder</option>
-                        <option value="Policy (unspecified)">Policy (unspecified)</option>
-                        <option value="Policy change">Policy change</option>
-                        <option value="Policy change quote">Policy change quote</option>
-                        <option value="Policy inquiry">Policy inquiry</option>
-                        <option value="Policy Synchronization">Policy Synchronization</option>
-                        <option value="Policy Synchronization Request">Policy Synchronization Request</option>
-                        <option value="Premium audit">Premium audit</option>
-                        <option value="Reinstatement">Reinstatement</option>
-                        <option value="Reissue">Reissue</option>
-                        <option value="Renew policy">Renew policy</option>
-                        <option value="Renewal quote">Renewal quote</option>
-                        <option value="Renewal request">Renewal request</option>
-                        <option value="Renewal requote">Renewal requote</option>
-                        <option value="Reversal of non-renewal">Reversal of non-renewal</option>
-                        <option value="Rewrite">Rewrite</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Description</label>
-                      <input
-                        type="text"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        className="w-full h-10 px-3.5 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* CARD 3: Company Setup */}
-            <div className="bg-white border border-border-main rounded-2xl p-5 shadow-sm space-y-4">
-              <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest border-b border-border-main pb-2 flex items-center gap-1.5">
-                <Building2 size={12} className="text-primary" />
-                Insurance Company Settings
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Company Class</label>
-                  <div className="flex gap-4">
-                    {["Insurance", "Brokerage", "Subscription"].map((type) => (
-                      <label key={type} className="flex items-center gap-1.5 text-xs font-bold text-slate-600 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="companyType"
-                          value={type}
-                          checked={companyType === type}
-                          onChange={() => setCompanyType(type)}
-                          className="text-primary focus:ring-primary/20"
-                        />
-                        {type}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Parent Company</label>
-                    <select
-                      value={parentCompany}
-                      onChange={(e) => setParentCompany(e.target.value)}
-                      className="w-full h-10 px-3 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                    >
-                      {companyType === "Insurance" && INSURANCE_PARENT_COMPANIES.map((company) => (
-                        <option key={company} value={company}>{company}</option>
-                      ))}
-                      {companyType === "Brokerage" && BROKERAGE_PARENT_COMPANIES.map((company) => (
-                        <option key={company} value={company}>{company}</option>
-                      ))}
-                      {companyType === "Subscription" && (
-                        <>
-                          <option value="Progressive">Progressive</option>
-                          <option value="Travelers">Travelers</option>
-                          <option value="Liberty Mutual">Liberty Mutual</option>
-                          <option value="Hartford">The Hartford</option>
-                          <option value="Chubb">Chubb Group</option>
-                        </>
-                      )}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Writing Company</label>
-                    <select
-                      value={writingCompany}
-                      onChange={(e) => setWritingCompany(e.target.value)}
-                      className="w-full h-10 px-3 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                    >
-                      {companyType === "Insurance" && INSURANCE_WRITING_COMPANIES[parentCompany] ? (
-                        INSURANCE_WRITING_COMPANIES[parentCompany].map((company) => (
-                          <option key={company} value={company}>{company}</option>
-                        ))
-                      ) : companyType === "Insurance" ? (
-                        <option value={parentCompany}>{parentCompany}</option>
-                      ) : companyType === "Brokerage" && BROKERAGE_WRITING_COMPANIES[parentCompany] ? (
-                        BROKERAGE_WRITING_COMPANIES[parentCompany].map((company) => (
-                          <option key={company} value={company}>{company}</option>
-                        ))
-                      ) : companyType === "Brokerage" ? (
-                        <option value={parentCompany}>{parentCompany}</option>
-                      ) : (
-                        <>
-                          <option value="Progressive Casualty">Progressive Casualty</option>
-                          <option value="Travelers Indemnity">Travelers Indemnity</option>
-                          <option value="Liberty Mutual Fire">Liberty Mutual Fire</option>
-                          <option value="Hartford Underwriters">Hartford Underwriters</option>
-                        </>
-                      )}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* CARD 4: Business Unit */}
-            <div className="bg-white border border-border-main rounded-2xl p-5 shadow-sm space-y-4">
-              <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest border-b border-border-main pb-2 flex items-center gap-1.5">
-                <Building2 size={12} className="text-primary" />
-                Internal Business Unit
-              </div>
-
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Division</label>
-                  <select
-                    value={division}
-                    onChange={(e) => setDivision(e.target.value)}
-                    className="w-full h-10 px-3 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                  >
-                    <option value="Gamaty Insurance Agency">Gamaty Insurance Agency</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Branch</label>
-                  <select
-                    value={branch}
-                    onChange={(e) => setBranch(e.target.value)}
-                    className="w-full h-10 px-3 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                  >
-                    <option value="Armar Insurance">Armar Insurance</option>
-                    <option value="CapCo Florida">CapCo Florida</option>
-                    <option value="Capital & Co">Capital & Co</option>
-                    <option value="JMB - DO NOT SERVICE">JMB - DO NOT SERVICE</option>
-                    <option value="Pregill Insurance">Pregill Insurance</option>
-                    <option value="WCFL Insurance Services">WCFL Insurance Services</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Department</label>
-                  <select
-                    value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                    className="w-full h-10 px-3 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                  >
-                    <option value="Commercial">Commercial</option>
-                    <option value="Health">Health</option>
-                    <option value="Personal">Personal</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* CARD 5: Billing & primary service */}
-            <div className="bg-white border border-border-main rounded-2xl p-5 shadow-sm space-y-4">
-              <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest border-b border-border-main pb-2 flex items-center gap-1.5">
-                <CreditCard size={12} className="text-primary" />
-                Billing & Service Group
-              </div>
-
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Bill Method</label>
-                    <select
-                      value={billMethod}
-                      onChange={(e) => setBillMethod(e.target.value)}
-                      className="w-full h-10 px-3 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                    >
-                      <option value="Direct bill">Direct bill</option>
-                      <option value="Agency bill">Agency bill</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Pay Plan</label>
-                    <select
-                      value={payPlan}
-                      onChange={(e) => setPayPlan(e.target.value)}
-                      className="w-full h-10 px-3 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                    >
-                      <option value="Annual">Annual</option>
-                      <option value="Bi-Monthly">Bi-Monthly</option>
-                      <option value="Full Pay">Full Pay</option>
-                      <option value="Monthly">Monthly</option>
-                      <option value="Nine (9) Equal Payments">Nine (9) Equal Payments</option>
-                      <option value="Other">Other</option>
-                      <option value="Premium Finance">Premium Finance</option>
-                      <option value="Quarterly">Quarterly</option>
-                      <option value="Semi-Annual">Semi-Annual</option>
-                      <option value="Seven (7) Payments">Seven (7) Payments</option>
-                      <option value="Ten (10) Payments">Ten (10) Payments</option>
-                      <option value="Three Payments">Three Payments</option>
-                      <option value="Two Payments">Two Payments</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-border-main/50 pt-4">
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Executive</label>
-                    <select
-                      value={executive}
-                      onChange={(e) => setExecutive(e.target.value)}
-                      className="w-full h-10 px-3 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                    >
-                      <option value="Akva, Jonathan">Akva, Jonathan</option>
-                      <option value="Anatian, Yoav">Anatian, Yoav</option>
-                      <option value="Buckanaga, Shania">Buckanaga, Shania</option>
-                      <option value="Cohen, Judah">Cohen, Judah</option>
-                      <option value="Drucker, Aaron">Drucker, Aaron</option>
-                      <option value="Gamaty, Eidan">Gamaty, Eidan</option>
-                      <option value="Gamaty, Joseph">Gamaty, Joseph</option>
-                      <option value="Gamaty, Michael">Gamaty, Michael</option>
-                      <option value="Gamaty, Moshe">Gamaty, Moshe</option>
-                      <option value="Harel, Eli">Harel, Eli</option>
-                      <option value="HOUSE">HOUSE</option>
-                      <option value="Kraut, Michal">Kraut, Michal</option>
-                      <option value="Service, Customer">Service, Customer</option>
-                      <option value="Short, Linda">Short, Linda</option>
-                      <option value="Solender, Ben">Solender, Ben</option>
-                      <option value="Weiner, Jake">Weiner, Jake</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Rep</label>
-                    <select
-                      value={representative}
-                      onChange={(e) => setRepresentative(e.target.value)}
-                      className="w-full h-10 px-3 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                    >
-                      <option value="Akva, Jonathan">Akva, Jonathan</option>
-                      <option value="Anatian, Yoav">Anatian, Yoav</option>
-                      <option value="Buckanaga, Shania">Buckanaga, Shania</option>
-                      <option value="Cohen, Judah">Cohen, Judah</option>
-                      <option value="CS, Certificates">CS, Certificates</option>
-                      <option value="Drucker, Aaron">Drucker, Aaron</option>
-                      <option value="Gamaty, Eidan">Gamaty, Eidan</option>
-                      <option value="Gamaty, Joseph">Gamaty, Joseph</option>
-                      <option value="Gamaty, Michael">Gamaty, Michael</option>
-                      <option value="Gamaty, Moshe">Gamaty, Moshe</option>
-                      <option value="Harel, Eli">Harel, Eli</option>
-                      <option value="HOUSE">HOUSE</option>
-                      <option value="Johnson, Chalia">Johnson, Chalia</option>
-                      <option value="Kraut, Michal">Kraut, Michal</option>
-                      <option value="Montoya, Keila">Montoya, Keila</option>
-                      <option value="Parungao, Joana">Parungao, Joana</option>
-                      <option value="Service, Customer">Service, Customer</option>
-                      <option value="Short, Linda">Short, Linda</option>
-                      <option value="Solender, Ben">Solender, Ben</option>
-                      <option value="Weiner, Jake">Weiner, Jake</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Broker</label>
-                    <select
-                      value={broker}
-                      onChange={(e) => setBroker(e.target.value)}
-                      className="w-full h-10 px-3 bg-white border border-border-main text-text-main text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
-                    >
-                      <option value="">-- None --</option>
-                      <option value="Broker, External">Broker, External</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* CARD 6: Options & Customer Defaults */}
-            <div className="bg-white border border-border-main rounded-2xl p-5 shadow-sm space-y-4">
-              <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest border-b border-border-main pb-2 flex items-center gap-1.5">
-                <FileText size={12} className="text-primary" />
-                Options & Customer Defaults
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                {/* Options checkboxes */}
-                <div className="space-y-2.5">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Additional Options</label>
-                  <label className="flex items-center gap-2.5 text-xs font-bold text-slate-600 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={includeNotes}
-                      onChange={(e) => setIncludeNotes(e.target.checked)}
-                      className="rounded border-border-main text-primary focus:ring-primary/20"
-                    />
-                    Include Policy Notes
-                  </label>
-                  <label className="flex items-center gap-2.5 text-xs font-bold text-slate-600 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={excludeLines}
-                      onChange={(e) => setExcludeLines(e.target.checked)}
-                      className="rounded border-border-main text-primary focus:ring-primary/20"
-                    />
-                    Exclude Lines of Business
-                  </label>
-                </div>
-
-                {/* Default from current customer checkboxes */}
-                <div className="space-y-2.5">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Default From Customer</label>
-                  <label className="flex items-center gap-2.5 text-xs font-semibold text-slate-600 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={defaultInsured}
-                      onChange={(e) => setDefaultInsured(e.target.checked)}
-                      className="rounded border-border-main text-primary focus:ring-primary/20"
-                    />
-                    First Named Insured Info
-                  </label>
-                  <label className="flex items-center gap-2.5 text-xs font-semibold text-slate-600 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={defaultCoInsured}
-                      onChange={(e) => setDefaultCoInsured(e.target.checked)}
-                      className="rounded border-border-main text-primary focus:ring-primary/20"
-                    />
-                    Co-Insured/Dependent
-                  </label>
-                  <label className="flex items-center gap-2.5 text-xs font-semibold text-slate-600 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={defaultDba}
-                      onChange={(e) => setDefaultDba(e.target.checked)}
-                      className="rounded border-border-main text-primary focus:ring-primary/20"
-                    />
-                    DBA
-                  </label>
-                  <label className="flex items-center gap-2.5 text-xs font-semibold text-slate-600 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={defaultContacts}
-                      onChange={(e) => setDefaultContacts(e.target.checked)}
-                      className="rounded border-border-main text-primary focus:ring-primary/20"
-                    />
-                    Contacts
-                  </label>
-                </div>
-
-              </div>
-            </div>
-
-          </div>
-
-          {/* ── STICKY BOTTOM ACTIONS BAR ── */}
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-border-main py-3.5 px-4 sm:px-8 flex justify-between sm:justify-end gap-3 z-50 shadow-lg select-none">
+        <div className="flex items-center justify-between border-b border-[#E5E2DE] pb-4">
+          <div className="flex items-center gap-3.5">
             <button
               type="button"
               onClick={handleCancel}
-              className="h-10 px-6 border border-border-main bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+              className="size-9 rounded-full bg-white hover:bg-[#FAF8F5] border border-[#D9D5D0] flex items-center justify-center text-[#7A6F64] hover:text-[#2d2a26] transition-all shadow-xs cursor-pointer shrink-0 group active:scale-95"
+              title="Back"
+            >
+              <ArrowLeft className="size-4.5 transition-transform group-hover:-translate-x-0.5" />
+            </button>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#1F2937] tracking-tight">
+                Add New Policy
+              </h1>
+              <p className="text-xs text-[#6B7280] mt-1">
+                Enter policy specifications, company settings, and business unit details for {customerName}.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Descriptive Instruction Box ── */}
+        <div className="bg-white border border-[#D9D5D0] rounded p-4 mt-4 flex gap-3.5 items-start shadow-xs">
+          <Info className="size-5 text-[#7A6F64] shrink-0 mt-0.5" />
+          <div className="text-xs text-[#6B7280] space-y-1 font-medium">
+            <p className="font-bold text-[#1F2937]">Enter the Basic Policy Information or select a Submission to create the new Policy.</p>
+            <p>To create a Policy for an existing Submission, select Submission # and Effective Date. The most current Application version(s) will default.</p>
+          </div>
+        </div>
+
+        {/* Success Feedback Alert */}
+        {success && (
+          <div className="bg-[#F0FDF4] border border-[#86EFAC] rounded text-[#166534] p-4 mt-4 flex items-center gap-3 animate-in slide-in-from-top-2 duration-200">
+            <CheckCircle2 className="size-5 text-[#16A34A] shrink-0" />
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-[#166534]">Policy Created Successfully</p>
+              <p className="text-xs font-medium text-[#15803D] mt-0.5">Saving details and closing window...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error Feedback Alert */}
+        {error && (
+          <div className="bg-[#FEF2F2] border border-[#FCA5A5] rounded text-[#991B1B] p-4 mt-4 flex items-center gap-3 animate-in slide-in-from-top-2 duration-200">
+            <Info className="size-5 text-[#DC2626] shrink-0" />
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-[#991B1B]">Validation Error</p>
+              <p className="text-xs font-medium text-[#B91C1C] mt-0.5">{error}</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Main Single Page Form */}
+      <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-8">
+
+        {/* ── CARD 1: Customer & Submission ── */}
+        <SectionCard
+          title="Customer & Submission"
+          isOpen={openSections["Customer & Submission"]}
+          onToggle={() => toggleSection("Customer & Submission")}
+        >
+          <FormRow label="Customer Name">
+            <input
+              type="text"
+              value={customerName}
+              disabled
+              className={inputCls}
+            />
+          </FormRow>
+
+          <FormRow label="Submission #">
+            <select
+              value={submissionId}
+              onChange={(e) => setSubmissionId(e.target.value)}
+              className={selectCls}
+            >
+              <option value="">-- Select --</option>
+              <option value="SUB-2026-001">SUB-2026-001</option>
+              <option value="SUB-2026-002">SUB-2026-002</option>
+            </select>
+          </FormRow>
+
+          <FormRow label="Sub. Eff Date">
+            <input
+              type="date"
+              value={subEffDate}
+              onChange={(e) => setSubEffDate(e.target.value)}
+              className={inputCls}
+            />
+          </FormRow>
+        </SectionCard>
+
+        {/* ── CARD 2: Policy Specifications ── */}
+        <SectionCard
+          title="Policy Specifications"
+          isOpen={openSections["Policy Specifications"]}
+          onToggle={() => toggleSection("Policy Specifications")}
+        >
+          <FormRow label="Policy #" required>
+            <input
+              type="text"
+              required
+              placeholder="Enter Policy Number"
+              value={policyNum}
+              onChange={(e) => setPolicyNum(e.target.value)}
+              className={inputCls}
+            />
+          </FormRow>
+
+          <FormRow label="Effective Date" required>
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                required
+                value={effDate}
+                onChange={(e) => {
+                  const newEffDate = e.target.value;
+                  setEffDate(newEffDate);
+                  if (newEffDate) {
+                    const dateObj = new Date(newEffDate);
+                    dateObj.setFullYear(dateObj.getFullYear() + 1);
+                    setExpDate(dateObj.toISOString().split("T")[0]);
+                  } else {
+                    setExpDate("");
+                  }
+                }}
+                className={inputCls}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (effDate) {
+                    const dateObj = new Date(effDate);
+                    dateObj.setMonth(dateObj.getMonth() + 6);
+                    setExpDate(dateObj.toISOString().split("T")[0]);
+                  }
+                }}
+                className="h-[40px] px-3 text-xs font-semibold border border-[#D1D5DB] text-[#4B5563] rounded bg-white hover:bg-[#F3F4F6] transition-colors cursor-pointer shrink-0"
+              >
+                +6 Mo
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (effDate) {
+                    const dateObj = new Date(effDate);
+                    dateObj.setFullYear(dateObj.getFullYear() + 1);
+                    setExpDate(dateObj.toISOString().split("T")[0]);
+                  }
+                }}
+                className="h-[40px] px-3 text-xs font-semibold border border-[#D1D5DB] text-[#4B5563] rounded bg-white hover:bg-[#F3F4F6] transition-colors cursor-pointer shrink-0"
+              >
+                +12 Mo
+              </button>
+            </div>
+          </FormRow>
+
+          <FormRow label="Expiration Date">
+            <input
+              type="date"
+              value={expDate}
+              onChange={(e) => setExpDate(e.target.value)}
+              disabled={isContinuous}
+              className={inputCls}
+            />
+          </FormRow>
+
+          <FormRow label="Policy Duration Options">
+            <div className="flex flex-wrap gap-6">
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
+                <input
+                  type="checkbox"
+                  checked={isContinuous}
+                  onChange={(e) => {
+                    setIsContinuous(e.target.checked);
+                    if (e.target.checked) setExpDate("");
+                  }}
+                  className={checkCls}
+                />
+                <span>Continuous</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
+                <input
+                  type="checkbox"
+                  checked={isNotRenewable}
+                  onChange={(e) => setIsNotRenewable(e.target.checked)}
+                  className={checkCls}
+                />
+                <span>Not Renewable</span>
+              </label>
+            </div>
+          </FormRow>
+
+          <FormRow label="Carrier Status">
+            <select
+              value={carrierStatus}
+              onChange={(e) => setCarrierStatus(e.target.value)}
+              className={selectCls}
+            >
+              <option value="Active">Active</option>
+              <option value="Pending">Pending</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="Expired">Expired</option>
+            </select>
+          </FormRow>
+
+          <FormRow label="Issue State">
+            <select
+              value={issueState}
+              onChange={(e) => setIssueState(e.target.value)}
+              className={selectCls}
+            >
+              <option value="FL">FL</option>
+              <option value="NY">NY</option>
+              <option value="CA">CA</option>
+              <option value="TX">TX</option>
+              <option value="GA">GA</option>
+            </select>
+          </FormRow>
+
+          <FormRow label="Renewal / Term (Months)">
+            <input
+              type="number"
+              min="0"
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+              className={inputCls}
+            />
+          </FormRow>
+
+          <FormRow label="Reinsurance">
+            <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
+              <input
+                type="checkbox"
+                checked={isReinsurance}
+                onChange={(e) => setIsReinsurance(e.target.checked)}
+                className={checkCls}
+              />
+              <span>Reinsurance Check</span>
+            </label>
+          </FormRow>
+
+          <FormRow label="Type of Business">
+            <select
+              value={businessType}
+              onChange={(e) => setBusinessType(e.target.value)}
+              className={selectCls}
+            >
+              <option value="Benefits">Benefits</option>
+              <option value="Commercial Lines">Commercial Lines</option>
+              <option value="Financial Services">Financial Services</option>
+              <option value="Health">Health</option>
+              <option value="Life">Life</option>
+              <option value="Non Property & Casualty">Non Property & Casualty</option>
+              <option value="Personal Lines">Personal Lines</option>
+            </select>
+          </FormRow>
+
+          <FormRow label="Transaction">
+            <select
+              value={transaction}
+              onChange={(e) => {
+                setTransaction(e.target.value);
+                setDescription(e.target.value);
+              }}
+              className={selectCls}
+            >
+              <option value="Anniversary re-rate">Anniversary re-rate</option>
+              <option value="Binder Billable">Binder Billable</option>
+              <option value="Binder Endorsement">Binder Endorsement</option>
+              <option value="Binder New Business">Binder New Business</option>
+              <option value="Binder Renewal">Binder Renewal</option>
+              <option value="Cancellation confirmation">Cancellation confirmation</option>
+              <option value="Cancellation request">Cancellation request</option>
+              <option value="New business">New business</option>
+              <option value="New business quote">New business quote</option>
+              <option value="Non-renewal notified Agency">Non-renewal notified Agency</option>
+              <option value="Non-renewal notified PolHolder">Non-renewal notified PolHolder</option>
+              <option value="Policy (unspecified)">Policy (unspecified)</option>
+              <option value="Policy change">Policy change</option>
+              <option value="Policy change quote">Policy change quote</option>
+              <option value="Policy inquiry">Policy inquiry</option>
+              <option value="Policy Synchronization">Policy Synchronization</option>
+              <option value="Policy Synchronization Request">Policy Synchronization Request</option>
+              <option value="Premium audit">Premium audit</option>
+              <option value="Reinstatement">Reinstatement</option>
+              <option value="Reissue">Reissue</option>
+              <option value="Renew policy">Renew policy</option>
+              <option value="Renewal quote">Renewal quote</option>
+              <option value="Renewal request">Renewal request</option>
+              <option value="Renewal requote">Renewal requote</option>
+              <option value="Reversal of non-renewal">Reversal of non-renewal</option>
+              <option value="Rewrite">Rewrite</option>
+            </select>
+          </FormRow>
+
+          <FormRow label="Description">
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className={inputCls}
+            />
+          </FormRow>
+        </SectionCard>
+
+        {/* ── CARD 3: Company Setup ── */}
+        <SectionCard
+          title="Company Setup"
+          isOpen={openSections["Company Setup"]}
+          onToggle={() => toggleSection("Company Setup")}
+        >
+          <FormRow label="Company Class">
+            <div className="flex flex-wrap gap-6">
+              {["Insurance", "Brokerage", "Subscription"].map((type) => (
+                <label key={type} className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
+                  <input
+                    type="radio"
+                    name="companyType"
+                    value={type}
+                    checked={companyType === type}
+                    onChange={() => setCompanyType(type)}
+                    className={checkCls}
+                  />
+                  <span>{type}</span>
+                </label>
+              ))}
+            </div>
+          </FormRow>
+
+          <FormRow label="Parent Company">
+            <select
+              value={parentCompany}
+              onChange={(e) => setParentCompany(e.target.value)}
+              className={selectCls}
+            >
+              {companyType === "Insurance" && INSURANCE_PARENT_COMPANIES.map((company) => (
+                <option key={company} value={company}>{company}</option>
+              ))}
+              {companyType === "Brokerage" && BROKERAGE_PARENT_COMPANIES.map((company) => (
+                <option key={company} value={company}>{company}</option>
+              ))}
+              {companyType === "Subscription" && (
+                <>
+                  <option value="Progressive">Progressive</option>
+                  <option value="Travelers">Travelers</option>
+                  <option value="Liberty Mutual">Liberty Mutual</option>
+                  <option value="Hartford">The Hartford</option>
+                  <option value="Chubb">Chubb Group</option>
+                </>
+              )}
+            </select>
+          </FormRow>
+
+          <FormRow label="Writing Company">
+            <select
+              value={writingCompany}
+              onChange={(e) => setWritingCompany(e.target.value)}
+              className={selectCls}
+            >
+              {companyType === "Insurance" && INSURANCE_WRITING_COMPANIES[parentCompany] ? (
+                INSURANCE_WRITING_COMPANIES[parentCompany].map((company) => (
+                  <option key={company} value={company}>{company}</option>
+                ))
+              ) : companyType === "Insurance" ? (
+                <option value={parentCompany}>{parentCompany}</option>
+              ) : companyType === "Brokerage" && BROKERAGE_WRITING_COMPANIES[parentCompany] ? (
+                BROKERAGE_WRITING_COMPANIES[parentCompany].map((company) => (
+                  <option key={company} value={company}>{company}</option>
+                ))
+              ) : companyType === "Brokerage" ? (
+                <option value={parentCompany}>{parentCompany}</option>
+              ) : (
+                <>
+                  <option value="Progressive Casualty">Progressive Casualty</option>
+                  <option value="Travelers Indemnity">Travelers Indemnity</option>
+                  <option value="Liberty Mutual Fire">Liberty Mutual Fire</option>
+                  <option value="Hartford Underwriters">Hartford Underwriters</option>
+                </>
+              )}
+            </select>
+          </FormRow>
+        </SectionCard>
+
+        {/* ── CARD 4: Business Unit ── */}
+        <SectionCard
+          title="Internal Business Unit"
+          isOpen={openSections["Internal Business Unit"]}
+          onToggle={() => toggleSection("Internal Business Unit")}
+        >
+          <FormRow label="Division">
+            <select
+              value={division}
+              onChange={(e) => setDivision(e.target.value)}
+              className={selectCls}
+            >
+              <option value="Gamaty Insurance Agency">Gamaty Insurance Agency</option>
+            </select>
+          </FormRow>
+
+          <FormRow label="Branch">
+            <select
+              value={branch}
+              onChange={(e) => setBranch(e.target.value)}
+              className={selectCls}
+            >
+              <option value="Armar Insurance">Armar Insurance</option>
+              <option value="CapCo Florida">CapCo Florida</option>
+              <option value="Capital & Co">Capital & Co</option>
+              <option value="JMB - DO NOT SERVICE">JMB - DO NOT SERVICE</option>
+              <option value="Pregill Insurance">Pregill Insurance</option>
+              <option value="WCFL Insurance Services">WCFL Insurance Services</option>
+            </select>
+          </FormRow>
+
+          <FormRow label="Department">
+            <select
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              className={selectCls}
+            >
+              <option value="Commercial">Commercial</option>
+              <option value="Health">Health</option>
+              <option value="Personal">Personal</option>
+            </select>
+          </FormRow>
+        </SectionCard>
+
+        {/* ── CARD 5: Billing & Agency Personnel ── */}
+        <SectionCard
+          title="Billing & Agency Personnel"
+          isOpen={openSections["Billing & Agency Personnel"]}
+          onToggle={() => toggleSection("Billing & Agency Personnel")}
+        >
+          <FormRow label="Bill Method">
+            <select
+              value={billMethod}
+              onChange={(e) => setBillMethod(e.target.value)}
+              className={selectCls}
+            >
+              <option value="Direct bill">Direct bill</option>
+              <option value="Agency bill">Agency bill</option>
+            </select>
+          </FormRow>
+
+          <FormRow label="Pay Plan">
+            <select
+              value={payPlan}
+              onChange={(e) => setPayPlan(e.target.value)}
+              className={selectCls}
+            >
+              <option value="Annual">Annual</option>
+              <option value="Bi-Monthly">Bi-Monthly</option>
+              <option value="Full Pay">Full Pay</option>
+              <option value="Monthly">Monthly</option>
+              <option value="Nine (9) Equal Payments">Nine (9) Equal Payments</option>
+              <option value="Other">Other</option>
+              <option value="Premium Finance">Premium Finance</option>
+              <option value="Quarterly">Quarterly</option>
+              <option value="Semi-Annual">Semi-Annual</option>
+              <option value="Seven (7) Payments">Seven (7) Payments</option>
+              <option value="Ten (10) Payments">Ten (10) Payments</option>
+              <option value="Three Payments">Three Payments</option>
+              <option value="Two Payments">Two Payments</option>
+            </select>
+          </FormRow>
+
+          <FormRow label="Executive">
+            <select
+              value={executive}
+              onChange={(e) => setExecutive(e.target.value)}
+              className={selectCls}
+            >
+              <option value="Akva, Jonathan">Akva, Jonathan</option>
+              <option value="Anatian, Yoav">Anatian, Yoav</option>
+              <option value="Buckanaga, Shania">Buckanaga, Shania</option>
+              <option value="Cohen, Judah">Cohen, Judah</option>
+              <option value="Drucker, Aaron">Drucker, Aaron</option>
+              <option value="Gamaty, Eidan">Gamaty, Eidan</option>
+              <option value="Gamaty, Joseph">Gamaty, Joseph</option>
+              <option value="Gamaty, Michael">Gamaty, Michael</option>
+              <option value="Gamaty, Moshe">Gamaty, Moshe</option>
+              <option value="Harel, Eli">Harel, Eli</option>
+              <option value="HOUSE">HOUSE</option>
+              <option value="Kraut, Michal">Kraut, Michal</option>
+              <option value="Service, Customer">Service, Customer</option>
+              <option value="Short, Linda">Short, Linda</option>
+              <option value="Solender, Ben">Solender, Ben</option>
+              <option value="Weiner, Jake">Weiner, Jake</option>
+            </select>
+          </FormRow>
+
+          <FormRow label="Representative">
+            <select
+              value={representative}
+              onChange={(e) => setRepresentative(e.target.value)}
+              className={selectCls}
+            >
+              <option value="Akva, Jonathan">Akva, Jonathan</option>
+              <option value="Anatian, Yoav">Anatian, Yoav</option>
+              <option value="Buckanaga, Shania">Buckanaga, Shania</option>
+              <option value="Cohen, Judah">Cohen, Judah</option>
+              <option value="CS, Certificates">CS, Certificates</option>
+              <option value="Drucker, Aaron">Drucker, Aaron</option>
+              <option value="Gamaty, Eidan">Gamaty, Eidan</option>
+              <option value="Gamaty, Joseph">Gamaty, Joseph</option>
+              <option value="Gamaty, Michael">Gamaty, Michael</option>
+              <option value="Gamaty, Moshe">Gamaty, Moshe</option>
+              <option value="Harel, Eli">Harel, Eli</option>
+              <option value="HOUSE">HOUSE</option>
+              <option value="Johnson, Chalia">Johnson, Chalia</option>
+              <option value="Kraut, Michal">Kraut, Michal</option>
+              <option value="Montoya, Keila">Montoya, Keila</option>
+              <option value="Parungao, Joana">Parungao, Joana</option>
+              <option value="Service, Customer">Service, Customer</option>
+              <option value="Short, Linda">Short, Linda</option>
+              <option value="Solender, Ben">Solender, Ben</option>
+              <option value="Weiner, Jake">Weiner, Jake</option>
+            </select>
+          </FormRow>
+
+          <FormRow label="Broker">
+            <select
+              value={broker}
+              onChange={(e) => setBroker(e.target.value)}
+              className={selectCls}
+            >
+              <option value="">-- None --</option>
+              <option value="Broker, External">Broker, External</option>
+            </select>
+          </FormRow>
+        </SectionCard>
+
+        {/* ── CARD 6: Options & Customer Defaults ── */}
+        <SectionCard
+          title="Options & Customer Defaults"
+          isOpen={openSections["Options & Customer Defaults"]}
+          onToggle={() => toggleSection("Options & Customer Defaults")}
+        >
+          <FormRow label="Additional Options">
+            <div className="flex flex-wrap gap-6">
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
+                <input
+                  type="checkbox"
+                  checked={includeNotes}
+                  onChange={(e) => setIncludeNotes(e.target.checked)}
+                  className={checkCls}
+                />
+                <span>Include Policy Notes</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
+                <input
+                  type="checkbox"
+                  checked={excludeLines}
+                  onChange={(e) => setExcludeLines(e.target.checked)}
+                  className={checkCls}
+                />
+                <span>Exclude Lines of Business</span>
+              </label>
+            </div>
+          </FormRow>
+
+          <FormRow label="Default From Customer">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
+                <input
+                  type="checkbox"
+                  checked={defaultInsured}
+                  onChange={(e) => setDefaultInsured(e.target.checked)}
+                  className={checkCls}
+                />
+                <span>First Named Insured Info</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
+                <input
+                  type="checkbox"
+                  checked={defaultCoInsured}
+                  onChange={(e) => setDefaultCoInsured(e.target.checked)}
+                  className={checkCls}
+                />
+                <span>Co-Insured/Dependent</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
+                <input
+                  type="checkbox"
+                  checked={defaultDba}
+                  onChange={(e) => setDefaultDba(e.target.checked)}
+                  className={checkCls}
+                />
+                <span>DBA</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
+                <input
+                  type="checkbox"
+                  checked={defaultContacts}
+                  onChange={(e) => setDefaultContacts(e.target.checked)}
+                  className={checkCls}
+                />
+                <span>Contacts</span>
+              </label>
+            </div>
+          </FormRow>
+        </SectionCard>
+
+        {/* ── Bottom Actions (Matching new-customer) ── */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 pb-16 border-t border-[#D9D5D0]">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="w-full sm:w-auto h-11 px-5 text-sm font-medium rounded border border-[#D1D5DB] bg-white text-[#374151] hover:bg-[#F9FAFB] transition-colors shadow-xs cursor-pointer"
             >
               Cancel
             </button>
+          </div>
+
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
             <button
               type="submit"
               disabled={isLoading || success}
-              className="h-10 px-8 bg-primary text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-md shadow-primary/20 hover:bg-primary/95 active:scale-[0.98] disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer border-none"
+              className="w-full sm:w-auto h-11 px-6 text-sm font-semibold rounded bg-[#7A6F64] hover:bg-[#5A4F44] text-white transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.99]"
             >
-              {isLoading ? "Processing..." : "OK"}
+              <CheckCircle2 className="size-4" />
+              <span>{isLoading ? "Processing..." : "OK"}</span>
             </button>
           </div>
+        </div>
 
-        </form>
-
-      </div>
+      </form>
     </div>
   );
 }
