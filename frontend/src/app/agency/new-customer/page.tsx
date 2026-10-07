@@ -87,6 +87,20 @@ function FormRow({
     );
 }
 
+// Helper to format US phone numbers: (123) 456-7890
+function formatUSPhone(val: string): string {
+    if (!val) return "";
+    let digits = val.replace(/\D/g, "");
+    if (digits.length > 10 && digits.startsWith("1")) {
+        digits = digits.slice(1);
+    }
+    digits = digits.slice(0, 10);
+    if (!digits) return "";
+    if (digits.length < 4) return `(${digits}`;
+    if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
 // Inline Phone Row with Ext matching Sterling Form layout
 function PhoneRow({
     label,
@@ -105,23 +119,38 @@ function PhoneRow({
     onChange: (v: string) => void;
     onExtChange: (v: string) => void;
 }) {
+    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const raw = e.target.value;
+        const formatted = formatUSPhone(raw);
+        onChange(formatted);
+    };
+
+    const handleExtChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const cleaned = e.target.value.replace(/[^0-9a-zA-Z]/g, "").slice(0, 6);
+        onExtChange(cleaned);
+    };
+
     return (
         <div className="grid grid-cols-1 sm:grid-cols-12 items-center gap-3 py-2.5 border-b border-[#F3F4F6] last:border-b-0">
             <label className={`sm:col-span-5 text-sm font-medium ${error ? "text-red-600 font-semibold" : "text-[#1F2937]"}`}>
                 {label}:{required && <span className="text-red-500 ml-1 font-bold">*</span>}
             </label>
             <div className="sm:col-span-7 flex flex-col">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full">
                     <input
-                        className={`${inputCls} flex-1 ${error ? "!border-red-500 focus:!ring-red-500/20 focus:!border-red-500" : ""}`}
-                        value={value}
-                        onChange={e => onChange(e.target.value)}
+                        type="tel"
+                        placeholder="(555) 000-0000"
+                        className={`h-[40px] px-3.5 border border-[#D1D5DB] rounded bg-white text-sm text-[#1F2937] placeholder-[#9CA3AF] transition-colors outline-none focus:border-[#7A6F64] focus:ring-1 focus:ring-[#7A6F64] flex-1 min-w-0 ${error ? "!border-red-500 focus:!ring-red-500/20 focus:!border-red-500" : ""}`}
+                        value={formatUSPhone(value || "")}
+                        onChange={handlePhoneChange}
                     />
-                    <span className="text-xs font-medium text-[#6B7280] shrink-0">Ext:</span>
+                    <span className="text-xs font-semibold text-[#6B7280] shrink-0">Ext:</span>
                     <input
-                        className={`${inputCls} w-20 text-center shrink-0`}
+                        type="text"
+                        placeholder="Ext"
+                        className="h-[40px] px-2.5 border border-[#D1D5DB] rounded bg-white text-sm text-[#1F2937] placeholder-[#9CA3AF] transition-colors outline-none focus:border-[#7A6F64] focus:ring-1 focus:ring-[#7A6F64] w-20 text-center shrink-0"
                         value={ext}
-                        onChange={e => onExtChange(e.target.value)}
+                        onChange={handleExtChange}
                     />
                 </div>
                 {error && <span className="text-xs text-red-600 font-medium mt-1">{error}</span>}
@@ -607,6 +636,7 @@ function NewCustomerContent() {
                         <input className={inputCls} value={f.firmName} onChange={e => set({ firmName: e.target.value })} />
                     </FormRow>
 
+                    {/*
                     <FormRow label="DBA">
                         <input className={inputCls} value={f.dba} onChange={e => set({ dba: e.target.value })} />
                     </FormRow>
@@ -632,6 +662,7 @@ function NewCustomerContent() {
                             </label>
                         </div>
                     </div>
+                    */}
                 </SectionCard>
 
                 {/* ── CARD 2: Addresses ── */}
@@ -675,6 +706,7 @@ function NewCustomerContent() {
                         <input className={inputCls} value={f.zip} onChange={e => set({ zip: e.target.value })} />
                     </FormRow>
 
+                    {/*
                     <FormRow label="County">
                         <input className={inputCls} value={f.county} onChange={e => set({ county: e.target.value })} />
                     </FormRow>
@@ -700,6 +732,7 @@ function NewCustomerContent() {
                             </label>
                         </div>
                     </div>
+                    */}
                 </SectionCard>
 
                 {/* ── CARD 3: Agency Personnel & Business Unit ── */}
@@ -756,6 +789,7 @@ function NewCustomerContent() {
                         </select>
                     </FormRow>
 
+                    {/*
                     <div className="grid grid-cols-1 sm:grid-cols-12 items-center gap-3 py-2.5 border-b border-[#F3F4F6]">
                         <div className="sm:col-start-6 sm:col-span-7">
                             <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
@@ -775,6 +809,7 @@ function NewCustomerContent() {
                             <option value="">-- None --</option>
                         </select>
                     </FormRow>
+                    */}
 
                     <FormRow label="Division" required error={errors.division}>
                         <select className={selectCls} value={f.division} onChange={e => set({ division: e.target.value })}>
@@ -819,6 +854,7 @@ function NewCustomerContent() {
                         onChange={v => set({ cell: v })}
                         onExtChange={v => set({ cellExt: v })}
                     />
+                    {/*
                     <PhoneRow
                         label="Business Phone"
                         value={f.phoneBusiness}
@@ -833,11 +869,13 @@ function NewCustomerContent() {
                         onChange={v => set({ phoneOther: v })}
                         onExtChange={v => set({ phoneOtherExt: v })}
                     />
+                    */}
 
                     <FormRow label="Primary Email" required error={errors.email}>
                         <input type="email" className={inputCls} value={f.email} onChange={e => set({ email: e.target.value })} />
                     </FormRow>
 
+                    {/*
                     <FormRow label="Alternate Email">
                         <input type="email" className={inputCls} value={f.email2} onChange={e => set({ email2: e.target.value })} />
                     </FormRow>
@@ -854,6 +892,7 @@ function NewCustomerContent() {
                             <option value="Fax">Fax</option>
                         </select>
                     </FormRow>
+                    */}
                 </SectionCard>
 
                 {/* ── CARD 5: Business with Agency & Policy Checks ── */}

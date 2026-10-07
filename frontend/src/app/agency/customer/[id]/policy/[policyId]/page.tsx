@@ -44,7 +44,7 @@ export default function PolicyDetailPage() {
     type: "",
     description: "",
     application: "",
-    writingCompany: "Sutton Specialty Insurance Company",
+    writingCompany: "",
     statePlan: "",
     sort: "1"
   });
@@ -176,6 +176,11 @@ export default function PolicyDetailPage() {
 
         setPolicy(match);
         setLobs(match.lobs || (storedLobs.length > 0 ? storedLobs : []));
+        const matchedWritingCo = match?.writing_company || match?.writingCompany || match?.company || "";
+        setNewLob(prev => ({
+          ...prev,
+          writingCompany: matchedWritingCo
+        }));
       } catch (err: any) {
         setError(err.message || "Failed to load data.");
       } finally {
@@ -312,7 +317,8 @@ export default function PolicyDetailPage() {
 
   const handleAddLob = () => {
     if (!newLob.type) return;
-    const updatedLobs = [...lobs, { ...newLob, plan: "—" }];
+    const writingCo = policy?.writing_company || policy?.writingCompany || policy?.company || newLob.writingCompany || "";
+    const updatedLobs = [...lobs, { ...newLob, writingCompany: writingCo, plan: "—" }];
     setLobs(updatedLobs);
     setIsAddingLob(false);
     logLobActivity("LOB Added", `Added Line of Business: ${newLob.type}`);
@@ -320,7 +326,7 @@ export default function PolicyDetailPage() {
       type: availableLobs[0],
       description: "",
       application: "",
-      writingCompany: policy?.writing_company || "Sutton Specialty Insurance Company",
+      writingCompany: writingCo,
       statePlan: "",
       sort: (updatedLobs.length + 1).toString()
     });
@@ -329,9 +335,10 @@ export default function PolicyDetailPage() {
 
   const handleSaveEdit = () => {
     if (selectedLobIndex !== null) {
+      const writingCo = policy?.writing_company || policy?.writingCompany || policy?.company || newLob.writingCompany || "";
       const oldLob = lobs[selectedLobIndex];
       const updated = [...lobs];
-      updated[selectedLobIndex] = { ...newLob, plan: "—" };
+      updated[selectedLobIndex] = { ...newLob, writingCompany: writingCo, plan: oldLob.plan || "—" };
       setLobs(updated);
       setIsAddingLob(false);
       setIsEditingLob(false);
@@ -897,11 +904,12 @@ export default function PolicyDetailPage() {
                         setIsEditingLob(false);
                         setSelectedLobIndex(null);
                         const options = LOB_OPTIONS[policy.type || "Commercial Lines"] || [];
+                        const writingCo = policy?.writing_company || policy?.writingCompany || policy?.company || "";
                         setNewLob({
                           type: options[0] || "",
                           description: "",
                           application: "",
-                          writingCompany: policy?.writing_company || "Sutton Specialty Insurance Company",
+                          writingCompany: writingCo,
                           statePlan: "",
                           sort: (lobs.length + 1).toString()
                         });
@@ -910,7 +918,12 @@ export default function PolicyDetailPage() {
                       <button
                         onClick={() => {
                           if (selectedLobIndex !== null) {
-                            setNewLob(lobs[selectedLobIndex]);
+                            const cur = lobs[selectedLobIndex];
+                            const writingCo = policy?.writing_company || policy?.writingCompany || policy?.company || cur.writingCompany || "";
+                            setNewLob({
+                              ...cur,
+                              writingCompany: writingCo
+                            });
                             setIsAddingLob(true);
                             setIsEditingLob(true);
                           }
@@ -974,7 +987,7 @@ export default function PolicyDetailPage() {
                           </td>
                           <td className="px-5 py-3.5 text-slate-500">{l.description || "—"}</td>
                           <td className="px-5 py-3.5 text-slate-500">{l.application || "—"}</td>
-                          <td className="px-5 py-3.5 text-text-main">{l.writingCompany || "—"}</td>
+                          <td className="px-5 py-3.5 text-text-main">{l.writingCompany || policy?.writing_company || policy?.writingCompany || policy?.company || "—"}</td>
                           <td className="px-5 py-3.5 text-slate-400">{l.plan || "—"}</td>
                           <td className="px-5 py-3.5 text-slate-400">{l.statePlan || "—"}</td>
                           <td className="px-5 py-3.5 text-slate-600">{l.sort}</td>
@@ -996,47 +1009,15 @@ export default function PolicyDetailPage() {
                         </select>
                       </div>
                       <div className="flex items-center justify-between gap-4">
-                        <span className={labelCls + " mb-0 w-32"}>Description:</span>
-                        <input type="text" value={newLob.description} onChange={e => setNewLob({ ...newLob, description: e.target.value })} className={inputCls + " flex-1"} />
-                      </div>
-                      <div className="flex items-center justify-between gap-4">
-                        <span className={labelCls + " mb-0 w-32"}>Application:</span>
-                        <select value={newLob.application} onChange={e => setNewLob({ ...newLob, application: e.target.value })} className={inputCls + " flex-1"}>
-                          <option></option>
-                          <option>Commercial General Liability</option>
-                        </select>
-                      </div>
-                      <div className="flex items-center justify-between gap-4">
-                        <span className={labelCls + " mb-0 w-32"}>Application Version:</span>
-                        <select className={inputCls + " flex-1"}>
-                          <option></option>
-                        </select>
-                      </div>
-                      <div className="flex items-center justify-between gap-4">
-                        <span className={labelCls + " mb-0 w-32"}>System Data Entry:</span>
-                        <select className={inputCls + " flex-1"}>
-                          <option></option>
-                        </select>
-                      </div>
-                      <div className="flex items-center justify-between gap-4">
                         <span className={labelCls + " mb-0 w-32 text-danger"}>Writing Company:</span>
-                        <select value={newLob.writingCompany} onChange={e => setNewLob({ ...newLob, writingCompany: e.target.value })} className={inputCls + " flex-1"}>
-                          <option>Sutton Specialty Insurance Company</option>
-                        </select>
-                      </div>
-                      <div className="flex items-center justify-between gap-4">
-                        <span className={labelCls + " mb-0 w-32"}>Company Plan:</span>
-                        <input type="text" className={inputCls + " flex-1 bg-slate-100"} readOnly />
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-3 flex-1">
-                          <span className={labelCls + " mb-0 w-24"}>State Plan:</span>
-                          <input type="text" value={newLob.statePlan} onChange={e => setNewLob({ ...newLob, statePlan: e.target.value })} className={inputCls + " w-24"} />
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className={labelCls + " mb-0"}>Sort Order #:</span>
-                          <input type="text" value={newLob.sort} onChange={e => setNewLob({ ...newLob, sort: e.target.value })} className={inputCls + " w-16 text-center"} />
-                        </div>
+                        <input
+                          type="text"
+                          value={policy?.writing_company || policy?.writingCompany || policy?.company || newLob.writingCompany || "—"}
+                          readOnly
+                          disabled
+                          className={inputCls + " flex-1 bg-slate-100/80 text-slate-700 cursor-not-allowed select-none font-semibold border-slate-200"}
+                          title="Writing Company is fixed from the policy details"
+                        />
                       </div>
                     </div>
                   </div>

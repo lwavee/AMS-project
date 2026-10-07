@@ -224,6 +224,8 @@ class PolicyBase(BaseModel):
     executive: Optional[str] = None
     representative: Optional[str] = None
     broker: Optional[str] = None
+    total_premium: Optional[str] = None
+    premium: Optional[str] = None
     include_notes: Optional[bool] = False
     exclude_lines: Optional[bool] = False
     default_insured: Optional[bool] = True

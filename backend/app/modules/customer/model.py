@@ -146,6 +146,8 @@ class Policy(Base):
     executive       = Column(String, nullable=True)
     representative  = Column(String, nullable=True)
     broker          = Column(String, nullable=True)
+    total_premium   = Column(String, nullable=True)
+    premium         = Column(String, nullable=True)
     include_notes   = Column(Boolean, default=False)
     exclude_lines   = Column(Boolean, default=False)
     default_insured = Column(Boolean, default=True)

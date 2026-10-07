@@ -2291,6 +2291,7 @@ export default function NewPolicyPage() {
   const [executive, setExecutive] = useState("");
   const [representative, setRepresentative] = useState("");
   const [broker, setBroker] = useState("");
+  const [totalPremium, setTotalPremium] = useState("");
 
   // Options
   const [includeNotes, setIncludeNotes] = useState(false);
@@ -2429,6 +2430,8 @@ export default function NewPolicyPage() {
       executive: executive || null,
       representative: representative || null,
       broker: broker || null,
+      total_premium: totalPremium || null,
+      premium: totalPremium || null,
       include_notes: includeNotes,
       exclude_lines: excludeLines,
       default_insured: defaultInsured,
@@ -2473,6 +2476,10 @@ export default function NewPolicyPage() {
         type: "",
         lobs: [],
         company: createdPolicy.company,
+        writing_company: createdPolicy.writing_company || writingCompany,
+        writingCompany: createdPolicy.writing_company || writingCompany,
+        total_premium: createdPolicy.total_premium || totalPremium,
+        premium: createdPolicy.total_premium || createdPolicy.premium || totalPremium,
         description: createdPolicy.description,
         effDate: createdPolicy.eff_date,
         expDate: createdPolicy.exp_date,
@@ -3058,6 +3065,19 @@ export default function NewPolicyPage() {
               <option value="">-- None --</option>
               <option value="Broker, External">Broker, External</option>
             </select>
+          </FormRow>
+
+          <FormRow label="Total Premium $">
+            <div className="relative flex items-center w-full">
+              <span className="absolute left-3.5 text-sm font-semibold text-[#6B7280] pointer-events-none">$</span>
+              <input
+                type="text"
+                value={totalPremium}
+                onChange={(e) => setTotalPremium(e.target.value.replace(/^\$/, ""))}
+                placeholder="0.00"
+                className={inputCls + " pl-7 font-medium"}
+              />
+            </div>
           </FormRow>
         </SectionCard>
 
