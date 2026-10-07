@@ -356,7 +356,22 @@ function PrintOptionsContent() {
               insurerF: insrMapping.insurers[5]?.name || '',
             };
 
+            const customerParams = {
+              insuredName: customer?.name || '',
+              insuredAddress: customer?.address || '',
+              insuredAddress2: customer?.address2 || '',
+              insuredCity: customer?.city || '',
+              insuredState: customer?.state || '',
+              insuredZip: customer?.zip || '',
+              contactName: customer?.contact_person?.name || '',
+              contactPhone: customer?.contact_person?.phone || '',
+              contactEmail: customer?.contact_person?.email || '',
+              contactFax: customer?.contact_person?.fax || '',
+              apiUrl: API_BASE_URL,
+            };
+
             const limitsObj = {
+              ...customerParams,
               glPolicyNo: localGlPolicyNo,
               glEffDate: localGlEffDate,
               glExpDate: localGlExpDate,

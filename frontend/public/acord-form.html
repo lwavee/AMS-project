@@ -481,11 +481,11 @@
         <div class="box insured no-border-bottom">
           <div class="box-label">INSURED</div>
           <div style="padding-left: 50px;">
-            <span id="insured-name">RS Remodeling Services, LLC</span><br>
-            <span id="insured-address">1860 Southwest 36th Terrace</span><br><br>
+            <span id="insured-name"></span><br>
+            <span id="insured-address"></span><br><br>
             <div style="display: flex; justify-content: space-between; padding-right: 30px;">
-              <span id="insured-city">Fort Lauderdale</span>
-              <span id="insured-state-zip">FL 33312</span>
+              <span id="insured-city"></span>
+              <span id="insured-state-zip"></span>
             </div>
           </div>
         </div>
@@ -494,14 +494,12 @@
         <table class="contact-table no-border-top no-border-left no-border-right">
           <tr>
             <td colspan="2" class="no-border-top no-border-left no-border-right">
-              <span class="label">CONTACT<br>NAME:</span> &nbsp;&nbsp;&nbsp;&nbsp; <span id="contact-name">Ben
-                Solender</span>
+              <span class="label">CONTACT<br>NAME:</span> &nbsp;&nbsp;&nbsp;&nbsp; <span id="contact-name"></span>
             </td>
           </tr>
           <tr>
             <td class="no-border-left" style="width: 50%;">
-              <span class="label">PHONE<br>(A/C, No, Ext):</span> <span id="contact-phone">(310)
-                492-2007</span>
+              <span class="label">PHONE<br>(A/C, No, Ext):</span> <span id="contact-phone"></span>
             </td>
             <td class="no-border-right" style="width: 50%;">
               <span class="label">FAX<br>(A/C, No):</span> <span id="contact-fax"></span>
@@ -509,7 +507,7 @@
           </tr>
           <tr>
             <td colspan="2" class="no-border-left no-border-right">
-              <span class="label">E-MAIL<br>ADDRESS:</span> <span id="contact-email">ben@capcoinsurance.com</span>
+              <span class="label">E-MAIL<br>ADDRESS:</span> <span id="contact-email"></span>
             </td>
           </tr>
         </table>
@@ -1394,23 +1392,99 @@
         console.error('[ACORD] Checkbox toggle parsing error:', e);
       }
 
+      // D. Populate Insured, Contact & Insurer details directly from URL params
+      try {
+        const insuredName = params.get('insuredName');
+        const insuredAddress = params.get('insuredAddress');
+        const insuredAddress2 = params.get('insuredAddress2');
+        const insuredCity = params.get('insuredCity');
+        const insuredState = params.get('insuredState');
+        const insuredZip = params.get('insuredZip');
+        const rawStateZip = params.get('insuredStateZip');
+        const insuredStateZip = rawStateZip || [insuredState, insuredZip].filter(Boolean).join(' ');
+
+        if (insuredName) {
+          const el = document.getElementById('insured-name');
+          if (el) el.innerText = insuredName;
+        }
+        if (insuredAddress) {
+          const el = document.getElementById('insured-address');
+          if (el) {
+            let fullAddr = insuredAddress;
+            if (insuredAddress2) fullAddr += ' ' + insuredAddress2;
+            el.innerText = fullAddr;
+          }
+        }
+        if (insuredCity) {
+          const el = document.getElementById('insured-city');
+          if (el) el.innerText = insuredCity;
+        }
+        if (insuredStateZip) {
+          const el = document.getElementById('insured-state-zip');
+          if (el) el.innerText = insuredStateZip;
+        }
+
+        const contactName = params.get('contactName');
+        const contactPhone = params.get('contactPhone');
+        const contactEmail = params.get('contactEmail');
+        const contactFax = params.get('contactFax');
+        if (contactName) {
+          const el = document.getElementById('contact-name');
+          if (el) el.innerText = contactName;
+        }
+        if (contactPhone) {
+          const el = document.getElementById('contact-phone');
+          if (el) el.innerText = contactPhone;
+        }
+        if (contactEmail) {
+          const el = document.getElementById('contact-email');
+          if (el) el.innerText = contactEmail;
+        }
+        if (contactFax) {
+          const el = document.getElementById('contact-fax');
+          if (el) el.innerText = contactFax;
+        }
+
+        // Insurers A-F from query params
+        ['a', 'b', 'c', 'd', 'e', 'f'].forEach((letter) => {
+          const insurerVal = params.get(`insurer${letter.toUpperCase()}`);
+          if (insurerVal) {
+            const nameEl = document.getElementById(`insurer-${letter}-name`);
+            const naicEl = document.getElementById(`insurer-${letter}-naic`);
+            if (nameEl) nameEl.innerText = insurerVal;
+            if (naicEl) naicEl.innerText = getNaic(insurerVal);
+          }
+        });
+      } catch (e) {
+        console.error('[ACORD] Insured/Contact param parsing error:', e);
+      }
+
       // ── 2. Run asynchronous API fetches for customer & carrier info ───────
       // Wrapped in try/catch to fail gracefully without blocking the printing completion signal
       const customerId = params.get('customerId');
       if (customerId) {
         const token = localStorage.getItem("token");
-        if (token) {
+        const apiBase = params.get('apiUrl') || (
+          window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://127.0.0.1:8000'
+            : ''
+        );
+        if (token && apiBase) {
           const letters = ['a', 'b', 'c', 'd', 'e', 'f'];
           try {
-            // Fetch customer details
-            const custResponse = await fetch(`http://127.0.0.1:8000/api/customers/${customerId}`, {
+            // Fetch customer details if not already passed or to refresh
+            const custResponse = await fetch(`${apiBase}/api/customers/${customerId}`, {
               headers: { 'Authorization': `Bearer ${token}` }
             });
             if (custResponse.ok) {
               const customer = await custResponse.json();
               if (customer) {
                 if (customer.name) document.getElementById('insured-name').innerText = customer.name;
-                if (customer.address) document.getElementById('insured-address').innerText = customer.address;
+                if (customer.address) {
+                  let fullAddr = customer.address;
+                  if (customer.address2) fullAddr += ' ' + customer.address2;
+                  document.getElementById('insured-address').innerText = fullAddr;
+                }
                 if (customer.city) document.getElementById('insured-city').innerText = customer.city;
 
                 const stateZip = [];
@@ -1439,7 +1513,7 @@
 
           try {
             // Fetch policies → populate INSURER A-F
-            const polResponse = await fetch(`http://127.0.0.1:8000/api/customers/${customerId}/policies`, {
+            const polResponse = await fetch(`${apiBase}/api/customers/${customerId}/policies`, {
               headers: { 'Authorization': `Bearer ${token}` }
             });
             if (polResponse.ok) {
@@ -1464,7 +1538,7 @@
                     nameEl.innerText = carriers[idx];
                     const naic = getNaic(carriers[idx]);
                     naicEl.innerText = naic;
-                  } else {
+                  } else if (!params.get(`insurer${letter.toUpperCase()}`)) {
                     nameEl.innerText = '';
                     naicEl.innerText = '';
                   }
@@ -1474,7 +1548,7 @@
           } catch (e) {
             console.error('[ACORD] Failed to fetch policy carriers:', e);
           }
-        } else {
+        } else if (!token) {
           console.warn('[ACORD] No token in localStorage; skipping API fetches');
         }
       } else {

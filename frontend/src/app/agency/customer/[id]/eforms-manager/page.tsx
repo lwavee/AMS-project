@@ -1848,6 +1848,20 @@ export default function EFormsManagerPage() {
                   return { gl, auto, umb, wc, insurers: insurerList };
                 })();
 
+                const commonCustomerParams = {
+                  insuredName: customer?.name || '',
+                  insuredAddress: customer?.address || '',
+                  insuredAddress2: customer?.address2 || '',
+                  insuredCity: customer?.city || '',
+                  insuredState: customer?.state || '',
+                  insuredZip: customer?.zip || '',
+                  contactName: customer?.contact_person?.name || '',
+                  contactPhone: customer?.contact_person?.phone || '',
+                  contactEmail: customer?.contact_person?.email || '',
+                  contactFax: customer?.contact_person?.fax || '',
+                  apiUrl: API_BASE_URL,
+                };
+
                 const dynamicInsurerParams = {
                   insurerA: insrMapping.insurers[0]?.name || '',
                   insurerB: insrMapping.insurers[1]?.name || '',
@@ -1866,6 +1880,7 @@ export default function EFormsManagerPage() {
                   const masterDesc = parentCert?.label || '';
                   const params = new URLSearchParams({
                     customerId: customerId || '',
+                    ...commonCustomerParams,
                     holderName: h.name,
                     holderAddress: h.address,
                     holderAddress2: h.address2,
@@ -1918,6 +1933,7 @@ export default function EFormsManagerPage() {
                   const masterDesc = activeCert?.label || '';
                   const params = new URLSearchParams({
                     customerId: customerId || '',
+                    ...commonCustomerParams,
                     masterDesc: masterDesc,
                     glPolicyNo: localGlPolicyNo,
                     glEffDate: localGlEffDate,
