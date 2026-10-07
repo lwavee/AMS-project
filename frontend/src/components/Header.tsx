@@ -120,10 +120,6 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
 
         {/* Right Actions Toolbar */}
         <div className="flex items-center gap-3 sm:gap-3.5">
-
-
-
-
           {/* Notification Bell */}
           <div className="relative" ref={notificationRef}>
             <button
