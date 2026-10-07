@@ -15,15 +15,14 @@ import {
 } from "@tanstack/react-table";
 import { Customer } from "../data/customers";
 import {
-  ArrowUp,
-  ArrowDown,
   ArrowUpDown,
-  RefreshCw,
+  MoreVertical,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  ChevronDown
+  ChevronDown,
+  RotateCw
 } from "lucide-react";
 
 interface CustomerTableProps {
@@ -34,6 +33,28 @@ interface CustomerTableProps {
   onRefresh?: () => void;
   inactiveColor?: string;
 }
+
+const AVATAR_PALETTES = [
+  { bg: "bg-[#E0F2FE]", text: "text-[#0284C7]" }, // AA - light blue
+  { bg: "bg-[#F3E8FF]", text: "text-[#9333EA]" }, // AC - light purple
+  { bg: "bg-[#DCFCE7]", text: "text-[#16A34A]" }, // SB - light green
+  { bg: "bg-[#FFE4E6]", text: "text-[#E11D48]" }, // CC - light pink
+  { bg: "bg-[#E0F2FE]", text: "text-[#0284C7]" }, // HP - cyan
+  { bg: "bg-[#EDE9FE]", text: "text-[#7C3AED]" }, // NA - violet
+  { bg: "bg-[#FFEDD5]", text: "text-[#EA580C]" }, // FL - orange
+  { bg: "bg-[#CCFBF1]", text: "text-[#0D9488]" }, // PC - teal
+  { bg: "bg-[#E0F2FE]", text: "text-[#0284C7]" }, // AA - light blue
+  { bg: "bg-[#FEF3C7]", text: "text-[#D97706]" }, // AK - amber
+];
+
+const getInitials = (name: string) => {
+  if (!name) return "CU";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+};
 
 export default function CustomerTable({
   data,
@@ -46,7 +67,7 @@ export default function CustomerTable({
   const router = useRouter();
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
-  // Define columns matching Sterling AMS specifications with modern presentation
+  // Columns definition matching Second Photo
   const columns = useMemo<ColumnDef<Customer>[]>(
     () => [
       // Select Checkbox Column
@@ -56,7 +77,7 @@ export default function CustomerTable({
           <div className="flex items-center justify-center">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-[#e5ddd5] text-[#9A8B7A] focus:ring-[#9A8B7A] focus:ring-opacity-25 focus:ring-offset-0 cursor-pointer accent-[#9A8B7A]"
+              className="h-4 w-4 rounded border-[#e5ddd5] text-[#795C46] focus:ring-[#795C46] focus:ring-offset-0 cursor-pointer accent-[#795C46]"
               checked={table.getIsAllPageRowsSelected()}
               ref={(input) => {
                 if (input) {
@@ -71,20 +92,28 @@ export default function CustomerTable({
           <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-[#e5ddd5] text-[#9A8B7A] focus:ring-[#9A8B7A] focus:ring-opacity-25 focus:ring-offset-0 cursor-pointer accent-[#9A8B7A]"
+              className="h-4 w-4 rounded border-[#e5ddd5] text-[#795C46] focus:ring-[#795C46] focus:ring-offset-0 cursor-pointer accent-[#795C46]"
               checked={row.getIsSelected()}
               disabled={!row.getCanSelect()}
               onChange={row.getToggleSelectedHandler()}
             />
           </div>
         ),
-        size: 40,
+        size: 38,
       },
       // ID (#)
       {
         accessorKey: "id",
-        header: "#",
-        cell: (info) => <span className="text-[#2d2a26] font-bold">{info.getValue() as string}</span>,
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="flex items-center gap-1 font-bold text-[#6b5e52] hover:text-[#1f1d1a] transition-colors outline-none uppercase tracking-wider text-[10px]"
+          >
+            <span>#</span>
+            <ArrowUpDown size={10} className="text-[#9A8B7A]" />
+          </button>
+        ),
+        cell: (info) => <span className="text-[#1f1d1a] font-bold text-xs">{info.getValue() as string}</span>,
         size: 40,
       },
       // Match Code
@@ -93,113 +122,232 @@ export default function CustomerTable({
         header: ({ column }) => (
           <button
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="flex items-center gap-1 font-bold text-[#2d2a26] hover:text-[#9A8B7A] transition-colors outline-none w-full text-left uppercase tracking-wider text-[10px]"
+            className="flex items-center gap-1 font-bold text-[#6b5e52] hover:text-[#1f1d1a] transition-colors outline-none uppercase tracking-wider text-[10px]"
           >
-            <span>Match</span>
-            {column.getIsSorted() === "asc" ? (
-              <ArrowUp size={11} className="text-[#9A8B7A]" />
-            ) : column.getIsSorted() === "desc" ? (
-              <ArrowDown size={11} className="text-[#9A8B7A]" />
-            ) : (
-              <ArrowUpDown size={11} className="text-[#6b5e52]/50" />
-            )}
+            <span>MATCH</span>
+            <ArrowUpDown size={10} className="text-[#9A8B7A]" />
           </button>
         ),
-        cell: (info) => <span className="font-mono text-[#2d2a26] font-bold">{info.getValue() as string}</span>,
-        size: 90,
+        cell: (info) => (
+          <span className="font-mono text-[#1f1d1a] font-bold text-xs">
+            {info.getValue() as string}
+          </span>
+        ),
+        size: 95,
       },
-      // Customer Name
+      // Customer Name with Initials Avatar & Tag
       {
         accessorKey: "name",
         header: ({ column }) => (
           <button
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="flex items-center gap-1 font-bold text-[#2d2a26] hover:text-[#9A8B7A] transition-colors outline-none w-full text-left uppercase tracking-wider text-[10px]"
+            className="flex items-center gap-1 font-bold text-[#6b5e52] hover:text-[#1f1d1a] transition-colors outline-none uppercase tracking-wider text-[10px]"
           >
-            <span>Name</span>
-            {column.getIsSorted() === "asc" ? (
-              <ArrowUp size={11} className="text-[#9A8B7A]" />
-            ) : column.getIsSorted() === "desc" ? (
-              <ArrowDown size={11} className="text-[#9A8B7A]" />
-            ) : (
-              <ArrowUpDown size={11} className="text-[#6b5e52]/50" />
-            )}
+            <span>NAME</span>
+            <ArrowUpDown size={10} className="text-[#9A8B7A]" />
           </button>
         ),
         cell: ({ row }) => {
           const name = row.original.name;
           const type = row.original.type;
-          const isCom = type === "Commercial";
+          const isCom = type === "Commercial" || !type;
+          const initials = getInitials(name);
+          const palette = AVATAR_PALETTES[row.index % AVATAR_PALETTES.length];
+
           return (
-            <div className="flex items-center gap-2 truncate">
+            <div className="flex items-center gap-2.5 min-w-0">
+              {/* Circular Avatar */}
+              <div
+                className={`h-7 w-7 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${palette.bg} ${palette.text}`}
+              >
+                {initials}
+              </div>
+
+              {/* Name text */}
               <span
                 onClick={(e) => {
                   e.stopPropagation();
                   router.push(`/agency/customer/${row.original.id}`);
                 }}
-                className="font-bold text-[#2d2a26] hover:text-[#9A8B7A] hover:underline cursor-pointer"
+                className="font-bold text-xs text-[#1f1d1a] hover:text-[#795C46] hover:underline cursor-pointer truncate"
                 title="Click to open customer folder"
               >
                 {name}
               </span>
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase shrink-0 tracking-wider ${
-                isCom ? "bg-[#9A8B7A]/15 text-[#9A8B7A]" : "bg-emerald-100 text-emerald-800"
-              }`}>
+
+              {/* COM / PERS pill badge */}
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-[#FAF8F5] text-[#8c827a] border border-[#e5ddd5] shrink-0">
                 {isCom ? "COM" : "PERS"}
               </span>
             </div>
           );
         },
-        size: 160,
+        size: 190,
       },
       // Address
       {
         accessorKey: "address",
-        header: () => <span className="uppercase tracking-wider text-[10px] text-[#2d2a26] font-bold">Address</span>,
-        cell: (info) => <span className="text-[#2d2a26] truncate">{info.getValue() as string}</span>,
-        size: 140,
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="flex items-center gap-1 font-bold text-[#6b5e52] hover:text-[#1f1d1a] transition-colors outline-none uppercase tracking-wider text-[10px]"
+          >
+            <span>ADDRESS</span>
+            <ArrowUpDown size={10} className="text-[#9A8B7A]" />
+          </button>
+        ),
+        cell: (info) => (
+          <span className="text-[#2d2a26] text-xs font-medium truncate block max-w-[150px]">
+            {info.getValue() as string || "—"}
+          </span>
+        ),
+        size: 150,
       },
       // City
       {
         accessorKey: "city",
-        header: () => <span className="uppercase tracking-wider text-[10px] text-[#2d2a26] font-bold">City</span>,
-        cell: (info) => <span className="text-[#2d2a26] truncate">{info.getValue() as string}</span>,
-        size: 100,
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="flex items-center gap-1 font-bold text-[#6b5e52] hover:text-[#1f1d1a] transition-colors outline-none uppercase tracking-wider text-[10px]"
+          >
+            <span>CITY</span>
+            <ArrowUpDown size={10} className="text-[#9A8B7A]" />
+          </button>
+        ),
+        cell: (info) => (
+          <span className="text-[#2d2a26] text-xs font-medium truncate block">
+            {info.getValue() as string || "—"}
+          </span>
+        ),
+        size: 110,
       },
-      // State
+      // State (ST)
       {
         accessorKey: "state",
-        header: () => <span className="uppercase tracking-wider text-[10px] text-[#2d2a26] font-bold">St</span>,
-        cell: (info) => <span className="text-[#2d2a26] font-bold">{info.getValue() as string}</span>,
-        size: 45,
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="flex items-center gap-1 font-bold text-[#6b5e52] hover:text-[#1f1d1a] transition-colors outline-none uppercase tracking-wider text-[10px]"
+          >
+            <span>ST</span>
+            <ArrowUpDown size={10} className="text-[#9A8B7A]" />
+          </button>
+        ),
+        cell: (info) => {
+          const val = (info.getValue() as string || "").toUpperCase();
+          const isSpecialState = val === "CA" || val === "WA";
+          if (isSpecialState) {
+            return (
+              <span className="inline-block bg-[#EBF5FF] text-[#2563EB] font-bold text-[10px] px-1.5 py-0.5 rounded">
+                {val}
+              </span>
+            );
+          }
+          return <span className="text-[#2d2a26] text-xs font-medium">{val || "—"}</span>;
+        },
+        size: 50,
       },
       // Zip
       {
         accessorKey: "zip",
-        header: () => <span className="uppercase tracking-wider text-[10px] text-[#2d2a26] font-bold">Zip</span>,
-        cell: (info) => <span className="text-[#2d2a26] font-mono">{info.getValue() as string}</span>,
-        size: 55,
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="flex items-center gap-1 font-bold text-[#6b5e52] hover:text-[#1f1d1a] transition-colors outline-none uppercase tracking-wider text-[10px]"
+          >
+            <span>ZIP</span>
+            <ArrowUpDown size={10} className="text-[#9A8B7A]" />
+          </button>
+        ),
+        cell: (info) => (
+          <span className="text-[#2d2a26] font-mono text-xs">
+            {info.getValue() as string || "—"}
+          </span>
+        ),
+        size: 65,
       },
       // Phone
       {
         accessorKey: "phone",
-        header: () => <span className="uppercase tracking-wider text-[10px] text-[#2d2a26] font-bold">Phone</span>,
-        cell: (info) => <span className="text-[#2d2a26] font-semibold font-mono">{info.getValue() as string}</span>,
-        size: 110,
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="flex items-center gap-1 font-bold text-[#6b5e52] hover:text-[#1f1d1a] transition-colors outline-none uppercase tracking-wider text-[10px]"
+          >
+            <span>PHONE</span>
+            <ArrowUpDown size={10} className="text-[#9A8B7A]" />
+          </button>
+        ),
+        cell: (info) => (
+          <span className="text-[#2d2a26] font-medium text-xs whitespace-nowrap">
+            {info.getValue() as string || "—"}
+          </span>
+        ),
+        size: 115,
       },
-      // Executive
+      // Executive (EXEC)
       {
         accessorKey: "primaryExec",
-        header: () => <span className="uppercase tracking-wider text-[10px] text-[#2d2a26] font-bold">Exec</span>,
-        cell: (info) => <span className="text-[#2d2a26] truncate">{info.getValue() as string}</span>,
-        size: 120,
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="flex items-center gap-1 font-bold text-[#6b5e52] hover:text-[#1f1d1a] transition-colors outline-none uppercase tracking-wider text-[10px]"
+          >
+            <span>EXEC</span>
+            <ArrowUpDown size={10} className="text-[#9A8B7A]" />
+          </button>
+        ),
+        cell: (info) => (
+          <span className="text-[#2d2a26] text-xs font-medium truncate block">
+            {info.getValue() as string || "Unassigned"}
+          </span>
+        ),
+        size: 130,
       },
-      // Primary Type
+      // Type (Commercial)
       {
         accessorKey: "type",
-        header: () => <span className="uppercase tracking-wider text-[10px] text-[#2d2a26] font-bold">Type</span>,
-        cell: (info) => <span className="text-[#2d2a26] font-medium">{info.getValue() as string}</span>,
-        size: 90,
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="flex items-center gap-1 font-bold text-[#6b5e52] hover:text-[#1f1d1a] transition-colors outline-none uppercase tracking-wider text-[10px]"
+          >
+            <span>TYPE</span>
+            <ArrowUpDown size={10} className="text-[#9A8B7A]" />
+          </button>
+        ),
+        cell: (info) => (
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#EBF5FF] text-[#2563EB]">
+            {info.getValue() as string || "Commercial"}
+          </span>
+        ),
+        size: 100,
+      },
+      // Action Column
+      {
+        id: "action",
+        header: () => (
+          <span className="uppercase tracking-wider text-[10px] text-[#6b5e52] font-bold">
+            ACTION
+          </span>
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center justify-center">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/agency/customer/${row.original.id}`);
+              }}
+              className="p-1 rounded-lg text-[#8c827a] hover:text-[#2d2a26] hover:bg-[#FAF8F5] transition-colors cursor-pointer"
+              title="More Actions"
+            >
+              <MoreVertical size={16} />
+            </button>
+          </div>
+        ),
+        size: 50,
       },
     ],
     [router]
@@ -224,20 +372,21 @@ export default function CustomerTable({
     },
   });
 
+  const pageCount = table.getPageCount();
+  const currentPage = table.getState().pagination.pageIndex;
+
   return (
-    <div
-      className="border border-[#e5ddd5] rounded-2xl bg-white flex flex-col font-sans select-none shrink-0 shadow-sm overflow-hidden"
-    >
+    <div className="border border-[#e5ddd5] rounded-2xl bg-white flex flex-col font-sans select-none shrink-0 shadow-2xs overflow-hidden">
       {/* Table grid wrapper */}
       <div className="overflow-x-auto min-h-[380px]">
-        <table className="premium-table table-fixed">
+        <table className="w-full text-xs text-left border-collapse">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="border-b border-[#e5ddd5]">
+              <tr key={headerGroup.id} className="border-b border-[#e5ddd5] bg-white">
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="border-r border-[#e5ddd5]/30 last:border-r-0 align-middle select-none sticky top-0 z-30 font-semibold table-header bg-[#FAF8F5]"
+                    className="px-3.5 py-3 align-middle select-none font-bold text-[#6b5e52]"
                     style={{ width: header.getSize() }}
                   >
                     {header.isPlaceholder
@@ -257,9 +406,8 @@ export default function CustomerTable({
                     key={row.id}
                     onClick={() => {
                       if (onRowClick) onRowClick(row.original);
-                      // Exclusive single select on row click: unselect previous, select current
                       setSelectedRowIds((prev) => {
-                        if (prev[row.id] && Object.keys(prev).filter(k => prev[k]).length === 1) {
+                        if (prev[row.id] && Object.keys(prev).filter((k) => prev[k]).length === 1) {
                           return {};
                         }
                         return { [row.id]: true };
@@ -272,12 +420,15 @@ export default function CustomerTable({
                     }
                     className={`transition-all cursor-pointer ${
                       isSelected
-                        ? "!bg-[#ede5db] text-[#2d2a26] font-bold ring-2 ring-inset ring-[#9A8B7A]/40 shadow-sm border-l-4 border-l-[#9A8B7A]"
-                        : "hover:bg-[#f5f1eb] odd:bg-white even:bg-[#f5f1eb]/20"
+                        ? "!bg-[#FAF6EE] text-[#1f1d1a]"
+                        : "hover:bg-[#FAF8F5]/80"
                     }`}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="border-r border-[#e5ddd5]/30 last:border-r-0 truncate align-middle table-body">
+                      <td
+                        key={cell.id}
+                        className="px-3.5 py-3 align-middle truncate text-xs"
+                      >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}
@@ -286,7 +437,7 @@ export default function CustomerTable({
               })
             ) : (
               <tr className="bg-white">
-                <td colSpan={columns.length} className="text-center py-20 text-[#6b5e52] font-medium table-body">
+                <td colSpan={columns.length} className="text-center py-20 text-[#6b5e52] font-medium">
                   No customer records found matching the criteria.
                 </td>
               </tr>
@@ -295,20 +446,18 @@ export default function CustomerTable({
         </table>
       </div>
 
-      {/* Paginated Footer */}
-      <div
-        className="px-6 py-4 bg-white border-t border-[#e5ddd5] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-[#6b5e52] shrink-0 select-none shadow-sm"
-      >
+      {/* Paginated Footer Matching Screenshot */}
+      <div className="px-5 py-3.5 bg-white border-t border-[#e5ddd5] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-[#6b5e52] shrink-0 select-none">
         {/* Left section: Records Indicator */}
         <div className="flex items-center gap-2.5">
-          <span className="text-[11px] uppercase tracking-wider text-[#6b5e52] font-bold">Show:</span>
+          <span className="text-xs text-[#6b5e52] font-medium">Show:</span>
           <div className="relative">
             <select
               value={table.getState().pagination.pageSize}
               onChange={(e) => {
                 table.setPageSize(Number(e.target.value));
               }}
-              className="h-8 pl-3 pr-8 border border-[#e5ddd5] rounded-full bg-white text-[#2d2a26] focus:outline-none focus:border-[#9A8B7A] text-xs font-bold transition-all appearance-none cursor-pointer"
+              className="h-8 pl-3 pr-7 border border-[#e5ddd5] rounded-xl bg-white text-[#2d2a26] focus:outline-none focus:border-[#795C46] text-xs font-semibold transition-all appearance-none cursor-pointer"
             >
               {[10, 15, 25, 50].map((pageSize) => (
                 <option key={pageSize} value={pageSize}>
@@ -316,72 +465,82 @@ export default function CustomerTable({
                 </option>
               ))}
             </select>
-            <ChevronDown size={12} className="text-[#6b5e52] absolute right-3 top-2.5 pointer-events-none" />
+            <ChevronDown size={12} className="text-[#6b5e52] absolute right-2.5 top-2.5 pointer-events-none" />
           </div>
           <span className="text-[#e5ddd5]">|</span>
           <span className="text-[#6b5e52] font-medium">
-            Total: <strong className="text-[#2d2a26]">{table.getFilteredRowModel().rows.length}</strong> records
+            Total: <strong className="text-[#2d2a26] font-bold">{table.getFilteredRowModel().rows.length}</strong> records
           </span>
         </div>
 
-        {/* Center: Pagination controls */}
+        {/* Right: Pagination controls */}
         <div className="flex items-center gap-1.5 font-bold justify-center">
           {/* Double left */}
           <button
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}
-            className="h-8 w-8 rounded-full border border-[#e5ddd5] bg-white hover:bg-[#f5f1eb] text-[#6b5e52] hover:text-[#2d2a26] disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center transition-all shadow-sm"
+            className="h-7 w-7 rounded-lg border border-[#e5ddd5] bg-white hover:bg-[#FAF8F5] text-[#6b5e52] hover:text-[#1f1d1a] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center transition-all"
             title="First Page"
           >
-            <ChevronsLeft size={14} />
+            <ChevronsLeft size={13} />
           </button>
 
           {/* Single left */}
           <button
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="h-8 w-8 rounded-full border border-[#e5ddd5] bg-white hover:bg-[#f5f1eb] text-[#6b5e52] hover:text-[#2d2a26] disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center transition-all shadow-sm"
+            className="h-7 w-7 rounded-lg border border-[#e5ddd5] bg-white hover:bg-[#FAF8F5] text-[#6b5e52] hover:text-[#1f1d1a] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center transition-all"
             title="Previous Page"
           >
-            <ChevronLeft size={14} />
+            <ChevronLeft size={13} />
           </button>
 
-          {/* Page Indicator */}
-          <div className="flex items-center gap-1 px-4 py-1.5 bg-[#f5f1eb] border border-[#e5ddd5] rounded-full text-xs text-[#2d2a26]">
-            <span>Page</span>
-            <strong className="text-[#9A8B7A]">{table.getState().pagination.pageIndex + 1}</strong>
-            <span>of</span>
-            <strong>{Math.max(1, table.getPageCount())}</strong>
-          </div>
+          {/* Page numbers: 1, 2, ... */}
+          {Array.from({ length: Math.min(pageCount || 1, 5) }).map((_, pIdx) => {
+            const isCurrent = currentPage === pIdx;
+            return (
+              <button
+                key={pIdx}
+                onClick={() => table.setPageIndex(pIdx)}
+                className={`h-7 w-7 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
+                  isCurrent
+                    ? "bg-[#795C46] text-white shadow-xs"
+                    : "text-[#2d2a26] hover:bg-[#FAF8F5] border border-transparent hover:border-[#e5ddd5]"
+                }`}
+              >
+                {pIdx + 1}
+              </button>
+            );
+          })}
 
           {/* Single right */}
           <button
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="h-8 w-8 rounded-full border border-[#e5ddd5] bg-white hover:bg-[#f5f1eb] text-[#6b5e52] hover:text-[#2d2a26] disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center transition-all shadow-sm"
+            className="h-7 w-7 rounded-lg border border-[#e5ddd5] bg-white hover:bg-[#FAF8F5] text-[#6b5e52] hover:text-[#1f1d1a] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center transition-all"
             title="Next Page"
           >
-            <ChevronRight size={14} />
+            <ChevronRight size={13} />
           </button>
 
           {/* Double right */}
           <button
             onClick={() => table.setPageIndex(table.getPageCount() - 1)}
             disabled={!table.getCanNextPage()}
-            className="h-8 w-8 rounded-full border border-[#e5ddd5] bg-white hover:bg-[#f5f1eb] text-[#6b5e52] hover:text-[#2d2a26] disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center transition-all shadow-sm"
+            className="h-7 w-7 rounded-lg border border-[#e5ddd5] bg-white hover:bg-[#FAF8F5] text-[#6b5e52] hover:text-[#1f1d1a] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center transition-all"
             title="Last Page"
           >
-            <ChevronsRight size={14} />
+            <ChevronsRight size={13} />
           </button>
 
-          {/* Refresh double-arrow */}
+          {/* Refresh icon */}
           {onRefresh && (
             <button
               onClick={onRefresh}
-              className="ml-2 h-8 w-8 rounded-full border border-[#e5ddd5] bg-white hover:bg-[#f5f1eb] text-[#6b5e52] hover:text-[#2d2a26] flex items-center justify-center cursor-pointer transition-all shadow-sm"
-              title="Reload current page"
+              className="ml-1 h-7 w-7 rounded-lg border border-[#e5ddd5] bg-white hover:bg-[#FAF8F5] text-[#6b5e52] hover:text-[#1f1d1a] flex items-center justify-center cursor-pointer transition-all"
+              title="Refresh table"
             >
-              <RefreshCw size={12} />
+              <RotateCw size={12} />
             </button>
           )}
         </div>

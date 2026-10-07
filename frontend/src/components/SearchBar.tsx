@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Search, ChevronDown } from "lucide-react";
+import { Search, ChevronDown, User, Layers } from "lucide-react";
 
 export interface AdvancedFilterState {
   searchQuery: string;
@@ -70,63 +70,83 @@ export default function SearchBar({
   setFilters,
   totalCount,
 }: SearchBarProps) {
-  const updateFilter = <K extends keyof AdvancedFilterState>(key: K, value: AdvancedFilterState[K]) => {
+  const updateFilter = <K extends keyof AdvancedFilterState>(
+    key: K,
+    value: AdvancedFilterState[K]
+  ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   return (
-    <div className="bg-white border border-[#e5ddd5] rounded-2xl font-sans shrink-0 select-none shadow-sm p-3 sm:px-5 sm:py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3">
-      {/* Search Input & Filter Dropdowns */}
-      <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap flex-1">
-        {/* Search Input */}
-        <div className="relative flex-1 min-w-[220px] max-w-sm">
-          <input
-            type="text"
-            value={filters.searchQuery}
-            onChange={(e) => updateFilter("searchQuery", e.target.value)}
-            className="w-full h-9 pl-9 pr-3 border border-[#e5ddd5] rounded-full bg-[#FAF8F5] text-xs font-semibold text-[#2d2a26] placeholder:text-[#9A8B7A] focus:outline-none focus:border-[#9A8B7A] focus:bg-white transition-all shadow-xs"
-            placeholder="Search..."
-          />
-          <Search size={14} className="text-[#9A8B7A] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-        </div>
-
-        {/* Search By Dropdown */}
-        <div className="relative">
-          <select
-            value={filters.searchBy}
-            onChange={(e) => updateFilter("searchBy", e.target.value)}
-            className="h-9 pl-3.5 pr-8 border border-[#e5ddd5] rounded-full bg-white text-xs font-semibold text-[#2d2a26] focus:outline-none focus:border-[#9A8B7A] appearance-none cursor-pointer shadow-xs hover:border-[#9A8B7A]/60 transition-colors"
-          >
-            <option value="Name">All Names</option>
-            <option value="Policy #">Policy #</option>
-            <option value="Account #">Account #</option>
-            <option value="Claim #">Claim #</option>
-            <option value="Email">Email</option>
-            <option value="More">All Fields</option>
-          </select>
-          <ChevronDown size={13} className="text-[#9A8B7A] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-        </div>
-
-        {/* Status Dropdown */}
-        <div className="relative">
-          <select
-            value={filters.statusFilter}
-            onChange={(e) => updateFilter("statusFilter", e.target.value as AdvancedFilterState["statusFilter"])}
-            className="h-9 pl-3.5 pr-8 border border-[#e5ddd5] rounded-full bg-white text-xs font-semibold text-[#2d2a26] focus:outline-none focus:border-[#9A8B7A] appearance-none cursor-pointer shadow-xs hover:border-[#9A8B7A]/60 transition-colors"
-          >
-            <option value="All">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
-          <ChevronDown size={13} className="text-[#9A8B7A] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+    <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full font-sans select-none">
+      {/* Search Input with Ctrl + K */}
+      <div className="relative flex-1 min-w-[280px]">
+        <Search
+          size={15}
+          className="text-[#8c827a] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+        />
+        <input
+          type="text"
+          value={filters.searchQuery}
+          onChange={(e) => updateFilter("searchQuery", e.target.value)}
+          className="w-full h-10 pl-9 pr-20 border border-[#e5ddd5] rounded-xl bg-white text-xs font-medium text-[#1f1d1a] placeholder:text-[#8c827a] focus:outline-none focus:border-[#795C46] transition-all shadow-2xs"
+          placeholder="Search by name, email, phone, address..."
+        />
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
+          <span className="text-[10px] font-semibold text-[#8c827a] bg-[#FAF8F5] px-2 py-0.5 rounded border border-[#e5ddd5]">
+            Ctrl + K
+          </span>
         </div>
       </div>
 
-      {/* Right Side: Total Count */}
-      <div className="flex items-center justify-end shrink-0">
-        <span className="text-xs font-bold text-[#6b5e52] tracking-wide">
-          {totalCount} Total
-        </span>
+      {/* Filter Dropdown 1: All Names */}
+      <div className="relative">
+        <select
+          value={filters.searchBy}
+          onChange={(e) => updateFilter("searchBy", e.target.value)}
+          className="h-10 pl-8 pr-8 border border-[#e5ddd5] rounded-xl bg-white text-xs font-semibold text-[#2d2a26] focus:outline-none focus:border-[#795C46] appearance-none cursor-pointer shadow-2xs hover:bg-[#FAF8F5] transition-all"
+        >
+          <option value="Name">All Names</option>
+          <option value="Policy #">Policy #</option>
+          <option value="Account #">Account #</option>
+          <option value="Claim #">Claim #</option>
+          <option value="Email">Email</option>
+          <option value="More">All Fields</option>
+        </select>
+        <User
+          size={13}
+          className="text-[#6b5e52] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+        />
+        <ChevronDown
+          size={13}
+          className="text-[#6b5e52] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+        />
+      </div>
+
+      {/* Filter Dropdown 2: All Statuses */}
+      <div className="relative">
+        <select
+          value={filters.statusFilter}
+          onChange={(e) =>
+            updateFilter(
+              "statusFilter",
+              e.target.value as AdvancedFilterState["statusFilter"]
+            )
+          }
+          className="h-10 pl-8 pr-8 border border-[#e5ddd5] rounded-xl bg-white text-xs font-semibold text-[#2d2a26] focus:outline-none focus:border-[#795C46] appearance-none cursor-pointer shadow-2xs hover:bg-[#FAF8F5] transition-all"
+        >
+          <option value="All">All Statuses</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+        <Layers
+          size={13}
+          className="text-[#6b5e52] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+        />
+        <ChevronDown
+          size={13}
+          className="text-[#6b5e52] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+        />
       </div>
     </div>
   );

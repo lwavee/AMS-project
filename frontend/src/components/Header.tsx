@@ -22,7 +22,8 @@ import {
   FileText,
   StickyNote,
   Mail,
-  RefreshCw
+  RefreshCw,
+  Landmark
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -110,12 +111,18 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
     <header className="bg-[#f5f1eb] px-4 sm:px-8 pt-5 pb-3 select-none shrink-0">
       <div className="max-w-[1600px] mx-auto flex items-center justify-between">
 
-        {/* Brand: Sterling Insurance Services Pill */}
+        {/* Brand: Sterling Insurance Services Pill (Matching Screenshot) */}
         <div
           onClick={() => router.push(userRole === "admin" ? "/admin/dashboard" : "/agency/dashboard")}
-          className="bg-[#8D7B68] hover:bg-[#7D6B58] text-white px-6 py-3 rounded-2xl text-base sm:text-xl font-bold shadow-xs cursor-pointer transition-colors"
+          className="bg-[#795C46] hover:bg-[#684e3a] text-white px-5 py-2.5 rounded-2xl shadow-xs cursor-pointer transition-all flex items-center gap-3.5"
         >
-          Sterling Insurance Services
+          <div className="h-9 w-9 flex items-center justify-center shrink-0">
+            <Landmark size={24} className="stroke-[2.2]" />
+          </div>
+          <div className="flex flex-col text-left">
+            <span className="font-extrabold text-sm sm:text-base leading-tight tracking-tight">Sterling AMS</span>
+            <span className="text-[11px] text-white/80 font-medium">Manage your customers and grow your business</span>
+          </div>
         </div>
 
         {/* Right Actions Toolbar */}
@@ -125,10 +132,13 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
             <button
               type="button"
               onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-              className="h-10 w-10 rounded-full bg-[#8D7B68] hover:bg-[#7D6B58] text-white flex items-center justify-center shadow-xs transition-colors cursor-pointer relative"
+              className="h-10 w-10 rounded-full border border-[#e5ddd5] bg-white hover:bg-[#FAF8F5] text-[#2d2a26] flex items-center justify-center shadow-xs transition-colors cursor-pointer relative"
               title="Notifications"
             >
               <Bell size={18} />
+              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-black rounded-full h-4 w-4 flex items-center justify-center border-2 border-white shadow-xs">
+                3
+              </span>
             </button>
 
             {/* Notification Dropdown Menu */}
@@ -138,8 +148,8 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
                   <span className="font-bold text-xs text-[#2d2a26] uppercase tracking-wider">
                     Notifications
                   </span>
-                  <span className="text-[10px] font-bold bg-[#8D7B68] text-white px-2 py-0.5 rounded-full">
-                    2 New
+                  <span className="text-[10px] font-bold bg-[#795C46] text-white px-2 py-0.5 rounded-full">
+                    3 New
                   </span>
                 </div>
                 <div className="max-h-64 overflow-y-auto divide-y divide-[#e5ddd5]/50">
@@ -161,10 +171,10 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
             <button
               type="button"
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="h-9 w-9 rounded-full bg-[#8D7B68] hover:bg-[#7D6B58] text-white flex items-center justify-center font-bold text-sm shadow-xs transition-colors cursor-pointer uppercase"
+              className="h-10 w-10 rounded-full bg-[#795C46] hover:bg-[#684e3a] text-white flex items-center justify-center font-black text-sm shadow-xs transition-colors cursor-pointer uppercase"
               title={userEmail}
             >
-              {userEmail ? userEmail.charAt(0) : "T"}
+              {userEmail ? userEmail.charAt(0) : "A"}
             </button>
 
             {/* User Profile Dropdown */}

@@ -37,7 +37,25 @@ import {
   FileArchive,
   Image as ImageIcon,
   File as FileIcon,
-  X
+  X,
+  MoreVertical,
+  RotateCcw,
+  ArrowUpDown,
+  History,
+  Users,
+  SquarePen,
+  Folder,
+  Layers,
+  Info,
+  CheckSquare,
+  Calculator,
+  List,
+  ListOrdered,
+  Link2,
+  MessageSquare,
+  Filter,
+  Search,
+  Clock
 } from "lucide-react";
 
 export default function CustomerProfilePage() {
@@ -58,10 +76,10 @@ export default function CustomerProfilePage() {
   const [policies, setPolicies] = useState<any[]>([]);
   const [selectedPolicyIndex, setSelectedPolicyIndex] = useState(0);
 
-  // Bottom Tabs - Default to "notes" as requested in screenshot 3
+  // Tabs State - 1: Policies, 2: Uploaded Documents, 3: Notes, 4: Status History, 5: Contact Information
   const [activeTab, setActiveTab] = useState<
-    "notes" | "status_history" | "contact_info" | "rating_info" | "all_policies" | "eforms"
-  >("notes");
+    "policies" | "documents" | "notes" | "status_history" | "contact_info"
+  >("policies");
 
   // Notify Filter Pills for Notes (Screenshot 3)
   const [noteFilters, setNoteFilters] = useState<string[]>(["Underwriter"]);
@@ -87,8 +105,104 @@ export default function CustomerProfilePage() {
   const [newNoteText, setNewNoteText] = useState("");
   const [noteLoading, setNoteLoading] = useState(false);
 
-  // Activities State
-  const [activities, setActivities] = useState<any[]>([]);
+  // Activities / History State (Matching Screenshot)
+  const DEFAULT_ACTIVITIES = [
+    {
+      id: "act-1",
+      date: "10/09/2026 11:26 AM",
+      type: "Note Added",
+      description: 'Added note: "hy hghghg"',
+      user: "AGENCY",
+      status: "NOTE CREATED",
+      statusType: "success"
+    },
+    {
+      id: "act-2",
+      date: "10/07/2026 11:59 PM",
+      type: "Note Added",
+      description: 'Added note: "hy"',
+      user: "AGENCY",
+      status: "NOTE CREATED",
+      statusType: "success"
+    },
+    {
+      id: "act-3",
+      date: "10/03/2026 11:43 PM",
+      type: "Document Uploaded",
+      description: "Attached document: PowerHosting_PreAdvance.pdf (1.9 MB)",
+      user: "AGENCY",
+      status: "DOC. ATTACHED",
+      statusType: "info"
+    },
+    {
+      id: "act-4",
+      date: "04/17/2026 11:20 AM",
+      type: "Master Certificate Created",
+      description: "Created Master Certificate of Insurance: ACORD 25 for General Liability Policy #POL-GL-100",
+      user: "TRAVEL DOLL",
+      status: "CERT. GENERATED",
+      statusType: "success"
+    },
+    {
+      id: "act-5",
+      date: "04/17/2026 10:44 AM",
+      type: "Certificate Holder Created",
+      description: "Added Holder: Travel Connection Co., 1000 Main St, Suite 101 - Los Angeles, CA",
+      user: "KOLB, MONTGOM...",
+      status: "HOLDER ADDED",
+      statusType: "success"
+    },
+    {
+      id: "act-6",
+      date: "08/17/2026 09:50 AM",
+      type: "New Policy Added",
+      description: "Added Policy: BAPC-GL-101 General Liability - $1,000,000 limit with XYZ Insurance Company",
+      user: "TRAVEL DOLL",
+      status: "POLICY ADDED",
+      statusType: "success"
+    },
+    {
+      id: "act-7",
+      date: "08/16/2026 02:16 PM",
+      type: "Document Attached",
+      description: "Attached document: ACORD_125_Commercial_Application.pdf (Application Document)",
+      user: "JOANA SARMIENTO",
+      status: "DOC. ATTACHED",
+      statusType: "info"
+    },
+    {
+      id: "act-8",
+      date: "08/16/2026 01:18 PM",
+      type: "Form Downloaded",
+      description: "Downloaded PDF: ACORD 25 Certificate of Liability Insurance",
+      user: "TRAVEL DOLL",
+      status: "DOWNLOADED",
+      statusType: "info"
+    },
+    {
+      id: "act-9",
+      date: "08/16/2026 11:48 AM",
+      type: "Note Added",
+      description: 'Added Note: "Customer request for updated invoice for policy renewal"',
+      user: "KARIM",
+      status: "NOTE CREATED",
+      statusType: "success"
+    },
+    {
+      id: "act-10",
+      date: "08/15/2026 10:00 AM",
+      type: "Customer Info Updated",
+      description: "Updated customer address: 1234 Oak St, Orlando, FL 32801",
+      user: "TRAVEL DOLL",
+      status: "UPDATED",
+      statusType: "warning"
+    }
+  ];
+
+  const [activities, setActivities] = useState<any[]>(DEFAULT_ACTIVITIES);
+  const [activitySearch, setActivitySearch] = useState("");
+  const [activityTypeFilter, setActivityTypeFilter] = useState("All Activity Types");
+  const [activityUserFilter, setActivityUserFilter] = useState("All Users");
 
   // Action Menu Dropdown
   const [actionMenuOpen, setActionMenuOpen] = useState(false);
@@ -524,6 +638,15 @@ export default function CustomerProfilePage() {
   const agencyDivision = customer.division || "Gamaty Insurance Agency LLC DBA Capital & Co";
   const preferredMethod = customer.preferred_method || customer.electronic_delivery || "Direct / Email";
 
+  const initials = (() => {
+    const raw = (customerFullName || displayName || "CU").trim();
+    const parts = raw.split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return raw.slice(0, 2).toUpperCase();
+  })();
+
   // Policies List
   const activeLOBList = policies.length > 0 ? policies : [
     {
@@ -588,574 +711,898 @@ export default function CustomerProfilePage() {
       <main className="flex-1 w-full p-4 md:p-6 lg:p-8 space-y-6">
 
         {/* ── 1. Customer Basic Detail Card (Screenshot 2) ── */}
-        <div className="bg-white border border-[#e5ddd5] rounded-2xl p-6 shadow-sm space-y-5 w-full">
+        <div className="bg-white border border-[#e5ddd5] rounded-3xl p-6 md:p-7 shadow-xs space-y-6 w-full">
 
-          {/* Header Title + ID */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-            <div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-xl md:text-2xl font-bold text-[#2d2a26] tracking-tight">
-                  {displayName}
-                </h1>
-                <span className={`px-2.5 py-0.5 border text-[11px] font-bold uppercase rounded-md tracking-wider ${customerStatus === "ACTIVE"
-                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                  : "bg-[#f5f1eb] text-[#6b5e52] border-[#e5ddd5]"
-                  }`}>
-                  {customerStatus}
-                </span>
-                <span className="px-2.5 py-0.5 bg-[#f5f1eb] border border-[#e5ddd5] text-[#6b5e52] text-[11px] font-semibold rounded-md">
-                  {customerType}
+          {/* Header Row: Left (Avatar + Details) | Right (Customer #ID + Actions) */}
+          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+            {/* Left Avatar + Info */}
+            <div className="flex items-start gap-4">
+              {/* Avatar Box */}
+              <div className="w-16 h-16 rounded-2xl bg-[#faeedd] flex items-center justify-center shrink-0 shadow-2xs">
+                <span className="text-xl font-bold text-[#5c3e28] tracking-tight">
+                  {initials}
                 </span>
               </div>
-              <p className="text-xs text-[#6b5e52] font-semibold mt-1">
-                Customer ID: {customerIdFormatted}
-              </p>
+
+              {/* Title, Badges, ID, Meta Row */}
+              <div className="space-y-1">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h1 className="text-xl md:text-2xl font-bold text-[#1f1d1a] tracking-tight">
+                    {displayName}
+                  </h1>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold bg-[#e8f8f0] text-[#059669]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" />
+                    {customer.status ? (customer.status.charAt(0).toUpperCase() + customer.status.slice(1).toLowerCase()) : "Active"}
+                  </span>
+                  <span className="px-3 py-0.5 rounded-full text-xs font-semibold bg-[#f7efe6] text-[#8c6b4b]">
+                    {customerType}
+                  </span>
+                </div>
+
+                <p className="text-xs text-[#8c827a] font-medium">
+                  Customer ID: {customerIdFormatted}
+                </p>
+
+                {/* Contact Meta Row */}
+                <div className="flex items-center gap-6 flex-wrap text-xs text-[#6b5e52] pt-2">
+                  <div className="flex items-center gap-1.5 font-medium">
+                    <User size={14} className="text-[#8c6b4b]" />
+                    <span>{customerFullName}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 font-medium">
+                    <MapPin size={14} className="text-[#8c6b4b]" />
+                    <span>{fullAddress}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 font-medium">
+                    <Phone size={14} className="text-[#8c6b4b]" />
+                    <span>{displayPhone}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 font-medium">
+                    <Mail size={14} className="text-[#8c6b4b]" />
+                    {displayEmail !== "—" ? (
+                      <a href={`mailto:${displayEmail}`} className="hover:underline text-[#2d2a26]">
+                        {displayEmail}
+                      </a>
+                    ) : (
+                      <span>No email</span>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="hidden md:block text-right">
-              <span className="text-xs font-semibold text-[#6b5e52]">
+
+            {/* Right Customer # + Action Buttons */}
+            <div className="flex flex-col items-start lg:items-end gap-3 shrink-0">
+              <span className="text-xs font-semibold text-[#8c827a]">
                 Customer #{customerIdFormatted}
               </span>
-            </div>
-          </div>
 
-          {/* Meta Info Row: Exec, Address, Phone, Email */}
-          <div className="flex items-center gap-6 flex-wrap text-xs text-[#6b5e52] pt-1">
-            <div className="flex items-center gap-1.5 font-medium">
-              <User size={14} className="text-[#9A8B7A]" />
-              <span>{customerFullName}</span>
-            </div>
+              <div className="flex items-center gap-2">
+                {/* 1 = Edit Customer */}
+                <button
+                  onClick={() => router.push(`/agency/new-customer?edit=${customerId}`)}
+                  className="h-9 px-4 bg-[#7a523b] hover:bg-[#68432e] text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-2 shadow-xs"
+                >
+                  <Edit3 size={13} className="text-white" />
+                  Edit Customer
+                </button>
 
-            <div className="flex items-center gap-1.5 font-medium">
-              <MapPin size={14} className="text-[#9A8B7A]" />
-              <span>{fullAddress}</span>
-            </div>
+                {/* 2 = E-Forms Manager */}
+                <button
+                  onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager`, "_blank")}
+                  className="h-9 px-4 bg-[#7a523b] hover:bg-[#68432e] text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-2 shadow-xs"
+                >
+                  <FileText size={13} className="text-white" />
+                  E-Forms Manager
+                </button>
 
-            <div className="flex items-center gap-1.5 font-medium">
-              <Phone size={14} className="text-[#9A8B7A]" />
-              <span>{displayPhone}</span>
-            </div>
-
-            <div className="flex items-center gap-1.5 font-medium">
-              <Mail size={14} className="text-[#9A8B7A]" />
-              {displayEmail !== "—" ? (
-                <a href={`mailto:${displayEmail}`} className="hover:underline text-[#2d2a26]">
-                  {displayEmail}
-                </a>
-              ) : (
-                <span>No email</span>
-              )}
-            </div>
-          </div>
-
-          {/* ── Top Action Buttons (Screenshot 1 & Screenshot 2) ── */}
-          <div className="pt-4 border-t border-[#f0e5d8] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-
-            {/* Left Status */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#2d2a26]">Customer Profile</span>
-              <span className="px-2.5 py-0.5 bg-[#f5f1eb] border border-[#e5ddd5] text-[#6b5e52] text-[10px] font-extrabold uppercase rounded-md tracking-wider">
-                {customerStatus}
-              </span>
-            </div>
-
-            {/* Right Action Button Group (Screenshot 1 Pill Buttons) */}
-            <div className="flex items-center gap-2.5 flex-wrap relative">
-
-              {/* Divider */}
-              <div className="h-6 w-px bg-[#e5ddd5] mx-1 hidden sm:block" />
-
-
-              {/* Edit Customer */}
-              <button
-                onClick={() => router.push(`/agency/new-customer?edit=${customerId}`)}
-                className="h-9 px-4 bg-white border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#2d2a26] text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
-              >
-                <Edit3 size={13} className="text-[#6b5e52]" />
-                Edit Customer
-              </button>
-
-            </div>
-
-          </div>
-
-          {/* Customer Summary Grid (Screenshot 2) */}
-          <div className="pt-4 border-t border-[#f0e5d8] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div>
-              <p className="text-xs font-bold text-[#6b5e52]">Total Policies:</p>
-              <p className="text-base font-extrabold text-[#2d2a26] mt-0.5">
-                {policies.length} {policies.length === 1 ? "Policy" : "Policies"}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-xs font-bold text-[#6b5e52]">Customer Since:</p>
-              <p className="text-sm font-semibold text-[#2d2a26] mt-0.5">{createDate}</p>
-            </div>
-
-            <div>
-              <p className="text-xs font-bold text-[#6b5e52]">Agency / Division:</p>
-              <p className="text-xs font-semibold text-[#2d2a26] mt-0.5 leading-snug">{agencyDivision}</p>
-            </div>
-
-            <div>
-              <p className="text-xs font-bold text-[#6b5e52]">Primary Executive:</p>
-              <p className="text-sm font-semibold text-[#2d2a26] mt-0.5">{primaryExec}</p>
-            </div>
-
-            <div>
-              <p className="text-xs font-bold text-[#6b5e52]">Delivery Preference:</p>
-              <p className="text-sm font-semibold text-[#2d2a26] mt-0.5">{preferredMethod}</p>
-            </div>
-
-            <div>
-              <p className="text-xs font-bold text-[#6b5e52]">Agent Name:</p>
-              <p className="text-sm font-semibold text-[#2d2a26] mt-0.5">{agentName}</p>
-            </div>
-          </div>
-
-        </div>
-
-        {/* ── 2. Policy Detail & Active Policies Section ── */}
-        <div id="policies-section" className="bg-white border border-[#e5ddd5] rounded-2xl p-6 shadow-sm space-y-6 w-full">
-
-          {/* Policy Section Header + Action Pill Buttons */}
-          <div className="border-b border-[#e5ddd5] pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-base font-bold text-[#2d2a26] flex items-center gap-2">
-                <Shield size={18} className="text-[#795C46]" />
-                Policies & Coverage ({policies.length})
-              </h2>
-              <p className="text-xs text-[#6b5e52] mt-0.5 font-medium">
-                Manage and view active policies, renewals, rewrites, and coverages
-              </p>
-            </div>
-
-            {/* Action Pill Buttons on Policy Table Header */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={() => window.open(`/agency/customer/${customerId}/new-policy`, "_blank")}
-                className="h-8 px-4 bg-[#795C46] hover:bg-[#634b39] text-white text-xs font-bold rounded-full shadow-xs transition-all cursor-pointer border-none flex items-center gap-1.5"
-              >
-                <Plus size={13} />
-                New Policy
-              </button>
-
-              <button
-                onClick={() => showToast("Renew policy initiated for selected policy.", "success")}
-                className="h-8 px-4 bg-white border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#2d2a26] text-xs font-bold rounded-full transition-all cursor-pointer shadow-2xs"
-              >
-                Renew
-              </button>
-
-              <button
-                onClick={() => showToast("Rewrite policy initiated for selected policy.", "success")}
-                className="h-8 px-4 bg-white border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#2d2a26] text-xs font-bold rounded-full transition-all cursor-pointer shadow-2xs"
-              >
-                Rewrite
-              </button>
-
-              <button
-                onClick={async () => {
-                  if (await confirmDialog("Are you sure you want to cancel the selected policy?", "Cancel Policy")) {
-                    showToast("Cancellation request submitted.", "success");
-                  }
-                }}
-                className="h-8 px-4 bg-white border border-[#e5ddd5] hover:bg-red-50 hover:text-red-700 text-[#2d2a26] text-xs font-bold rounded-full transition-all cursor-pointer shadow-2xs"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-
-          {/* ── Policy Table ── */}
-          <div className="border border-[#e5ddd5] rounded-xl overflow-hidden shadow-2xs">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-[#FAF8F5] text-[#6b5e52] font-bold border-b border-[#e5ddd5]">
-                <tr>
-                  <th className="w-12 text-center py-2.5 px-3">Select</th>
-                  <th className="px-4 py-2.5">Policy #</th>
-                  <th className="px-4 py-2.5">Status</th>
-                  <th className="px-4 py-2.5">Term</th>
-                  <th className="px-4 py-2.5">Line of Business</th>
-                  <th className="px-4 py-2.5">Insurance Carrier</th>
-                  <th className="px-4 py-2.5">Effective Date</th>
-                  <th className="px-4 py-2.5">Expiration Date</th>
-                  <th className="px-4 py-2.5 text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#e5ddd5]">
-                {activeLOBList.map((p, idx) => {
-                  const isSelected = selectedPolicyIndex === idx;
-                  return (
-                    <tr
-                      key={p.id || idx}
-                      onClick={() => setSelectedPolicyIndex(idx)}
-                      className={`cursor-pointer transition-colors ${isSelected ? "bg-[#FAF8F5] font-semibold" : "hover:bg-[#FAF8F5]/60"
-                        }`}
-                    >
-                      <td className="text-center py-3 px-3">
-                        <input
-                          type="radio"
-                          name="policy_select"
-                          checked={isSelected}
-                          onChange={() => setSelectedPolicyIndex(idx)}
-                          className="accent-[#795C46] cursor-pointer"
-                        />
-                      </td>
-                      <td className="px-4 py-3 font-bold">
-                        <span
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open(
-                              `/agency/customer/${customerId}/policy/${p.id}`,
-                              "_blank",
-                              "width=1100,height=850"
-                            );
-                          }}
-                          className="text-[#795C46] hover:underline cursor-pointer"
-                        >
-                          {p.policyNum}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded text-[10px] font-bold uppercase">
-                          {p.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-[#2d2a26]">{p.term}</td>
-                      <td className="px-4 py-3 font-semibold text-[#2d2a26]">{p.type}</td>
-                      <td className="px-4 py-3 text-[#6b5e52]">{p.company}</td>
-                      <td className="px-4 py-3 text-[#6b5e52]">{p.effDate}</td>
-                      <td className="px-4 py-3 text-[#6b5e52]">{p.expDate}</td>
-                      <td className="px-4 py-3 text-center">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open(
-                              `/agency/customer/${customerId}/policy/${p.id}`,
-                              "_blank",
-                              "width=1100,height=850"
-                            );
-                          }}
-                          className="px-2.5 py-1 bg-white border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#2d2a26] rounded text-[11px] font-bold cursor-pointer shadow-2xs"
-                        >
-                          View Policy
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-        </div>
-
-        {/* ── 3. Uploaded Documents Section (Screenshot 4) ── */}
-        <div className="bg-white border border-[#e5ddd5] rounded-2xl p-6 shadow-sm space-y-4 w-full">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-[#2d2a26]">Uploaded Documents</h3>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="text-xs font-bold text-[#795C46] hover:text-[#634b39] flex items-center gap-1 cursor-pointer"
-            >
-              <Upload size={13} />
-              Upload New File
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left 70% - Dashed Dropzone */}
-            <div
-              onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-              onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }}
-              onDrop={handleFileDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className={`lg:col-span-8 border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${isDragOver
-                ? "border-[#795C46] bg-[#795C46]/5 scale-[0.99]"
-                : "border-[#e5ddd5] hover:border-[#9A8B7A] bg-[#FAF8F5]"
-                }`}
-            >
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileInputChange}
-                className="hidden"
-              />
-              <div className={`h-14 w-14 rounded-full flex items-center justify-center mb-4 transition-all shadow-xs ${isDragOver ? 'bg-[#795C46] text-white' : 'bg-white border border-[#e5ddd5] text-[#795C46]'}`}>
-                <CloudUpload size={28} />
+                {/* 3 = Three dots */}
+                <button
+                  onClick={() => router.push(`/agency/customer/${customerId}/new-activity`)}
+                  className="h-9 w-9 rounded-xl border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#6b5e52] hover:text-[#2d2a26] flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                  title="More Options"
+                >
+                  <MoreVertical size={16} />
+                </button>
               </div>
-              <p className="text-sm font-bold text-[#2d2a26] mb-1">
-                Click to browse or drag files here
-              </p>
-              <p className="text-[11px] font-medium text-[#6b5e52]">
-                Support for PDF, DOCX, PNG, ZIP up to 10MB
-              </p>
-            </div>
-
-            {/* Right 30% - Subjective Lines */}
-            <div className="lg:col-span-4 bg-[#FAF8F5] border border-[#e5ddd5] rounded-2xl p-4 space-y-3">
-              <h4 className="text-xs font-bold text-[#2d2a26]">Subjective Lines</h4>
-              <label className="flex items-start gap-2 text-[11px] text-[#6b5e52] cursor-pointer">
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  className="mt-0.5 accent-[#795C46] rounded cursor-pointer"
-                />
-                <span>1 year of loss runs required, valued within 60 days of inception.</span>
-              </label>
             </div>
           </div>
 
-          {/* Documents Table */}
-          <div className="border border-[#e5ddd5] rounded-xl overflow-hidden mt-4">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-[#FAF8F5] text-[#6b5e52] font-bold border-b border-[#e5ddd5]">
-                <tr>
-                  <th className="px-4 py-2.5">Filename</th>
-                  <th className="px-4 py-2.5">Category</th>
-                  <th className="px-4 py-2.5">Description</th>
-                  <th className="px-4 py-2.5">Uploaded On</th>
-                  <th className="px-4 py-2.5 text-center">Manage</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#e5ddd5]">
-                {docLoading ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-6 text-center text-[#6b5e52]">
-                      <Loader2 className="animate-spin text-[#9A8B7A] mx-auto size-5 mb-1" />
-                      Loading files...
-                    </td>
-                  </tr>
-                ) : documents.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-[#6b5e52]/70 font-medium">
-                      No documents uploaded yet
-                    </td>
-                  </tr>
-                ) : (
-                  documents.map((doc) => (
-                    <tr key={doc.id} className="hover:bg-[#FAF8F5] transition-colors group">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-lg bg-white border border-[#e5ddd5] flex items-center justify-center text-[#9A8B7A] shrink-0 shadow-2xs group-hover:border-[#795C46] group-hover:text-[#795C46] transition-colors">
-                            {doc.fileName?.toLowerCase().endsWith('.pdf') ? <FileText size={15} /> :
-                              doc.fileName?.toLowerCase().match(/\.(jpg|jpeg|png)$/) ? <ImageIcon size={15} /> :
-                                doc.fileName?.toLowerCase().endsWith('.zip') ? <FileArchive size={15} /> :
-                                  <FileIcon size={15} />}
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="font-bold text-[#2d2a26] text-xs max-w-[200px] truncate" title={doc.fileName}>
-                              {doc.fileName || "Document"}
-                            </span>
-                            {doc.ext && <span className="text-[9px] uppercase tracking-wider text-[#9A8B7A] font-bold">{doc.ext.replace('.', '')}</span>}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-[#6b5e52]">
-                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${doc.action === 'Policy Attachment' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                            doc.action === 'Loss Runs' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                              doc.action === 'Signed Binder' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                'bg-[#f5f1eb] text-[#6b5e52] border-[#e5ddd5]'
-                          }`}>
-                          {doc.action || "Upload"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-[#6b5e52] max-w-[200px] truncate font-medium text-[11px]" title={doc.description}>
-                        {doc.description || "—"}
-                      </td>
-                      <td className="px-4 py-3 font-medium text-[#6b5e52] text-[11px]">
-                        {doc.createdAt}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
-                          {doc.url && (
-                            <a
-                              href={doc.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="p-1.5 rounded-lg text-[#6b5e52] hover:text-[#795C46] hover:bg-white border border-transparent hover:border-[#e5ddd5] hover:shadow-2xs transition-all"
-                              title="View Document"
-                            >
-                              <Eye size={14} />
-                            </a>
-                          )}
-                          <button
-                            onClick={() => handleDeleteDocument(doc.id)}
-                            className="p-1.5 rounded-lg text-[#6b5e52] hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 transition-all cursor-pointer"
-                            title="Delete Document"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+          {/* ── Metric Cards Grid (Screenshot 2) ── */}
+          <div className="pt-5 border-t border-[#f0e5d8] space-y-4">
+            {/* Row 1: 4 Cards */}
+            <div className="border border-[#ebe5df] rounded-2xl grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[#ebe5df] bg-white">
+              {/* Total Policies */}
+              <div className="p-4 flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-xl bg-[#edeefc] text-[#5e5cee] flex items-center justify-center shrink-0">
+                  <FileText size={18} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-[#8c827a] font-medium">Total Policies</p>
+                  <p className="text-base font-bold text-[#1f1d1a] leading-tight mt-0.5">
+                    {policies.length}
+                  </p>
+                  <p className="text-[11px] text-[#8c827a] font-normal mt-0.5">Active policies</p>
+                </div>
+              </div>
+
+              {/* Customer Since */}
+              <div className="p-4 flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-xl bg-[#e6f7ef] text-[#10b981] flex items-center justify-center shrink-0">
+                  <Calendar size={18} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-[#8c827a] font-medium">Customer Since</p>
+                  <p className="text-base font-bold text-[#1f1d1a] leading-tight mt-0.5">
+                    {createDate}
+                  </p>
+                  <p className="text-[11px] text-[#8c827a] font-normal mt-0.5">Client with us</p>
+                </div>
+              </div>
+
+              {/* Agency / Division */}
+              <div className="p-4 flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-xl bg-[#fef3e7] text-[#d97706] flex items-center justify-center shrink-0">
+                  <Building2 size={18} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-[#8c827a] font-medium">Agency / Division</p>
+                  <p className="text-base font-bold text-[#1f1d1a] leading-tight mt-0.5 truncate" title={agencyDivision}>
+                    {agencyDivision}
+                  </p>
+                  <p className="text-[11px] text-[#8c827a] font-normal mt-0.5">Assigned agency</p>
+                </div>
+              </div>
+
+              {/* Primary Executive */}
+              <div className="p-4 flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-xl bg-[#e8f3fe] text-[#0284c7] flex items-center justify-center shrink-0">
+                  <User size={18} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-[#8c827a] font-medium">Primary Executive</p>
+                  <p className="text-base font-bold text-[#1f1d1a] leading-tight mt-0.5 truncate" title={primaryExec}>
+                    {primaryExec}
+                  </p>
+                  <p className="text-[11px] text-[#8c827a] font-normal mt-0.5">Account executive</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Row 2: 2 Cards (aligned with first 2 columns) */}
+            <div className="border border-[#ebe5df] rounded-2xl grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#ebe5df] bg-white w-full lg:w-1/2">
+              {/* Delivery Preference */}
+              <div className="p-4 flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-xl bg-[#fdeeed] text-[#ef4444] flex items-center justify-center shrink-0">
+                  <Mail size={18} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-[#8c827a] font-medium">Delivery Preference</p>
+                  <p className="text-base font-bold text-[#1f1d1a] leading-tight mt-0.5 truncate">
+                    {preferredMethod}
+                  </p>
+                </div>
+              </div>
+
+              {/* Agent Name */}
+              <div className="p-4 flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-xl bg-[#e6f7ef] text-[#10b981] flex items-center justify-center shrink-0">
+                  <User size={18} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-[#8c827a] font-medium">Agent Name</p>
+                  <p className="text-base font-bold text-[#1f1d1a] leading-tight mt-0.5 truncate" title={agentName}>
+                    {agentName}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
         </div>
 
-        {/* ── 4. Bottom Tabbed Section (Screenshot 3 Notes Thread Layout) ── */}
-        <div className="bg-white border border-[#e5ddd5] rounded-2xl p-6 shadow-sm space-y-6 w-full">
+        {/* ── Tabs Navigation Bar Card (Screenshot 1) ── */}
+        <div className="bg-white border border-[#e5ddd5] rounded-2xl p-2.5 shadow-xs flex items-center gap-2 overflow-x-auto w-full">
+          {/* Tab 1: Policies (4) */}
+          <button
+            onClick={() => setActiveTab("policies")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap ${activeTab === "policies"
+              ? "bg-[#F5EDE5] text-[#795C46] border-b-2 border-[#795C46] shadow-2xs font-extrabold"
+              : "text-[#6b5e52] hover:bg-[#FAF8F5] hover:text-[#2d2a26]"
+              }`}
+          >
+            <Shield size={16} className={activeTab === "policies" ? "text-[#795C46]" : "text-[#795C46]"} />
+            <span>Policies ({policies.length})</span>
+          </button>
 
-          {/* Bottom Tabs Nav */}
-          <div className="border-b border-[#e5ddd5] flex items-center gap-8 overflow-x-auto">
-            <button
-              onClick={() => setActiveTab("notes")}
-              className={`pb-3 font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${activeTab === "notes"
-                ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
-                : "text-[#6b5e52] hover:text-[#2d2a26]"
-                }`}
-            >
-              Notes
-            </button>
+          {/* Tab 2: Uploaded Documents */}
+          <button
+            onClick={() => setActiveTab("documents")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap ${activeTab === "documents"
+              ? "bg-[#F5EDE5] text-[#795C46] border-b-2 border-[#795C46] shadow-2xs font-extrabold"
+              : "text-[#6b5e52] hover:bg-[#FAF8F5] hover:text-[#2d2a26]"
+              }`}
+          >
+            <FileText size={16} className={activeTab === "documents" ? "text-[#795C46]" : "text-blue-500"} />
+            <span>Uploaded Documents {documents.length > 0 ? `(${documents.length})` : ""}</span>
+          </button>
 
-            <button
-              onClick={() => setActiveTab("status_history")}
-              className={`pb-3 font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${activeTab === "status_history"
-                ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
-                : "text-[#6b5e52] hover:text-[#2d2a26]"
-                }`}
-            >
-              Status History
-            </button>
+          {/* Tab 3: Notes */}
+          <button
+            onClick={() => setActiveTab("notes")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap ${activeTab === "notes"
+              ? "bg-[#F5EDE5] text-[#795C46] border-b-2 border-[#795C46] shadow-2xs font-extrabold"
+              : "text-[#6b5e52] hover:bg-[#FAF8F5] hover:text-[#2d2a26]"
+              }`}
+          >
+            <SquarePen size={16} className={activeTab === "notes" ? "text-[#795C46]" : "text-purple-500"} />
+            <span>Notes</span>
+          </button>
 
-            <button
-              onClick={() => setActiveTab("contact_info")}
-              className={`pb-3 font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${activeTab === "contact_info"
-                ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
-                : "text-[#6b5e52] hover:text-[#2d2a26]"
-                }`}
-            >
-              Contact Information
-            </button>
+          {/* Tab 4: Status History */}
+          <button
+            onClick={() => setActiveTab("status_history")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap ${activeTab === "status_history"
+              ? "bg-[#F5EDE5] text-[#795C46] border-b-2 border-[#795C46] shadow-2xs font-extrabold"
+              : "text-[#6b5e52] hover:bg-[#FAF8F5] hover:text-[#2d2a26]"
+              }`}
+          >
+            <History size={16} className={activeTab === "status_history" ? "text-[#795C46]" : "text-emerald-500"} />
+            <span>Status History</span>
+          </button>
 
-            <button
-              onClick={() => setActiveTab("rating_info")}
-              className={`pb-3 font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${activeTab === "rating_info"
-                ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
-                : "text-[#6b5e52] hover:text-[#2d2a26]"
-                }`}
-            >
-              Rating Information
-            </button>
+          {/* Tab 5: Contact Information */}
+          <button
+            onClick={() => setActiveTab("contact_info")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap ${activeTab === "contact_info"
+              ? "bg-[#F5EDE5] text-[#795C46] border-b-2 border-[#795C46] shadow-2xs font-extrabold"
+              : "text-[#6b5e52] hover:bg-[#FAF8F5] hover:text-[#2d2a26]"
+              }`}
+          >
+            <Users size={16} className={activeTab === "contact_info" ? "text-[#795C46]" : "text-amber-600"} />
+            <span>Contact Information</span>
+          </button>
+        </div>
 
-            <button
-              onClick={() => setActiveTab("all_policies")}
-              className={`pb-3 font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${activeTab === "all_policies"
-                ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
-                : "text-[#6b5e52] hover:text-[#2d2a26]"
-                }`}
-            >
-              All Policies ({policies.length})
-            </button>
-
-            <button
-              onClick={() => setActiveTab("eforms")}
-              className={`pb-3 font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${activeTab === "eforms"
-                ? "text-[#2d2a26] border-b-2 border-black font-extrabold"
-                : "text-[#6b5e52] hover:text-[#2d2a26]"
-                }`}
-            >
-              eForms Library
-            </button>
-          </div>
-
-          {/* ── TAB: NOTES (Exact Screenshot 3 Layout) ── */}
-          {activeTab === "notes" && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-
-              {/* LEFT 65% – ADD NOTE */}
-              <div className="lg:col-span-7 space-y-4">
-                <h3 className="text-sm font-bold text-[#2d2a26]">
-                  Add Note
-                </h3>
-
-                {/* Notify Filters */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-[#6b5e52] mr-1">Notify:</span>
-                  {[
-                    "Underwriter",
-                    "Accounting",
-                    "Endorsements",
-                    "Cancellations",
-                    "Audits",
-                  ].map((item) => (
-                    <button
-                      key={item}
-                      onClick={() => toggleNoteFilter(item)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${noteFilters.includes(item)
-                        ? "bg-black text-white border-black"
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200"
-                        }`}
-                    >
-                      {item}
-                    </button>
-                  ))}
+        {/* ── Active Tab Content Card with Smooth Transition (Screenshot 1) ── */}
+        <div key={activeTab} className="bg-white border border-[#e5ddd5] rounded-2xl p-6 shadow-sm w-full animate-tab-content transition-all duration-300">
+          {/* ── TAB 1: POLICIES ── */}
+          {activeTab === "policies" && (
+            <div id="policies-section" className="space-y-6">
+              {/* Policy Section Header + Action Buttons */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+                <div className="flex items-center gap-3.5">
+                  <div className="h-12 w-12 rounded-2xl bg-[#F5EDE5] text-[#795C46] flex items-center justify-center shrink-0 border border-[#e5ddd5]/60 shadow-2xs">
+                    <Shield size={22} className="stroke-[2.2]" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-extrabold text-[#1f1d1a]">
+                      Policies & Coverage ({policies.length})
+                    </h2>
+                    <p className="text-xs text-[#6b5e52] mt-0.5 font-medium">
+                      Manage and view active policies, renewals, rewrites, and coverages
+                    </p>
+                  </div>
                 </div>
 
-                {/* Chat/Note Input Box */}
+                {/* Action Buttons matching Screenshot 1 */}
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <button
+                    onClick={() => window.open(`/agency/customer/${customerId}/new-policy`, "_blank")}
+                    className="h-9 px-4 bg-[#6d4c3d] hover:bg-[#5a3e31] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Plus size={14} className="stroke-[2.5]" />
+                    New Policy
+                  </button>
+
+                  <button
+                    onClick={() => showToast("Renew policy initiated for selected policy.", "success")}
+                    className="h-9 px-4 bg-white border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#2d2a26] text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    <RotateCcw size={14} className="text-[#6b5e52]" />
+                    Renew
+                  </button>
+
+                  <button
+                    onClick={() => showToast("Rewrite policy initiated for selected policy.", "success")}
+                    className="h-9 px-4 bg-white border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#2d2a26] text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    <FileText size={14} className="text-[#6b5e52]" />
+                    Rewrite
+                  </button>
+
+                  <button
+                    onClick={async () => {
+                      if (await confirmDialog("Are you sure you want to cancel the selected policy?", "Cancel Policy")) {
+                        showToast("Cancellation request submitted.", "success");
+                      }
+                    }}
+                    className="h-9 px-4 bg-white border border-red-200 hover:bg-red-50 text-red-600 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    <XCircle size={14} className="text-red-500" />
+                    Cancel
+                  </button>
+                </div>
+              </div>
+
+              {/* Policy Table matching Screenshot 1 */}
+              <div className="border border-[#e5ddd5] rounded-2xl overflow-hidden mt-6 bg-white shadow-2xs">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-[#FAF7F2] text-[#6b5e52] font-semibold border-b border-[#e5ddd5]">
+                    <tr>
+                      <th className="w-12 px-4 py-3.5 text-center">
+                        <input
+                          type="checkbox"
+                          className="rounded-md border-[#e5ddd5] text-[#795C46] accent-[#795C46] h-4 w-4 cursor-pointer"
+                        />
+                      </th>
+                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
+                        Policy # <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
+                      </th>
+                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
+                        Status <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
+                      </th>
+                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
+                        Term <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
+                      </th>
+                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
+                        Line of Business <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
+                      </th>
+                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
+                        Insurance Carrier <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
+                      </th>
+                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
+                        Effective Date <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
+                      </th>
+                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
+                        Expiration Date <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
+                      </th>
+                      <th className="px-4 py-3.5 font-bold text-[#6b5e52] text-center">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#e5ddd5]">
+                    {activeLOBList.map((p, idx) => {
+                      const isSelected = selectedPolicyIndex === idx;
+                      return (
+                        <tr
+                          key={p.id || idx}
+                          onClick={() => setSelectedPolicyIndex(idx)}
+                          className={`cursor-pointer transition-colors ${isSelected ? "bg-[#FAF8F5]/80 font-medium" : "hover:bg-[#FAF8F5]/60"
+                            }`}
+                        >
+                          <td className="text-center py-3.5 px-4">
+                            <input
+                              type="checkbox"
+                              name="policy_select"
+                              checked={isSelected}
+                              onChange={() => setSelectedPolicyIndex(idx)}
+                              className="rounded-md border-[#e5ddd5] accent-[#795C46] h-4 w-4 cursor-pointer"
+                            />
+                          </td>
+                          <td className="px-4 py-3.5 font-extrabold text-[#1f1d1a]">
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(
+                                  `/agency/customer/${customerId}/policy/${p.id}`,
+                                  "_blank",
+                                  "width=1100,height=850"
+                                );
+                              }}
+                              className="hover:text-[#795C46] hover:underline cursor-pointer"
+                            >
+                              {p.policyNum}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-[#E8F8F0] text-[#12805C]">
+                              <span className="h-1.5 w-1.5 rounded-full bg-[#12805C]"></span>
+                              {p.status || "ACTIVE"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 text-[#2d2a26] font-medium">{p.term || "12 Months"}</td>
+                          <td className="px-4 py-3.5 font-bold text-[#1f1d1a]">{p.type}</td>
+                          <td className="px-4 py-3.5 text-[#4a423b] font-medium">{p.company}</td>
+                          <td className="px-4 py-3.5 text-[#4a423b] font-medium">{p.effDate}</td>
+                          <td className="px-4 py-3.5 text-[#4a423b] font-medium">{p.expDate}</td>
+                          <td className="px-4 py-3.5 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(
+                                    `/agency/customer/${customerId}/policy/${p.id}`,
+                                    "_blank",
+                                    "width=1100,height=850"
+                                  );
+                                }}
+                                className="h-8 px-3.5 bg-[#795C46] hover:bg-[#634b39] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                              >
+                                <Eye size={13} />
+                                View Policy
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                }}
+                                className="h-8 w-8 flex items-center justify-center rounded-xl text-[#8c827a] hover:text-[#2d2a26] hover:bg-[#FAF8F5] transition-colors cursor-pointer"
+                              >
+                                <MoreVertical size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB 2: UPLOADED DOCUMENTS (Matching Photo) ── */}
+          {activeTab === "documents" && (
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+                <div className="flex items-center gap-3.5">
+                  <div className="h-12 w-12 rounded-2xl bg-[#F5EDE5] text-[#795C46] flex items-center justify-center shrink-0 border border-[#e5ddd5]/60 shadow-2xs">
+                    <FileText size={22} className="stroke-[2.2]" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-extrabold text-[#1f1d1a]">
+                      Uploaded Documents
+                    </h2>
+                    <p className="text-xs text-[#6b5e52] mt-0.5 font-medium">
+                      Upload and manage customer documents securely
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-9 px-4 bg-[#6d4c3d] hover:bg-[#5a3e31] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Upload size={14} className="stroke-[2.5]" />
+                  Upload New File
+                </button>
+              </div>
+
+              {/* Grid 2-columns (Dropzone left, Info cards right) */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                {/* Left 70% - Drag & Drop Zone with Animated File Type Arc */}
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                  onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }}
+                  onDrop={handleFileDrop}
+                  className={`lg:col-span-8 border-2 border-dashed rounded-3xl p-8 flex flex-col items-center justify-center text-center transition-all relative overflow-hidden bg-[#FAF8F5] ${isDragOver ? "border-[#795C46] bg-[#795C46]/5 scale-[0.99]" : "border-[#e5ddd5] hover:border-[#9A8B7A]"
+                    }`}
+                >
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileInputChange}
+                    className="hidden"
+                  />
+
+                  {/* Cloud Icon & Floating File Type Icons Arc */}
+                  <div className="relative mb-3 flex items-center justify-center w-full max-w-[280px] h-20">
+                    {/* Subtle Curved connecting line */}
+                    <svg className="absolute w-full h-14 top-2 text-[#e5ddd5]" viewBox="0 0 280 50" fill="none">
+                      <path d="M 25 40 Q 140 0 255 40" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" />
+                    </svg>
+
+                    {/* PDF (Red) */}
+                    <div className="absolute left-3 top-6 h-7 w-7 rounded-full bg-[#FEF2F2] border border-[#FEE2E2] text-[#DC2626] flex items-center justify-center text-[9px] font-extrabold shadow-2xs">
+                      PDF
+                    </div>
+
+                    {/* DOC (Blue) */}
+                    <div className="absolute left-14 top-1 h-7 w-7 rounded-full bg-[#EFF6FF] border border-[#DBEAFE] text-[#2563EB] flex items-center justify-center text-[9px] font-extrabold shadow-2xs">
+                      DOC
+                    </div>
+
+                    {/* Center Cloud Badge */}
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className="relative z-10 h-14 w-14 rounded-full bg-[#F5EDE5] border border-[#e5ddd5] text-[#795C46] flex items-center justify-center shadow-xs cursor-pointer hover:scale-105 transition-transform"
+                    >
+                      <CloudUpload size={26} className="stroke-[2.2]" />
+                    </div>
+
+                    {/* PNG (Green) */}
+                    <div className="absolute right-14 top-1 h-7 w-7 rounded-full bg-[#F0FDF4] border border-[#DCFCE7] text-[#16A34A] flex items-center justify-center text-[9px] font-extrabold shadow-2xs">
+                      PNG
+                    </div>
+
+                    {/* ZIP (Purple) */}
+                    <div className="absolute right-3 top-6 h-7 w-7 rounded-full bg-[#FAF5FF] border border-[#F3E8FF] text-[#9333EA] flex items-center justify-center text-[9px] font-extrabold shadow-2xs">
+                      ZIP
+                    </div>
+                  </div>
+
+                  <p className="text-sm font-bold text-[#1f1d1a]">
+                    Drag & drop files here
+                  </p>
+                  <p className="text-xs text-[#6b5e52] mt-0.5 font-medium">
+                    or click to browse from your device
+                  </p>
+
+                  <div className="flex items-center gap-1.5 text-[11px] text-[#8c827a] font-medium mt-1.5">
+                    <Info size={13} className="text-[#9A8B7A]" />
+                    <span>Supports PDF, DOCX, PNG (Max size: 10MB per file)</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-9 px-5 bg-[#6d4c3d] hover:bg-[#5a3e31] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 mt-4 cursor-pointer"
+                  >
+                    <Folder size={14} />
+                    Browse Files
+                  </button>
+                </div>
+
+                {/* Right 30% - Subjective Lines & Accepted File Types */}
+                <div className="lg:col-span-4 flex flex-col gap-4 justify-between">
+                  {/* Card 1: Subjective Lines */}
+                  <div className="bg-white border border-[#e5ddd5] rounded-2xl p-4 shadow-2xs space-y-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-8 w-8 rounded-xl bg-[#F5EDE5] text-[#795C46] flex items-center justify-center shrink-0 border border-[#e5ddd5]/60">
+                        <FileText size={15} />
+                      </div>
+                      <h4 className="text-xs font-extrabold text-[#1f1d1a]">Subjective Lines</h4>
+                    </div>
+
+                    <div className="bg-[#ECFDF5] border border-[#A7F3D0] rounded-xl p-3 flex items-start gap-2.5">
+                      <CheckSquare size={16} className="text-[#059669] shrink-0 mt-0.5 fill-[#059669] text-white rounded" />
+                      <span className="text-[11px] font-medium text-[#065F46] leading-relaxed">
+                        1 year of loss runs required, valued within 60 days of inception.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Documents Table */}
+              <div className="border border-[#e5ddd5] rounded-2xl overflow-hidden mt-6 bg-white shadow-2xs">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-[#FAF7F2] text-[#6b5e52] font-semibold border-b border-[#e5ddd5]">
+                    <tr>
+                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
+                        Filename <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
+                      </th>
+                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
+                        Category <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
+                      </th>
+                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
+                        Description <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
+                      </th>
+                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
+                        Uploaded On <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
+                      </th>
+                      <th className="px-4 py-3.5 font-bold text-[#6b5e52] text-center">
+                        Manage
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#e5ddd5]">
+                    {docLoading ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-10 text-center text-[#6b5e52]">
+                          <Loader2 className="animate-spin text-[#9A8B7A] mx-auto size-5 mb-1" />
+                          Loading files...
+                        </td>
+                      </tr>
+                    ) : documents.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-12 text-center">
+                          <div className="flex flex-col items-center justify-center">
+                            <FileText size={34} className="text-[#c4b5a5] stroke-[1.5] mb-2" />
+                            <p className="text-sm font-bold text-[#2d2a26]">No documents uploaded yet</p>
+                            <p className="text-xs text-[#8c827a] mt-0.5 font-medium">Upload files to keep customer documents organized and accessible.</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      documents.map((doc) => (
+                        <tr key={doc.id} className="hover:bg-[#FAF8F5] transition-colors group">
+                          <td className="px-4 py-3.5">
+                            <div className="flex items-center gap-3">
+                              <div className="h-8 w-8 rounded-lg bg-white border border-[#e5ddd5] flex items-center justify-center text-[#9A8B7A] shrink-0 shadow-2xs group-hover:border-[#795C46] group-hover:text-[#795C46] transition-colors">
+                                {doc.fileName?.toLowerCase().endsWith('.pdf') ? <FileText size={15} /> :
+                                  doc.fileName?.toLowerCase().match(/\.(jpg|jpeg|png)$/) ? <ImageIcon size={15} /> :
+                                    doc.fileName?.toLowerCase().endsWith('.zip') ? <FileArchive size={15} /> :
+                                      <FileIcon size={15} />}
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="font-bold text-[#2d2a26] text-xs max-w-[200px] truncate" title={doc.fileName}>
+                                  {doc.fileName || "Document"}
+                                </span>
+                                {doc.ext && <span className="text-[9px] uppercase tracking-wider text-[#9A8B7A] font-bold">{doc.ext.replace('.', '')}</span>}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3.5 text-[#6b5e52]">
+                            <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${doc.action === 'Policy Attachment' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                              doc.action === 'Loss Runs' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                                doc.action === 'Signed Binder' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                  'bg-[#f5f1eb] text-[#6b5e52] border-[#e5ddd5]'
+                              }`}>
+                              {doc.action || "Upload"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 text-[#6b5e52] max-w-[200px] truncate font-medium text-[11px]" title={doc.description}>
+                            {doc.description || "—"}
+                          </td>
+                          <td className="px-4 py-3.5 font-medium text-[#6b5e52] text-[11px]">
+                            {doc.createdAt}
+                          </td>
+                          <td className="px-4 py-3.5 text-center">
+                            <div className="flex items-center justify-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                              {doc.url && (
+                                <a
+                                  href={doc.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="p-1.5 rounded-lg text-[#6b5e52] hover:text-[#795C46] hover:bg-white border border-transparent hover:border-[#e5ddd5] hover:shadow-2xs transition-all"
+                                  title="View Document"
+                                >
+                                  <Eye size={14} />
+                                </a>
+                              )}
+                              <button
+                                onClick={() => handleDeleteDocument(doc.id)}
+                                className="p-1.5 rounded-lg text-[#6b5e52] hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 transition-all cursor-pointer"
+                                title="Delete Document"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB: NOTES (Matching Photo) ── */}
+          {activeTab === "notes" && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+              {/* LEFT 60% – ADD NOTE */}
+              <div className="lg:col-span-7 space-y-5">
+                {/* Header */}
+                <div className="flex items-center gap-3.5 pb-1">
+                  <div className="h-12 w-12 rounded-2xl bg-[#F5EDE5] text-[#795C46] flex items-center justify-center shrink-0 border border-[#e5ddd5]/60 shadow-2xs">
+                    <FileText size={22} className="stroke-[2.2]" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-extrabold text-[#1f1d1a]">
+                      Add Note
+                    </h2>
+                    <p className="text-xs text-[#6b5e52] mt-0.5 font-medium">
+                      Add internal notes and mentions to keep track of customer communication
+                    </p>
+                  </div>
+                </div>
+
+                {/* Notify Filters Row */}
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <span className="text-xs font-bold text-[#2d2a26] mr-1">Notify:</span>
+                  {[
+                    { label: "Underwriter", icon: <Bell size={13} /> },
+                    { label: "Accounting", icon: <Calculator size={13} /> },
+                    { label: "Endorsements", icon: <FileText size={13} /> },
+                    { label: "Cancellations", icon: <XCircle size={13} /> },
+                    { label: "Audits", icon: <Shield size={13} /> },
+                  ].map((item) => {
+                    const isSelected = noteFilters.includes(item.label);
+                    return (
+                      <button
+                        key={item.label}
+                        type="button"
+                        onClick={() => toggleNoteFilter(item.label)}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs ${isSelected
+                            ? "bg-[#6d4c3d] text-white shadow-xs"
+                            : "bg-white border border-[#e5ddd5] hover:bg-[#FAF8F5] text-[#2d2a26]"
+                          }`}
+                      >
+                        {React.cloneElement(item.icon, {
+                          className: isSelected ? "text-white" : "text-[#6b5e52]",
+                        })}
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Chat/Note Input Box with Avatar */}
                 <div className="flex gap-3.5 items-start pt-1">
                   {/* User Avatar */}
-                  <div className="w-9 h-9 rounded-full bg-[#795C46] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
-                    {primaryExec.charAt(0).toUpperCase() || "G"}
+                  <div className="w-9 h-9 rounded-full bg-[#6d4c3d] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs mt-1">
+                    {displayName.charAt(0).toUpperCase() || "K"}
                   </div>
 
-                  {/* Textarea */}
-                  <div className="flex-1 space-y-3">
+                  {/* Rich Editor Box */}
+                  <div className="flex-1 border border-[#e5ddd5] rounded-2xl bg-white overflow-hidden shadow-2xs focus-within:border-[#9A8B7A] focus-within:ring-2 focus-within:ring-[#9A8B7A]/20 transition-all">
                     <textarea
-                      rows={5}
-                      className="w-full border border-[#e5ddd5] rounded-xl p-3.5 text-xs text-[#2d2a26] focus:outline-none focus:ring-2 focus:ring-[#9A8B7A] bg-white resize-none shadow-2xs"
+                      rows={4}
+                      className="w-full p-4 text-xs text-[#1f1d1a] placeholder:text-[#8c827a] resize-none outline-none border-none bg-transparent font-medium"
                       value={newNoteText}
                       onChange={(e) => setNewNoteText(e.target.value)}
-                      placeholder="Leave a note..."
+                      placeholder="Write your note here..."
+                      maxLength={1000}
                     />
 
-                    <div className="flex justify-end">
-                      <button
-                        onClick={handleAddNote}
-                        disabled={noteLoading || !newNoteText.trim()}
-                        className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#795C46] hover:bg-[#634b39] text-white rounded-lg text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
-                      >
-                        <Plus size={14} />
-                        {noteLoading ? "Saving..." : "Add Note"}
-                      </button>
+                    {/* Toolbar */}
+                    <div className="border-t border-[#f0e9df] px-3.5 py-2 flex items-center justify-between bg-[#FAF8F5]/60">
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setNewNoteText((prev) => prev ? `**${prev}**` : "**bold text**")}
+                          className="h-6 w-6 flex items-center justify-center text-xs font-extrabold text-[#6b5e52] hover:text-[#2d2a26] hover:bg-white rounded transition-colors cursor-pointer"
+                          title="Bold"
+                        >
+                          B
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setNewNoteText((prev) => prev ? `*${prev}*` : "*italic text*")}
+                          className="h-6 w-6 flex items-center justify-center text-xs font-serif italic text-[#6b5e52] hover:text-[#2d2a26] hover:bg-white rounded transition-colors cursor-pointer"
+                          title="Italic"
+                        >
+                          I
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setNewNoteText((prev) => prev ? `<u>${prev}</u>` : "<u>underline</u>")}
+                          className="h-6 w-6 flex items-center justify-center text-xs underline text-[#6b5e52] hover:text-[#2d2a26] hover:bg-white rounded transition-colors cursor-pointer"
+                          title="Underline"
+                        >
+                          U
+                        </button>
+                        <div className="h-3.5 w-px bg-[#e5ddd5] mx-1" />
+                        <button
+                          type="button"
+                          onClick={() => setNewNoteText((prev) => `${prev}\n• `)}
+                          className="h-6 w-6 flex items-center justify-center text-[#6b5e52] hover:text-[#2d2a26] hover:bg-white rounded transition-colors cursor-pointer"
+                          title="Bullet list"
+                        >
+                          <List size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setNewNoteText((prev) => `${prev}\n1. `)}
+                          className="h-6 w-6 flex items-center justify-center text-[#6b5e52] hover:text-[#2d2a26] hover:bg-white rounded transition-colors cursor-pointer"
+                          title="Numbered list"
+                        >
+                          <ListOrdered size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setNewNoteText((prev) => `${prev} [link](url)`)}
+                          className="h-6 w-6 flex items-center justify-center text-[#6b5e52] hover:text-[#2d2a26] hover:bg-white rounded transition-colors cursor-pointer"
+                          title="Add link"
+                        >
+                          <Link2 size={13} />
+                        </button>
+                      </div>
+
+                      <span className="text-[11px] font-medium text-[#8c827a]">
+                        {newNoteText.length}/1000
+                      </span>
                     </div>
                   </div>
                 </div>
+
+                {/* Submit Button */}
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="button"
+                    onClick={handleAddNote}
+                    disabled={noteLoading || !newNoteText.trim()}
+                    className="h-9 px-5 bg-[#6d4c3d] hover:bg-[#5a3e31] text-white rounded-xl text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Plus size={14} className="stroke-[2.5]" />
+                    {noteLoading ? "Saving..." : "Add Note"}
+                  </button>
+                </div>
               </div>
 
-              {/* RIGHT 35% – NOTES THREAD */}
-              <div className="lg:col-span-5 flex flex-col space-y-4">
-                <h3 className="text-sm font-bold text-[#2d2a26]">
-                  Notes Thread
-                </h3>
+              {/* RIGHT 40% – NOTES THREAD */}
+              <div className="lg:col-span-5 bg-[#FAF8F5]/60 border border-[#e5ddd5] rounded-3xl p-5 shadow-2xs flex flex-col justify-between min-h-[360px]">
+                {/* Header */}
+                <div className="flex items-center justify-between pb-3 border-b border-[#e5ddd5]/60">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-9 w-9 rounded-2xl bg-white border border-[#e5ddd5] text-[#795C46] flex items-center justify-center shrink-0 shadow-2xs">
+                      <MessageSquare size={16} />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-extrabold text-[#1f1d1a]">
+                        Notes Thread
+                      </h3>
+                      <p className="text-[11px] text-[#6b5e52] font-medium">
+                        View all notes and conversations for this customer
+                      </p>
+                    </div>
+                  </div>
 
-                {/* Chat Container */}
-                <div className="border border-[#e5ddd5] rounded-2xl bg-[#f8fafc] min-h-[300px] max-h-[450px] overflow-y-auto p-4 flex flex-col gap-3.5 shadow-inner relative">
+                  {/* Filter Pill */}
+                  <button
+                    type="button"
+                    className="bg-white border border-[#e5ddd5] hover:bg-[#FAF8F5] text-[#2d2a26] text-xs font-semibold px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
+                  >
+                    <Filter size={12} className="text-[#6b5e52]" />
+                    <span>All Notes</span>
+                    <ChevronDown size={12} className="text-[#6b5e52]" />
+                  </button>
+                </div>
+
+                {/* Body: Empty State or Notes List */}
+                <div className="flex-1 flex flex-col justify-center py-6">
                   {notes.length === 0 ? (
-                    <div className="flex-1 flex flex-col items-center justify-center text-center my-auto py-12">
-                      <div className="w-12 h-10 bg-gray-200 rounded-lg mb-3 opacity-60 flex items-center justify-center text-gray-400">
-                        <StickyNote size={20} />
+                    <div className="flex flex-col items-center justify-center text-center my-auto">
+                      {/* Illustrated Overlapping Cards Graphic with Sparkle */}
+                      <div className="relative w-36 h-20 mb-3 flex items-center justify-center">
+                        {/* Left tilted card */}
+                        <div className="absolute left-3 top-3 w-16 h-13 bg-white border border-[#e5ddd5] rounded-xl shadow-2xs -rotate-12 flex flex-col p-2 justify-center gap-1 opacity-70">
+                          <div className="h-1.5 w-8 bg-[#e5ddd5] rounded-full" />
+                          <div className="h-1.5 w-10 bg-[#f0e9df] rounded-full" />
+                        </div>
+                        {/* Right tilted card */}
+                        <div className="absolute right-3 top-3 w-16 h-13 bg-white border border-[#e5ddd5] rounded-xl shadow-2xs rotate-12 flex flex-col p-2 justify-center gap-1 opacity-70">
+                          <div className="h-1.5 w-10 bg-[#e5ddd5] rounded-full" />
+                          <div className="h-1.5 w-6 bg-[#f0e9df] rounded-full" />
+                        </div>
+                        {/* Center prominent warm card */}
+                        <div className="relative z-10 w-20 h-16 bg-[#F5EDE5] border border-[#d8c8ba] rounded-2xl shadow-xs flex flex-col items-center justify-center p-2.5 gap-1.5">
+                          <div className="h-1.5 w-10 bg-[#795C46]/60 rounded-full" />
+                          <div className="h-1.5 w-12 bg-[#795C46]/80 rounded-full" />
+                          <div className="h-1.5 w-7 bg-[#795C46]/60 rounded-full" />
+                        </div>
+                        {/* Sparkle top right */}
+                        <div className="absolute top-0 right-6 text-[#795C46] font-bold text-xs">
+                          ✦
+                        </div>
                       </div>
-                      <p className="font-bold text-xs text-gray-600 mb-0.5">No notes added yet</p>
-                      <p className="text-[11px] text-gray-400 max-w-xs">Drop in questions or comments to help us assist you.</p>
+
+                      <p className="font-extrabold text-sm text-[#1f1d1a]">
+                        No notes added yet
+                      </p>
+                      <p className="text-xs text-[#8c827a] mt-0.5 font-medium max-w-xs">
+                        Drop in questions or comments to help us assist you.
+                      </p>
                     </div>
                   ) : (
-                    notes.map((n) => (
-                      <div key={n.id} className="bg-white border border-[#e5ddd5] rounded-xl p-3.5 shadow-2xs space-y-1.5">
-                        <div className="flex items-center justify-between text-[10px] text-[#6b5e52]">
-                          <span className="font-bold uppercase text-[#795C46]">
-                            {n.author || "Agent"} ({n.role || "staff"})
-                          </span>
-                          <span>{n.created_at || "Recent"}</span>
+                    <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                      {notes.map((n) => (
+                        <div
+                          key={n.id}
+                          className="bg-white border border-[#e5ddd5] rounded-2xl p-3.5 shadow-2xs space-y-1.5"
+                        >
+                          <div className="flex items-center justify-between text-[11px] text-[#6b5e52]">
+                            <span className="font-bold uppercase text-[#795C46]">
+                              {n.author || "Agent"} ({n.role || "staff"})
+                            </span>
+                            <span className="font-medium text-[#8c827a]">
+                              {n.created_at || "Recent"}
+                            </span>
+                          </div>
+                          <p className="text-xs text-[#2d2a26] font-medium whitespace-pre-wrap leading-relaxed">
+                            {n.text}
+                          </p>
                         </div>
-                        <p className="text-xs text-[#2d2a26] font-medium whitespace-pre-wrap">{n.text}</p>
-                      </div>
-                    ))
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
@@ -1163,68 +1610,259 @@ export default function CustomerProfilePage() {
             </div>
           )}
 
-          {/* ── TAB: STATUS HISTORY ── */}
+          {/* ── TAB: STATUS HISTORY (Matching Screenshot) ── */}
           {activeTab === "status_history" && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between pb-1">
-                <div>
-                  <h3 className="text-sm font-bold text-[#2d2a26]">Customer History & Activity Log</h3>
-                  <p className="text-xs text-[#6b5e52]">
-                    Chronological audit log of all activities including policies added, documents attached, certificate holders created, eForms issued, and agent updates.
-                  </p>
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-1">
+                <div className="flex items-center gap-3.5">
+                  <div className="h-12 w-12 rounded-2xl bg-[#F5EDE5] text-[#795C46] flex items-center justify-center shrink-0 border border-[#e5ddd5]/60 shadow-2xs">
+                    <Clock size={22} className="stroke-[2.2]" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-extrabold text-[#1f1d1a]">
+                      Customer History & Activity Log
+                    </h2>
+                    <p className="text-xs text-[#6b5e52] mt-0.5 font-medium">
+                      View a complete history of all activities, notes, policy changes, and document actions for this customer.
+                    </p>
+                  </div>
                 </div>
+
                 <button
                   onClick={() => window.open(`/agency/customer/${customerId}/new-activity`, "_blank", "width=1000,height=900")}
-                  className="h-8 px-3.5 bg-[#795C46] hover:bg-[#634b39] text-white text-xs font-bold rounded-lg transition-all shadow-xs cursor-pointer flex items-center gap-1.5 shrink-0"
+                  className="h-9 px-4 bg-[#6d4c3d] hover:bg-[#5a3e31] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
                 >
-                  <Plus size={13} />
+                  <Plus size={14} className="stroke-[2.5]" />
                   Log Activity
                 </button>
               </div>
 
-              <div className="border border-[#e5ddd5] rounded-xl overflow-hidden shadow-2xs">
+              {/* Filter & Search Bar Row */}
+              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+                {/* Search activities */}
+                <div className="relative flex-1 min-w-[240px]">
+                  <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9A8B7A]" />
+                  <input
+                    type="text"
+                    value={activitySearch}
+                    onChange={(e) => setActivitySearch(e.target.value)}
+                    placeholder="Search activities, users, or details..."
+                    className="w-full pl-9 pr-4 py-2 border border-[#e5ddd5] rounded-xl text-xs bg-white text-[#1f1d1a] placeholder:text-[#8c827a] outline-none focus:border-[#795C46] shadow-2xs font-medium transition-all"
+                  />
+                </div>
+
+                {/* Activity Type Filter */}
+                <select
+                  value={activityTypeFilter}
+                  onChange={(e) => setActivityTypeFilter(e.target.value)}
+                  className="px-3.5 py-2 border border-[#e5ddd5] rounded-xl text-xs font-semibold text-[#2d2a26] bg-white shadow-2xs cursor-pointer outline-none hover:bg-[#FAF8F5] transition-all"
+                >
+                  <option value="All Activity Types">All Activity Types</option>
+                  <option value="Note Added">Notes</option>
+                  <option value="Document">Documents</option>
+                  <option value="Certificate">Certificates</option>
+                  <option value="Policy">Policies</option>
+                  <option value="Updated">Customer Info</option>
+                </select>
+
+                {/* Users Filter */}
+                <select
+                  value={activityUserFilter}
+                  onChange={(e) => setActivityUserFilter(e.target.value)}
+                  className="px-3.5 py-2 border border-[#e5ddd5] rounded-xl text-xs font-semibold text-[#2d2a26] bg-white shadow-2xs cursor-pointer outline-none hover:bg-[#FAF8F5] transition-all"
+                >
+                  <option value="All Users">All Users</option>
+                  <option value="AGENCY">AGENCY</option>
+                  <option value="TRAVEL DOLL">TRAVEL DOLL</option>
+                  <option value="KOLB, MONTGOM...">KOLB, MONTGOM...</option>
+                  <option value="JOANA SARMIENTO">JOANA SARMIENTO</option>
+                  <option value="KARIM">KARIM</option>
+                </select>
+
+                {/* Date Range Selector */}
+                <div className="flex items-center gap-2 px-3.5 py-2 border border-[#e5ddd5] rounded-xl text-xs font-semibold text-[#2d2a26] bg-white shadow-2xs cursor-pointer hover:bg-[#FAF8F5] transition-all">
+                  <Calendar size={13} className="text-[#6b5e52]" />
+                  <span>Select Date Range</span>
+                  <ChevronDown size={12} className="text-[#6b5e52]" />
+                </div>
+
+                {/* Refresh button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActivitySearch("");
+                    setActivityTypeFilter("All Activity Types");
+                    setActivityUserFilter("All Users");
+                    showToast("Activity log refreshed", "success");
+                  }}
+                  className="flex items-center gap-1.5 px-3.5 py-2 border border-[#e5ddd5] rounded-xl text-xs font-semibold text-[#2d2a26] bg-white hover:bg-[#FAF8F5] shadow-2xs cursor-pointer transition-all shrink-0"
+                >
+                  <RotateCcw size={13} className="text-[#6b5e52]" />
+                  <span>Refresh</span>
+                </button>
+              </div>
+
+              {/* Activities Table matching Screenshot */}
+              <div className="border border-[#e5ddd5] rounded-2xl overflow-hidden mt-2 bg-white shadow-2xs">
                 <table className="w-full text-xs text-left">
-                  <thead className="bg-[#FAF8F5] text-[#6b5e52] font-bold border-b border-[#e5ddd5]">
+                  <thead className="bg-[#FAF7F2] text-[#6b5e52] font-semibold border-b border-[#e5ddd5]">
                     <tr>
-                      <th className="px-4 py-2.5">Date & Time</th>
-                      <th className="px-4 py-2.5">Action / Event</th>
-                      <th className="px-4 py-2.5">Description & Details</th>
-                      <th className="px-4 py-2.5">User / Agent</th>
-                      <th className="px-4 py-2.5 text-center">Status</th>
+                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
+                        Date & Time <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
+                      </th>
+                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
+                        Activity / Event <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
+                      </th>
+                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
+                        Description & Details <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
+                      </th>
+                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
+                        User / Agent <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
+                      </th>
+                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
+                        Status <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
+                      </th>
+                      <th className="w-10 px-2 py-3.5 text-center"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#e5ddd5]">
-                    {activities.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="py-8 text-center text-[#6b5e52]">
-                          No activity history logged yet.
-                        </td>
-                      </tr>
-                    ) : (
-                      activities.map((item: any, idx: number) => (
-                        <tr key={item.id || idx} className="hover:bg-[#FAF8F5] transition-colors">
-                          <td className="px-4 py-3 font-semibold text-[#6b5e52] whitespace-nowrap">
-                            {item.date || item.changedAt || "08/17/2026"}
-                          </td>
-                          <td className="px-4 py-3 font-bold text-[#795C46] whitespace-nowrap">
-                            <span className="inline-block px-2.5 py-0.5 bg-[#f5f1eb] border border-[#e5ddd5] rounded-md text-[11px] font-bold text-[#2d2a26]">
-                              {item.action || item.program || "Activity"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-[#2d2a26] font-medium">
-                            {item.description || item.status || "—"}
-                          </td>
-                          <td className="px-4 py-3 text-[#2d2a26] font-semibold whitespace-nowrap">
-                            {item.by || item.user || "TRAVIS BELL"}
-                          </td>
-                          <td className="px-4 py-3 text-center whitespace-nowrap">
-                            <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-md text-[10px] font-bold uppercase tracking-wider">
-                              {item.trans || item.status || "Completed"}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    )}
+                    {activities
+                      .filter((item) => {
+                        const q = activitySearch.toLowerCase().trim();
+                        const matchesSearch =
+                          !q ||
+                          item.description?.toLowerCase().includes(q) ||
+                          item.user?.toLowerCase().includes(q) ||
+                          item.type?.toLowerCase().includes(q);
+
+                        const matchesType =
+                          activityTypeFilter === "All Activity Types" ||
+                          item.type?.toLowerCase().includes(activityTypeFilter.toLowerCase());
+
+                        const matchesUser =
+                          activityUserFilter === "All Users" ||
+                          item.user?.toLowerCase().includes(activityUserFilter.toLowerCase());
+
+                        return matchesSearch && matchesType && matchesUser;
+                      })
+                      .map((item, idx) => {
+                        const isNote = item.type?.includes("Note");
+                        const isDoc = item.type?.includes("Document") || item.type?.includes("Attached");
+                        const isCert = item.type?.includes("Master Certificate");
+                        const isHolder = item.type?.includes("Holder");
+                        const isPolicy = item.type?.includes("Policy");
+                        const isDownload = item.type?.includes("Download");
+                        const isUpdated = item.type?.includes("Updated");
+
+                        return (
+                          <tr key={item.id || idx} className="hover:bg-[#FAF8F5]/80 transition-colors">
+                            {/* Date & Time */}
+                            <td className="px-4 py-3.5 font-medium text-[#2d2a26] whitespace-nowrap">
+                              {item.date}
+                            </td>
+
+                            {/* Activity / Event */}
+                            <td className="px-4 py-3.5 whitespace-nowrap">
+                              {isNote && (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]">
+                                  <Plus size={11} className="stroke-[3]" />
+                                  {item.type}
+                                </span>
+                              )}
+                              {isDoc && (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]">
+                                  <FileText size={12} />
+                                  {item.type}
+                                </span>
+                              )}
+                              {isCert && (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#FAF5FF] text-[#9333EA] border border-[#F3E8FF]">
+                                  <FileText size={12} />
+                                  {item.type}
+                                </span>
+                              )}
+                              {isHolder && (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]">
+                                  <Building2 size={12} />
+                                  {item.type}
+                                </span>
+                              )}
+                              {isPolicy && (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#FDF4EB] text-[#B45309] border border-[#FED7AA]">
+                                  <Shield size={12} />
+                                  {item.type}
+                                </span>
+                              )}
+                              {isDownload && (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#FAF5FF] text-[#9333EA] border border-[#F3E8FF]">
+                                  <Download size={12} />
+                                  {item.type}
+                                </span>
+                              )}
+                              {isUpdated && (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#FEF2F2] text-[#DC2626] border border-[#FEE2E2]">
+                                  <Edit3 size={12} />
+                                  {item.type}
+                                </span>
+                              )}
+                              {!isNote && !isDoc && !isCert && !isHolder && !isPolicy && !isDownload && !isUpdated && (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#FAF8F5] text-[#6b5e52] border border-[#e5ddd5]">
+                                  {item.type}
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Description & Details */}
+                            <td className="px-4 py-3.5 text-[#2d2a26] font-medium max-w-md">
+                              {item.description}
+                            </td>
+
+                            {/* User / Agent */}
+                            <td className="px-4 py-3.5 font-bold text-[#4a423b] whitespace-nowrap">
+                              {item.user}
+                            </td>
+
+                            {/* Status */}
+                            <td className="px-4 py-3.5 whitespace-nowrap">
+                              {item.statusType === "success" && (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#ECFDF5] text-[#059669]">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-[#059669]" />
+                                  {item.status}
+                                </span>
+                              )}
+                              {item.statusType === "info" && (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#EFF6FF] text-[#2563EB]">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-[#2563EB]" />
+                                  {item.status}
+                                </span>
+                              )}
+                              {item.statusType === "warning" && (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#FFFBEB] text-[#D97706]">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-[#D97706]" />
+                                  {item.status}
+                                </span>
+                              )}
+                              {!item.statusType && (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#FAF8F5] text-[#6b5e52]">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-[#6b5e52]" />
+                                  {item.status}
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Actions */}
+                            <td className="px-2 py-3.5 text-center">
+                              <button
+                                type="button"
+                                className="p-1 rounded-lg text-[#8c827a] hover:text-[#2d2a26] hover:bg-[#FAF8F5] transition-colors cursor-pointer"
+                              >
+                                <MoreVertical size={16} />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>
@@ -1264,139 +1902,6 @@ export default function CustomerProfilePage() {
               </div>
             </div>
           )}
-
-          {/* ── TAB: RATING INFORMATION ── */}
-          {activeTab === "rating_info" && (
-            <div className="space-y-4 text-xs">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-[#FAF8F5] border border-[#e5ddd5] rounded-xl space-y-2">
-                  <h4 className="font-bold text-[#795C46] uppercase text-[10px] tracking-wider border-b border-[#e5ddd5] pb-1">
-                    Rating Classification
-                  </h4>
-                  <p><strong>Business Origin:</strong> {customer.business_origin || "Direct"}</p>
-                  <p><strong>Acquisition:</strong> {customer.acquisition || "Direct"}</p>
-                  <p><strong>Multiple Entity:</strong> {customer.multiple_entity_customer_type || "Standard"}</p>
-                </div>
-
-                <div className="p-4 bg-[#FAF8F5] border border-[#e5ddd5] rounded-xl space-y-2">
-                  <h4 className="font-bold text-[#795C46] uppercase text-[10px] tracking-wider border-b border-[#e5ddd5] pb-1">
-                    Coverage Lines
-                  </h4>
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    <span className="inline-flex items-center gap-1.5 text-[#2d2a26]">
-                      <CheckCircle size={13} className="text-[#795C46]" /> Commercial
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 text-[#2d2a26]">
-                      <CheckCircle size={13} className="text-[#795C46]" /> General Liability
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── TAB: ALL POLICIES ── */}
-          {activeTab === "all_policies" && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-[#6b5e52]">Policies Directory</span>
-                <button
-                  onClick={() => window.open(`/agency/customer/${customerId}/new-policy`, "_blank")}
-                  className="h-8 px-3.5 bg-[#795C46] hover:bg-[#634b39] text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <Plus size={13} />
-                  Add New Policy
-                </button>
-              </div>
-
-              <div className="border border-[#e5ddd5] rounded-xl overflow-hidden">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-[#FAF8F5] text-[#6b5e52] font-bold border-b border-[#e5ddd5]">
-                    <tr>
-                      <th className="px-4 py-2.5">Policy Number</th>
-                      <th className="px-4 py-2.5">Type</th>
-                      <th className="px-4 py-2.5">Insurance Company</th>
-                      <th className="px-4 py-2.5">Term</th>
-                      <th className="px-4 py-2.5">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#e5ddd5]">
-                    {policies.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-[#6b5e52]/70 font-medium">
-                          No policies created yet. Click "Add New Policy" to create one.
-                        </td>
-                      </tr>
-                    ) : (
-                      policies.map((p) => (
-                        <tr key={p.id} className="hover:bg-[#FAF8F5] transition-colors">
-                          <td className="px-4 py-3 font-bold text-[#2d2a26]">
-                            <span
-                              onClick={() => window.open(`/agency/customer/${customerId}/policy/${p.id}`, "_blank", "width=1100,height=850")}
-                              className="text-[#795C46] hover:underline cursor-pointer"
-                            >
-                              {p.policyNum}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 font-semibold text-[#2d2a26]">{p.type}</td>
-                          <td className="px-4 py-3 text-[#6b5e52]">{p.company}</td>
-                          <td className="px-4 py-3 text-[#6b5e52]">{p.effDate} — {p.expDate}</td>
-                          <td className="px-4 py-3">
-                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded font-bold uppercase text-[10px]">
-                              {p.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* ── TAB: EFORMS LIBRARY ── */}
-          {activeTab === "eforms" && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-[#6b5e52]">Quick Launch Insurance eForms</span>
-                <button
-                  onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager`, "_blank")}
-                  className="h-8 px-3.5 bg-[#795C46] hover:bg-[#634b39] text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <FileText size={13} />
-                  Open Full eForms Manager
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {[
-                  "Commercial Application",
-                  "Certificate of Liability",
-                  "Certificate of Property",
-                  "Binder of Insurance",
-                  "Auto ID Card",
-                  "Change Request",
-                  "Cancellation Request",
-                  "Property Loss Notice",
-                ].map((formTitle) => (
-                  <button
-                    key={formTitle}
-                    onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager`, "_blank")}
-                    className="p-3.5 bg-[#FAF8F5] border border-[#e5ddd5] hover:border-[#9A8B7A] hover:bg-white rounded-xl text-left transition-all cursor-pointer flex items-center gap-2.5 group shadow-2xs"
-                  >
-                    <div className="h-8 w-8 rounded-lg bg-white border border-[#e5ddd5] flex items-center justify-center text-[#795C46] shrink-0 group-hover:bg-[#795C46] group-hover:text-white transition-colors">
-                      <FileText size={15} />
-                    </div>
-                    <span className="text-xs font-bold text-[#2d2a26] group-hover:text-[#795C46] transition-colors leading-tight">
-                      {formTitle}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
         </div>
 
       </main>

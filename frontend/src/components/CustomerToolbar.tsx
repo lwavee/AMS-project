@@ -3,11 +3,12 @@
 import React from "react";
 import {
   Plus,
-  Edit,
+  Edit3,
   FolderOpen,
   Trash2,
   RotateCw,
-  Download
+  Download,
+  ChevronDown
 } from "lucide-react";
 
 interface CustomerToolbarProps {
@@ -37,98 +38,93 @@ export default function CustomerToolbar({
   const isSingleSelection = selectedCount === 1;
 
   return (
-    <div
-      className="bg-white border border-[#e5ddd5] rounded-2xl px-3 sm:px-6 py-3 flex items-center justify-between gap-2 select-none font-sans shrink-0 shadow-sm overflow-x-auto custom-scrollbar"
-    >
-      {/* Primary Actions Group */}
-      <div className="flex items-center gap-2 shrink-0">
-
-        {/* New Customer Button */}
+    <div className="flex items-center justify-between gap-3 select-none font-sans shrink-0 flex-wrap">
+      {/* Left Action Buttons */}
+      <div className="flex items-center gap-2.5 flex-wrap">
+        {/* + New Customer Button */}
         <button
+          type="button"
           onClick={onNewCustomer}
-          className="h-9 px-4 flex items-center gap-1.5 bg-[#9A8B7A] hover:bg-[#8a6f4d] text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-sm cursor-pointer active:scale-[0.98] transition-all border-none"
+          className="h-9 px-4 flex items-center gap-1.5 bg-[#795C46] hover:bg-[#684e3a] text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer active:scale-[0.98] transition-all border-none"
         >
-          <Plus size={15} strokeWidth={2.5} />
+          <Plus size={14} className="stroke-[2.5]" />
           <span>New Customer</span>
         </button>
-
-        {/* Divider */}
-        <div className="w-px h-5 bg-[#e5ddd5] mx-1"></div>
 
         {/* Edit Button */}
         {canEdit && (
           <button
+            type="button"
             disabled={!isSingleSelection}
             onClick={onEdit}
-            className={`h-9 px-4 flex items-center gap-1.5 border text-xs font-bold uppercase tracking-wider rounded-full transition-all ${isSingleSelection
-              ? "bg-white border-[#e5ddd5] text-[#2d2a26] hover:bg-[#f5f1eb] hover:text-[#9A8B7A] cursor-pointer active:scale-[0.98] shadow-sm"
-              : "bg-[#f5f1eb]/50 border-transparent text-[#6b5e52]/40 cursor-not-allowed"
-              }`}
+            className={`h-9 px-3.5 flex items-center gap-1.5 border rounded-xl text-xs font-semibold transition-all shadow-2xs ${
+              isSingleSelection
+                ? "bg-white border-[#e5ddd5] text-[#2d2a26] hover:bg-[#FAF8F5] cursor-pointer"
+                : "bg-[#FAF8F5]/50 border-[#e5ddd5]/60 text-[#8c827a]/60 cursor-not-allowed"
+            }`}
           >
-            <Edit size={13} />
+            <Edit3 size={13} />
             <span>Edit</span>
           </button>
         )}
 
-        {/* Open Details Button */}
+        {/* Open Folder Button */}
         <button
+          type="button"
           disabled={!isSingleSelection}
           onClick={onOpen}
-          className={`h-9 px-4 flex items-center gap-1.5 border text-xs font-bold uppercase tracking-wider rounded-full transition-all ${isSingleSelection
-            ? "bg-white border-[#e5ddd5] text-[#2d2a26] hover:bg-[#f5f1eb] hover:text-[#9A8B7A] cursor-pointer active:scale-[0.98] shadow-sm"
-            : "bg-[#f5f1eb]/50 border-transparent text-[#6b5e52]/40 cursor-not-allowed"
-            }`}
+          className={`h-9 px-3.5 flex items-center gap-1.5 border rounded-xl text-xs font-semibold transition-all shadow-2xs ${
+            isSingleSelection
+              ? "bg-white border-[#e5ddd5] text-[#2d2a26] hover:bg-[#FAF8F5] cursor-pointer"
+              : "bg-[#FAF8F5]/50 border-[#e5ddd5]/60 text-[#8c827a]/60 cursor-not-allowed"
+          }`}
         >
-          <FolderOpen size={13} className={isSingleSelection ? "text-[#9A8B7A]" : "text-[#6b5e52]/40"} />
+          <FolderOpen size={13} />
           <span>Open Folder</span>
         </button>
 
         {/* Delete Button */}
         {canDelete && (
           <button
+            type="button"
             disabled={!hasSelection}
             onClick={onDelete}
-            className={`h-9 px-4 flex items-center gap-1.5 border text-xs font-bold uppercase tracking-wider rounded-full transition-all ${hasSelection
-              ? "bg-white border-[#e5ddd5] text-red-600 hover:bg-red-50 cursor-pointer active:scale-[0.98] shadow-sm"
-              : "bg-[#f5f1eb]/50 border-transparent text-[#6b5e52]/40 cursor-not-allowed"
-              }`}
+            className={`h-9 px-3.5 flex items-center gap-1.5 border rounded-xl text-xs font-bold transition-all shadow-2xs ${
+              hasSelection
+                ? "bg-[#FEF2F2] border-[#FECACA] hover:bg-[#FEE2E2] text-[#DC2626] cursor-pointer"
+                : "bg-[#FAF8F5]/50 border-[#e5ddd5]/60 text-[#8c827a]/60 cursor-not-allowed"
+            }`}
           >
-            <Trash2 size={13} />
+            <Trash2 size={13} className={hasSelection ? "text-[#DC2626]" : "text-[#8c827a]/60"} />
             <span>Delete</span>
           </button>
         )}
-
       </div>
 
-      {/* Auxiliary / Secondary Buttons Group */}
+      {/* Right Action Buttons */}
       <div className="flex items-center gap-2.5 ml-auto">
-
         {/* Refresh Button */}
         <button
+          type="button"
           onClick={onRefresh}
-          className="h-9 px-3.5 flex items-center justify-center border border-[#e5ddd5] bg-white hover:bg-[#f5f1eb] text-[#6b5e52] hover:text-[#2d2a26] rounded-full transition-all cursor-pointer shadow-sm"
-          title="Refresh grid data"
+          className="h-9 w-9 flex items-center justify-center border border-[#e5ddd5] bg-white hover:bg-[#FAF8F5] text-[#6b5e52] hover:text-[#2d2a26] rounded-xl transition-all cursor-pointer shadow-2xs"
+          title="Refresh customers"
         >
           <RotateCw size={13} />
         </button>
 
-        {/* Export CSV Button */}
+        {/* Export Button */}
         {onExport && (
           <button
+            type="button"
             onClick={onExport}
-            className="h-9 px-4 flex items-center gap-1.5 border border-[#e5ddd5] bg-white hover:bg-[#f5f1eb] text-[#2d2a26] hover:text-[#9A8B7A] rounded-full font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+            className="h-9 px-3.5 flex items-center gap-1.5 border border-[#e5ddd5] bg-white hover:bg-[#FAF8F5] text-[#2d2a26] rounded-xl text-xs font-semibold transition-all cursor-pointer shadow-2xs"
             title="Export CSV"
           >
             <Download size={13} />
             <span>Export</span>
+            <ChevronDown size={12} className="text-[#6b5e52]" />
           </button>
-        )}
-
-        {/* Selection indicator */}
-        {hasSelection && (
-          <div className="h-9 px-3.5 flex items-center justify-center bg-[#9A8B7A]/15 border border-[#9A8B7A]/30 rounded-full text-[#9A8B7A] font-bold text-xs uppercase tracking-wider">
-            Selected: {selectedCount}
-          </div>
         )}
       </div>
     </div>

@@ -208,3 +208,23 @@ nextjs-portal * {
   opacity: 0 !important;
   pointer-events: none !important;
 }
+
+/* Smooth fade & slide animations for tab switching and expanding */
+@keyframes fadeInSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-tab-content {
+  animation: fadeInSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.tab-transition {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}

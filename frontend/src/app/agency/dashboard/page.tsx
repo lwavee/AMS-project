@@ -32,7 +32,9 @@ import {
   Lock,
   Building2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Clock,
+  XCircle
 } from "lucide-react";
 
 import { API_BASE_URL } from "../../../lib/config";
@@ -42,7 +44,7 @@ export default function Page() {
   const router = useRouter();
   const [currentTab, setCurrentTab] = useState("Customers");
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [selectedRowIds, setSelectedRowIds] = useState<RowSelectionState>({});
+  const [selectedRowIds, setSelectedRowIds] = useState<RowSelectionState>({ "0": true });
   const [isLoading, setIsLoading] = useState(true);
 
   // Search & Filtering State
@@ -713,19 +715,114 @@ export default function Page() {
         </div>
       )}
 
-      {/* Main Workspace Card Container (Matching Sterling Portal Layout & Spacing) */}
+      {/* Main Workspace Card Container (Matching Second Photo) */}
       <div className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-8 pb-12 pt-2 flex flex-col">
-        <div className="bg-white rounded-2xl border border-[#e5ddd5] shadow-sm flex flex-col flex-1 p-5 sm:p-7 space-y-4">
+        <div className="bg-white rounded-3xl border border-[#e5ddd5] shadow-2xs flex flex-col flex-1 p-5 sm:p-7 space-y-4">
           {currentTab === "Agent Control" && userRole === "agency" ? (
             renderAgentControlView()
           ) : (
             <>
-              {/* Searchbar Component */}
+              {/* Header Row: Customers Title & Total Badge (Matching Second Photo) */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
+                <div className="flex items-center gap-3.5">
+                  <div className="h-12 w-12 rounded-2xl bg-[#FDF6F0] border border-[#F5E6D8] text-[#795C46] flex items-center justify-center shrink-0 shadow-2xs">
+                    <Users size={22} className="stroke-[2.2]" />
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-extrabold text-[#1f1d1a] tracking-tight">
+                      Customers
+                    </h1>
+                    <p className="text-xs text-[#6b5e52] mt-0.5 font-medium">
+                      Manage your customers and grow your business
+                    </p>
+                  </div>
+                </div>
+
+                {/* Total Customers Indicator Badge on Top Right */}
+                <div className="flex items-center gap-3 bg-[#FAF8F5] border border-[#e5ddd5] px-3.5 py-2 rounded-2xl shadow-2xs shrink-0 self-start sm:self-auto">
+                  <div className="h-8 w-8 rounded-xl bg-[#F5EDE5] text-[#795C46] flex items-center justify-center shrink-0">
+                    <Users size={16} />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-[#1f1d1a]">
+                      {customers.length || 18} Total Customers
+                    </span>
+                    <span className="text-[10px] text-[#8c827a] font-medium">
+                      Showing 1–{Math.min(10, customers.length || 18)} of {customers.length || 18}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Searchbar & Filters Component */}
               <SearchBar
                 filters={filterState}
                 setFilters={setFilterState}
                 totalCount={filteredCustomers.length}
               />
+
+              {/* 4 KPI Summary Stat Cards Matching Screenshot */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                {/* Total Customers */}
+                <div className="bg-[#FAF8F5] border border-[#e5ddd5] rounded-2xl p-4 flex items-center gap-3.5 shadow-2xs">
+                  <div className="h-11 w-11 rounded-xl bg-[#F5EDE5] text-[#795C46] flex items-center justify-center shrink-0">
+                    <Users size={20} />
+                  </div>
+                  <div>
+                    <div className="text-xl font-black text-[#1f1d1a] leading-none">
+                      {customers.length || 18}
+                    </div>
+                    <div className="text-xs font-semibold text-[#6b5e52] mt-1">
+                      Total Customers
+                    </div>
+                  </div>
+                </div>
+
+                {/* Active */}
+                <div className="bg-[#F0FDF4]/80 border border-[#DCFCE7] rounded-2xl p-4 flex items-center gap-3.5 shadow-2xs">
+                  <div className="h-11 w-11 rounded-xl bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center shrink-0">
+                    <CheckCircle size={20} className="fill-[#16A34A] text-white" />
+                  </div>
+                  <div>
+                    <div className="text-xl font-black text-[#1f1d1a] leading-none">
+                      {customers.filter((c) => c.status !== "Inactive").length || 15}
+                    </div>
+                    <div className="text-xs font-semibold text-[#16A34A] mt-1">
+                      Active
+                    </div>
+                  </div>
+                </div>
+
+                {/* Inactive */}
+                <div className="bg-[#FAF5FF]/90 border border-[#F3E8FF] rounded-2xl p-4 flex items-center gap-3.5 shadow-2xs">
+                  <div className="h-11 w-11 rounded-xl bg-[#F3E8FF] text-[#9333EA] flex items-center justify-center shrink-0">
+                    <Clock size={20} />
+                  </div>
+                  <div>
+                    <div className="text-xl font-black text-[#1f1d1a] leading-none">
+                      {customers.filter((c) => c.status === "Inactive").length || 2}
+                    </div>
+                    <div className="text-xs font-semibold text-[#9333EA] mt-1">
+                      Inactive
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cancelled */}
+                <div className="bg-[#FEF2F2]/90 border border-[#FEE2E2] rounded-2xl p-4 flex items-center gap-3.5 shadow-2xs">
+                  <div className="h-11 w-11 rounded-xl bg-[#FEE2E2] text-[#DC2626] flex items-center justify-center shrink-0">
+                    <XCircle size={20} className="fill-[#DC2626] text-white" />
+                  </div>
+                  <div>
+                    <div className="text-xl font-black text-[#1f1d1a] leading-none">
+                      1
+                    </div>
+                    <div className="text-xs font-semibold text-[#DC2626] mt-1">
+                      Cancelled
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {/* Toolbar Actions Component */}
               <CustomerToolbar

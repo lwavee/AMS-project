@@ -43,9 +43,8 @@ function SectionCard({
       >
         <span>{title}</span>
         <ChevronDown
-          className={`size-5 text-white/90 transition-transform duration-300 ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`size-5 text-white/90 transition-transform duration-300 ${isOpen ? "rotate-180" : ""
+            }`}
         />
       </button>
       {isOpen && (
@@ -79,10 +78,9 @@ function FormRow({
       <div className="sm:col-span-7 flex flex-col">
         {React.isValidElement(children)
           ? React.cloneElement(children as any, {
-              className: `${(children.props as any).className || ""} ${
-                error ? "!border-red-500 focus:!ring-red-500/20 focus:!border-red-500" : ""
+            className: `${(children.props as any).className || ""} ${error ? "!border-red-500 focus:!ring-red-500/20 focus:!border-red-500" : ""
               }`
-            })
+          })
           : children}
         {error && <span className="text-xs text-red-600 font-medium mt-1">{error}</span>}
       </div>
@@ -2309,14 +2307,12 @@ export default function NewPolicyPage() {
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Section Accordion State
+  // Section Accordion State (all minimized by default when form opens)
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    "Customer & Submission": true,
-    "Policy Specifications": true,
-    "Company Setup": true,
-    "Internal Business Unit": true,
-    "Billing & Agency Personnel": true,
-    "Options & Customer Defaults": true,
+    "Customer & Submission": false,
+    "Policy Specifications": false,
+    "Company Setup": false,
+    "Billing & Agency Personnel": false,
   });
 
   const toggleSection = (title: string) => {
@@ -2506,10 +2502,10 @@ export default function NewPolicyPage() {
         try {
           window.opener.location.href = customerUrl;
           window.opener.focus();
-        } catch (e) {}
+        } catch (e) { }
         try {
           window.close();
-        } catch (e) {}
+        } catch (e) { }
       } else {
         // If opened in full tab without opener, navigate current tab to customer page
         router.push(customerUrl);
@@ -2532,7 +2528,7 @@ export default function NewPolicyPage() {
         window.opener.focus();
       }
       window.close();
-    } catch (e) {}
+    } catch (e) { }
     router.push(`/agency/customer/${customerId}`);
   };
 
@@ -2629,15 +2625,43 @@ export default function NewPolicyPage() {
               <option value="SUB-2026-002">SUB-2026-002</option>
             </select>
           </FormRow>
-
-          <FormRow label="Sub. Eff Date">
-            <input
-              type="date"
-              value={subEffDate}
-              onChange={(e) => setSubEffDate(e.target.value)}
-              className={inputCls}
-            />
+          <FormRow label="Division">
+            <select
+              value={division}
+              onChange={(e) => setDivision(e.target.value)}
+              className={selectCls}
+            >
+              <option value="Gamaty Insurance Agency">Gamaty Insurance Agency</option>
+            </select>
           </FormRow>
+
+          <FormRow label="Branch">
+            <select
+              value={branch}
+              onChange={(e) => setBranch(e.target.value)}
+              className={selectCls}
+            >
+              <option value="Armar Insurance">Armar Insurance</option>
+              <option value="CapCo Florida">CapCo Florida</option>
+              <option value="Capital & Co">Capital & Co</option>
+              <option value="JMB - DO NOT SERVICE">JMB - DO NOT SERVICE</option>
+              <option value="Pregill Insurance">Pregill Insurance</option>
+              <option value="WCFL Insurance Services">WCFL Insurance Services</option>
+            </select>
+          </FormRow>
+
+          <FormRow label="Department">
+            <select
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              className={selectCls}
+            >
+              <option value="Commercial">Commercial</option>
+              <option value="Health">Health</option>
+              <option value="Personal">Personal</option>
+            </select>
+          </FormRow>
+
         </SectionCard>
 
         {/* ── CARD 2: Policy Specifications ── */}
@@ -2932,50 +2956,6 @@ export default function NewPolicyPage() {
           </FormRow>
         </SectionCard>
 
-        {/* ── CARD 4: Business Unit ── */}
-        <SectionCard
-          title="Internal Business Unit"
-          isOpen={openSections["Internal Business Unit"]}
-          onToggle={() => toggleSection("Internal Business Unit")}
-        >
-          <FormRow label="Division">
-            <select
-              value={division}
-              onChange={(e) => setDivision(e.target.value)}
-              className={selectCls}
-            >
-              <option value="Gamaty Insurance Agency">Gamaty Insurance Agency</option>
-            </select>
-          </FormRow>
-
-          <FormRow label="Branch">
-            <select
-              value={branch}
-              onChange={(e) => setBranch(e.target.value)}
-              className={selectCls}
-            >
-              <option value="Armar Insurance">Armar Insurance</option>
-              <option value="CapCo Florida">CapCo Florida</option>
-              <option value="Capital & Co">Capital & Co</option>
-              <option value="JMB - DO NOT SERVICE">JMB - DO NOT SERVICE</option>
-              <option value="Pregill Insurance">Pregill Insurance</option>
-              <option value="WCFL Insurance Services">WCFL Insurance Services</option>
-            </select>
-          </FormRow>
-
-          <FormRow label="Department">
-            <select
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              className={selectCls}
-            >
-              <option value="Commercial">Commercial</option>
-              <option value="Health">Health</option>
-              <option value="Personal">Personal</option>
-            </select>
-          </FormRow>
-        </SectionCard>
-
         {/* ── CARD 5: Billing & Agency Personnel ── */}
         <SectionCard
           title="Billing & Agency Personnel"
@@ -3081,76 +3061,7 @@ export default function NewPolicyPage() {
           </FormRow>
         </SectionCard>
 
-        {/* ── CARD 6: Options & Customer Defaults ── */}
-        <SectionCard
-          title="Options & Customer Defaults"
-          isOpen={openSections["Options & Customer Defaults"]}
-          onToggle={() => toggleSection("Options & Customer Defaults")}
-        >
-          <FormRow label="Additional Options">
-            <div className="flex flex-wrap gap-6">
-              <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
-                <input
-                  type="checkbox"
-                  checked={includeNotes}
-                  onChange={(e) => setIncludeNotes(e.target.checked)}
-                  className={checkCls}
-                />
-                <span>Include Policy Notes</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
-                <input
-                  type="checkbox"
-                  checked={excludeLines}
-                  onChange={(e) => setExcludeLines(e.target.checked)}
-                  className={checkCls}
-                />
-                <span>Exclude Lines of Business</span>
-              </label>
-            </div>
-          </FormRow>
 
-          <FormRow label="Default From Customer">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
-                <input
-                  type="checkbox"
-                  checked={defaultInsured}
-                  onChange={(e) => setDefaultInsured(e.target.checked)}
-                  className={checkCls}
-                />
-                <span>First Named Insured Info</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
-                <input
-                  type="checkbox"
-                  checked={defaultCoInsured}
-                  onChange={(e) => setDefaultCoInsured(e.target.checked)}
-                  className={checkCls}
-                />
-                <span>Co-Insured/Dependent</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
-                <input
-                  type="checkbox"
-                  checked={defaultDba}
-                  onChange={(e) => setDefaultDba(e.target.checked)}
-                  className={checkCls}
-                />
-                <span>DBA</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
-                <input
-                  type="checkbox"
-                  checked={defaultContacts}
-                  onChange={(e) => setDefaultContacts(e.target.checked)}
-                  className={checkCls}
-                />
-                <span>Contacts</span>
-              </label>
-            </div>
-          </FormRow>
-        </SectionCard>
 
         {/* ── Bottom Actions (Matching new-customer) ── */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 pb-16 border-t border-[#D9D5D0]">
