@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   User,
   FileText,
+  FileSignature,
   Activity,
   StickyNote,
   AlertTriangle,
@@ -30,6 +31,7 @@ import {
   Home,
   Bell,
   ChevronDown,
+  ChevronRight,
   Edit3,
   ExternalLink,
   Briefcase,
@@ -76,10 +78,24 @@ export default function CustomerProfilePage() {
   const [policies, setPolicies] = useState<any[]>([]);
   const [selectedPolicyIndex, setSelectedPolicyIndex] = useState(0);
 
-  // Tabs State - 1: Policies, 2: Uploaded Documents, 3: Notes, 4: Status History, 5: Contact Information
+  // Tabs State - Documents, Notes, Status History, Contact Information (Policies opens on separate dedicated page)
   const [activeTab, setActiveTab] = useState<
-    "policies" | "documents" | "notes" | "status_history" | "contact_info"
-  >("policies");
+    "documents" | "notes" | "status_history" | "contact_info" | null
+  >(null);
+
+  // Read tab parameter on initial load or URL change
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get("tab");
+      if (
+        tabParam &&
+        ["documents", "notes", "status_history", "contact_info"].includes(tabParam)
+      ) {
+        setActiveTab(tabParam as any);
+      }
+    }
+  }, []);
 
   // Notify Filter Pills for Notes (Screenshot 3)
   const [noteFilters, setNoteFilters] = useState<string[]>(["Underwriter"]);
@@ -784,19 +800,10 @@ export default function CustomerProfilePage() {
                 {/* 1 = Edit Customer */}
                 <button
                   onClick={() => router.push(`/agency/new-customer?edit=${customerId}`)}
-                  className="h-9 px-4 bg-[#7a523b] hover:bg-[#68432e] text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-2 shadow-xs"
+                  className="h-9 px-4 bg-[#9A8B7A] hover:bg-[#8a6f4d] text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-2 shadow-xs"
                 >
                   <Edit3 size={13} className="text-white" />
                   Edit Customer
-                </button>
-
-                {/* 2 = E-Forms Manager */}
-                <button
-                  onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager`, "_blank")}
-                  className="h-9 px-4 bg-[#7a523b] hover:bg-[#68432e] text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-2 shadow-xs"
-                >
-                  <FileText size={13} className="text-white" />
-                  E-Forms Manager
                 </button>
 
                 {/* 3 = Three dots */}
@@ -811,24 +818,9 @@ export default function CustomerProfilePage() {
             </div>
           </div>
 
-          {/* ── Metric Cards Grid (Screenshot 2) ── */}
-          <div className="pt-5 border-t border-[#f0e5d8] space-y-4">
-            {/* Row 1: Cards */}
+          {/* ── Metric Cards Grid ── */}
+          <div className="pt-5 border-t border-[#f0e5d8]">
             <div className="border border-[#ebe5df] rounded-2xl grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#ebe5df] bg-white">
-              {/* Total Policies */}
-              <div className="p-4 flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-xl bg-[#edeefc] text-[#5e5cee] flex items-center justify-center shrink-0">
-                  <FileText size={18} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs text-[#8c827a] font-medium">Total Policies</p>
-                  <p className="text-base font-bold text-[#1f1d1a] leading-tight mt-0.5">
-                    {policies.length}
-                  </p>
-                  <p className="text-[11px] text-[#8c827a] font-normal mt-0.5">Active policies</p>
-                </div>
-              </div>
-
               {/* Customer Since */}
               <div className="p-4 flex items-center gap-3.5">
                 <div className="w-11 h-11 rounded-xl bg-[#e6f7ef] text-[#10b981] flex items-center justify-center shrink-0">
@@ -857,23 +849,6 @@ export default function CustomerProfilePage() {
                 </div>
               </div>
 
-              {/* Primary Executive (Commented Out) */}
-              {/* <div className="p-4 flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-xl bg-[#e8f3fe] text-[#0284c7] flex items-center justify-center shrink-0">
-                  <User size={18} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs text-[#8c827a] font-medium">Primary Executive</p>
-                  <p className="text-base font-bold text-[#1f1d1a] leading-tight mt-0.5 truncate" title={primaryExec}>
-                    {primaryExec}
-                  </p>
-                  <p className="text-[11px] text-[#8c827a] font-normal mt-0.5">Account executive</p>
-                </div>
-              </div> */}
-            </div>
-
-            {/* Row 2: Cards */}
-            <div className="border border-[#ebe5df] rounded-2xl grid grid-cols-1 divide-y divide-[#ebe5df] bg-white w-full sm:w-1/2 lg:w-1/3">
               {/* Delivery Preference */}
               <div className="p-4 flex items-center gap-3.5">
                 <div className="w-11 h-11 rounded-xl bg-[#fdeeed] text-[#ef4444] flex items-center justify-center shrink-0">
@@ -884,1132 +859,158 @@ export default function CustomerProfilePage() {
                   <p className="text-base font-bold text-[#1f1d1a] leading-tight mt-0.5 truncate">
                     {preferredMethod}
                   </p>
+                  <p className="text-[11px] text-[#8c827a] font-normal mt-0.5">Preferred contact</p>
                 </div>
               </div>
-
-              {/* Agent Name (Commented Out) */}
-              {/* <div className="p-4 flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-xl bg-[#e6f7ef] text-[#10b981] flex items-center justify-center shrink-0">
-                  <User size={18} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs text-[#8c827a] font-medium">Agent Name</p>
-                  <p className="text-base font-bold text-[#1f1d1a] leading-tight mt-0.5 truncate" title={agentName}>
-                    {agentName}
-                  </p>
-                </div>
-              </div> */}
             </div>
           </div>
 
-        </div>
-
-        {/* ── Tabs Navigation Bar Card (Screenshot 1) ── */}
-        <div className="bg-white border border-[#e5ddd5] rounded-2xl p-2.5 shadow-xs flex items-center gap-2 overflow-x-auto w-full">
-          {/* Tab 1: Policies (4) */}
-          <button
-            onClick={() => setActiveTab("policies")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap ${activeTab === "policies"
-              ? "bg-[#F5EDE5] text-[#795C46] border-b-2 border-[#795C46] shadow-2xs font-extrabold"
-              : "text-[#6b5e52] hover:bg-[#FAF8F5] hover:text-[#2d2a26]"
-              }`}
-          >
-            <Shield size={16} className={activeTab === "policies" ? "text-[#795C46]" : "text-[#795C46]"} />
-            <span>Policies ({policies.length})</span>
-          </button>
-
-          {/* Tab 2: Uploaded Documents */}
-          <button
-            onClick={() => setActiveTab("documents")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap ${activeTab === "documents"
-              ? "bg-[#F5EDE5] text-[#795C46] border-b-2 border-[#795C46] shadow-2xs font-extrabold"
-              : "text-[#6b5e52] hover:bg-[#FAF8F5] hover:text-[#2d2a26]"
-              }`}
-          >
-            <FileText size={16} className={activeTab === "documents" ? "text-[#795C46]" : "text-blue-500"} />
-            <span>Uploaded Documents {documents.length > 0 ? `(${documents.length})` : ""}</span>
-          </button>
-
-          {/* Tab 3: Notes */}
-          <button
-            onClick={() => setActiveTab("notes")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap ${activeTab === "notes"
-              ? "bg-[#F5EDE5] text-[#795C46] border-b-2 border-[#795C46] shadow-2xs font-extrabold"
-              : "text-[#6b5e52] hover:bg-[#FAF8F5] hover:text-[#2d2a26]"
-              }`}
-          >
-            <SquarePen size={16} className={activeTab === "notes" ? "text-[#795C46]" : "text-purple-500"} />
-            <span>Notes</span>
-          </button>
-
-          {/* Tab 4: Status History */}
-          <button
-            onClick={() => setActiveTab("status_history")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap ${activeTab === "status_history"
-              ? "bg-[#F5EDE5] text-[#795C46] border-b-2 border-[#795C46] shadow-2xs font-extrabold"
-              : "text-[#6b5e52] hover:bg-[#FAF8F5] hover:text-[#2d2a26]"
-              }`}
-          >
-            <History size={16} className={activeTab === "status_history" ? "text-[#795C46]" : "text-emerald-500"} />
-            <span>Status History</span>
-          </button>
-
-          {/* Tab 5: Contact Information */}
-          <button
-            onClick={() => setActiveTab("contact_info")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap ${activeTab === "contact_info"
-              ? "bg-[#F5EDE5] text-[#795C46] border-b-2 border-[#795C46] shadow-2xs font-extrabold"
-              : "text-[#6b5e52] hover:bg-[#FAF8F5] hover:text-[#2d2a26]"
-              }`}
-          >
-            <Users size={16} className={activeTab === "contact_info" ? "text-[#795C46]" : "text-amber-600"} />
-            <span>Contact Information</span>
-          </button>
-        </div>
-
-        {/* ── Active Tab Content Card with Smooth Transition (Screenshot 1) ── */}
-        <div key={activeTab} className="bg-white border border-[#e5ddd5] rounded-2xl p-6 shadow-sm w-full animate-tab-content transition-all duration-300">
-          {/* ── TAB 1: POLICIES ── */}
-          {activeTab === "policies" && (
-            <div id="policies-section" className="space-y-6">
-              {/* Policy Section Header + Action Buttons */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
-                <div className="flex items-center gap-3.5">
-                  <div className="h-12 w-12 rounded-2xl bg-[#F5EDE5] text-[#795C46] flex items-center justify-center shrink-0 border border-[#e5ddd5]/60 shadow-2xs">
-                    <Shield size={22} className="stroke-[2.2]" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-extrabold text-[#1f1d1a]">
-                      Policies & Coverage ({policies.length})
-                    </h2>
-                    <p className="text-xs text-[#6b5e52] mt-0.5 font-medium">
-                      Manage and view active policies, renewals, rewrites, and coverages
-                    </p>
-                  </div>
-                </div>
-
-                {/* Action Buttons matching Screenshot 1 */}
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <button
-                    onClick={() => window.open(`/agency/customer/${customerId}/new-policy`, "_blank")}
-                    className="h-9 px-4 bg-[#6d4c3d] hover:bg-[#5a3e31] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Plus size={14} className="stroke-[2.5]" />
-                    New Policy
-                  </button>
-
-                  <button
-                    onClick={() => showToast("Renew policy initiated for selected policy.", "success")}
-                    className="h-9 px-4 bg-white border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#2d2a26] text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                  >
-                    <RotateCcw size={14} className="text-[#6b5e52]" />
-                    Renew
-                  </button>
-
-                  <button
-                    onClick={() => showToast("Rewrite policy initiated for selected policy.", "success")}
-                    className="h-9 px-4 bg-white border border-[#e5ddd5] hover:bg-[#f5f1eb] text-[#2d2a26] text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                  >
-                    <FileText size={14} className="text-[#6b5e52]" />
-                    Rewrite
-                  </button>
-
-                  <button
-                    onClick={async () => {
-                      if (await confirmDialog("Are you sure you want to cancel the selected policy?", "Cancel Policy")) {
-                        showToast("Cancellation request submitted.", "success");
-                      }
-                    }}
-                    className="h-9 px-4 bg-white border border-red-200 hover:bg-red-50 text-red-600 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                  >
-                    <XCircle size={14} className="text-red-500" />
-                    Cancel
-                  </button>
-                </div>
-              </div>
-
-              {/* Policy Table matching Screenshot 1 */}
-              <div className="border border-[#e5ddd5] rounded-2xl overflow-hidden mt-6 bg-white shadow-2xs">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-[#FAF7F2] text-[#6b5e52] font-semibold border-b border-[#e5ddd5]">
-                    <tr>
-                      <th className="w-12 px-4 py-3.5 text-center">
-                        <input
-                          type="checkbox"
-                          className="rounded-md border-[#e5ddd5] text-[#795C46] accent-[#795C46] h-4 w-4 cursor-pointer"
-                        />
-                      </th>
-                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
-                        Policy # <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
-                      </th>
-                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
-                        Status <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
-                      </th>
-                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
-                        Term <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
-                      </th>
-                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
-                        Line of Business <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
-                      </th>
-                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
-                        Insurance Carrier <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
-                      </th>
-                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
-                        Effective Date <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
-                      </th>
-                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
-                        Expiration Date <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
-                      </th>
-                      <th className="px-4 py-3.5 font-bold text-[#6b5e52] text-center">
-                        Action
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#e5ddd5]">
-                    {activeLOBList.map((p, idx) => {
-                      const isSelected = selectedPolicyIndex === idx;
-                      return (
-                        <tr
-                          key={p.id || idx}
-                          onClick={() => setSelectedPolicyIndex(idx)}
-                          className={`cursor-pointer transition-colors ${isSelected ? "bg-[#FAF8F5]/80 font-medium" : "hover:bg-[#FAF8F5]/60"
-                            }`}
-                        >
-                          <td className="text-center py-3.5 px-4">
-                            <input
-                              type="checkbox"
-                              name="policy_select"
-                              checked={isSelected}
-                              onChange={() => setSelectedPolicyIndex(idx)}
-                              className="rounded-md border-[#e5ddd5] accent-[#795C46] h-4 w-4 cursor-pointer"
-                            />
-                          </td>
-                          <td className="px-4 py-3.5 font-extrabold text-[#1f1d1a]">
-                            <span
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(
-                                  `/agency/customer/${customerId}/policy/${p.id}`,
-                                  "_blank",
-                                  "width=1100,height=850"
-                                );
-                              }}
-                              className="hover:text-[#795C46] hover:underline cursor-pointer"
-                            >
-                              {p.policyNum}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-[#E8F8F0] text-[#12805C]">
-                              <span className="h-1.5 w-1.5 rounded-full bg-[#12805C]"></span>
-                              {p.status || "ACTIVE"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3.5 text-[#2d2a26] font-medium">{p.term || "12 Months"}</td>
-                          <td className="px-4 py-3.5 font-bold text-[#1f1d1a]">{p.type}</td>
-                          <td className="px-4 py-3.5 text-[#4a423b] font-medium">{p.company}</td>
-                          <td className="px-4 py-3.5 text-[#4a423b] font-medium">{p.effDate}</td>
-                          <td className="px-4 py-3.5 text-[#4a423b] font-medium">{p.expDate}</td>
-                          <td className="px-4 py-3.5 text-center">
-                            <div className="flex items-center justify-center gap-2">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  window.open(
-                                    `/agency/customer/${customerId}/policy/${p.id}`,
-                                    "_blank",
-                                    "width=1100,height=850"
-                                  );
-                                }}
-                                className="h-8 px-3.5 bg-[#795C46] hover:bg-[#634b39] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
-                              >
-                                <Eye size={13} />
-                                View Policy
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                }}
-                                className="h-8 w-8 flex items-center justify-center rounded-xl text-[#8c827a] hover:text-[#2d2a26] hover:bg-[#FAF8F5] transition-colors cursor-pointer"
-                              >
-                                <MoreVertical size={16} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* ── TAB 2: UPLOADED DOCUMENTS (Matching Photo) ── */}
-          {activeTab === "documents" && (
-            <div className="space-y-6">
-              {/* Header */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
-                <div className="flex items-center gap-3.5">
-                  <div className="h-12 w-12 rounded-2xl bg-[#F5EDE5] text-[#795C46] flex items-center justify-center shrink-0 border border-[#e5ddd5]/60 shadow-2xs">
-                    <FileText size={22} className="stroke-[2.2]" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-extrabold text-[#1f1d1a]">
-                      Uploaded Documents
-                    </h2>
-                    <p className="text-xs text-[#6b5e52] mt-0.5 font-medium">
-                      Upload and manage customer documents securely
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="h-9 px-4 bg-[#6d4c3d] hover:bg-[#5a3e31] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Upload size={14} className="stroke-[2.5]" />
-                  Upload New File
-                </button>
-              </div>
-
-              {/* Grid 2-columns (Dropzone left, Info cards right) */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-                {/* Left 70% - Drag & Drop Zone with Animated File Type Arc */}
-                <div
-                  onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-                  onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }}
-                  onDrop={handleFileDrop}
-                  className={`lg:col-span-8 border-2 border-dashed rounded-3xl p-8 flex flex-col items-center justify-center text-center transition-all relative overflow-hidden bg-[#FAF8F5] ${isDragOver ? "border-[#795C46] bg-[#795C46]/5 scale-[0.99]" : "border-[#e5ddd5] hover:border-[#9A8B7A]"
-                    }`}
-                >
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileInputChange}
-                    className="hidden"
-                  />
-
-                  {/* Cloud Icon & Floating File Type Icons Arc */}
-                  <div className="relative mb-3 flex items-center justify-center w-full max-w-[280px] h-20">
-                    {/* Subtle Curved connecting line */}
-                    <svg className="absolute w-full h-14 top-2 text-[#e5ddd5]" viewBox="0 0 280 50" fill="none">
-                      <path d="M 25 40 Q 140 0 255 40" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" />
-                    </svg>
-
-                    {/* PDF (Red) */}
-                    <div className="absolute left-3 top-6 h-7 w-7 rounded-full bg-[#FEF2F2] border border-[#FEE2E2] text-[#DC2626] flex items-center justify-center text-[9px] font-extrabold shadow-2xs">
-                      PDF
-                    </div>
-
-                    {/* DOC (Blue) */}
-                    <div className="absolute left-14 top-1 h-7 w-7 rounded-full bg-[#EFF6FF] border border-[#DBEAFE] text-[#2563EB] flex items-center justify-center text-[9px] font-extrabold shadow-2xs">
-                      DOC
-                    </div>
-
-                    {/* Center Cloud Badge */}
-                    <div
-                      onClick={() => fileInputRef.current?.click()}
-                      className="relative z-10 h-14 w-14 rounded-full bg-[#F5EDE5] border border-[#e5ddd5] text-[#795C46] flex items-center justify-center shadow-xs cursor-pointer hover:scale-105 transition-transform"
-                    >
-                      <CloudUpload size={26} className="stroke-[2.2]" />
-                    </div>
-
-                    {/* PNG (Green) */}
-                    <div className="absolute right-14 top-1 h-7 w-7 rounded-full bg-[#F0FDF4] border border-[#DCFCE7] text-[#16A34A] flex items-center justify-center text-[9px] font-extrabold shadow-2xs">
-                      PNG
-                    </div>
-
-                    {/* ZIP (Purple) */}
-                    <div className="absolute right-3 top-6 h-7 w-7 rounded-full bg-[#FAF5FF] border border-[#F3E8FF] text-[#9333EA] flex items-center justify-center text-[9px] font-extrabold shadow-2xs">
-                      ZIP
-                    </div>
-                  </div>
-
-                  <p className="text-sm font-bold text-[#1f1d1a]">
-                    Drag & drop files here
-                  </p>
-                  <p className="text-xs text-[#6b5e52] mt-0.5 font-medium">
-                    or click to browse from your device
-                  </p>
-
-                  <div className="flex items-center gap-1.5 text-[11px] text-[#8c827a] font-medium mt-1.5">
-                    <Info size={13} className="text-[#9A8B7A]" />
-                    <span>Supports PDF, DOCX, PNG (Max size: 10MB per file)</span>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="h-9 px-5 bg-[#6d4c3d] hover:bg-[#5a3e31] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 mt-4 cursor-pointer"
-                  >
-                    <Folder size={14} />
-                    Browse Files
-                  </button>
-                </div>
-
-                {/* Right 30% - Subjective Lines & Accepted File Types */}
-                <div className="lg:col-span-4 flex flex-col gap-4 justify-between">
-                  {/* Card 1: Subjective Lines */}
-                  <div className="bg-white border border-[#e5ddd5] rounded-2xl p-4 shadow-2xs space-y-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="h-8 w-8 rounded-xl bg-[#F5EDE5] text-[#795C46] flex items-center justify-center shrink-0 border border-[#e5ddd5]/60">
-                        <FileText size={15} />
-                      </div>
-                      <h4 className="text-xs font-extrabold text-[#1f1d1a]">Subjective Lines</h4>
-                    </div>
-
-                    <div className="bg-[#ECFDF5] border border-[#A7F3D0] rounded-xl p-3 flex items-start gap-2.5">
-                      <CheckSquare size={16} className="text-[#059669] shrink-0 mt-0.5 fill-[#059669] text-white rounded" />
-                      <span className="text-[11px] font-medium text-[#065F46] leading-relaxed">
-                        1 year of loss runs required, valued within 60 days of inception.
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Documents Table */}
-              <div className="border border-[#e5ddd5] rounded-2xl overflow-hidden mt-6 bg-white shadow-2xs">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-[#FAF7F2] text-[#6b5e52] font-semibold border-b border-[#e5ddd5]">
-                    <tr>
-                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
-                        Filename <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
-                      </th>
-                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
-                        Category <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
-                      </th>
-                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
-                        Description <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
-                      </th>
-                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
-                        Uploaded On <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
-                      </th>
-                      <th className="px-4 py-3.5 font-bold text-[#6b5e52] text-center">
-                        Manage
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#e5ddd5]">
-                    {docLoading ? (
-                      <tr>
-                        <td colSpan={5} className="px-4 py-10 text-center text-[#6b5e52]">
-                          <Loader2 className="animate-spin text-[#9A8B7A] mx-auto size-5 mb-1" />
-                          Loading files...
-                        </td>
-                      </tr>
-                    ) : documents.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="px-4 py-12 text-center">
-                          <div className="flex flex-col items-center justify-center">
-                            <FileText size={34} className="text-[#c4b5a5] stroke-[1.5] mb-2" />
-                            <p className="text-sm font-bold text-[#2d2a26]">No documents uploaded yet</p>
-                            <p className="text-xs text-[#8c827a] mt-0.5 font-medium">Upload files to keep customer documents organized and accessible.</p>
-                          </div>
-                        </td>
-                      </tr>
-                    ) : (
-                      documents.map((doc) => (
-                        <tr key={doc.id} className="hover:bg-[#FAF8F5] transition-colors group">
-                          <td className="px-4 py-3.5">
-                            <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-lg bg-white border border-[#e5ddd5] flex items-center justify-center text-[#9A8B7A] shrink-0 shadow-2xs group-hover:border-[#795C46] group-hover:text-[#795C46] transition-colors">
-                                {doc.fileName?.toLowerCase().endsWith('.pdf') ? <FileText size={15} /> :
-                                  doc.fileName?.toLowerCase().match(/\.(jpg|jpeg|png)$/) ? <ImageIcon size={15} /> :
-                                    doc.fileName?.toLowerCase().endsWith('.zip') ? <FileArchive size={15} /> :
-                                      <FileIcon size={15} />}
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="font-bold text-[#2d2a26] text-xs max-w-[200px] truncate" title={doc.fileName}>
-                                  {doc.fileName || "Document"}
-                                </span>
-                                {doc.ext && <span className="text-[9px] uppercase tracking-wider text-[#9A8B7A] font-bold">{doc.ext.replace('.', '')}</span>}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3.5 text-[#6b5e52]">
-                            <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${doc.action === 'Policy Attachment' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                              doc.action === 'Loss Runs' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                                doc.action === 'Signed Binder' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                  'bg-[#f5f1eb] text-[#6b5e52] border-[#e5ddd5]'
-                              }`}>
-                              {doc.action || "Upload"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3.5 text-[#6b5e52] max-w-[200px] truncate font-medium text-[11px]" title={doc.description}>
-                            {doc.description || "—"}
-                          </td>
-                          <td className="px-4 py-3.5 font-medium text-[#6b5e52] text-[11px]">
-                            {doc.createdAt}
-                          </td>
-                          <td className="px-4 py-3.5 text-center">
-                            <div className="flex items-center justify-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
-                              {doc.url && (
-                                <a
-                                  href={doc.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="p-1.5 rounded-lg text-[#6b5e52] hover:text-[#795C46] hover:bg-white border border-transparent hover:border-[#e5ddd5] hover:shadow-2xs transition-all"
-                                  title="View Document"
-                                >
-                                  <Eye size={14} />
-                                </a>
-                              )}
-                              <button
-                                onClick={() => handleDeleteDocument(doc.id)}
-                                className="p-1.5 rounded-lg text-[#6b5e52] hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 transition-all cursor-pointer"
-                                title="Delete Document"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* ── TAB: NOTES (Matching Photo) ── */}
-          {activeTab === "notes" && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-
-              {/* LEFT 60% – ADD NOTE */}
-              <div className="lg:col-span-7 space-y-5">
-                {/* Header */}
-                <div className="flex items-center gap-3.5 pb-1">
-                  <div className="h-12 w-12 rounded-2xl bg-[#F5EDE5] text-[#795C46] flex items-center justify-center shrink-0 border border-[#e5ddd5]/60 shadow-2xs">
-                    <FileText size={22} className="stroke-[2.2]" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-extrabold text-[#1f1d1a]">
-                      Add Note
-                    </h2>
-                    <p className="text-xs text-[#6b5e52] mt-0.5 font-medium">
-                      Add internal notes and mentions to keep track of customer communication
-                    </p>
-                  </div>
-                </div>
-
-                {/* Notify Filters Row */}
-                <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="text-xs font-bold text-[#2d2a26] mr-1">Notify:</span>
-                  {[
-                    { label: "Underwriter", icon: <Bell size={13} /> },
-                    { label: "Accounting", icon: <Calculator size={13} /> },
-                    { label: "Endorsements", icon: <FileText size={13} /> },
-                    { label: "Cancellations", icon: <XCircle size={13} /> },
-                    { label: "Audits", icon: <Shield size={13} /> },
-                  ].map((item) => {
-                    const isSelected = noteFilters.includes(item.label);
-                    return (
-                      <button
-                        key={item.label}
-                        type="button"
-                        onClick={() => toggleNoteFilter(item.label)}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs ${isSelected
-                            ? "bg-[#6d4c3d] text-white shadow-xs"
-                            : "bg-white border border-[#e5ddd5] hover:bg-[#FAF8F5] text-[#2d2a26]"
-                          }`}
-                      >
-                        {React.cloneElement(item.icon, {
-                          className: isSelected ? "text-white" : "text-[#6b5e52]",
-                        })}
-                        <span>{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Chat/Note Input Box with Avatar */}
-                <div className="flex gap-3.5 items-start pt-1">
-                  {/* User Avatar */}
-                  <div className="w-9 h-9 rounded-full bg-[#6d4c3d] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs mt-1">
-                    {displayName.charAt(0).toUpperCase() || "K"}
-                  </div>
-
-                  {/* Rich Editor Box */}
-                  <div className="flex-1 border border-[#e5ddd5] rounded-2xl bg-white overflow-hidden shadow-2xs focus-within:border-[#9A8B7A] focus-within:ring-2 focus-within:ring-[#9A8B7A]/20 transition-all">
-                    <textarea
-                      rows={4}
-                      className="w-full p-4 text-xs text-[#1f1d1a] placeholder:text-[#8c827a] resize-none outline-none border-none bg-transparent font-medium"
-                      value={newNoteText}
-                      onChange={(e) => setNewNoteText(e.target.value)}
-                      placeholder="Write your note here..."
-                      maxLength={1000}
-                    />
-
-                    {/* Toolbar */}
-                    <div className="border-t border-[#f0e9df] px-3.5 py-2 flex items-center justify-between bg-[#FAF8F5]/60">
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setNewNoteText((prev) => prev ? `**${prev}**` : "**bold text**")}
-                          className="h-6 w-6 flex items-center justify-center text-xs font-extrabold text-[#6b5e52] hover:text-[#2d2a26] hover:bg-white rounded transition-colors cursor-pointer"
-                          title="Bold"
-                        >
-                          B
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setNewNoteText((prev) => prev ? `*${prev}*` : "*italic text*")}
-                          className="h-6 w-6 flex items-center justify-center text-xs font-serif italic text-[#6b5e52] hover:text-[#2d2a26] hover:bg-white rounded transition-colors cursor-pointer"
-                          title="Italic"
-                        >
-                          I
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setNewNoteText((prev) => prev ? `<u>${prev}</u>` : "<u>underline</u>")}
-                          className="h-6 w-6 flex items-center justify-center text-xs underline text-[#6b5e52] hover:text-[#2d2a26] hover:bg-white rounded transition-colors cursor-pointer"
-                          title="Underline"
-                        >
-                          U
-                        </button>
-                        <div className="h-3.5 w-px bg-[#e5ddd5] mx-1" />
-                        <button
-                          type="button"
-                          onClick={() => setNewNoteText((prev) => `${prev}\n• `)}
-                          className="h-6 w-6 flex items-center justify-center text-[#6b5e52] hover:text-[#2d2a26] hover:bg-white rounded transition-colors cursor-pointer"
-                          title="Bullet list"
-                        >
-                          <List size={13} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setNewNoteText((prev) => `${prev}\n1. `)}
-                          className="h-6 w-6 flex items-center justify-center text-[#6b5e52] hover:text-[#2d2a26] hover:bg-white rounded transition-colors cursor-pointer"
-                          title="Numbered list"
-                        >
-                          <ListOrdered size={13} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setNewNoteText((prev) => `${prev} [link](url)`)}
-                          className="h-6 w-6 flex items-center justify-center text-[#6b5e52] hover:text-[#2d2a26] hover:bg-white rounded transition-colors cursor-pointer"
-                          title="Add link"
-                        >
-                          <Link2 size={13} />
-                        </button>
-                      </div>
-
-                      <span className="text-[11px] font-medium text-[#8c827a]">
-                        {newNoteText.length}/1000
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Submit Button */}
-                <div className="flex justify-end pt-1">
-                  <button
-                    type="button"
-                    onClick={handleAddNote}
-                    disabled={noteLoading || !newNoteText.trim()}
-                    className="h-9 px-5 bg-[#6d4c3d] hover:bg-[#5a3e31] text-white rounded-xl text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
-                  >
-                    <Plus size={14} className="stroke-[2.5]" />
-                    {noteLoading ? "Saving..." : "Add Note"}
-                  </button>
-                </div>
-              </div>
-
-              {/* RIGHT 40% – NOTES THREAD */}
-              <div className="lg:col-span-5 bg-[#FAF8F5]/60 border border-[#e5ddd5] rounded-3xl p-5 shadow-2xs flex flex-col justify-between min-h-[360px]">
-                {/* Header */}
-                <div className="flex items-center justify-between pb-3 border-b border-[#e5ddd5]/60">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-9 w-9 rounded-2xl bg-white border border-[#e5ddd5] text-[#795C46] flex items-center justify-center shrink-0 shadow-2xs">
-                      <MessageSquare size={16} />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-extrabold text-[#1f1d1a]">
-                        Notes Thread
-                      </h3>
-                      <p className="text-[11px] text-[#6b5e52] font-medium">
-                        View all notes and conversations for this customer
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Filter Pill */}
-                  <button
-                    type="button"
-                    className="bg-white border border-[#e5ddd5] hover:bg-[#FAF8F5] text-[#2d2a26] text-xs font-semibold px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
-                  >
-                    <Filter size={12} className="text-[#6b5e52]" />
-                    <span>All Notes</span>
-                    <ChevronDown size={12} className="text-[#6b5e52]" />
-                  </button>
-                </div>
-
-                {/* Body: Empty State or Notes List */}
-                <div className="flex-1 flex flex-col justify-center py-6">
-                  {notes.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center text-center my-auto">
-                      {/* Illustrated Overlapping Cards Graphic with Sparkle */}
-                      <div className="relative w-36 h-20 mb-3 flex items-center justify-center">
-                        {/* Left tilted card */}
-                        <div className="absolute left-3 top-3 w-16 h-13 bg-white border border-[#e5ddd5] rounded-xl shadow-2xs -rotate-12 flex flex-col p-2 justify-center gap-1 opacity-70">
-                          <div className="h-1.5 w-8 bg-[#e5ddd5] rounded-full" />
-                          <div className="h-1.5 w-10 bg-[#f0e9df] rounded-full" />
-                        </div>
-                        {/* Right tilted card */}
-                        <div className="absolute right-3 top-3 w-16 h-13 bg-white border border-[#e5ddd5] rounded-xl shadow-2xs rotate-12 flex flex-col p-2 justify-center gap-1 opacity-70">
-                          <div className="h-1.5 w-10 bg-[#e5ddd5] rounded-full" />
-                          <div className="h-1.5 w-6 bg-[#f0e9df] rounded-full" />
-                        </div>
-                        {/* Center prominent warm card */}
-                        <div className="relative z-10 w-20 h-16 bg-[#F5EDE5] border border-[#d8c8ba] rounded-2xl shadow-xs flex flex-col items-center justify-center p-2.5 gap-1.5">
-                          <div className="h-1.5 w-10 bg-[#795C46]/60 rounded-full" />
-                          <div className="h-1.5 w-12 bg-[#795C46]/80 rounded-full" />
-                          <div className="h-1.5 w-7 bg-[#795C46]/60 rounded-full" />
-                        </div>
-                        {/* Sparkle top right */}
-                        <div className="absolute top-0 right-6 text-[#795C46] font-bold text-xs">
-                          ✦
-                        </div>
-                      </div>
-
-                      <p className="font-extrabold text-sm text-[#1f1d1a]">
-                        No notes added yet
-                      </p>
-                      <p className="text-xs text-[#8c827a] mt-0.5 font-medium max-w-xs">
-                        Drop in questions or comments to help us assist you.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
-                      {notes.map((n) => (
-                        <div
-                          key={n.id}
-                          className="bg-white border border-[#e5ddd5] rounded-2xl p-3.5 shadow-2xs space-y-1.5"
-                        >
-                          <div className="flex items-center justify-between text-[11px] text-[#6b5e52]">
-                            <span className="font-bold uppercase text-[#795C46]">
-                              {n.author || "Agent"} ({n.role || "staff"})
-                            </span>
-                            <span className="font-medium text-[#8c827a]">
-                              {n.created_at || "Recent"}
-                            </span>
-                          </div>
-                          <p className="text-xs text-[#2d2a26] font-medium whitespace-pre-wrap leading-relaxed">
-                            {n.text}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-            </div>
-          )}
-
-          {/* ── TAB: STATUS HISTORY (Matching Screenshot) ── */}
-          {activeTab === "status_history" && (
-            <div className="space-y-6">
-              {/* Header */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-1">
-                <div className="flex items-center gap-3.5">
-                  <div className="h-12 w-12 rounded-2xl bg-[#F5EDE5] text-[#795C46] flex items-center justify-center shrink-0 border border-[#e5ddd5]/60 shadow-2xs">
-                    <Clock size={22} className="stroke-[2.2]" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-extrabold text-[#1f1d1a]">
-                      Customer History & Activity Log
-                    </h2>
-                    <p className="text-xs text-[#6b5e52] mt-0.5 font-medium">
-                      View a complete history of all activities, notes, policy changes, and document actions for this customer.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => window.open(`/agency/customer/${customerId}/new-activity`, "_blank", "width=1000,height=900")}
-                  className="h-9 px-4 bg-[#6d4c3d] hover:bg-[#5a3e31] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
-                >
-                  <Plus size={14} className="stroke-[2.5]" />
-                  Log Activity
-                </button>
-              </div>
-
-              {/* Filter & Search Bar Row */}
-              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
-                {/* Search activities */}
-                <div className="relative flex-1 min-w-[240px]">
-                  <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9A8B7A]" />
-                  <input
-                    type="text"
-                    value={activitySearch}
-                    onChange={(e) => setActivitySearch(e.target.value)}
-                    placeholder="Search activities, users, or details..."
-                    className="w-full pl-9 pr-4 py-2 border border-[#e5ddd5] rounded-xl text-xs bg-white text-[#1f1d1a] placeholder:text-[#8c827a] outline-none focus:border-[#795C46] shadow-2xs font-medium transition-all"
-                  />
-                </div>
-
-                {/* Activity Type Filter */}
-                <select
-                  value={activityTypeFilter}
-                  onChange={(e) => setActivityTypeFilter(e.target.value)}
-                  className="px-3.5 py-2 border border-[#e5ddd5] rounded-xl text-xs font-semibold text-[#2d2a26] bg-white shadow-2xs cursor-pointer outline-none hover:bg-[#FAF8F5] transition-all"
-                >
-                  <option value="All Activity Types">All Activity Types</option>
-                  <option value="Note Added">Notes</option>
-                  <option value="Document">Documents</option>
-                  <option value="Certificate">Certificates</option>
-                  <option value="Policy">Policies</option>
-                  <option value="Updated">Customer Info</option>
-                </select>
-
-                {/* Users Filter */}
-                <select
-                  value={activityUserFilter}
-                  onChange={(e) => setActivityUserFilter(e.target.value)}
-                  className="px-3.5 py-2 border border-[#e5ddd5] rounded-xl text-xs font-semibold text-[#2d2a26] bg-white shadow-2xs cursor-pointer outline-none hover:bg-[#FAF8F5] transition-all"
-                >
-                  <option value="All Users">All Users</option>
-                  <option value="AGENCY">AGENCY</option>
-                  <option value="TRAVEL DOLL">TRAVEL DOLL</option>
-                  <option value="KOLB, MONTGOM...">KOLB, MONTGOM...</option>
-                  <option value="JOANA SARMIENTO">JOANA SARMIENTO</option>
-                  <option value="KARIM">KARIM</option>
-                </select>
-
-                {/* Date Range Selector */}
-                <div className="flex items-center gap-2 px-3.5 py-2 border border-[#e5ddd5] rounded-xl text-xs font-semibold text-[#2d2a26] bg-white shadow-2xs cursor-pointer hover:bg-[#FAF8F5] transition-all">
-                  <Calendar size={13} className="text-[#6b5e52]" />
-                  <span>Select Date Range</span>
-                  <ChevronDown size={12} className="text-[#6b5e52]" />
-                </div>
-
-                {/* Refresh button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActivitySearch("");
-                    setActivityTypeFilter("All Activity Types");
-                    setActivityUserFilter("All Users");
-                    showToast("Activity log refreshed", "success");
+          {/* Quick Links */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full">
+            {[
+              {
+                id: "policies" as const,
+                name: `Policies (${policies.length})`,
+                shortName: "Policies",
+                description: "View and manage active policies, renewals & coverage",
+                icon: Shield,
+                iconBg: "bg-[#9A8B7A]", // Screenshot 2 Card 1: Warm Taupe / Brown
+                badge: policies.length.toString(),
+                badgeColor: "bg-[#F5EDE5] text-[#9A8B7A]",
+                bubbleColor: "bg-[#F5EDE5]/70",
+                href: `/agency/customer/${customerId}/policies`,
+                openInNewTab: false,
+              },
+              {
+                id: "eforms_manager" as const,
+                name: "eForms Manager",
+                shortName: "eForms Manager",
+                description: "Manage, issue and distribute ACORD forms & certificates",
+                icon: FileSignature,
+                iconBg: "bg-[#0284c7]", // Vibrant Sky Blue
+                badge: undefined,
+                badgeColor: "bg-sky-100/70 text-sky-700",
+                bubbleColor: "bg-sky-50/70",
+                href: `/agency/customer/${customerId}/eforms-manager`,
+                openInNewTab: true,
+              },
+              {
+                id: "documents" as const,
+                name: `Uploaded Documents${documents.length > 0 ? ` (${documents.length})` : ""}`,
+                shortName: "Uploaded Documents",
+                description: "View, upload, and organize customer documents & files",
+                icon: FileText,
+                iconBg: "bg-[#2563eb]", // Screenshot 2 Card 2: Vibrant Blue
+                badge: documents.length > 0 ? documents.length.toString() : undefined,
+                badgeColor: "bg-blue-100/70 text-blue-600",
+                bubbleColor: "bg-blue-50/70",
+                href: `/agency/customer/${customerId}/documents`,
+                openInNewTab: false,
+              },
+              {
+                id: "notes" as const,
+                name: `Notes${notes.length > 0 ? ` (${notes.length})` : ""}`,
+                shortName: "Notes",
+                description: "Customer notes, internal logs, and communication memos",
+                icon: SquarePen,
+                iconBg: "bg-[#9333ea]", // Screenshot 2 Card 4: Purple
+                badge: notes.length > 0 ? notes.length.toString() : undefined,
+                badgeColor: "bg-purple-100/70 text-purple-600",
+                bubbleColor: "bg-purple-50/70",
+                href: `/agency/customer/${customerId}/notes`,
+                openInNewTab: false,
+              },
+              {
+                id: "status_history" as const,
+                name: `Status History${activities.length > 0 ? ` (${activities.length})` : ""}`,
+                shortName: "Status History",
+                description: "Track timeline, audit events, and status updates",
+                icon: History,
+                iconBg: "bg-[#059669]", // Screenshot 2 Card 6: Emerald Green
+                badge: activities.length > 0 ? activities.length.toString() : undefined,
+                badgeColor: "bg-emerald-100/70 text-emerald-700",
+                bubbleColor: "bg-emerald-50/70",
+                href: `/agency/customer/${customerId}/status-history`,
+                openInNewTab: false,
+              },
+              {
+                id: "contact_info" as const,
+                name: "Contact Information",
+                shortName: "Contact Information",
+                description: "Customer address, contact points, and profile info",
+                icon: Users,
+                iconBg: "bg-[#ea580c]", // Screenshot 2 Card 5: Warm Orange
+                badge: undefined,
+                badgeColor: "bg-orange-100/70 text-orange-700",
+                bubbleColor: "bg-orange-50/70",
+                href: `/agency/customer/${customerId}/contact-info`,
+                openInNewTab: false,
+              },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isNewTab = Boolean(tab.openInNewTab);
+              return (
+                <a
+                  key={tab.id}
+                  href={tab.href}
+                  target={isNewTab ? "_blank" : undefined}
+                  rel={isNewTab ? "noopener noreferrer" : undefined}
+                  onClick={(e) => {
+                    if (!isNewTab) {
+                      e.preventDefault();
+                      router.push(tab.href);
+                    }
                   }}
-                  className="flex items-center gap-1.5 px-3.5 py-2 border border-[#e5ddd5] rounded-xl text-xs font-semibold text-[#2d2a26] bg-white hover:bg-[#FAF8F5] shadow-2xs cursor-pointer transition-all shrink-0"
+                  className="relative bg-white rounded-2xl p-5 border border-[#e5ddd5] hover:border-[#c5b8ac] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group flex flex-col justify-between overflow-hidden cursor-pointer shadow-xs"
                 >
-                  <RotateCcw size={13} className="text-[#6b5e52]" />
-                  <span>Refresh</span>
-                </button>
-              </div>
+                  {/* Decorative background shape in top right (Screenshot 2) */}
+                  <div
+                    className={`absolute -top-7 -right-7 w-28 h-28 rounded-full pointer-events-none transition-transform duration-300 group-hover:scale-110 ${tab.bubbleColor}`}
+                  />
 
-              {/* Activities Table matching Screenshot */}
-              <div className="border border-[#e5ddd5] rounded-2xl overflow-hidden mt-2 bg-white shadow-2xs">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-[#FAF7F2] text-[#6b5e52] font-semibold border-b border-[#e5ddd5]">
-                    <tr>
-                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
-                        Date & Time <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
-                      </th>
-                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
-                        Activity / Event <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
-                      </th>
-                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
-                        Description & Details <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
-                      </th>
-                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
-                        User / Agent <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
-                      </th>
-                      <th className="px-4 py-3.5 font-bold text-[#6b5e52]">
-                        Status <ArrowUpDown size={11} className="inline ml-1 text-[#9A8B7A]" />
-                      </th>
-                      <th className="w-10 px-2 py-3.5 text-center"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#e5ddd5]">
-                    {activities
-                      .filter((item) => {
-                        const q = activitySearch.toLowerCase().trim();
-                        const matchesSearch =
-                          !q ||
-                          item.description?.toLowerCase().includes(q) ||
-                          item.user?.toLowerCase().includes(q) ||
-                          item.type?.toLowerCase().includes(q);
+                  <div>
+                    {/* Top Row: Colored Icon Box (left) & Badge Pill (right) */}
+                    <div className="flex items-start justify-between relative z-10">
+                      <div
+                        className={`w-11 h-11 rounded-xl flex items-center justify-center text-white shadow-xs shrink-0 ${tab.iconBg}`}
+                      >
+                        <Icon size={22} className="stroke-[2.2]" />
+                      </div>
 
-                        const matchesType =
-                          activityTypeFilter === "All Activity Types" ||
-                          item.type?.toLowerCase().includes(activityTypeFilter.toLowerCase());
+                      {tab.badge !== undefined && (
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-xs font-bold shrink-0 ${tab.badgeColor}`}
+                        >
+                          {tab.badge}
+                        </span>
+                      )}
+                    </div>
 
-                        const matchesUser =
-                          activityUserFilter === "All Users" ||
-                          item.user?.toLowerCase().includes(activityUserFilter.toLowerCase());
+                    {/* Title & Description */}
+                    <div className="mt-4 relative z-10">
+                      <h3 className="text-base font-bold text-[#1f1d1a] group-hover:text-[#9A8B7A] transition-colors leading-snug">
+                        {tab.name}
+                      </h3>
+                      <p className="text-xs text-[#8c827a] font-medium mt-1 leading-relaxed">
+                        {tab.description}
+                      </p>
+                    </div>
+                  </div>
 
-                        return matchesSearch && matchesType && matchesUser;
-                      })
-                      .map((item, idx) => {
-                        const isNote = item.type?.includes("Note");
-                        const isDoc = item.type?.includes("Document") || item.type?.includes("Attached");
-                        const isCert = item.type?.includes("Master Certificate");
-                        const isHolder = item.type?.includes("Holder");
-                        const isPolicy = item.type?.includes("Policy");
-                        const isDownload = item.type?.includes("Download");
-                        const isUpdated = item.type?.includes("Updated");
-
-                        return (
-                          <tr key={item.id || idx} className="hover:bg-[#FAF8F5]/80 transition-colors">
-                            {/* Date & Time */}
-                            <td className="px-4 py-3.5 font-medium text-[#2d2a26] whitespace-nowrap">
-                              {item.date}
-                            </td>
-
-                            {/* Activity / Event */}
-                            <td className="px-4 py-3.5 whitespace-nowrap">
-                              {isNote && (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]">
-                                  <Plus size={11} className="stroke-[3]" />
-                                  {item.type}
-                                </span>
-                              )}
-                              {isDoc && (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]">
-                                  <FileText size={12} />
-                                  {item.type}
-                                </span>
-                              )}
-                              {isCert && (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#FAF5FF] text-[#9333EA] border border-[#F3E8FF]">
-                                  <FileText size={12} />
-                                  {item.type}
-                                </span>
-                              )}
-                              {isHolder && (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]">
-                                  <Building2 size={12} />
-                                  {item.type}
-                                </span>
-                              )}
-                              {isPolicy && (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#FDF4EB] text-[#B45309] border border-[#FED7AA]">
-                                  <Shield size={12} />
-                                  {item.type}
-                                </span>
-                              )}
-                              {isDownload && (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#FAF5FF] text-[#9333EA] border border-[#F3E8FF]">
-                                  <Download size={12} />
-                                  {item.type}
-                                </span>
-                              )}
-                              {isUpdated && (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#FEF2F2] text-[#DC2626] border border-[#FEE2E2]">
-                                  <Edit3 size={12} />
-                                  {item.type}
-                                </span>
-                              )}
-                              {!isNote && !isDoc && !isCert && !isHolder && !isPolicy && !isDownload && !isUpdated && (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#FAF8F5] text-[#6b5e52] border border-[#e5ddd5]">
-                                  {item.type}
-                                </span>
-                              )}
-                            </td>
-
-                            {/* Description & Details */}
-                            <td className="px-4 py-3.5 text-[#2d2a26] font-medium max-w-md">
-                              {item.description}
-                            </td>
-
-                            {/* User / Agent */}
-                            <td className="px-4 py-3.5 font-bold text-[#4a423b] whitespace-nowrap">
-                              {item.user}
-                            </td>
-
-                            {/* Status */}
-                            <td className="px-4 py-3.5 whitespace-nowrap">
-                              {item.statusType === "success" && (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#ECFDF5] text-[#059669]">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-[#059669]" />
-                                  {item.status}
-                                </span>
-                              )}
-                              {item.statusType === "info" && (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#EFF6FF] text-[#2563EB]">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-[#2563EB]" />
-                                  {item.status}
-                                </span>
-                              )}
-                              {item.statusType === "warning" && (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#FFFBEB] text-[#D97706]">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-[#D97706]" />
-                                  {item.status}
-                                </span>
-                              )}
-                              {!item.statusType && (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#FAF8F5] text-[#6b5e52]">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-[#6b5e52]" />
-                                  {item.status}
-                                </span>
-                              )}
-                            </td>
-
-                            {/* Actions */}
-                            <td className="px-2 py-3.5 text-center">
-                              <button
-                                type="button"
-                                className="p-1 rounded-lg text-[#8c827a] hover:text-[#2d2a26] hover:bg-[#FAF8F5] transition-colors cursor-pointer"
-                              >
-                                <MoreVertical size={16} />
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* ── TAB: CONTACT INFORMATION ── */}
-          {activeTab === "contact_info" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
-              <div className="space-y-3 bg-[#FAF8F5] p-4 rounded-xl border border-[#e5ddd5]">
-                <h4 className="font-bold text-[#795C46] uppercase text-[10px] tracking-wider border-b border-[#e5ddd5] pb-1">
-                  General Information
-                </h4>
-                <p><strong>Customer Name:</strong> {displayName}</p>
-                <p><strong>Customer Type:</strong> {customer.customer_type || "Commercial Customer"}</p>
-                <p><strong>Business Type:</strong> {customer.type || "Commercial"}</p>
-                <p><strong>Division:</strong> {customer.division || "Sterling Wholesale Insurance"}</p>
-              </div>
-
-              <div className="space-y-3 bg-[#FAF8F5] p-4 rounded-xl border border-[#e5ddd5]">
-                <h4 className="font-bold text-[#795C46] uppercase text-[10px] tracking-wider border-b border-[#e5ddd5] pb-1">
-                  Phone & Contact
-                </h4>
-                <p><strong>Primary Phone:</strong> {customer.phone || "—"}</p>
-                <p><strong>Business Phone:</strong> {customer.phone_business || "—"}</p>
-                <p><strong>Email Address:</strong> {displayEmail}</p>
-                <p><strong>Website:</strong> {customer.web || "—"}</p>
-              </div>
-
-              <div className="space-y-3 bg-[#FAF8F5] p-4 rounded-xl border border-[#e5ddd5]">
-                <h4 className="font-bold text-[#795C46] uppercase text-[10px] tracking-wider border-b border-[#e5ddd5] pb-1">
-                  Address & Settings
-                </h4>
-                <p><strong>Street Address:</strong> {customer.address || "—"}</p>
-                <p><strong>City / State / Zip:</strong> {[customer.city, customer.state, customer.zip].filter(Boolean).join(", ") || "—"}</p>
-                <p><strong>Delivery Method:</strong> {customer.electronic_delivery || "Direct / Email"}</p>
-              </div>
-            </div>
-          )}
+                  {/* Bottom link: Go to [Tab] > */}
+                  <div className="mt-4 pt-1 flex items-center text-xs font-semibold text-[#8c827a] group-hover:text-[#1f1d1a] transition-colors relative z-10">
+                    <span className="flex items-center gap-1">
+                      Go to {tab.shortName}
+                      <ChevronRight size={14} className="stroke-[2.5] transition-transform duration-200 group-hover:translate-x-1" />
+                    </span>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
         </div>
 
       </main>
-
-      {/* ── Document Upload Modal ── */}
-      {showDocModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2d2a26]/40 backdrop-blur-sm p-4">
-          <div className="bg-[#FAF8F5] rounded-3xl shadow-2xl w-full max-w-md border border-[#e5ddd5] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
-            {/* Header */}
-            <div className="px-6 py-4 bg-white border-b border-[#e5ddd5] flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-[#f5f1eb] text-[#795C46] flex items-center justify-center">
-                  <CloudUpload size={16} />
-                </div>
-                <h3 className="text-sm font-extrabold text-[#2d2a26]">
-                  Upload Document
-                </h3>
-              </div>
-              <button onClick={() => {
-                setShowDocModal(false);
-                setPendingFile(null);
-                setDocDescription("");
-                setDocAction("Upload");
-                if (fileInputRef.current) fileInputRef.current.value = "";
-              }} className="text-[#9A8B7A] hover:text-[#2d2a26] transition-colors p-1 rounded-full hover:bg-[#f5f1eb] cursor-pointer">
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="p-6 space-y-5">
-              {/* File Attachment Card */}
-              <div className="p-3.5 bg-white border border-[#e5ddd5] rounded-2xl flex items-center gap-3 shadow-2xs">
-                <div className="h-10 w-10 bg-[#f5f1eb] rounded-xl flex items-center justify-center text-[#795C46] shrink-0">
-                  <FileText size={20} />
-                </div>
-                <div className="flex flex-col overflow-hidden">
-                  <span className="text-xs font-bold text-[#2d2a26] truncate">{pendingFile?.name}</span>
-                  <span className="text-[10px] font-bold text-[#9A8B7A] uppercase tracking-wider">{(pendingFile?.size ? (pendingFile.size / 1024 / 1024).toFixed(2) : "0.00")} MB</span>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6b5e52] mb-1.5 ml-1">Action / Category</label>
-                  <select
-                    value={docAction}
-                    onChange={(e) => setDocAction(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-[#e5ddd5] rounded-xl text-xs font-bold text-[#2d2a26] outline-none focus:border-[#795C46] focus:ring-4 focus:ring-[#795C46]/10 bg-white transition-all shadow-2xs cursor-pointer appearance-none"
-                    style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%239A8B7A%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem top 50%', backgroundSize: '0.65rem auto' }}
-                  >
-                    <option value="Upload">Standard Upload</option>
-                    <option value="Policy Attachment">Policy Attachment</option>
-                    <option value="Customer File">Customer File</option>
-                    <option value="Loss Runs">Loss Runs</option>
-                    <option value="Signed Binder">Signed Binder</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6b5e52] mb-1.5 ml-1">Document Description</label>
-                  <input
-                    type="text"
-                    value={docDescription}
-                    onChange={(e) => setDocDescription(e.target.value)}
-                    placeholder="E.g. 2026 Loss Runs for GL Policy"
-                    className="w-full px-4 py-2.5 border border-[#e5ddd5] rounded-xl text-xs font-semibold text-[#2d2a26] outline-none focus:border-[#795C46] focus:ring-4 focus:ring-[#795C46]/10 bg-white transition-all shadow-2xs placeholder:text-[#e5ddd5]"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-4 bg-white border-t border-[#e5ddd5] flex items-center justify-end gap-3">
-              <button
-                onClick={() => {
-                  setShowDocModal(false);
-                  setPendingFile(null);
-                  setDocDescription("");
-                  setDocAction("Upload");
-                  if (fileInputRef.current) fileInputRef.current.value = "";
-                }}
-                disabled={isUploading}
-                className="px-5 py-2.5 border border-[#e5ddd5] rounded-xl text-xs font-bold text-[#6b5e52] hover:bg-[#f5f1eb] hover:text-[#2d2a26] transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveDocument}
-                disabled={isUploading}
-                className="px-6 py-2.5 bg-[#795C46] hover:bg-[#634b39] text-white rounded-xl text-xs font-bold transition-all shadow-md hover:shadow-lg active:scale-95 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {isUploading ? (
-                  <>
-                    <Loader2 size={14} className="animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <CloudUpload size={14} />
-                    Confirm Upload
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );

@@ -114,7 +114,7 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
         {/* Brand: Sterling Insurance Services Pill (Matching Screenshot) */}
         <div
           onClick={() => router.push(userRole === "admin" ? "/admin/dashboard" : "/agency/dashboard")}
-          className="bg-[#795C46] hover:bg-[#684e3a] text-white px-5 py-2.5 rounded-2xl shadow-xs cursor-pointer transition-all flex items-center gap-3.5"
+          className="bg-[#9A8B7A] hover:bg-[#8a6f4d] text-white px-5 py-2.5 rounded-2xl shadow-xs cursor-pointer transition-all flex items-center gap-3.5"
         >
           <div className="h-9 w-9 flex items-center justify-center shrink-0">
             <Landmark size={24} className="stroke-[2.2]" />
@@ -148,7 +148,7 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
                   <span className="font-bold text-xs text-[#2d2a26] uppercase tracking-wider">
                     Notifications
                   </span>
-                  <span className="text-[10px] font-bold bg-[#795C46] text-white px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold bg-[#9A8B7A] text-white px-2 py-0.5 rounded-full">
                     3 New
                   </span>
                 </div>
@@ -171,7 +171,7 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
             <button
               type="button"
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="h-10 w-10 rounded-full bg-[#795C46] hover:bg-[#684e3a] text-white flex items-center justify-center font-black text-sm shadow-xs transition-colors cursor-pointer uppercase"
+              className="h-10 w-10 rounded-full bg-[#9A8B7A] hover:bg-[#8a6f4d] text-white flex items-center justify-center font-black text-sm shadow-xs transition-colors cursor-pointer uppercase"
               title={userEmail}
             >
               {userEmail ? userEmail.charAt(0) : "A"}

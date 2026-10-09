@@ -369,7 +369,7 @@ export default function NewActivityPage() {
             <span className="text-white font-bold text-xl tracking-wider font-sans">S</span>
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-base tracking-tight text-text-main leading-tight font-sans">Sterling Insurance Services</span>
+            <span className="font-bold text-base tracking-tight text-text-main leading-tight font-sans">Sterling AMS</span>
             <span className="text-[9px] uppercase tracking-wider text-primary font-bold leading-none mt-0.5">Activity / Suspense Center</span>
           </div>
         </div>

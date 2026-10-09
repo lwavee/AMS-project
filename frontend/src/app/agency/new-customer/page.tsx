@@ -1,11 +1,92 @@
 /* eslint-disable */
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Info, Plus, Trash2, CheckCircle2, FileText, ChevronDown, ArrowLeft } from "lucide-react";
+import { Info, Plus, Trash2, CheckCircle2, FileText, ChevronDown, ArrowLeft, MapPin, Loader2, Sparkles, X } from "lucide-react";
 import { API_BASE_URL } from "../../../lib/config";
 import { showToast } from "@/components/ToastProvider";
+
+// Complete US State & Territory codes and names
+const STATE_CODE_TO_NAME: Record<string, string> = {
+  AA: "Armed Forces Americas",
+  AE: "Armed Forces Europe",
+  AK: "Alaska",
+  AL: "Alabama",
+  AP: "Armed Forces Pacific",
+  AR: "Arkansas",
+  AS: "American Samoa",
+  AZ: "Arizona",
+  CA: "California",
+  CO: "Colorado",
+  CT: "Connecticut",
+  DC: "District of Columbia",
+  DE: "Delaware",
+  FL: "Florida",
+  GA: "Georgia",
+  GU: "Guam",
+  HI: "Hawaii",
+  IA: "Iowa",
+  ID: "Idaho",
+  IL: "Illinois",
+  IN: "Indiana",
+  KS: "Kansas",
+  KY: "Kentucky",
+  LA: "Louisiana",
+  MA: "Massachusetts",
+  MD: "Maryland",
+  ME: "Maine",
+  MI: "Michigan",
+  MN: "Minnesota",
+  MO: "Missouri",
+  MP: "Northern Mariana Islands",
+  MS: "Mississippi",
+  MT: "Montana",
+  NC: "North Carolina",
+  ND: "North Dakota",
+  NE: "Nebraska",
+  NH: "New Hampshire",
+  NJ: "New Jersey",
+  NM: "New Mexico",
+  NV: "Nevada",
+  NY: "New York",
+  OH: "Ohio",
+  OK: "Oklahoma",
+  OR: "Oregon",
+  PA: "Pennsylvania",
+  PR: "Puerto Rico",
+  RI: "Rhode Island",
+  SC: "South Carolina",
+  SD: "South Dakota",
+  TN: "Tennessee",
+  TX: "Texas",
+  UT: "Utah",
+  VA: "Virginia",
+  VI: "Virgin Islands",
+  VT: "Vermont",
+  WA: "Washington",
+  WI: "Wisconsin",
+  WV: "West Virginia",
+  WY: "Wyoming",
+};
+
+const STATE_NAME_TO_CODE: Record<string, string> = Object.entries(STATE_CODE_TO_NAME).reduce(
+  (acc, [code, name]) => {
+    acc[name.toLowerCase()] = code;
+    acc[code.toLowerCase()] = code;
+    return acc;
+  },
+  {} as Record<string, string>
+);
+
+const US_STATES = Object.keys(STATE_CODE_TO_NAME).sort();
+
+function findStateCode(val: string): string {
+  if (!val) return "";
+  const clean = val.trim();
+  if (clean.length === 2) return clean.toUpperCase();
+  return STATE_NAME_TO_CODE[clean.toLowerCase()] || clean.toUpperCase();
+}
 
 // ─── Sterling Style Tokens ───────────────────────────────────
 const inputCls =
@@ -99,33 +180,26 @@ function formatUSPhone(val: string): string {
     return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
 }
 
-// Inline Phone Row with Ext matching Sterling Form layout
+// Inline Phone Row matching Sterling Form layout
 function PhoneRow({
     label,
     value,
-    ext,
     required,
     error,
     onChange,
-    onExtChange
 }: {
     label: string;
     value: string;
-    ext: string;
+    ext?: string;
     required?: boolean;
     error?: string;
     onChange: (v: string) => void;
-    onExtChange: (v: string) => void;
+    onExtChange?: (v: string) => void;
 }) {
     const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const raw = e.target.value;
         const formatted = formatUSPhone(raw);
         onChange(formatted);
-    };
-
-    const handleExtChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const cleaned = e.target.value.replace(/[^0-9a-zA-Z]/g, "").slice(0, 6);
-        onExtChange(cleaned);
     };
 
     return (
@@ -134,23 +208,13 @@ function PhoneRow({
                 {label}:{required && <span className="text-red-500 ml-1 font-bold">*</span>}
             </label>
             <div className="sm:col-span-7 flex flex-col">
-                <div className="flex items-center gap-2 w-full">
-                    <input
-                        type="tel"
-                        placeholder="(555) 000-0000"
-                        className={`h-[40px] px-3.5 border border-[#D1D5DB] rounded bg-white text-sm text-[#1F2937] placeholder-[#9CA3AF] transition-colors outline-none focus:border-[#7A6F64] focus:ring-1 focus:ring-[#7A6F64] flex-1 min-w-0 ${error ? "!border-red-500 focus:!ring-red-500/20 focus:!border-red-500" : ""}`}
-                        value={formatUSPhone(value || "")}
-                        onChange={handlePhoneChange}
-                    />
-                    <span className="text-xs font-semibold text-[#6B7280] shrink-0">Ext:</span>
-                    <input
-                        type="text"
-                        placeholder="Ext"
-                        className="h-[40px] px-2.5 border border-[#D1D5DB] rounded bg-white text-sm text-[#1F2937] placeholder-[#9CA3AF] transition-colors outline-none focus:border-[#7A6F64] focus:ring-1 focus:ring-[#7A6F64] w-20 text-center shrink-0"
-                        value={ext}
-                        onChange={handleExtChange}
-                    />
-                </div>
+                <input
+                    type="tel"
+                    placeholder="(555) 000-0000"
+                    className={`h-[40px] px-3.5 border border-[#D1D5DB] rounded bg-white text-sm text-[#1F2937] placeholder-[#9CA3AF] transition-colors outline-none focus:border-[#7A6F64] focus:ring-1 focus:ring-[#7A6F64] w-full ${error ? "!border-red-500 focus:!ring-red-500/20 focus:!border-red-500" : ""}`}
+                    value={formatUSPhone(value || "")}
+                    onChange={handlePhoneChange}
+                />
                 {error && <span className="text-xs text-red-600 font-medium mt-1">{error}</span>}
             </div>
         </div>
@@ -175,7 +239,7 @@ const defaultForm = {
     executive: "", representative: "", brokersCustomer: false, broker: "",
 
     // Business Unit
-    division: "Gamaty Insurance Agency", branch: "", department: "",
+    division: "CapCo Insurance Agency", branch: "", department: "",
 
     // Phone Numbers
     phoneResidence: "", phoneResidenceExt: "", phoneBusiness: "", phoneBusinessExt: "",
@@ -387,6 +451,74 @@ function NewCustomerContent() {
             });
         }
     };
+
+    // ── Smarty Address Autocomplete ──
+    const addressInputRef = useRef<HTMLInputElement>(null);
+    const suggestionRef = useRef<HTMLDivElement>(null);
+    const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [addressLoading, setAddressLoading] = useState(false);
+
+    const handleAddressSearch = async (value: string) => {
+        set({ address: value });
+        if (value.length < 3) {
+            setAddressSuggestions([]);
+            setShowSuggestions(false);
+            return;
+        }
+        setAddressLoading(true);
+        try {
+            const res = await fetch(`/api/address/autocomplete?search=${encodeURIComponent(value)}`);
+            const data = await res.json();
+            setAddressSuggestions(data.suggestions || []);
+            setShowSuggestions(true);
+        } catch (err) {
+            console.error("Address search error:", err);
+        } finally {
+            setAddressLoading(false);
+        }
+    };
+
+    const handleSelectSuggestion = (suggestion: any) => {
+        const stateCode = findStateCode(suggestion.state || "");
+        const streetAddress = `${suggestion.street_line || ""}`.trim();
+
+        set({
+            address: streetAddress,
+            address2: suggestion.secondary || "",
+            city: suggestion.city || "",
+            zip: suggestion.zipcode || "",
+            state: stateCode,
+            country: "US"
+        });
+        setErrors(prev => {
+            const next = { ...prev };
+            delete next.address;
+            delete next.city;
+            delete next.state;
+            delete next.zip;
+            delete next.country;
+            return next;
+        });
+        setAddressSuggestions([]);
+        setShowSuggestions(false);
+    };
+
+    // Close dropdown on outside click
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (
+                suggestionRef.current &&
+                !suggestionRef.current.contains(e.target as Node) &&
+                addressInputRef.current &&
+                !addressInputRef.current.contains(e.target as Node)
+            ) {
+                setShowSuggestions(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     // ── Submit ──
     const handleSave = async (andClose: boolean) => {
@@ -672,7 +804,41 @@ function NewCustomerContent() {
                     onToggle={() => toggleSection("Addresses")}
                 >
                     <FormRow label="Address" required error={errors.address}>
-                        <input className={inputCls} value={f.address} onChange={e => set({ address: e.target.value })} />
+                        <div className="relative">
+                            <input
+                                ref={addressInputRef}
+                                type="text"
+                                value={f.address}
+                                onChange={(e) => handleAddressSearch(e.target.value)}
+                                className={inputCls}
+                                placeholder="Start typing address..."
+                                autoComplete="off"
+                            />
+
+                            {/* Loading */}
+                            {addressLoading && (
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">Searching...</div>
+                            )}
+
+                            {/* Dropdown */}
+                            {showSuggestions && addressSuggestions.length > 0 && (
+                                <div
+                                    ref={suggestionRef}
+                                    className="absolute z-50 w-full bg-white border border-gray-200 rounded shadow-lg mt-1 max-h-60 overflow-y-auto"
+                                >
+                                    {addressSuggestions.map((suggestion, index) => (
+                                        <div
+                                            key={index}
+                                            onMouseDown={() => handleSelectSuggestion(suggestion)}
+                                            className="px-4 py-3 hover:bg-[#f5f2ef] cursor-pointer text-sm border-b border-gray-100 last:border-0"
+                                        >
+                                            <span className="font-medium">{suggestion.street_line} {suggestion.secondary}</span>
+                                            <span className="text-gray-500 ml-1">{suggestion.city}, {suggestion.state} {suggestion.zipcode}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </FormRow>
 
                     <FormRow label="Address 2">
@@ -684,11 +850,27 @@ function NewCustomerContent() {
                     </FormRow>
 
                     <FormRow label="State" required error={errors.state}>
-                        <select className={selectCls} value={f.state} onChange={e => set({ state: e.target.value })}>
+                        <select
+                            className={selectCls}
+                            value={findStateCode(f.state) || f.state}
+                            onChange={e => {
+                                set({ state: e.target.value });
+                                if (errors.state) {
+                                    setErrors(prev => {
+                                        const next = { ...prev };
+                                        delete next.state;
+                                        return next;
+                                    });
+                                }
+                            }}
+                        >
                             <option value="">-- Select State --</option>
-                            {["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"].map(s => (
+                            {US_STATES.map(s => (
                                 <option key={s} value={s}>{s}</option>
                             ))}
+                            {f.state && !US_STATES.includes(f.state) && !US_STATES.includes(findStateCode(f.state)) && (
+                                <option value={f.state}>{f.state}</option>
+                            )}
                         </select>
                     </FormRow>
 
@@ -814,7 +996,7 @@ function NewCustomerContent() {
 
                     <FormRow label="Division" required error={errors.division}>
                         <select className={selectCls} value={f.division} onChange={e => set({ division: e.target.value })}>
-                            <option value="Gamaty Insurance Agency">Gamaty Insurance Agency</option>
+                            <option value="CapCo Insurance Agency">CapCo Insurance Agency</option>
                         </select>
                     </FormRow>
 

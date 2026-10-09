@@ -89,7 +89,7 @@ export default function SearchBar({
           type="text"
           value={filters.searchQuery}
           onChange={(e) => updateFilter("searchQuery", e.target.value)}
-          className="w-full h-10 pl-9 pr-20 border border-[#e5ddd5] rounded-xl bg-white text-xs font-medium text-[#1f1d1a] placeholder:text-[#8c827a] focus:outline-none focus:border-[#795C46] transition-all shadow-2xs"
+          className="w-full h-10 pl-9 pr-20 border border-[#e5ddd5] rounded-xl bg-white text-xs font-medium text-[#1f1d1a] placeholder:text-[#8c827a] focus:outline-none focus:border-[#9A8B7A] transition-all shadow-2xs"
           placeholder="Search by name, email, phone, address..."
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
@@ -104,7 +104,7 @@ export default function SearchBar({
         <select
           value={filters.searchBy}
           onChange={(e) => updateFilter("searchBy", e.target.value)}
-          className="h-10 pl-8 pr-8 border border-[#e5ddd5] rounded-xl bg-white text-xs font-semibold text-[#2d2a26] focus:outline-none focus:border-[#795C46] appearance-none cursor-pointer shadow-2xs hover:bg-[#FAF8F5] transition-all"
+          className="h-10 pl-8 pr-8 border border-[#e5ddd5] rounded-xl bg-white text-xs font-semibold text-[#2d2a26] focus:outline-none focus:border-[#9A8B7A] appearance-none cursor-pointer shadow-2xs hover:bg-[#FAF8F5] transition-all"
         >
           <option value="Name">All Names</option>
           <option value="Policy #">Policy #</option>
@@ -133,7 +133,7 @@ export default function SearchBar({
               e.target.value as AdvancedFilterState["statusFilter"]
             )
           }
-          className="h-10 pl-8 pr-8 border border-[#e5ddd5] rounded-xl bg-white text-xs font-semibold text-[#2d2a26] focus:outline-none focus:border-[#795C46] appearance-none cursor-pointer shadow-2xs hover:bg-[#FAF8F5] transition-all"
+          className="h-10 pl-8 pr-8 border border-[#e5ddd5] rounded-xl bg-white text-xs font-semibold text-[#2d2a26] focus:outline-none focus:border-[#9A8B7A] appearance-none cursor-pointer shadow-2xs hover:bg-[#FAF8F5] transition-all"
         >
           <option value="All">All Statuses</option>
           <option value="Active">Active</option>

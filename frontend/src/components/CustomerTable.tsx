@@ -77,7 +77,7 @@ export default function CustomerTable({
           <div className="flex items-center justify-center">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-[#e5ddd5] text-[#795C46] focus:ring-[#795C46] focus:ring-offset-0 cursor-pointer accent-[#795C46]"
+              className="h-4 w-4 rounded border-[#e5ddd5] text-[#9A8B7A] focus:ring-[#9A8B7A] focus:ring-offset-0 cursor-pointer accent-[#9A8B7A]"
               checked={table.getIsAllPageRowsSelected()}
               ref={(input) => {
                 if (input) {
@@ -92,7 +92,7 @@ export default function CustomerTable({
           <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-[#e5ddd5] text-[#795C46] focus:ring-[#795C46] focus:ring-offset-0 cursor-pointer accent-[#795C46]"
+              className="h-4 w-4 rounded border-[#e5ddd5] text-[#9A8B7A] focus:ring-[#9A8B7A] focus:ring-offset-0 cursor-pointer accent-[#9A8B7A]"
               checked={row.getIsSelected()}
               disabled={!row.getCanSelect()}
               onChange={row.getToggleSelectedHandler()}
@@ -169,7 +169,7 @@ export default function CustomerTable({
                   e.stopPropagation();
                   router.push(`/agency/customer/${row.original.id}`);
                 }}
-                className="font-bold text-xs text-[#1f1d1a] hover:text-[#795C46] hover:underline cursor-pointer truncate"
+                className="font-bold text-xs text-[#1f1d1a] hover:text-[#9A8B7A] hover:underline cursor-pointer truncate"
                 title="Click to open customer folder"
               >
                 {name}
@@ -457,7 +457,7 @@ export default function CustomerTable({
               onChange={(e) => {
                 table.setPageSize(Number(e.target.value));
               }}
-              className="h-8 pl-3 pr-7 border border-[#e5ddd5] rounded-xl bg-white text-[#2d2a26] focus:outline-none focus:border-[#795C46] text-xs font-semibold transition-all appearance-none cursor-pointer"
+              className="h-8 pl-3 pr-7 border border-[#e5ddd5] rounded-xl bg-white text-[#2d2a26] focus:outline-none focus:border-[#9A8B7A] text-xs font-semibold transition-all appearance-none cursor-pointer"
             >
               {[10, 15, 25, 50].map((pageSize) => (
                 <option key={pageSize} value={pageSize}>
@@ -504,7 +504,7 @@ export default function CustomerTable({
                 onClick={() => table.setPageIndex(pIdx)}
                 className={`h-7 w-7 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
                   isCurrent
-                    ? "bg-[#795C46] text-white shadow-xs"
+                    ? "bg-[#9A8B7A] text-white shadow-xs"
                     : "text-[#2d2a26] hover:bg-[#FAF8F5] border border-transparent hover:border-[#e5ddd5]"
                 }`}
               >

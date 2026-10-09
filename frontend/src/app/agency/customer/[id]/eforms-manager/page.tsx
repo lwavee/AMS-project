@@ -1586,7 +1586,7 @@ export default function EFormsManagerPage() {
       {/* ── Top Header (Commented Out) ── */}
       {/* <header className="bg-white border-b border-[#e5ddd5] px-6 py-2.5 flex items-center justify-between shrink-0 z-30">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-[#694e3c] flex items-center justify-center text-white shadow-xs">
+          <div className="h-10 w-10 rounded-xl bg-[#9A8B7A] flex items-center justify-center text-white shadow-xs">
             <Landmark size={22} className="stroke-[2.2]" />
           </div>
           <div className="flex flex-col">
@@ -1631,7 +1631,7 @@ export default function EFormsManagerPage() {
 
           <button
             onClick={() => router.push("/agency/agency-profile")}
-            className="h-9 w-9 rounded-full bg-[#694e3c] text-white flex items-center justify-center font-bold text-sm shadow-2xs cursor-pointer uppercase"
+            className="h-9 w-9 rounded-full bg-[#9A8B7A] text-white flex items-center justify-center font-bold text-sm shadow-2xs cursor-pointer uppercase"
             title="Profile"
           >
             {customerName ? customerName.charAt(0) : "S"}
@@ -1650,7 +1650,7 @@ export default function EFormsManagerPage() {
           {/* Card Header Action Bar */}
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between px-6 py-3.5 border-b border-[#f0ece5] gap-4 shrink-0">
             <div className="flex items-center gap-3.5">
-              <div className="h-12 w-12 rounded-2xl bg-[#f7f4ee] border border-[#ebe5dc] flex items-center justify-center text-[#795c46] shrink-0 shadow-2xs">
+              <div className="h-12 w-12 rounded-2xl bg-[#f7f4ee] border border-[#ebe5dc] flex items-center justify-center text-[#9A8B7A] shrink-0 shadow-2xs">
                 <Landmark size={24} className="stroke-[2.2]" />
               </div>
               <div className="min-w-0">
@@ -1672,7 +1672,7 @@ export default function EFormsManagerPage() {
             <div className="flex items-center gap-2 shrink-0 flex-wrap">
               <button
                 onClick={handleSaveOverrides}
-                className="h-8 px-4 flex items-center gap-1.5 bg-[#694e3c] hover:bg-[#594132] text-white font-bold text-xs rounded-xl shadow-2xs transition-all cursor-pointer"
+                className="h-8 px-4 flex items-center gap-1.5 bg-[#9A8B7A] hover:bg-[#8a6f4d] text-white font-bold text-xs rounded-xl shadow-2xs transition-all cursor-pointer"
                 title="Save Changes"
               >
                 <Save size={13} />
@@ -1884,7 +1884,7 @@ export default function EFormsManagerPage() {
                     <select
                       value={selectedPolicy}
                       onChange={(e) => setSelectedPolicy(e.target.value)}
-                      className="w-full text-xs font-semibold text-[#2d2a26] bg-white border border-[#e5ddd5] rounded-xl px-2.5 py-1.5 pr-7 outline-none focus:border-[#795c46] cursor-pointer truncate appearance-none"
+                      className="w-full text-xs font-semibold text-[#2d2a26] bg-white border border-[#e5ddd5] rounded-xl px-2.5 py-1.5 pr-7 outline-none focus:border-[#9A8B7A] cursor-pointer truncate appearance-none"
                       title={selectedPolicy}
                     >
                       {policies.map((p) => (
@@ -1915,7 +1915,7 @@ export default function EFormsManagerPage() {
               {/* Tree View */}
               <div 
                 className={`flex-1 overflow-y-auto p-2 transition-colors custom-scrollbar ${
-                  isDragging ? "bg-amber-50/50 border-2 border-dashed border-[#795c46]" : "bg-white"
+                  isDragging ? "bg-amber-50/50 border-2 border-dashed border-[#9A8B7A]" : "bg-white"
                 }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -1961,7 +1961,7 @@ export default function EFormsManagerPage() {
               {/* Preview Header Bar */}
               <div className="px-6 py-3 border-b border-[#f0ece5] flex items-center justify-between bg-white shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-xl bg-[#f7f4ee] border border-[#ebe5dc] flex items-center justify-center text-[#795c46] shrink-0">
+                  <div className="h-9 w-9 rounded-xl bg-[#f7f4ee] border border-[#ebe5dc] flex items-center justify-center text-[#9A8B7A] shrink-0">
                     <FileSignature size={18} />
                   </div>
                   <div>
@@ -2003,7 +2003,7 @@ export default function EFormsManagerPage() {
                                 setZoomDropdownOpen(false);
                               }}
                               className={`w-full text-center py-1.5 px-2 hover:bg-[#f5f1eb] cursor-pointer transition-colors ${
-                                zoomLevel === val ? 'text-[#795c46] font-bold bg-[#faf8f5]' : ''
+                                zoomLevel === val ? 'text-[#9A8B7A] font-bold bg-[#faf8f5]' : ''
                               }`}
                             >
                               {val}%
@@ -2316,7 +2316,7 @@ export default function EFormsManagerPage() {
                           </div>
                           {/* Magnifying Glass Overlay */}
                           <div className="absolute -bottom-2 -right-3 w-14 h-14 rounded-full bg-white border-2 border-[#e5ddd5] shadow-lg flex items-center justify-center">
-                            <Search size={24} className="text-[#795c46] stroke-[2.5]" />
+                            <Search size={24} className="text-[#9A8B7A] stroke-[2.5]" />
                           </div>
                         </div>
 

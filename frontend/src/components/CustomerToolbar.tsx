@@ -45,7 +45,7 @@ export default function CustomerToolbar({
         <button
           type="button"
           onClick={onNewCustomer}
-          className="h-9 px-4 flex items-center gap-1.5 bg-[#795C46] hover:bg-[#684e3a] text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer active:scale-[0.98] transition-all border-none"
+          className="h-9 px-4 flex items-center gap-1.5 bg-[#9A8B7A] hover:bg-[#8a6f4d] text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer active:scale-[0.98] transition-all border-none"
         >
           <Plus size={14} className="stroke-[2.5]" />
           <span>New Customer</span>

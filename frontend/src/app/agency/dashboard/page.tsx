@@ -725,7 +725,7 @@ export default function Page() {
               {/* Header Row: Customers Title & Total Badge (Matching Second Photo) */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
                 <div className="flex items-center gap-3.5">
-                  <div className="h-12 w-12 rounded-2xl bg-[#FDF6F0] border border-[#F5E6D8] text-[#795C46] flex items-center justify-center shrink-0 shadow-2xs">
+                  <div className="h-12 w-12 rounded-2xl bg-[#FDF6F0] border border-[#F5E6D8] text-[#9A8B7A] flex items-center justify-center shrink-0 shadow-2xs">
                     <Users size={22} className="stroke-[2.2]" />
                   </div>
                   <div>
@@ -740,7 +740,7 @@ export default function Page() {
 
                 {/* Total Customers Indicator Badge on Top Right */}
                 <div className="flex items-center gap-3 bg-[#FAF8F5] border border-[#e5ddd5] px-3.5 py-2 rounded-2xl shadow-2xs shrink-0 self-start sm:self-auto">
-                  <div className="h-8 w-8 rounded-xl bg-[#F5EDE5] text-[#795C46] flex items-center justify-center shrink-0">
+                  <div className="h-8 w-8 rounded-xl bg-[#F5EDE5] text-[#9A8B7A] flex items-center justify-center shrink-0">
                     <Users size={16} />
                   </div>
                   <div className="flex flex-col">
@@ -765,7 +765,7 @@ export default function Page() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                 {/* Total Customers */}
                 <div className="bg-[#FAF8F5] border border-[#e5ddd5] rounded-2xl p-4 flex items-center gap-3.5 shadow-2xs">
-                  <div className="h-11 w-11 rounded-xl bg-[#F5EDE5] text-[#795C46] flex items-center justify-center shrink-0">
+                  <div className="h-11 w-11 rounded-xl bg-[#F5EDE5] text-[#9A8B7A] flex items-center justify-center shrink-0">
                     <Users size={20} />
                   </div>
                   <div>
