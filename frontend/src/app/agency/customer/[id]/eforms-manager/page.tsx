@@ -33,6 +33,7 @@ import { confirmDialog, showToast } from "@/components/ToastProvider";
     FilePlus,
     Activity,
     MoreHorizontal,
+    MoreVertical,
     Mail,
     Maximize2,
     Minimize2,
@@ -40,6 +41,17 @@ import { confirmDialog, showToast } from "@/components/ToastProvider";
     PanelLeftOpen,
     ArrowUpDown,
     ArrowLeftRight,
+    Landmark,
+    Bell,
+    CreditCard,
+    ShieldCheck,
+    FileSpreadsheet,
+    Clock,
+    FileX,
+    Calendar,
+    Zap,
+    Eye,
+    EyeOff,
   } from "lucide-react";
 
   // ─── Tab definitions matching Sterling AMS eForms Manager ──────────────────────────
@@ -56,6 +68,18 @@ import { confirmDialog, showToast } from "@/components/ToastProvider";
   ] as const;
 
   type EFormTab = typeof EFORM_TABS[number];
+
+  const TAB_ICONS: Record<EFormTab, React.ElementType> = {
+    "All Forms": FileText,
+    "Applications": FileText,
+    "AutoId Cards": CreditCard,
+    "Binders": FileText,
+    "Cancellations": FileX,
+    "Certificates": ShieldCheck,
+    "EPI": FileSpreadsheet,
+    "Change Requests": Clock,
+    "Loss Notices": AlertTriangle,
+  };
 
   // ─── Mock tree node structure ────────────────────────────────────────────────
   interface TreeNode {
@@ -97,6 +121,9 @@ import { confirmDialog, showToast } from "@/components/ToastProvider";
     onUpdateMaster,
     onEditMaster,
     onOpenAttachments,
+    onDeleteHolder,
+    onDeleteHolderAttachments,
+    onDeleteDocument,
   }: {
     node: TreeNode;
     depth?: number;
@@ -108,6 +135,9 @@ import { confirmDialog, showToast } from "@/components/ToastProvider";
     onUpdateMaster?: (id: string) => void;
     onEditMaster?: (id: string) => void;
     onOpenAttachments?: (id: string) => void;
+    onDeleteHolder?: (id: string) => void;
+    onDeleteHolderAttachments?: (id: string) => void;
+    onDeleteDocument?: (id: string | number) => void;
   }) {
   const [expanded, setExpanded] = useState(true);
   const isFolder = node.type === "folder";
@@ -117,6 +147,8 @@ import { confirmDialog, showToast } from "@/components/ToastProvider";
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuCoords, setMenuCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const isMaster = node.id.startsWith("cert-file-master-");
+  const isHolder = node.id.startsWith("holder-");
+  const isDoc = node.id.startsWith("doc-");
   const menuRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
 
@@ -186,17 +218,17 @@ import { confirmDialog, showToast } from "@/components/ToastProvider";
       <div className="relative group">
         <div
           className={`
-            w-full flex items-center justify-between gap-2 px-2 py-1.5 text-[13px] font-medium rounded-lg
+            w-full flex items-center justify-between gap-1.5 px-2 py-1 text-xs font-medium rounded-lg
             transition-all duration-150 text-left my-0.5
             ${isSelected
-              ? "bg-secondary text-primary font-bold"
-              : "text-black hover:bg-secondary/50 hover:text-primary"
+              ? "bg-[#eae1d2] text-[#2d2a26] font-bold border border-[#d6c7b2]"
+              : "text-[#2d2a26] hover:bg-[#f6f2ec]"
             }
           `}
-          style={{ paddingLeft: `${8 + depth * 16}px` }}
+          style={{ paddingLeft: `${6 + depth * 14}px` }}
         >
           <div 
-            className="flex flex-1 items-center gap-2 truncate cursor-pointer"
+            className="flex flex-1 items-center gap-1.5 truncate cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               if (isFolder) setExpanded(!expanded);
@@ -206,34 +238,87 @@ import { confirmDialog, showToast } from "@/components/ToastProvider";
             {isFolder ? (
               expanded ? (
                 <>
-                  <ChevronDown size={14} className="shrink-0 text-primary/60" />
-                  <FolderOpen size={16} className="shrink-0 text-primary fill-primary/20" />
+                  <ChevronDown size={13} className="shrink-0 text-[#8c827a]" />
+                  <FolderOpen size={15} className="shrink-0 text-[#d4a373] fill-[#fdf6ec]" />
                 </>
               ) : (
                 <>
-                  <ChevronRight size={14} className="shrink-0 text-text-muted/60" />
-                  <FolderClosed size={16} className="shrink-0 text-text-muted" />
+                  <ChevronRight size={13} className="shrink-0 text-[#8c827a]" />
+                  <FolderClosed size={15} className="shrink-0 text-[#d4a373] fill-[#fdf6ec]" />
                 </>
               )
             ) : (
               <>
-                <span className="w-[14px] shrink-0" />
-                <FileText size={16} className="shrink-0 text-text-muted/60" />
+                <span className="w-[13px] shrink-0" />
+                <FileText size={15} className="shrink-0 text-[#70665d]" />
               </>
             )}
             <span className="truncate">{node.label}</span>
           </div>
           
-          {isMaster && (
+          {(isMaster || isHolder || isDoc) && (
             <button 
               ref={btnRef}
-              className={`p-1 rounded-md hover:bg-slate-300 ${menuOpen ? 'bg-slate-300' : 'opacity-0 group-hover:opacity-100'} transition-opacity cursor-pointer`}
+              className={`p-1 rounded hover:bg-[#d6c7b2] ${menuOpen ? 'bg-[#d6c7b2]' : 'opacity-80 group-hover:opacity-100'} transition-opacity cursor-pointer shrink-0`}
               onClick={toggleMenu}
+              title="Options"
             >
-              <MoreHorizontal size={14} className="text-slate-500" />
+              <MoreVertical size={13} className="text-[#6b5e52]" />
             </button>
           )}
         </div>
+
+        {/* Holder Context Menu: Delete Holder (first), Delete Attachments (second) */}
+        {isHolder && menuOpen && (
+          <div 
+            ref={menuRef}
+            style={{ position: 'fixed', top: `${menuCoords.top}px`, left: `${menuCoords.left}px`, zIndex: 9999 }}
+            className="bg-white border border-slate-200 shadow-2xl rounded-xl py-1 w-44 text-xs font-medium text-slate-700 animate-in fade-in zoom-in-95 duration-100"
+          >
+            <button 
+              className="w-full text-left px-3 py-1.5 hover:bg-red-50 text-red-600 cursor-pointer flex items-center gap-2"
+              onClick={() => {
+                setMenuOpen(false);
+                if (onDeleteHolder) onDeleteHolder(node.id);
+              }}
+            >
+              <Trash2 size={13} className="text-red-500" />
+              <span>Delete Holder</span>
+            </button>
+            <button 
+              className="w-full text-left px-3 py-1.5 hover:bg-red-50 text-red-600 cursor-pointer flex items-center gap-2"
+              onClick={() => {
+                setMenuOpen(false);
+                if (onDeleteHolderAttachments) onDeleteHolderAttachments(node.id);
+              }}
+            >
+              <Trash2 size={13} className="text-red-500" />
+              <span>Delete Attachments</span>
+            </button>
+          </div>
+        )}
+
+        {/* Attachment Context Menu: Delete Attachment */}
+        {isDoc && menuOpen && (
+          <div 
+            ref={menuRef}
+            style={{ position: 'fixed', top: `${menuCoords.top}px`, left: `${menuCoords.left}px`, zIndex: 9999 }}
+            className="bg-white border border-slate-200 shadow-2xl rounded-xl py-1 w-44 text-xs font-medium text-slate-700 animate-in fade-in zoom-in-95 duration-100"
+          >
+            <button 
+              className="w-full text-left px-3 py-1.5 hover:bg-red-50 text-red-600 cursor-pointer flex items-center gap-2"
+              onClick={() => {
+                setMenuOpen(false);
+                if (onDeleteDocument && node.documentData?.id) {
+                  onDeleteDocument(node.documentData.id);
+                }
+              }}
+            >
+              <Trash2 size={13} className="text-red-500" />
+              <span>Delete Attachment</span>
+            </button>
+          </div>
+        )}
         
         {isMaster && menuOpen && (
           <div 
@@ -314,6 +399,9 @@ import { confirmDialog, showToast } from "@/components/ToastProvider";
               onUpdateMaster={onUpdateMaster}
               onEditMaster={onEditMaster}
               onOpenAttachments={onOpenAttachments}
+              onDeleteHolder={onDeleteHolder}
+              onDeleteHolderAttachments={onDeleteHolderAttachments}
+              onDeleteDocument={onDeleteDocument}
             />
           ))}
         </div>
@@ -498,7 +586,7 @@ export default function EFormsManagerPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [policyCoveragesMap, setPolicyCoveragesMap] = useState<Record<string, { effDate: string, expDate: string, insurerName: string, gl: any[], umb: any[], wc: any, ba: any[] }>>({});
-  const [activeTab, setActiveTab] = useState<EFormTab>("All Forms");
+  const [activeTab, setActiveTab] = useState<EFormTab>("Certificates");
   const [selectedPolicy, setSelectedPolicy] = useState<string>("");
   const [selectedEffDate, setSelectedEffDate] = useState<string>("");
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
@@ -515,6 +603,55 @@ export default function EFormsManagerPage() {
 
   const [isDragging, setIsDragging] = useState(false);
   const [showTreePanel, setShowTreePanel] = useState(true);
+  const [zoomLevel, setZoomLevel] = useState<number>(100);
+  const [zoomDropdownOpen, setZoomDropdownOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const zoomMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close zoom dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (zoomMenuRef.current && !zoomMenuRef.current.contains(e.target as Node)) {
+        setZoomDropdownOpen(false);
+      }
+    };
+    if (zoomDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [zoomDropdownOpen]);
+
+  // Fullscreen toggle handler
+  const handleToggleFullscreen = () => {
+    const panel = document.getElementById("eform-preview-panel");
+    if (!panel) return;
+
+    if (!document.fullscreenElement && !isFullscreen) {
+      if (panel.requestFullscreen) {
+        panel.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {
+          setIsFullscreen(true);
+        });
+      } else {
+        setIsFullscreen(true);
+      }
+    } else {
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {
+          setIsFullscreen(false);
+        });
+      } else {
+        setIsFullscreen(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
 
   // ── Edit Form State ──
   const [isEditing, setIsEditing] = useState(false);
@@ -969,6 +1106,107 @@ export default function EFormsManagerPage() {
     }
   };
 
+  const handleDeleteHolder = async (nodeId: string) => {
+    if (!(await confirmDialog("Are you sure you want to delete this certificate holder?", "Delete Holder"))) return;
+    const holderDbId = nodeId.replace("holder-", "");
+    const parentCert = createdCertificates.find(c => 
+      c.children && c.children.some((child: any) => child.id === nodeId)
+    );
+    const certDbId = parentCert ? parentCert.id.replace("cert-file-master-", "") : null;
+    if (!certDbId) {
+      showToast("Certificate for this holder not found", "error");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/certificates/${certDbId}/holders/${holderDbId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to delete certificate holder");
+
+      showToast("Certificate holder deleted successfully", "success");
+      await fetchData();
+      if (selectedNode === nodeId) {
+        setSelectedNode(null);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Error deleting certificate holder", "error");
+    }
+  };
+
+  const handleDeleteHolderAttachments = async (nodeId: string) => {
+    if (!(await confirmDialog("Are you sure you want to delete all attachments for this holder?", "Delete Attachments"))) return;
+
+    const findNode = (nodes: TreeNode[], id: string): TreeNode | null => {
+      for (const n of nodes) {
+        if (n.id === id) return n;
+        if (n.children) {
+          const found = findNode(n.children, id);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    const holderNode = findNode(createdCertificates, nodeId);
+    const attachments = holderNode?.children || [];
+    if (attachments.length === 0) {
+      showToast("No attachments found for this holder", "info");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      for (const att of attachments) {
+        if (att.documentData?.id) {
+          await fetch(`${API_BASE_URL}/api/customers/${customerId}/documents/${att.documentData.id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        }
+      }
+
+      showToast("Attachments deleted successfully", "success");
+      await fetchData();
+      if (selectedNode && selectedNode.startsWith("doc-")) {
+        setSelectedNode(null);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Error deleting attachments", "error");
+    }
+  };
+
+  const handleDeleteDocument = async (docId: string | number) => {
+    if (!(await confirmDialog("Are you sure you want to delete this attachment?", "Delete Attachment"))) return;
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/documents/${docId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to delete attachment");
+
+      showToast("Attachment deleted successfully", "success");
+      await fetchData();
+      if (selectedNode === `doc-${docId}`) {
+        setSelectedNode(null);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Error deleting attachment", "error");
+    }
+  };
+
   const handleUpdateMaster = (nodeId: string) => {
     const certDbId = nodeId.replace("cert-file-master-", "");
     window.open(
@@ -987,7 +1225,7 @@ export default function EFormsManagerPage() {
     window.open(
       `/agency/customer/${customerId}/eforms-manager/add-edit-holder?certId=${certNum}&certDbId=${certDbId}`,
       '_blank',
-      'width=1050,height=800,menubar=no,toolbar=no'
+      'width=1150,height=850,menubar=no,toolbar=no'
     );
   };
 
@@ -1061,103 +1299,17 @@ export default function EFormsManagerPage() {
     return () => window.removeEventListener("message", handleMessage);
   }, [fetchData]);
 
-  // ── Build tree data from customer + policies ──
+  // ── Build tree data: Master > Holder > Attachment ──
   const buildTree = (): TreeNode[] => {
     if (!customer) return [];
-
-    const customerName =
-      customer.name ||
-      [customer.first_name, customer.last_name].filter(Boolean).join(" ") ||
-      "Customer";
-
-    const certNodes: TreeNode[] = [
-      {
-        id: `cert-all`,
-        label: `Certificate, Last 2 year(s)`,
-        type: "folder" as const,
-        formType: "Certificates",
-        children: [
-          ...createdCertificates
-        ],
-      }
-    ];
-
-    const policyNodes: TreeNode[] = policies.map((p) => ({
-      id: `p-${p.id}`,
-      label: `NBS New business ${p.effDate || ""}`,
-      type: "folder" as const,
-      children: [
-        {
-          id: `appform-${p.id}`,
-          label: "Commercial Applicant Information",
-          type: "folder" as const,
-          children: [
-            {
-              id: `misc-${p.id}`,
-              label: `${p.type || "Miscellaneous Professional"} Liability`,
-              type: "file" as const,
-              formType: "Applications",
-            }
-          ]
-        }
-      ]
-    }));
-
-    return [
-      {
-        id: "root",
-        label: `Customer - ${customerName}`,
-        type: "folder",
-        children: [...certNodes, ...policyNodes],
-      },
-    ];
+    return createdCertificates;
   };
 
   const treeData = buildTree();
 
   // ── Filter tree by active tab ──
-  const filterTree = (nodes: TreeNode[], tab: EFormTab): TreeNode[] => {
-    if (tab === "All Forms") return nodes;
-
-    const tabTypeMap: Record<string, string> = {
-      Applications: "Applications",
-      "AutoId Cards": "AutoId",
-      Binders: "Binder",
-      Cancellations: "Cancellation",
-      Certificates: "Certificate",
-      EPI: "EPI",
-      "Change Requests": "Change",
-      "Loss Notices": "Loss",
-    };
-
-    const filterType = tabTypeMap[tab] || tab;
-
-    const filterNodes = (items: TreeNode[]): TreeNode[] => {
-      return items
-        .map((node) => {
-          if (node.type === "file") {
-            return node.formType?.includes(filterType) || activeTab === "All Forms" ? node : null;
-          }
-          if (node.children) {
-            const filtered = filterNodes(node.children);
-            if (filtered.length > 0) {
-              return { ...node, children: filtered };
-            }
-          }
-          // Keep empty folders if they explicitly match the formType (like Master Certificates)
-          if (node.type === "folder" && (node.formType?.includes(filterType) || activeTab === "All Forms")) {
-            return { ...node, children: [] };
-          }
-          // Keep root folder even if empty for context
-          if (node.type === "folder" && node.id === "root") {
-            return { ...node, children: [] };
-          }
-          return null;
-        })
-        .filter(Boolean) as TreeNode[];
-    };
-
-    return filterNodes(nodes);
+  const filterTree = (nodes: TreeNode[], _tab: EFormTab): TreeNode[] => {
+    return nodes;
   };
 
   const displayTree = filterTree(treeData, activeTab);
@@ -1429,59 +1581,104 @@ export default function EFormsManagerPage() {
 
   // ─── Main Render ───────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-screen bg-bg-base font-sans select-none overflow-hidden">
+    <div className={`flex flex-col ${isFullscreen ? 'fixed inset-0 z-50' : 'h-screen'} bg-[#f5f1eb] font-sans select-none overflow-hidden text-[#2d2a26]`}>
 
-      {/* ── Modern Shared Top Header ── */}
-      {/* <Header onToggleDrawer={() => setDrawerOpen(true)} /> */}
+      {/* ── Top Header (Commented Out) ── */}
+      {/* <header className="bg-white border-b border-[#e5ddd5] px-6 py-2.5 flex items-center justify-between shrink-0 z-30">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-[#694e3c] flex items-center justify-center text-white shadow-xs">
+            <Landmark size={22} className="stroke-[2.2]" />
+          </div>
+          <div className="flex flex-col">
+            <span className="font-extrabold text-base text-[#2d2a26] leading-tight">Sterling AMS</span>
+            <span className="text-[11px] text-[#8c827a] font-medium leading-tight">Insurance Agency</span>
+          </div>
+
+          <div className="hidden lg:flex items-center gap-2 ml-8 text-xs text-[#8c827a]">
+            <button onClick={() => router.push('/agency/dashboard')} className="hover:text-[#2d2a26] cursor-pointer">Agency</button>
+            <ChevronRight size={12} className="text-[#b5aca2]" />
+            <button onClick={() => router.push(`/agency/customer/${customerId}`)} className="hover:text-[#2d2a26] cursor-pointer">Customer</button>
+            <ChevronRight size={12} className="text-[#b5aca2]" />
+            <span className="hover:text-[#2d2a26] cursor-pointer" onClick={() => router.push(`/agency/customer/${customerId}`)}>{customerName}</span>
+            <ChevronRight size={12} className="text-[#b5aca2]" />
+            <span className="font-bold text-[#2d2a26]">eForms Manager</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 bg-white border border-[#e5ddd5] rounded-xl text-xs text-[#8c827a] w-72 shadow-2xs">
+            <Search size={14} className="text-[#a89d91]" />
+            <input
+              type="text"
+              placeholder="Search customers, policies, documents..."
+              className="w-full bg-transparent border-none outline-none text-[#2d2a26] text-xs placeholder:text-[#a89d91]"
+            />
+            <span className="text-[10px] bg-[#f5f1eb] text-[#8c827a] px-1.5 py-0.5 rounded font-mono border border-[#e5ddd5] shrink-0">Ctrl + K</span>
+          </div>
+
+          <div className="relative">
+            <button
+              onClick={() => showToast("3 new notifications", "info")}
+              className="h-9 w-9 rounded-full border border-[#e5ddd5] bg-white hover:bg-[#faf8f5] text-[#2d2a26] flex items-center justify-center shadow-2xs transition-colors cursor-pointer"
+              title="Notifications"
+            >
+              <Bell size={16} />
+              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-black rounded-full h-4 w-4 flex items-center justify-center border-2 border-white">
+                3
+              </span>
+            </button>
+          </div>
+
+          <button
+            onClick={() => router.push("/agency/agency-profile")}
+            className="h-9 w-9 rounded-full bg-[#694e3c] text-white flex items-center justify-center font-bold text-sm shadow-2xs cursor-pointer uppercase"
+            title="Profile"
+          >
+            {customerName ? customerName.charAt(0) : "S"}
+          </button>
+        </div>
+      </header> */}
+
       <RightDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       {/* ── Main Content Area ── */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-bg-base p-1.5 gap-2">
-
-        {/* Top Breadcrumb/Back */}
-        {/* <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-widest text-text-muted px-2 shrink-0">
-          <button
-            onClick={() => router.push(`/agency/customer/${customerId}`)}
-            className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-pointer group"
-          >
-            <ArrowLeft size={13} strokeWidth={2.5} className="group-hover:-translate-x-0.5 transition-transform" />
-            Back to Customer
-          </button>
-          <ChevronRight size={11} className="text-border-main" />
-          <span className="text-text-main truncate">eForms Manager</span>
-        </div> */}  
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#f5f1eb] p-3 md:p-4">
 
         {/* ─ Modern Floating eForms Card ─ */}
-        <div className="bg-white border border-border-main rounded-2xl flex flex-col flex-1 shrink-0 shadow-sm overflow-hidden min-h-0">
+        <div className="bg-white border border-[#e5ddd5] rounded-3xl flex flex-col flex-1 shrink-0 shadow-sm overflow-hidden min-h-0">
 
-          {/* Header Action Bar */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 py-4 border-b border-border-main/50 gap-4 shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                <FileSignature size={20} className="text-primary" />
+          {/* Card Header Action Bar */}
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between px-6 py-3.5 border-b border-[#f0ece5] gap-4 shrink-0">
+            <div className="flex items-center gap-3.5">
+              <div className="h-12 w-12 rounded-2xl bg-[#f7f4ee] border border-[#ebe5dc] flex items-center justify-center text-[#795c46] shrink-0 shadow-2xs">
+                <Landmark size={24} className="stroke-[2.2]" />
               </div>
               <div className="min-w-0">
-                <h1 className="font-extrabold text-lg text-text-main tracking-tight truncate flex items-center gap-2">
-                  {customerName}
-                  <span className="text-border-main text-sm font-normal hidden sm:inline">—</span>
-                  <span className="text-sm font-bold text-primary hidden sm:inline">eForms Manager</span>
-                </h1>
-                <p className="text-[11px] font-semibold text-text-muted mt-0.5 truncate">
-                  {policies.length > 0 && policies[0].effDate ? `Policy #${policies[0].policyNum} | Effective: ${policies[0].effDate}` : "No Active Policies"}
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h1 className="font-extrabold text-lg text-[#2d2a26] tracking-tight truncate">
+                    {customerName}
+                  </h1>
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#ecfdf5] text-[#059669] border border-[#a7f3d0]">
+                    Active
+                  </span>
+                </div>
+                <p className="text-xs text-[#70665d] font-medium mt-0.5 truncate">
+                  Policy #{selectedPolicy || policies[0]?.policyNum || "8767"} | Effective: {selectedEffDate ? selectedEffDate.split(',')[0].replace(' - NBS', '').trim() : (policies[0]?.effDate || "2026-09-04")} | NBS New business
                 </p>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2 shrink-0">
-              <button className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">
+            {/* Action Buttons Toolbar */}
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              <button
+                onClick={handleSaveOverrides}
+                className="h-8 px-4 flex items-center gap-1.5 bg-[#694e3c] hover:bg-[#594132] text-white font-bold text-xs rounded-xl shadow-2xs transition-all cursor-pointer"
+                title="Save Changes"
+              >
                 <Save size={13} />
-                <span className="hidden lg:inline">Save</span>
+                <span>Save</span>
               </button>
 
-              <div className="h-5 w-px bg-border-main" />
-
-              {/* Email Forms */}
               <button
                 title="Email Forms"
                 onClick={() => {
@@ -1491,13 +1688,12 @@ export default function EFormsManagerPage() {
                     "width=920,height=680,menubar=no,toolbar=no,location=no,status=no"
                   );
                 }}
-                className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
+                className="h-8 px-3.5 flex items-center gap-1.5 bg-white border border-[#e5ddd5] hover:bg-[#faf8f5] text-[#2d2a26] font-bold text-xs rounded-xl shadow-2xs transition-all cursor-pointer"
               >
                 <Mail size={13} />
-                <span className="hidden lg:inline">Email Forms</span>
+                <span>Email Forms</span>
               </button>
 
-              {/* Print Forms */}
               <button
                 title="Print Forms"
                 onClick={() => {
@@ -1507,204 +1703,219 @@ export default function EFormsManagerPage() {
                     "width=850,height=600,menubar=no,toolbar=no,location=no,status=no"
                   );
                 }}
-                className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
+                className="h-8 px-3.5 flex items-center gap-1.5 bg-white border border-[#e5ddd5] hover:bg-[#faf8f5] text-[#2d2a26] font-bold text-xs rounded-xl shadow-2xs transition-all cursor-pointer"
               >
                 <Printer size={13} />
-                <span className="hidden lg:inline">Print Forms</span>
+                <span>Print Forms</span>
               </button>
 
-              <div className="h-5 w-px bg-border-main" />
-
-              {/* Fit to Height */}
-              <button
-                title="Fit to Height"
-                onClick={() => {
-                  const panel = document.getElementById("eform-preview-panel");
-                  if (panel) {
-                    panel.style.overflowY = "hidden";
-                    panel.style.overflowX = "auto";
-                    const iframe = panel.querySelector("iframe") as HTMLIFrameElement | null;
-                    if (iframe) { iframe.style.width = "auto"; iframe.style.height = "100%"; }
-                  }
-                }}
-                className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
-              >
-                <ArrowUpDown size={13} />
-                <span className="hidden lg:inline">Fit Height</span>
-              </button>
-
-              {/* Fit to Width */}
-              <button
-                title="Fit to Width"
-                onClick={() => {
-                  const panel = document.getElementById("eform-preview-panel");
-                  if (panel) {
-                    panel.style.overflowY = "auto";
-                    panel.style.overflowX = "hidden";
-                    const iframe = panel.querySelector("iframe") as HTMLIFrameElement | null;
-                    if (iframe) { iframe.style.width = "100%"; iframe.style.height = "auto"; }
-                  }
-                }}
-                className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
-              >
-                <ArrowLeftRight size={13} />
-                <span className="hidden lg:inline">Fit Width</span>
-              </button>
-
-              <div className="h-5 w-px bg-border-main" />
-
-              {/* Edit Form Toggle */}
+              {/* Edit Form Toggle if applicable */}
               {(selectedNode?.startsWith("cert-file-master-")) && (
                 <>
+                  <div className="h-5 w-px bg-[#e5ddd5] mx-0.5" />
                   {!isEditing ? (
                     <button
                       title="Edit Form"
                       onClick={() => {
                         setIsEditing(true);
-                        // Reload iframe with isEditing=true; use a new key so iframe gets fresh edit mode
                         setIframeKey(selectedNode + '_edit_' + Date.now());
                       }}
-                      className="h-8 px-3.5 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer"
+                      className="h-8 px-3.5 flex items-center gap-1.5 bg-white border border-[#e5ddd5] hover:bg-[#faf8f5] text-[#2d2a26] font-bold text-xs rounded-xl shadow-2xs transition-all cursor-pointer"
                     >
                       <Edit3 size={13} />
-                      <span className="hidden lg:inline">Edit Form</span>
+                      <span className="hidden sm:inline">Edit Form</span>
                     </button>
                   ) : (
                     <>
                       <button
-                        title="Save Changes"
-                        onClick={handleSaveOverrides}
-                        className="h-8 px-3.5 flex items-center gap-1.5 border border-primary bg-primary text-white hover:bg-primary/90 font-bold text-xs rounded-xl transition-all cursor-pointer"
-                      >
-                        <Save size={13} />
-                        <span className="hidden lg:inline">Save</span>
-                      </button>
-                      <button
                         title="Cancel Editing"
                         onClick={handleCancelEdit}
-                        className="h-8 px-3.5 flex items-center gap-1.5 border border-red-500 bg-red-50 text-red-600 hover:bg-red-100 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                        className="h-8 px-3 flex items-center gap-1.5 border border-red-300 bg-red-50 text-red-600 hover:bg-red-100 font-bold text-xs rounded-xl transition-all cursor-pointer"
                       >
-                        <span className="hidden lg:inline">Cancel</span>
+                        <span className="hidden sm:inline">Cancel</span>
                       </button>
                     </>
                   )}
-                  <div className="h-5 w-px bg-border-main" />
                 </>
               )}
-
-              {/* Show/Hide Tree */}
-              <button
-                title={showTreePanel ? "Hide Tree" : "Show Tree"}
-                onClick={() => setShowTreePanel(prev => !prev)}
-                className={`h-8 px-3.5 flex items-center gap-1.5 border font-bold text-xs rounded-xl transition-all cursor-pointer ${
-                  showTreePanel
-                    ? "border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary"
-                    : "border-primary bg-primary/10 text-primary hover:bg-primary/20"
-                }`}
-              >
-                {showTreePanel ? <PanelLeftClose size={13} /> : <PanelLeftOpen size={13} />}
-                <span className="hidden lg:inline">{showTreePanel ? "Hide Tree" : "Show Tree"}</span>
-              </button>
             </div>
           </div>
 
-          {/* Category Tabs */}
-          <div className="px-6 py-3 flex items-center gap-2 overflow-x-auto shrink-0 custom-scrollbar">
-            {EFORM_TABS.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`
-                  h-8 px-4 flex items-center justify-center text-[12px] whitespace-nowrap transition-all cursor-pointer rounded-xl
-                  ${activeTab === tab
-                    ? "bg-secondary text-primary font-bold"
-                    : "text-text-muted hover:text-text-main hover:bg-secondary/50 font-semibold"
-                  }
-                `}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+          {/* Horizontal Category Tabs (Commented Out) */}
+          {/* <div className="px-6 py-2.5 flex items-center gap-2 overflow-x-auto shrink-0 border-b border-[#f0ece5] custom-scrollbar bg-white">
+            {EFORM_TABS.map((tab) => {
+              const Icon = TAB_ICONS[tab] || FileText;
+              const isActive = activeTab === tab;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`
+                    h-8 px-3.5 flex items-center gap-2 text-xs whitespace-nowrap transition-all cursor-pointer rounded-xl shrink-0
+                    ${isActive
+                      ? "bg-[#eae3d5] border border-[#d3c5b2] text-[#2d2a26] font-bold shadow-2xs"
+                      : "text-[#70665d] hover:text-[#2d2a26] hover:bg-[#f6f2ec] font-semibold"
+                    }
+                  `}
+                >
+                  <Icon size={14} className={isActive ? "text-[#2d2a26]" : "text-[#8c827a]"} />
+                  <span>{tab}</span>
+                </button>
+              );
+            })}
+          </div> */}
 
-          {/* Contextual Action Bar */}
-          <div className="px-6 py-2.5 border-y border-border-main flex items-center gap-2 overflow-x-auto shrink-0 custom-scrollbar bg-slate-50/50">
-            {renderActionButtons()}
-          </div>
-
-          {/* ── Main Content Split ── */}
+          {/* ── Main Content Split: Left Panel + Right Panel ── */}
           <div className="flex flex-1 min-h-0 overflow-hidden relative">
 
             {/* ── Left Panel: Customer/Policy selectors + Tree ── */}
-            <div className={`shrink-0 border-r border-border-main bg-white flex flex-col h-full transition-all duration-300 overflow-hidden ${showTreePanel ? "w-[230px]" : "w-0 border-r-0"}`}>
+            <div className={`shrink-0 border-r border-[#f0ece5] bg-white flex flex-col h-full transition-all duration-300 overflow-hidden ${showTreePanel ? "w-[305px]" : "w-0 border-r-0"}`}>
 
               {/* Filters Section */}
-              <div className="p-2.5 flex flex-col gap-2 border-b border-border-main bg-white">
+              <div className="p-3.5 flex flex-col gap-2.5 border-b border-[#f0ece5] bg-white">
 
-                {/* Customer field */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Customer</label>
+                {/* Top Action Buttons */}
+                {activeTab === "Certificates" ? (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {/* + New Cert Liab */}
+                    <button
+                      onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager/new-certificate`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no')}
+                      className="h-8 px-3.5 flex items-center gap-1.5 bg-[#8c7a6b] hover:bg-[#7b6b5d] text-white text-xs font-semibold rounded-full transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                    >
+                      <Plus size={14} className="stroke-[2.2]" />
+                      <span>New Cert Liab</span>
+                    </button>
+
+                    {/* + New Cert Prop */}
+                    <button
+                      onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager/new-cert-prop`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no')}
+                      className="h-8 px-3.5 flex items-center gap-1.5 bg-[#8c7a6b] hover:bg-[#7b6b5d] text-white text-xs font-semibold rounded-full transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                    >
+                      <Plus size={14} className="stroke-[2.2]" />
+                      <span>New Cert Prop</span>
+                    </button>
+
+                    {/* Delete */}
+                    <button
+                      onClick={async () => {
+                        if (selectedNode) {
+                          if (selectedNode.startsWith("cert-file-master-")) {
+                            handleDeleteMaster(selectedNode);
+                          } else if (selectedNode.startsWith("holder-")) {
+                            handleDeleteHolder(selectedNode);
+                          } else if (selectedNode.startsWith("doc-")) {
+                            const docDbId = selectedNode.replace("doc-", "");
+                            handleDeleteDocument(docDbId);
+                          } else {
+                            showToast("Selected item removed", "success");
+                          }
+                        } else {
+                          showToast("Please select an item from the tree to delete.", "info");
+                        }
+                      }}
+                      className="h-8 px-3.5 flex items-center gap-1.5 border border-[#d6cfc7] bg-white hover:bg-[#faf7f4] text-[#4a453e] font-semibold text-xs rounded-full transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                    >
+                      <Trash2 size={13} className="text-[#5c544c]" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={async () => {
+                        if (selectedNode) {
+                          const confirmed = await confirmDialog("Are you sure you want to delete this selected item?", "Delete Item");
+                          if (confirmed) {
+                            if (selectedNode.startsWith("cert-file-master-")) {
+                              handleDeleteMaster(selectedNode);
+                            } else {
+                              showToast("Selected item removed", "success");
+                            }
+                          }
+                        } else {
+                          showToast("Please select an item from the tree to delete.", "info");
+                        }
+                      }}
+                      className="h-8 px-3.5 flex items-center gap-1.5 border border-[#d6cfc7] bg-white hover:bg-[#faf7f4] text-[#4a453e] font-semibold text-xs rounded-full transition-all cursor-pointer shadow-xs"
+                    >
+                      <Trash2 size={13} className="text-[#5c544c]" />
+                      <span>Delete</span>
+                    </button>
+
+                    {/* Contextual actions for active tabs */}
+                    {(activeTab === "Applications" || activeTab === "Loss Notices" || activeTab === "AutoId Cards" || activeTab === "Binders" || activeTab === "Cancellations") && (
+                      <button
+                        onClick={() => {
+                          if (activeTab === "Applications") window.open(`/agency/customer/${customerId}/eforms-manager/new-application`, '_blank', 'width=1050,height=800');
+                          else if (activeTab === "Loss Notices") window.open(`/agency/customer/${customerId}/eforms-manager/new-loss-notice`, '_blank', 'width=1050,height=800');
+                          else if (activeTab === "AutoId Cards") window.open(`/agency/customer/${customerId}/eforms-manager/new-autoid`, '_blank', 'width=1050,height=800');
+                          else if (activeTab === "Binders") window.open(`/agency/customer/${customerId}/eforms-manager/new-binder`, '_blank', 'width=1050,height=800');
+                          else if (activeTab === "Cancellations") window.open(`/agency/customer/${customerId}/eforms-manager/new-cancellation`, '_blank', 'width=1050,height=800');
+                        }}
+                        className="h-8 px-3.5 flex items-center gap-1.5 bg-[#8c7a6b] hover:bg-[#7b6b5d] text-white font-semibold text-xs rounded-full transition-all cursor-pointer shadow-xs"
+                      >
+                        <Plus size={14} className="stroke-[2.2]" />
+                        <span>New</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Customer field (Commented Out) */}
+                {/* <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-[#8c827a] uppercase tracking-wider">CUSTOMER</label>
                   <div className="flex items-center gap-1.5">
                     <input
                       type="text"
                       value={customerName}
                       readOnly
-                      className="flex-1 text-xs font-semibold text-text-main bg-bg-base border border-border-main rounded-lg px-2 py-1.5 outline-none truncate"
+                      className="flex-1 text-xs font-semibold text-[#2d2a26] bg-[#faf8f5] border border-[#e5ddd5] rounded-xl px-2.5 py-1.5 outline-none truncate"
                     />
-                    <button className="h-7 w-7 rounded-lg bg-secondary flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors cursor-pointer shrink-0">
+                    <button className="h-7 w-7 rounded-lg bg-white border border-[#e5ddd5] hover:bg-[#faf8f5] flex items-center justify-center text-[#8c827a] hover:text-[#2d2a26] transition-colors cursor-pointer shrink-0">
                       <Search size={13} />
                     </button>
                   </div>
-                </div>
+                </div> */}
 
-                {/* Policy # dropdown */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Policy #</label>
-                  <select
-                    value={selectedPolicy}
-                    onChange={(e) => setSelectedPolicy(e.target.value)}
-                    className="w-full text-xs font-semibold text-text-main bg-white border border-border-main rounded-lg px-2 py-1.5 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 cursor-pointer truncate appearance-none"
-                    title={selectedPolicy}
-                  >
-                    {policies.map((p) => {
-                      const statusFlag = p.status === "Active" ? "A" : "E";
-                      return (
+                {/* Policy # dropdown (Commented Out) */}
+                {/* <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-[#8c827a] uppercase tracking-wider">POLICY #</label>
+                  <div className="relative">
+                    <select
+                      value={selectedPolicy}
+                      onChange={(e) => setSelectedPolicy(e.target.value)}
+                      className="w-full text-xs font-semibold text-[#2d2a26] bg-white border border-[#e5ddd5] rounded-xl px-2.5 py-1.5 pr-7 outline-none focus:border-[#795c46] cursor-pointer truncate appearance-none"
+                      title={selectedPolicy}
+                    >
+                      {policies.map((p) => (
                         <option key={p.id} value={p.policyNum}>
-                          {p.policyNum}{p.type ? `, ${p.type}` : ""}{p.status ? `, ${p.status}` : ""}{p.term ? `, ${p.term}` : (p.effDate || p.expDate ? `, ${p.effDate || ""} - ${p.expDate || ""}` : "")}
+                          {p.policyNum}{p.type ? `, ${p.type}` : ""}{p.status ? `, ${p.status}` : ""}{p.term ? `, ${p.term}` : "12 Months"}
                         </option>
-                      );
-                    })}
-                    {policies.length === 0 && (
-                      <option value="">No policies found</option>
-                    )}
-                  </select>
-                </div>
+                      ))}
+                      {policies.length === 0 && (
+                        <option value="">8767, New business, Active, 12 Months</option>
+                      )}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#8c827a] pointer-events-none" />
+                  </div>
+                </div> */}
 
-                {/* Eff Date dropdown */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Effective Date</label>
-                  <select
-                    value={selectedEffDate}
-                    onChange={(e) => setSelectedEffDate(e.target.value)}
-                    className="w-full text-xs font-semibold text-text-main bg-white border border-border-main rounded-lg px-2 py-1.5 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 cursor-pointer truncate appearance-none"
-                    title={selectedEffDate}
-                  >
-                    {policies.map((p) => (
-                      <option key={p.id} value={`${p.effDate}, ${p.status}, ${p.type}`}>
-                        {p.effDate || "N/A"} - NBS
-                      </option>
-                    ))}
-                    {policies.length === 0 && (
-                      <option value="">N/A</option>
-                    )}
-                  </select>
-                </div>
+                {/* Eff Date field (Commented Out) */}
+                {/* <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-[#8c827a] uppercase tracking-wider">EFFECTIVE DATE</label>
+                  <div className="flex items-center gap-2 bg-white border border-[#e5ddd5] rounded-xl px-2.5 py-1.5 text-xs font-semibold text-[#2d2a26]">
+                    <Calendar size={14} className="text-[#8c827a] shrink-0" />
+                    <span className="truncate">
+                      {selectedEffDate ? selectedEffDate.split(',')[0].trim() : (policies[0]?.effDate || "2026-09-04")} - NBS
+                    </span>
+                  </div>
+                </div> */}
               </div>
 
               {/* Tree View */}
               <div 
-                className={`flex-1 overflow-y-auto p-2 transition-colors ${
-                  isDragging ? "bg-primary/10 border-2 border-dashed border-primary" : "bg-white"
+                className={`flex-1 overflow-y-auto p-2 transition-colors custom-scrollbar ${
+                  isDragging ? "bg-amber-50/50 border-2 border-dashed border-[#795c46]" : "bg-white"
                 }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -1722,13 +1933,16 @@ export default function EFormsManagerPage() {
                       onUpdateMaster={handleUpdateMaster}
                       onOpenAttachments={handleOpenAttachments}
                       onAddEditHolder={handleOpenInterests}
+                      onDeleteHolder={handleDeleteHolder}
+                      onDeleteHolderAttachments={handleDeleteHolderAttachments}
+                      onDeleteDocument={handleDeleteDocument}
                     />
                   ))
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-center p-6">
-                    <FileText size={24} className="text-slate-200 mb-2" />
-                    <p className="text-xs font-bold text-slate-400">No forms found</p>
-                    <p className="text-[10px] text-slate-300 mt-1">
+                    <FileText size={24} className="text-[#d8cdbd] mb-2" />
+                    <p className="text-xs font-bold text-[#8c827a]">No forms found</p>
+                    <p className="text-[10px] text-[#a89d91] mt-1">
                       No eForms available for this filter.
                     </p>
                   </div>
@@ -1737,7 +1951,99 @@ export default function EFormsManagerPage() {
             </div>
 
             {/* ── Right Panel: Form preview area ── */}
-            <div className="flex-1 flex flex-col bg-slate-50/50 overflow-auto relative" id="eform-preview-panel">
+            <div 
+              className={`flex-1 flex flex-col bg-[#faf8f5]/40 overflow-hidden relative ${
+                isFullscreen ? 'fixed inset-0 z-50 bg-white' : ''
+              }`} 
+              id="eform-preview-panel"
+            >
+
+              {/* Preview Header Bar */}
+              <div className="px-6 py-3 border-b border-[#f0ece5] flex items-center justify-between bg-white shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-xl bg-[#f7f4ee] border border-[#ebe5dc] flex items-center justify-center text-[#795c46] shrink-0">
+                    <FileSignature size={18} />
+                  </div>
+                  <div>
+                    <h2 className="font-extrabold text-sm text-[#2d2a26] tracking-tight">eForms Preview</h2>
+                    <p className="text-xs text-[#8c827a] font-normal hidden sm:block">
+                      Select a certificate holder from the tree to preview the ACORD form with holder details.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Zoom Controls & Fullscreen */}
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center border border-[#e5ddd5] rounded-xl overflow-hidden bg-white shadow-2xs">
+                    <button
+                      onClick={() => setZoomLevel(prev => Math.max(50, prev - 10))}
+                      className="h-7 px-2.5 flex items-center justify-center text-[#6b5e52] hover:bg-[#faf8f5] text-xs font-bold transition-colors cursor-pointer"
+                      title="Zoom Out"
+                    >
+                      <Minus size={13} />
+                    </button>
+
+                    <div className="relative" ref={zoomMenuRef}>
+                      <button
+                        onClick={() => setZoomDropdownOpen(prev => !prev)}
+                        className="px-2.5 text-xs font-semibold text-[#2d2a26] border-x border-[#e5ddd5] h-7 flex items-center justify-center select-none hover:bg-[#faf8f5] transition-colors cursor-pointer gap-1"
+                        title="Select Zoom Level"
+                      >
+                        <span>{zoomLevel}%</span>
+                        <ChevronDown size={11} className={`text-[#8c827a] transition-transform ${zoomDropdownOpen ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {zoomDropdownOpen && (
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-24 bg-white border border-[#e5ddd5] rounded-xl shadow-xl py-1 z-50 text-xs font-semibold text-[#2d2a26] animate-in fade-in zoom-in-95 duration-100">
+                          {[50, 75, 90, 100, 125, 150, 200].map((val) => (
+                            <button
+                              key={val}
+                              onClick={() => {
+                                setZoomLevel(val);
+                                setZoomDropdownOpen(false);
+                              }}
+                              className={`w-full text-center py-1.5 px-2 hover:bg-[#f5f1eb] cursor-pointer transition-colors ${
+                                zoomLevel === val ? 'text-[#795c46] font-bold bg-[#faf8f5]' : ''
+                              }`}
+                            >
+                              {val}%
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => setZoomLevel(prev => Math.min(200, prev + 10))}
+                      className="h-7 px-2.5 flex items-center justify-center text-[#6b5e52] hover:bg-[#faf8f5] text-xs font-bold transition-colors cursor-pointer"
+                      title="Zoom In"
+                    >
+                      <Plus size={13} />
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={handleToggleFullscreen}
+                    className="h-7 w-7 rounded-full border border-[#e5ddd5] bg-white hover:bg-[#faf8f5] flex items-center justify-center text-[#6b5e52] shadow-2xs transition-colors cursor-pointer ml-1"
+                    title={isFullscreen ? "Exit Fullscreen" : "Toggle Fullscreen"}
+                  >
+                    {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Scrollable Viewport with Zoom Scale Applied */}
+              <div 
+                className="flex-1 overflow-auto flex flex-col items-center justify-start bg-slate-50/50 p-2 sm:p-4 relative" 
+                id="eform-zoom-viewport"
+              >
+                <div 
+                  style={{ 
+                    zoom: `${zoomLevel}%`,
+                    transformOrigin: 'top center',
+                  }}
+                  className="w-full h-full flex-1 flex flex-col items-center justify-start transition-all duration-100"
+                >
               {(() => {
                 // Find if the selected node is a holder node by searching the tree
                 const findNodeById = (nodes: TreeNode[], id: string): TreeNode | null => {
@@ -1995,22 +2301,77 @@ export default function EFormsManagerPage() {
                   }
                 } else {
                   return (
-                    <div className="flex-1 flex items-center justify-center min-h-full">
-                      <div className="text-center space-y-4 p-8">
-                        <div className="h-20 w-20 rounded-3xl bg-white border border-border-main shadow-sm flex items-center justify-center mx-auto transition-transform hover:scale-105">
-                          <FileSignature size={32} className="text-primary/40" />
+                    <div className="flex-1 flex flex-col p-6 items-center justify-center bg-white">
+                      <div className="w-full h-full border-2 border-dashed border-[#ebe5dc] rounded-2xl flex flex-col items-center justify-center p-8 bg-[#faf8f5]/40 text-center">
+                        
+                        {/* Stylized Document & Magnifying Glass Graphic */}
+                        <div className="relative mb-5 flex items-center justify-center">
+                          <div className="w-24 h-28 bg-white border border-[#e5ddd5] rounded-xl shadow-md flex flex-col p-3 gap-2 relative">
+                            <div className="w-10 h-2 bg-[#f0ece5] rounded" />
+                            <div className="w-full h-1.5 bg-[#f5f1eb] rounded" />
+                            <div className="w-full h-1.5 bg-[#f5f1eb] rounded" />
+                            <div className="w-3/4 h-1.5 bg-[#f5f1eb] rounded" />
+                            <div className="w-full h-1.5 bg-[#f5f1eb] rounded" />
+                            <div className="w-1/2 h-1.5 bg-[#f5f1eb] rounded" />
+                          </div>
+                          {/* Magnifying Glass Overlay */}
+                          <div className="absolute -bottom-2 -right-3 w-14 h-14 rounded-full bg-white border-2 border-[#e5ddd5] shadow-lg flex items-center justify-center">
+                            <Search size={24} className="text-[#795c46] stroke-[2.5]" />
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="text-base font-extrabold text-text-main tracking-tight">eForms Preview</h3>
-                          <p className="text-[13px] text-text-muted max-w-[260px] mx-auto mt-1.5 leading-relaxed">
-                            Select a certificate holder from the tree to preview the ACORD form with holder details.
-                          </p>
+
+                        {/* Heading & Subtitle */}
+                        <h3 className="text-xl font-extrabold text-[#2d2a26] tracking-tight">eForms Preview</h3>
+                        <p className="text-xs text-[#8c827a] max-w-sm mt-1.5 mb-10 leading-relaxed">
+                          Select a certificate holder from the tree to preview the ACORD form with holder details.
+                        </p>
+
+                        {/* 4 Feature Highlights */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-2xl w-full">
+                          {/* 1. View eForms */}
+                          <div className="flex flex-col items-center text-center">
+                            <div className="w-11 h-11 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-2 shadow-2xs">
+                              <FileText size={18} />
+                            </div>
+                            <span className="text-xs font-bold text-[#2d2a26]">View eForms</span>
+                            <span className="text-[11px] text-[#8c827a]">PDF Preview</span>
+                          </div>
+
+                          {/* 2. Certificate Holders */}
+                          <div className="flex flex-col items-center text-center">
+                            <div className="w-11 h-11 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2 shadow-2xs">
+                              <ShieldCheck size={18} />
+                            </div>
+                            <span className="text-xs font-bold text-[#2d2a26]">Certificate Holders</span>
+                            <span className="text-[11px] text-[#8c827a]">with Details</span>
+                          </div>
+
+                          {/* 3. Easy Navigation */}
+                          <div className="flex flex-col items-center text-center">
+                            <div className="w-11 h-11 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center mb-2 shadow-2xs">
+                              <Eye size={18} />
+                            </div>
+                            <span className="text-xs font-bold text-[#2d2a26]">Easy Navigation</span>
+                            <span className="text-[11px] text-[#8c827a]">Tree Structure</span>
+                          </div>
+
+                          {/* 4. Fast & Secure */}
+                          <div className="flex flex-col items-center text-center">
+                            <div className="w-11 h-11 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center mb-2 shadow-2xs">
+                              <Zap size={18} />
+                            </div>
+                            <span className="text-xs font-bold text-[#2d2a26]">Fast & Secure</span>
+                            <span className="text-[11px] text-[#8c827a]">Document Access</span>
+                          </div>
                         </div>
+
                       </div>
                     </div>
                   );
                 }
               })()}
+                </div>
+              </div>
             </div>
 
           </div>

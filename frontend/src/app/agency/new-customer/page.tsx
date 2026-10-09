@@ -40,9 +40,8 @@ function SectionCard({
             >
                 <span>{title}</span>
                 <ChevronDown
-                    className={`size-5 text-white/90 transition-transform duration-300 ${
-                        isOpen ? "rotate-180" : ""
-                    }`}
+                    className={`size-5 text-white/90 transition-transform duration-300 ${isOpen ? "rotate-180" : ""
+                        }`}
                 />
             </button>
             {isOpen && (
@@ -76,9 +75,8 @@ function FormRow({
             <div className="sm:col-span-7 flex flex-col">
                 {React.isValidElement(children)
                     ? React.cloneElement(children as any, {
-                        className: `${(children.props as any).className || ""} ${
-                            error ? "!border-red-500 focus:!ring-red-500/20 focus:!border-red-500" : ""
-                        }`
+                        className: `${(children.props as any).className || ""} ${error ? "!border-red-500 focus:!ring-red-500/20 focus:!border-red-500" : ""
+                            }`
                     })
                     : children}
                 {error && <span className="text-xs text-red-600 font-medium mt-1">{error}</span>}
@@ -187,7 +185,7 @@ const defaultForm = {
     email2: "", web: "",
 
     // Address extras
-    address2: "", country: "", county: "", latitude: "", longitude: "", altAddressBilling: false,
+    address2: "", country: "US", county: "", latitude: "", longitude: "", altAddressBilling: false,
 
     // Distribution / Contact
     preferredDistribution: "", preferredMethod: "", marketingSolicitation: "", electronicDelivery: "", notes: "",
@@ -279,7 +277,9 @@ function buildPayload(f: FormState) {
     out.status = f.status || "Active";
     out.primary_exec = f.primaryExec || f.executive || "Unassigned";
     out.type = f.type || "Commercial";
-    
+    out.country = f.country || "US";
+    out.customer_added_date = f.customerAddedDate || new Date().toISOString().split("T")[0];
+
     // Ensure the primary 'phone' field is populated for the dashboard table
     if (!out.phone) {
         out.phone = f.cell || f.phoneBusiness || f.phoneResidence || f.phoneOther || null;
@@ -403,11 +403,11 @@ function NewCustomerContent() {
         }
 
         if (!f.executive?.trim()) newErrors.executive = "Executive is required";
-        if (!f.representative?.trim()) newErrors.representative = "Representative is required";
+        // if (!f.representative?.trim()) newErrors.representative = "Representative is required";
         if (!f.division?.trim()) newErrors.division = "Division is required";
         if (!f.branch?.trim()) newErrors.branch = "Branch is required";
         if (!f.department?.trim()) newErrors.department = "Department is required";
-        if (!f.customerAddedDate?.trim()) newErrors.customerAddedDate = "Customer Added Date is required";
+        // if (!f.customerAddedDate?.trim()) newErrors.customerAddedDate = "Customer Added Date is required";
 
         if (!f.address?.trim()) newErrors.address = "Address is required";
         if (!f.city?.trim()) newErrors.city = "City is required";
@@ -575,8 +575,8 @@ function NewCustomerContent() {
                         </div>
                     </div>
 
-                    {/* Settings */}
-                    <div className="grid grid-cols-1 sm:grid-cols-12 items-center gap-3 py-2.5 border-b border-[#F3F4F6]">
+                    {/* Settings (Commented Out) */}
+                    {/* <div className="grid grid-cols-1 sm:grid-cols-12 items-center gap-3 py-2.5 border-b border-[#F3F4F6]">
                         <label className="sm:col-span-5 text-sm font-medium text-[#1F2937]">
                             Settings
                         </label>
@@ -600,7 +600,7 @@ function NewCustomerContent() {
                                 <span>Exclude from Purge</span>
                             </label>
                         </div>
-                    </div>
+                    </div> */}
 
                     {/* Entity Classification */}
                     <div className="grid grid-cols-1 sm:grid-cols-12 items-center gap-3 py-2.5 border-b border-[#F3F4F6]">
@@ -608,7 +608,7 @@ function NewCustomerContent() {
                             Entity Classification <span className="text-red-500 font-bold">*</span>
                         </label>
                         <div className="sm:col-span-7 flex flex-wrap gap-6">
-                            {["Individual", "Family", "Business"].map(t => (
+                            {["Individual", "Business"].map(t => (
                                 <label key={t} className="flex items-center gap-2 cursor-pointer text-sm text-[#1F2937]">
                                     <input
                                         type="radio"
@@ -693,12 +693,12 @@ function NewCustomerContent() {
                     </FormRow>
 
                     <FormRow label="Country" required error={errors.country}>
-                        <select className={selectCls} value={f.country} onChange={e => set({ country: e.target.value })}>
-                            <option value="">-- Select Country --</option>
-                            <option value="US">United States</option>
-                            <option value="CA">Canada</option>
-                            <option value="IN">India</option>
-                            <option value="UK">United Kingdom</option>
+                        <select
+                            className={`${selectCls} disabled:bg-[#F3F4F6] disabled:text-[#4B5563] disabled:cursor-not-allowed`}
+                            value={f.country || "US"}
+                            disabled
+                        >
+                            <option value="US">US</option>
                         </select>
                     </FormRow>
 
@@ -763,7 +763,8 @@ function NewCustomerContent() {
                         </select>
                     </FormRow>
 
-                    <FormRow label="Representative" required error={errors.representative}>
+                    {/* Representative (Commented Out) */}
+                    {/* <FormRow label="Representative" required error={errors.representative}>
                         <select className={selectCls} value={f.representative} onChange={e => set({ representative: e.target.value })}>
                             <option value="">Select Representative</option>
                             <option value="Akva, Jonathan">Akva, Jonathan</option>
@@ -787,7 +788,7 @@ function NewCustomerContent() {
                             <option value="Solender, Ben">Solender, Ben</option>
                             <option value="Weiner, Jake">Weiner, Jake</option>
                         </select>
-                    </FormRow>
+                    </FormRow> */}
 
                     {/*
                     <div className="grid grid-cols-1 sm:grid-cols-12 items-center gap-3 py-2.5 border-b border-[#F3F4F6]">
@@ -895,8 +896,8 @@ function NewCustomerContent() {
                     */}
                 </SectionCard>
 
-                {/* ── CARD 5: Business with Agency & Policy Checks ── */}
-                <SectionCard
+                {/* ── CARD 5: Business with Agency & Policy Checks (Commented Out) ── */}
+                {/* <SectionCard
                     title="Business with Agency & Policy Checks"
                     isOpen={openSections["Business with Agency & Policy Checks"]}
                     onToggle={() => toggleSection("Business with Agency & Policy Checks")}
@@ -923,7 +924,6 @@ function NewCustomerContent() {
                         <input type="date" className={inputCls} value={f.customerAddedDate} onChange={e => set({ customerAddedDate: e.target.value })} />
                     </FormRow>
 
-                    {/* Policy Checks */}
                     <div className="py-3 border-b border-[#F3F4F6] space-y-3">
                         <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-[#1F2937]">
                             <input
@@ -957,7 +957,6 @@ function NewCustomerContent() {
                         </div>
                     </div>
 
-                    {/* International Phone */}
                     <div className="pt-2 space-y-3">
                         <label className="text-sm font-semibold text-[#1F2937] block">International Phone 1</label>
                         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-[#F9FAFB] p-4 rounded border border-[#E5E2DE]">
@@ -986,10 +985,10 @@ function NewCustomerContent() {
                             </div>
                         </div>
                     </div>
-                </SectionCard>
+                </SectionCard> */}
 
-                {/* ── CARD 6: Additional Customer Information ── */}
-                <SectionCard
+                {/* ── CARD 6: Additional Customer Information (Commented Out) ── */}
+                {/* <SectionCard
                     title="Additional Customer Information"
                     isOpen={openSections["Additional Customer Information"]}
                     onToggle={() => toggleSection("Additional Customer Information")}
@@ -1094,10 +1093,10 @@ function NewCustomerContent() {
                             <option value="6411">6411 - Insurance Agents, Brokers & Service</option>
                         </select>
                     </FormRow>
-                </SectionCard>
+                </SectionCard> */}
 
-                {/* ── CARD 7: Service Groups ── */}
-                <SectionCard
+                {/* ── CARD 7: Service Groups (Commented Out) ── */}
+                {/* <SectionCard
                     title="Service Groups"
                     isOpen={openSections["Service Groups"]}
                     onToggle={() => toggleSection("Service Groups")}
@@ -1159,9 +1158,8 @@ function NewCustomerContent() {
                                                 <td className="py-3 px-4">{group.name}</td>
                                                 <td className="py-3 px-4">{group.businessType}</td>
                                                 <td className="py-3 px-4 text-center">
-                                                    <span className={`inline-block px-2.5 py-0.5 rounded text-xs font-semibold ${
-                                                        group.primary ? "bg-[#7A6F64]/10 text-[#7A6F64] border border-[#7A6F64]/20" : "bg-[#F3F4F6] text-[#6B7280]"
-                                                    }`}>
+                                                    <span className={`inline-block px-2.5 py-0.5 rounded text-xs font-semibold ${group.primary ? "bg-[#7A6F64]/10 text-[#7A6F64] border border-[#7A6F64]/20" : "bg-[#F3F4F6] text-[#6B7280]"
+                                                        }`}>
                                                         {group.primary ? "Yes" : "No"}
                                                     </span>
                                                 </td>
@@ -1172,10 +1170,10 @@ function NewCustomerContent() {
                             </table>
                         </div>
                     </div>
-                </SectionCard>
+                </SectionCard> */}
 
-                {/* ── CARD 8: Contacts ── */}
-                <SectionCard
+                {/* ── CARD 8: Contacts (Commented Out) ── */}
+                {/* <SectionCard
                     title="Contacts"
                     isOpen={openSections["Contacts"]}
                     onToggle={() => toggleSection("Contacts")}
@@ -1238,7 +1236,7 @@ function NewCustomerContent() {
                             </table>
                         </div>
                     </div>
-                </SectionCard>
+                </SectionCard> */}
 
                 {/* ── CARD 9: Bottom Actions (Exact Sterling 3-button layout matching Screenshot 3) ── */}
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 pb-16 border-t border-[#D9D5D0]">

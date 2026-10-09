@@ -495,7 +495,7 @@ export default function AddEditHolderPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 shrink-0 mb-6">
 
             {/* COLUMN 1 */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-6 min-w-0">
 
               {/* Name Selection */}
               <div className="bg-white rounded-xl border border-border-main p-5 shadow-sm flex flex-col gap-3">
@@ -532,23 +532,22 @@ export default function AddEditHolderPage() {
                 <h3 className="text-xs font-bold text-primary border-b border-border-main/50 pb-2 uppercase tracking-wider">Holder Details</h3>
                 <div className="flex flex-col gap-2.5 text-xs">
                   <Row label="Name *">
-                    <input type="text" className={INPUT} value={newHolder.name} onChange={(e) => setNewHolder((h) => ({ ...h, name: e.target.value }))} required />
+                    <input type="text" className={INPUT + " w-full"} value={newHolder.name} onChange={(e) => setNewHolder((h) => ({ ...h, name: e.target.value }))} required />
                   </Row>
                   <Row label="Contact">
-                    <input type="text" className={INPUT} value={newHolder.contact} onChange={(e) => setNewHolder((h) => ({ ...h, contact: e.target.value }))} />
+                    <input type="text" className={INPUT + " w-full"} value={newHolder.contact} onChange={(e) => setNewHolder((h) => ({ ...h, contact: e.target.value }))} />
                   </Row>
                   <Row label="Address">
-                    <div className="flex flex-col gap-1.5 flex-1">
-                      <input type="text" placeholder="Line 1" className={INPUT} value={newHolder.address} onChange={(e) => setNewHolder((h) => ({ ...h, address: e.target.value }))} />
-                      <input type="text" placeholder="Line 2" className={INPUT} value={newHolder.address2} onChange={(e) => setNewHolder((h) => ({ ...h, address2: e.target.value }))} />
+                    <div className="flex flex-col gap-1.5 w-full min-w-0">
+                      <input type="text" placeholder="Line 1" className={INPUT + " w-full"} value={newHolder.address} onChange={(e) => setNewHolder((h) => ({ ...h, address: e.target.value }))} />
+                      <input type="text" placeholder="Line 2" className={INPUT + " w-full"} value={newHolder.address2} onChange={(e) => setNewHolder((h) => ({ ...h, address2: e.target.value }))} />
                     </div>
                   </Row>
-                  <div className="flex items-center gap-2">
-                    <span className="w-20 font-semibold text-text-muted shrink-0">City</span>
-                    <input type="text" className={INPUT + " flex-1"} value={newHolder.city} onChange={(e) => setNewHolder((h) => ({ ...h, city: e.target.value }))} />
-                    <span className="font-semibold text-text-muted ml-1">St</span>
+                  <Row label="City">
+                    <input type="text" className={INPUT + " flex-1 min-w-0"} value={newHolder.city} onChange={(e) => setNewHolder((h) => ({ ...h, city: e.target.value }))} />
+                    <span className="font-semibold text-text-muted shrink-0 text-xs">St</span>
                     <select
-                      className="border border-border-main p-1.5 rounded-lg focus:outline-none focus:border-primary text-text-main bg-white text-xs shadow-sm w-20"
+                      className="border border-border-main p-1.5 rounded-lg focus:outline-none focus:border-primary text-text-main bg-white text-xs shadow-sm w-20 shrink-0 truncate"
                       value={newHolder.state}
                       onChange={(e) => setNewHolder((h) => ({ ...h, state: e.target.value }))}
                     >
@@ -557,19 +556,18 @@ export default function AddEditHolderPage() {
                         <option key={s.code} value={s.code}>{s.code} — {s.name}</option>
                       ))}
                     </select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-20 font-semibold text-text-muted shrink-0">Zip</span>
-                    <input type="text" className={INPUT + " w-24"} value={newHolder.zip} onChange={(e) => setNewHolder((h) => ({ ...h, zip: e.target.value }))} />
-                    <span className="font-semibold text-text-muted ml-2">Email</span>
-                    <input type="text" className={INPUT + " flex-1"} value={newHolder.email} onChange={(e) => setNewHolder((h) => ({ ...h, email: e.target.value }))} />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-20 font-semibold text-text-muted shrink-0">Fax</span>
-                    <input type="text" className={INPUT + " w-24"} value={newHolder.fax} onChange={(e) => setNewHolder((h) => ({ ...h, fax: e.target.value }))} />
-                    <span className="font-semibold text-text-muted ml-2">Ext</span>
-                    <input type="text" className={INPUT + " w-16"} value={newHolder.fax_ext} onChange={(e) => setNewHolder((h) => ({ ...h, fax_ext: e.target.value }))} />
-                  </div>
+                  </Row>
+                  <Row label="Zip">
+                    <input type="text" className={INPUT + " w-28 min-w-0"} value={newHolder.zip} onChange={(e) => setNewHolder((h) => ({ ...h, zip: e.target.value }))} />
+                  </Row>
+                  <Row label="Email">
+                    <input type="email" placeholder="name@example.com" className={INPUT + " w-full min-w-0"} value={newHolder.email} onChange={(e) => setNewHolder((h) => ({ ...h, email: e.target.value }))} />
+                  </Row>
+                  <Row label="Fax">
+                    <input type="text" className={INPUT + " flex-1 min-w-0"} value={newHolder.fax} onChange={(e) => setNewHolder((h) => ({ ...h, fax: e.target.value }))} />
+                    <span className="font-semibold text-text-muted shrink-0 text-xs">Ext</span>
+                    <input type="text" className={INPUT + " w-16 shrink-0"} value={newHolder.fax_ext} onChange={(e) => setNewHolder((h) => ({ ...h, fax_ext: e.target.value }))} />
+                  </Row>
                 </div>
               </div>
 
@@ -631,18 +629,18 @@ export default function AddEditHolderPage() {
             </div>
 
             {/* COLUMN 2 */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-6 min-w-0">
 
               {/* Dates */}
               <div className="bg-white rounded-xl border border-border-main p-5 shadow-sm flex flex-col gap-3">
                 <h3 className="text-xs font-bold text-primary border-b border-border-main/50 pb-2 uppercase tracking-wider">Dates &amp; Written Notice</h3>
                 <div className="flex flex-col gap-3 text-xs">
-                  <Row label="Date Issued *">
-                    <input type="date" className={INPUT + " flex-1"} value={newHolder.issue_date} onChange={(e) => setNewHolder((h) => ({ ...h, issue_date: e.target.value }))} />
+                  <Row label="Date Issued *" labelWidth="w-24">
+                    <input type="date" className={INPUT + " w-full min-w-0"} value={newHolder.issue_date} onChange={(e) => setNewHolder((h) => ({ ...h, issue_date: e.target.value }))} />
                   </Row>
                   <div className="border-t border-border-main/30 pt-2 flex flex-col gap-2">
                     <span className="font-semibold text-text-main">Written Notice of Cancellation</span>
-                    <Row label="# of Days:">
+                    <Row label="# of Days:" labelWidth="w-24">
                       <input type="number" className={INPUT + " w-24"} value={newHolder.written_notice_days} onChange={(e) => setNewHolder((h) => ({ ...h, written_notice_days: Number(e.target.value) }))} />
                     </Row>
                   </div>
@@ -732,7 +730,7 @@ export default function AddEditHolderPage() {
             </div>
 
             {/* COLUMN 3 */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-6 min-w-0">
 
               {/* Summary panel */}
               <div className="bg-secondary/10 border border-border-main rounded-xl p-5 flex flex-col gap-4 shadow-sm relative overflow-hidden flex-1 min-h-[160px]">
@@ -760,13 +758,13 @@ export default function AddEditHolderPage() {
                 <h3 className="text-xs font-bold text-primary border-b border-border-main/50 pb-2 uppercase tracking-wider">Additional Information</h3>
                 <div className="flex flex-col gap-2.5 text-xs">
                   <Row label="Job Type:" right>
-                    <input type="text" className={INPUT + " flex-1"} value={newHolder.job_type} onChange={(e) => setNewHolder((h) => ({ ...h, job_type: e.target.value }))} />
+                    <input type="text" className={INPUT + " w-full min-w-0"} value={newHolder.job_type} onChange={(e) => setNewHolder((h) => ({ ...h, job_type: e.target.value }))} />
                   </Row>
                   <Row label="Job #:" right>
-                    <input type="text" className={INPUT + " flex-1"} value={newHolder.job_num} onChange={(e) => setNewHolder((h) => ({ ...h, job_num: e.target.value }))} />
+                    <input type="text" className={INPUT + " w-full min-w-0"} value={newHolder.job_num} onChange={(e) => setNewHolder((h) => ({ ...h, job_num: e.target.value }))} />
                   </Row>
                   <Row label="Project End Date:" right>
-                    <input type="date" className={INPUT + " w-36"} value={newHolder.project_end_date} onChange={(e) => setNewHolder((h) => ({ ...h, project_end_date: e.target.value }))} />
+                    <input type="date" className={INPUT + " w-full min-w-0"} value={newHolder.project_end_date} onChange={(e) => setNewHolder((h) => ({ ...h, project_end_date: e.target.value }))} />
                   </Row>
                   <div className="flex items-center justify-center gap-6 mt-2 border-t border-border-main/20 pt-3">
                     <label className="flex items-center gap-2 cursor-pointer select-none font-semibold text-text-main">
@@ -790,15 +788,18 @@ export default function AddEditHolderPage() {
 
 // ── Shared Tailwind helpers ───────────────────────────────────────────────────
 const INPUT =
-  "border border-border-main p-1.5 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-text-main bg-white text-xs transition-colors shadow-sm";
+  "border border-border-main p-1.5 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-text-main bg-white text-xs transition-colors shadow-sm min-w-0";
 const INPUT_AREA =
-  "w-full min-h-[70px] border border-border-main p-2.5 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-text-main bg-white text-xs transition-colors shadow-sm";
+  "w-full min-h-[70px] border border-border-main p-2.5 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-text-main bg-white text-xs transition-colors shadow-sm min-w-0";
 
-function Row({ label, children, right = false }: { label: string; children: React.ReactNode; right?: boolean }) {
+function Row({ label, children, right = false, labelWidth }: { label: string; children: React.ReactNode; right?: boolean; labelWidth?: string }) {
+  const widthClass = labelWidth || (right ? "w-28 text-right" : "w-16");
   return (
-    <div className="flex items-center gap-2.5">
-      <span className={`shrink-0 font-semibold text-text-muted ${right ? "w-28 text-right" : "w-20"}`}>{label}</span>
-      {children}
+    <div className="flex items-center gap-2 w-full min-w-0">
+      <span className={`shrink-0 font-semibold text-text-muted text-xs ${widthClass}`}>{label}</span>
+      <div className="flex-1 min-w-0 flex items-center gap-2">
+        {children}
+      </div>
     </div>
   );
 }

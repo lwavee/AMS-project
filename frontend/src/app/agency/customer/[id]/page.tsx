@@ -813,8 +813,8 @@ export default function CustomerProfilePage() {
 
           {/* ── Metric Cards Grid (Screenshot 2) ── */}
           <div className="pt-5 border-t border-[#f0e5d8] space-y-4">
-            {/* Row 1: 4 Cards */}
-            <div className="border border-[#ebe5df] rounded-2xl grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[#ebe5df] bg-white">
+            {/* Row 1: Cards */}
+            <div className="border border-[#ebe5df] rounded-2xl grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#ebe5df] bg-white">
               {/* Total Policies */}
               <div className="p-4 flex items-center gap-3.5">
                 <div className="w-11 h-11 rounded-xl bg-[#edeefc] text-[#5e5cee] flex items-center justify-center shrink-0">
@@ -857,8 +857,8 @@ export default function CustomerProfilePage() {
                 </div>
               </div>
 
-              {/* Primary Executive */}
-              <div className="p-4 flex items-center gap-3.5">
+              {/* Primary Executive (Commented Out) */}
+              {/* <div className="p-4 flex items-center gap-3.5">
                 <div className="w-11 h-11 rounded-xl bg-[#e8f3fe] text-[#0284c7] flex items-center justify-center shrink-0">
                   <User size={18} />
                 </div>
@@ -869,11 +869,11 @@ export default function CustomerProfilePage() {
                   </p>
                   <p className="text-[11px] text-[#8c827a] font-normal mt-0.5">Account executive</p>
                 </div>
-              </div>
+              </div> */}
             </div>
 
-            {/* Row 2: 2 Cards (aligned with first 2 columns) */}
-            <div className="border border-[#ebe5df] rounded-2xl grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#ebe5df] bg-white w-full lg:w-1/2">
+            {/* Row 2: Cards */}
+            <div className="border border-[#ebe5df] rounded-2xl grid grid-cols-1 divide-y divide-[#ebe5df] bg-white w-full sm:w-1/2 lg:w-1/3">
               {/* Delivery Preference */}
               <div className="p-4 flex items-center gap-3.5">
                 <div className="w-11 h-11 rounded-xl bg-[#fdeeed] text-[#ef4444] flex items-center justify-center shrink-0">
@@ -887,8 +887,8 @@ export default function CustomerProfilePage() {
                 </div>
               </div>
 
-              {/* Agent Name */}
-              <div className="p-4 flex items-center gap-3.5">
+              {/* Agent Name (Commented Out) */}
+              {/* <div className="p-4 flex items-center gap-3.5">
                 <div className="w-11 h-11 rounded-xl bg-[#e6f7ef] text-[#10b981] flex items-center justify-center shrink-0">
                   <User size={18} />
                 </div>
@@ -898,7 +898,7 @@ export default function CustomerProfilePage() {
                     {agentName}
                   </p>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
 
