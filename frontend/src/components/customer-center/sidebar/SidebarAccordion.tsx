@@ -176,7 +176,7 @@ export default function SidebarAccordion({
         onToggle={() => toggleSection("forms")}
       >
         <SidebarItem
-          label="Launch eForm..."
+          label="Launch Certificate of Insurance..."
           icon={Rocket}
           isAction
           onClick={() => handleActionNavigate(`/agency/customer/${customerId}/eforms-manager`)}

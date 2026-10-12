@@ -11,7 +11,7 @@ export default function NewCancellationFormPage() {
   const [customer, setCustomer] = useState<any>(null);
 
   useEffect(() => {
-    document.title = `eForms - Policy #KHAU604377 Eff date 10/1/2025 to 10/1/2026`;
+    document.title = `Certificate of Insurance - Policy #KHAU604377 Eff date 10/1/2025 to 10/1/2026`;
     
     const fetchCust = async () => {
       const token = localStorage.getItem("token");
@@ -35,7 +35,7 @@ export default function NewCancellationFormPage() {
       
       {/* ── Menu Bar ── */}
       <div className="bg-[#f0f0f0] flex items-center gap-4 px-2 py-1 border-b border-white shadow-sm shrink-0">
-        {["File", "Edit", "eForms", "View", "Operation", "Toolbox", "Help"].map((item) => (
+        {["File", "Edit", "Certificate of Insurance", "View", "Operation", "Toolbox", "Help"].map((item) => (
           <span key={item} className="text-[11px] text-text-main hover:bg-slate-200 px-1.5 py-0.5 rounded cursor-pointer select-none">
             {item}
           </span>

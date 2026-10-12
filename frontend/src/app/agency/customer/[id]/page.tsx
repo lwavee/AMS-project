@@ -678,10 +678,10 @@ export default function CustomerProfilePage() {
   const currentLOB = activeLOBList[selectedPolicyIndex] || activeLOBList[0];
 
   return (
-    <div suppressHydrationWarning className="flex flex-col min-h-screen bg-[#f5f1eb] font-sans text-[#2d2a26] antialiased select-none w-full">
+    <div suppressHydrationWarning className="flex flex-col min-h-screen bg-white font-sans text-[#2d2a26] antialiased select-none w-full">
 
       {/* ── Top Header (Back Button & Sterling Signature Icons) ── */}
-      <header className="bg-white border-b border-[#e5ddd5] px-6 py-3 flex items-center justify-between shrink-0 shadow-xs sticky top-0 z-40 w-full">
+      <header className="bg-white border-b border-[#f0ece5] px-6 md:px-8 py-3.5 flex items-center justify-between shrink-0 sticky top-0 z-40 w-full">
         {/* Back Button */}
         <button
           onClick={() => router.push("/agency/dashboard")}
@@ -723,11 +723,11 @@ export default function CustomerProfilePage() {
         </div>
       </header>
 
-      {/* ── Main Customer Body ── */}
-      <main className="flex-1 w-full p-4 md:p-6 lg:p-8 space-y-6">
+      {/* ── Main Customer Body (Merged in one continuous section) ── */}
+      <main className="flex-1 w-full px-6 md:px-8 py-6 space-y-6">
 
-        {/* ── 1. Customer Basic Detail Card (Screenshot 2) ── */}
-        <div className="bg-white border border-[#e5ddd5] rounded-3xl p-6 md:p-7 shadow-xs space-y-6 w-full">
+        {/* ── 1. Customer Basic Detail Section ── */}
+        <div className="space-y-6 w-full">
 
           {/* Header Row: Left (Avatar + Details) | Right (Customer #ID + Actions) */}
           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
@@ -883,9 +883,9 @@ export default function CustomerProfilePage() {
               },
               {
                 id: "eforms_manager" as const,
-                name: "eForms Manager",
-                shortName: "eForms Manager",
-                description: "Manage, issue and distribute ACORD forms & certificates",
+                name: "Certificate of Insurance",
+                shortName: "Certificate of Insurance",
+                description: "Manage, issue and distribute certificates of insurance & ACORD forms",
                 icon: FileSignature,
                 iconBg: "bg-[#0284c7]", // Vibrant Sky Blue
                 badge: undefined,

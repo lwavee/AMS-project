@@ -11,7 +11,7 @@ export default function NewApplicationFormPage() {
   const [customer, setCustomer] = useState<any>(null);
 
   useEffect(() => {
-    document.title = `eForms - Policy #EGL0013969 Eff date 2/3/2026 to 2/3/2027`;
+    document.title = `Certificate of Insurance - Policy #EGL0013969 Eff date 2/3/2026 to 2/3/2027`;
     
     const fetchCust = async () => {
       const token = localStorage.getItem("token");

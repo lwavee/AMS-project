@@ -56,7 +56,7 @@ export default function RightDrawer({ open, onClose }: RightDrawerProps) {
   const quickActionsItems = [
     { name: "New Activity", icon: Calendar },
     { name: "New Suspense", icon: Clock },
-    { name: "eForms", icon: FileText },
+    { name: "Certificate of Insurance", icon: FileText },
     { name: "New Note", icon: StickyNote },
     { name: "Form Letters", icon: Mail },
     { name: "Daily Process", icon: RefreshCw },
@@ -147,6 +147,12 @@ export default function RightDrawer({ open, onClose }: RightDrawerProps) {
                           const cid = match ? match[1] : "search";
                           window.open(`/agency/customer/${cid}/new-activity`, '_blank', 'width=1000,height=900');
                           onClose();
+                        } else if (action.name === "Certificate of Insurance") {
+                          const match = window.location.pathname.match(/\/agency\/customer\/([^\/]+)/);
+                          if (match) {
+                            window.open(`/agency/customer/${match[1]}/eforms-manager`, '_blank');
+                            onClose();
+                          }
                         }
                       }}
                       className="flex items-center gap-3 p-3.5 bg-white hover:bg-[#f5f1eb] border border-[#e5ddd5] rounded-xl transition-all cursor-pointer shadow-xs group"

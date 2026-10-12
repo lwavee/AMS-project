@@ -49,8 +49,28 @@ export default function NewCertPropPage() {
   const [noteMessage, setNoteMessage] = useState("");
   const [printNote, setPrintNote] = useState(true);
 
-  // Authorized Rep
-  const [authRep, setAuthRep] = useState("");
+  // Helper to format date as M/D/YYYY
+  const formatDisplayDate = (d?: string | Date | null) => {
+    if (!d) {
+      const now = new Date();
+      return `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+    }
+    if (typeof d === "string") {
+      if (d.includes("/")) return d;
+      const match = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (match) {
+        return `${parseInt(match[2], 10)}/${parseInt(match[3], 10)}/${match[1]}`;
+      }
+      const parsed = new Date(d);
+      if (!isNaN(parsed.getTime())) {
+        return `${parsed.getMonth() + 1}/${parsed.getDate()}/${parsed.getFullYear()}`;
+      }
+      return d;
+    }
+    return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+  };
+
+  const [issueDate, setIssueDate] = useState<string>(() => formatDisplayDate());
 
   const togglePropRow = (id: number) => {
     setSelectedPropRows(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -90,6 +110,7 @@ export default function NewCertPropPage() {
             assignNumber,
             description,
             showToInsured,
+            issueDate,
             selectedPropPolicy,
             propDetailDate,
             selectedPropRows: Array.from(selectedPropRows),
@@ -198,7 +219,12 @@ export default function NewCertPropPage() {
               </label>
               <div className="flex items-center gap-2">
                 <label className="text-[13px] font-semibold text-text-main">Issue Date:</label>
-                <input type="text" defaultValue="7/2/2026" className="w-24 text-[13px] font-semibold text-text-main bg-white border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-center" />
+                <input 
+                  type="text" 
+                  value={issueDate} 
+                  onChange={e => setIssueDate(e.target.value)} 
+                  className="w-24 text-[13px] font-semibold text-text-main bg-white border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-center" 
+                />
               </div>
             </div>
           </div>

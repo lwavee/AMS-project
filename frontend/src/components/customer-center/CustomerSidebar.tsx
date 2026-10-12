@@ -13,7 +13,7 @@ export const NAV_ITEMS = [
   { id: "activities", label: "Activities" },
   { id: "claims", label: "Claims" },
   { id: "notes", label: "Notes" },
-  { id: "eforms", label: "eForms" },
+  { id: "eforms", label: "Certificate of Insurance" },
   { id: "documents", label: "Documents" },
   { id: "reports", label: "Reports" },
   { id: "settings", label: "Settings" },

@@ -10,7 +10,7 @@ export default function NewAutoIdPage() {
 
   useEffect(() => {
     // In a real app, fetch customer and policies
-    document.title = "Auto Id Cards - eForms";
+    document.title = "Auto Id Cards - Certificate of Insurance";
   }, [customerId]);
 
   return (
@@ -45,7 +45,7 @@ export default function NewAutoIdPage() {
             Select Default Information and appropriate Vehicle(s) you wish to create auto id cards for.
           </p>
           <label className="flex items-center gap-2 text-[13px] font-semibold text-text-main cursor-pointer">
-            <input type="checkbox" className="accent-primary w-4 h-4" /> Delete card(s) when eForms closes
+            <input type="checkbox" className="accent-primary w-4 h-4" /> Delete card(s) when Certificate of Insurance closes
           </label>
         </div>
 

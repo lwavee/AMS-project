@@ -11,7 +11,7 @@ export default function NewBinderFormPage() {
   const [customer, setCustomer] = useState<any>(null);
 
   useEffect(() => {
-    document.title = `eForms - Linda Haddock - Policy #500242202700 Eff date 8/3/2025 to 8/3/2026`;
+    document.title = `Certificate of Insurance - Linda Haddock - Policy #500242202700 Eff date 8/3/2025 to 8/3/2026`;
     
     const fetchCust = async () => {
       const token = localStorage.getItem("token");

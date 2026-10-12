@@ -768,11 +768,11 @@ function NewCustomerContent() {
                         <input className={inputCls} value={f.firmName} onChange={e => set({ firmName: e.target.value })} />
                     </FormRow>
 
-                    {/*
-                    <FormRow label="DBA">
+                    <FormRow label="DBA Name">
                         <input className={inputCls} value={f.dba} onChange={e => set({ dba: e.target.value })} />
                     </FormRow>
 
+                    {/*
                     <FormRow label="Formal Salutation">
                         <input className={inputCls} value={f.formalSalutation} onChange={e => set({ formalSalutation: e.target.value })} />
                     </FormRow>

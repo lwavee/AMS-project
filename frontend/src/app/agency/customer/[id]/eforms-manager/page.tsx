@@ -1320,13 +1320,13 @@ export default function EFormsManagerPage() {
       <div className="flex flex-col h-screen bg-bg-base font-sans">
         <div className="bg-white/80 backdrop-blur-xl border-b border-border-main h-12 px-4 flex items-center gap-3 shrink-0">
           <FileSignature size={18} className="text-primary" />
-          <span className="font-bold text-sm text-text-main">eForms Manager</span>
+          <span className="font-bold text-sm text-text-main">Certificate of Insurance</span>
         </div>
         <div className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="animate-spin text-primary" size={28} />
             <span className="font-bold text-xs uppercase tracking-widest text-slate-500">
-              Loading eForms Manager...
+              Loading Certificate of Insurance...
             </span>
           </div>
         </div>
@@ -1581,7 +1581,7 @@ export default function EFormsManagerPage() {
 
   // ─── Main Render ───────────────────────────────────────────────────────────
   return (
-    <div className={`flex flex-col ${isFullscreen ? 'fixed inset-0 z-50' : 'h-screen'} bg-[#f5f1eb] font-sans select-none overflow-hidden text-[#2d2a26]`}>
+    <div className={`flex flex-col ${isFullscreen ? 'fixed inset-0 z-50' : 'h-screen'} bg-white font-sans select-none overflow-hidden text-[#2d2a26]`}>
 
       {/* ── Top Header (Commented Out) ── */}
       {/* <header className="bg-white border-b border-[#e5ddd5] px-6 py-2.5 flex items-center justify-between shrink-0 z-30">
@@ -1601,7 +1601,7 @@ export default function EFormsManagerPage() {
             <ChevronRight size={12} className="text-[#b5aca2]" />
             <span className="hover:text-[#2d2a26] cursor-pointer" onClick={() => router.push(`/agency/customer/${customerId}`)}>{customerName}</span>
             <ChevronRight size={12} className="text-[#b5aca2]" />
-            <span className="font-bold text-[#2d2a26]">eForms Manager</span>
+            <span className="font-bold text-[#2d2a26]">Certificate of Insurance</span>
           </div>
         </div>
 
@@ -1641,41 +1641,41 @@ export default function EFormsManagerPage() {
 
       <RightDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
-      {/* ── Main Content Area ── */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#f5f1eb] p-3 md:p-4">
+      {/* ── Main Content Area (Unified Single Section) ── */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white">
 
-        {/* ─ Modern Floating eForms Card ─ */}
-        <div className="bg-white border border-[#e5ddd5] rounded-3xl flex flex-col flex-1 shrink-0 shadow-sm overflow-hidden min-h-0">
+        {/* ─ Unified eForms Container ─ */}
+        <div className="bg-white flex flex-col flex-1 shrink-0 overflow-hidden min-h-0">
 
           {/* Card Header Action Bar */}
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between px-6 py-3.5 border-b border-[#f0ece5] gap-4 shrink-0">
-            <div className="flex items-center gap-3.5">
-              <div className="h-12 w-12 rounded-2xl bg-[#f7f4ee] border border-[#ebe5dc] flex items-center justify-center text-[#9A8B7A] shrink-0 shadow-2xs">
-                <Landmark size={24} className="stroke-[2.2]" />
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between px-4 py-2 border-b border-[#f0ece5] gap-3 shrink-0">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-8 w-8 rounded-xl bg-[#f7f4ee] border border-[#ebe5dc] flex items-center justify-center text-[#9A8B7A] shrink-0 shadow-2xs">
+                <Landmark size={17} className="stroke-[2.2]" />
               </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <h1 className="font-extrabold text-lg text-[#2d2a26] tracking-tight truncate">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="font-extrabold text-[15px] text-[#2d2a26] tracking-tight truncate leading-tight">
                     {customerName}
                   </h1>
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#ecfdf5] text-[#059669] border border-[#a7f3d0]">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#ecfdf5] text-[#059669] border border-[#a7f3d0] leading-none">
                     Active
                   </span>
                 </div>
-                <p className="text-xs text-[#70665d] font-medium mt-0.5 truncate">
+                <p className="text-[11px] text-[#70665d] font-medium leading-tight truncate">
                   Policy #{selectedPolicy || policies[0]?.policyNum || "8767"} | Effective: {selectedEffDate ? selectedEffDate.split(',')[0].replace(' - NBS', '').trim() : (policies[0]?.effDate || "2026-09-04")} | NBS New business
                 </p>
               </div>
             </div>
 
             {/* Action Buttons Toolbar */}
-            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
               <button
                 onClick={handleSaveOverrides}
-                className="h-8 px-4 flex items-center gap-1.5 bg-[#9A8B7A] hover:bg-[#8a6f4d] text-white font-bold text-xs rounded-xl shadow-2xs transition-all cursor-pointer"
+                className="h-7 px-3 flex items-center gap-1.5 bg-[#9A8B7A] hover:bg-[#8a6f4d] text-white font-bold text-[11px] rounded-lg shadow-2xs transition-all cursor-pointer"
                 title="Save Changes"
               >
-                <Save size={13} />
+                <Save size={12} />
                 <span>Save</span>
               </button>
 
@@ -1688,9 +1688,9 @@ export default function EFormsManagerPage() {
                     "width=920,height=680,menubar=no,toolbar=no,location=no,status=no"
                   );
                 }}
-                className="h-8 px-3.5 flex items-center gap-1.5 bg-white border border-[#e5ddd5] hover:bg-[#faf8f5] text-[#2d2a26] font-bold text-xs rounded-xl shadow-2xs transition-all cursor-pointer"
+                className="h-7 px-2.5 flex items-center gap-1.5 bg-white border border-[#e5ddd5] hover:bg-[#faf8f5] text-[#2d2a26] font-bold text-[11px] rounded-lg shadow-2xs transition-all cursor-pointer"
               >
-                <Mail size={13} />
+                <Mail size={12} />
                 <span>Email Forms</span>
               </button>
 
@@ -1703,16 +1703,16 @@ export default function EFormsManagerPage() {
                     "width=850,height=600,menubar=no,toolbar=no,location=no,status=no"
                   );
                 }}
-                className="h-8 px-3.5 flex items-center gap-1.5 bg-white border border-[#e5ddd5] hover:bg-[#faf8f5] text-[#2d2a26] font-bold text-xs rounded-xl shadow-2xs transition-all cursor-pointer"
+                className="h-7 px-2.5 flex items-center gap-1.5 bg-white border border-[#e5ddd5] hover:bg-[#faf8f5] text-[#2d2a26] font-bold text-[11px] rounded-lg shadow-2xs transition-all cursor-pointer"
               >
-                <Printer size={13} />
+                <Printer size={12} />
                 <span>Print Forms</span>
               </button>
 
               {/* Edit Form Toggle if applicable */}
               {(selectedNode?.startsWith("cert-file-master-")) && (
                 <>
-                  <div className="h-5 w-px bg-[#e5ddd5] mx-0.5" />
+                  <div className="h-4 w-px bg-[#e5ddd5] mx-0.5" />
                   {!isEditing ? (
                     <button
                       title="Edit Form"
@@ -1720,9 +1720,9 @@ export default function EFormsManagerPage() {
                         setIsEditing(true);
                         setIframeKey(selectedNode + '_edit_' + Date.now());
                       }}
-                      className="h-8 px-3.5 flex items-center gap-1.5 bg-white border border-[#e5ddd5] hover:bg-[#faf8f5] text-[#2d2a26] font-bold text-xs rounded-xl shadow-2xs transition-all cursor-pointer"
+                      className="h-7 px-2.5 flex items-center gap-1.5 bg-white border border-[#e5ddd5] hover:bg-[#faf8f5] text-[#2d2a26] font-bold text-[11px] rounded-lg shadow-2xs transition-all cursor-pointer"
                     >
-                      <Edit3 size={13} />
+                      <Edit3 size={12} />
                       <span className="hidden sm:inline">Edit Form</span>
                     </button>
                   ) : (
@@ -1730,7 +1730,7 @@ export default function EFormsManagerPage() {
                       <button
                         title="Cancel Editing"
                         onClick={handleCancelEdit}
-                        className="h-8 px-3 flex items-center gap-1.5 border border-red-300 bg-red-50 text-red-600 hover:bg-red-100 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                        className="h-7 px-2.5 flex items-center gap-1.5 border border-red-300 bg-red-50 text-red-600 hover:bg-red-100 font-bold text-[11px] rounded-lg transition-all cursor-pointer"
                       >
                         <span className="hidden sm:inline">Cancel</span>
                       </button>
@@ -1769,10 +1769,10 @@ export default function EFormsManagerPage() {
           <div className="flex flex-1 min-h-0 overflow-hidden relative">
 
             {/* ── Left Panel: Customer/Policy selectors + Tree ── */}
-            <div className={`shrink-0 border-r border-[#f0ece5] bg-white flex flex-col h-full transition-all duration-300 overflow-hidden ${showTreePanel ? "w-[305px]" : "w-0 border-r-0"}`}>
+            <div className={`shrink-0 border-r border-[#f0ece5] bg-white flex flex-col h-full transition-all duration-300 overflow-hidden ${showTreePanel ? "w-[225px]" : "w-0 border-r-0"}`}>
 
               {/* Filters Section */}
-              <div className="p-3.5 flex flex-col gap-2.5 border-b border-[#f0ece5] bg-white">
+              <div className="p-2.5 flex flex-col gap-2 border-b border-[#f0ece5] bg-white">
 
                 {/* Top Action Buttons */}
                 {activeTab === "Certificates" ? (
@@ -1780,19 +1780,21 @@ export default function EFormsManagerPage() {
                     {/* + New Cert Liab */}
                     <button
                       onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager/new-certificate`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no')}
-                      className="h-8 px-3.5 flex items-center gap-1.5 bg-[#8c7a6b] hover:bg-[#7b6b5d] text-white text-xs font-semibold rounded-full transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                      className="h-7 px-2.5 flex items-center gap-1 bg-[#8c7a6b] hover:bg-[#7b6b5d] text-white text-[11px] font-semibold rounded-full transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                      title="New Certificate of Liability"
                     >
-                      <Plus size={14} className="stroke-[2.2]" />
-                      <span>New Cert Liab</span>
+                      <Plus size={12} className="stroke-[2.2]" />
+                      <span>Cert Liab</span>
                     </button>
 
                     {/* + New Cert Prop */}
                     <button
                       onClick={() => window.open(`/agency/customer/${customerId}/eforms-manager/new-cert-prop`, '_blank', 'width=1050,height=800,menubar=no,toolbar=no')}
-                      className="h-8 px-3.5 flex items-center gap-1.5 bg-[#8c7a6b] hover:bg-[#7b6b5d] text-white text-xs font-semibold rounded-full transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                      className="h-7 px-2.5 flex items-center gap-1 bg-[#8c7a6b] hover:bg-[#7b6b5d] text-white text-[11px] font-semibold rounded-full transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                      title="New Certificate of Property"
                     >
-                      <Plus size={14} className="stroke-[2.2]" />
-                      <span>New Cert Prop</span>
+                      <Plus size={12} className="stroke-[2.2]" />
+                      <span>Cert Prop</span>
                     </button>
 
                     {/* Delete */}
@@ -1813,9 +1815,10 @@ export default function EFormsManagerPage() {
                           showToast("Please select an item from the tree to delete.", "info");
                         }
                       }}
-                      className="h-8 px-3.5 flex items-center gap-1.5 border border-[#d6cfc7] bg-white hover:bg-[#faf7f4] text-[#4a453e] font-semibold text-xs rounded-full transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                      className="h-7 px-2 flex items-center gap-1 border border-[#d6cfc7] bg-white hover:bg-[#faf7f4] text-[#4a453e] font-semibold text-[11px] rounded-full transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                      title="Delete selected item"
                     >
-                      <Trash2 size={13} className="text-[#5c544c]" />
+                      <Trash2 size={11} className="text-[#5c544c]" />
                       <span>Delete</span>
                     </button>
                   </div>
@@ -1943,7 +1946,7 @@ export default function EFormsManagerPage() {
                     <FileText size={24} className="text-[#d8cdbd] mb-2" />
                     <p className="text-xs font-bold text-[#8c827a]">No forms found</p>
                     <p className="text-[10px] text-[#a89d91] mt-1">
-                      No eForms available for this filter.
+                      No certificates available for this filter.
                     </p>
                   </div>
                 )}
@@ -1959,50 +1962,50 @@ export default function EFormsManagerPage() {
             >
 
               {/* Preview Header Bar */}
-              <div className="px-6 py-3 border-b border-[#f0ece5] flex items-center justify-between bg-white shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-xl bg-[#f7f4ee] border border-[#ebe5dc] flex items-center justify-center text-[#9A8B7A] shrink-0">
-                    <FileSignature size={18} />
+              <div className="px-4 py-1.5 border-b border-[#f0ece5] flex items-center justify-between bg-white shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-lg bg-[#f7f4ee] border border-[#ebe5dc] flex items-center justify-center text-[#9A8B7A] shrink-0">
+                    <FileSignature size={14} />
                   </div>
                   <div>
-                    <h2 className="font-extrabold text-sm text-[#2d2a26] tracking-tight">eForms Preview</h2>
-                    <p className="text-xs text-[#8c827a] font-normal hidden sm:block">
+                    <h2 className="font-extrabold text-xs text-[#2d2a26] tracking-tight leading-tight">Certificate of Insurance Preview</h2>
+                    <p className="text-[10px] text-[#8c827a] font-normal leading-none hidden sm:block">
                       Select a certificate holder from the tree to preview the ACORD form with holder details.
                     </p>
                   </div>
                 </div>
 
                 {/* Zoom Controls & Fullscreen */}
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center border border-[#e5ddd5] rounded-xl overflow-hidden bg-white shadow-2xs">
+                <div className="flex items-center gap-1.5">
+                  <div className="flex items-center border border-[#e5ddd5] rounded-lg overflow-hidden bg-white shadow-2xs">
                     <button
                       onClick={() => setZoomLevel(prev => Math.max(50, prev - 10))}
-                      className="h-7 px-2.5 flex items-center justify-center text-[#6b5e52] hover:bg-[#faf8f5] text-xs font-bold transition-colors cursor-pointer"
+                      className="h-6 px-2 flex items-center justify-center text-[#6b5e52] hover:bg-[#faf8f5] text-xs font-bold transition-colors cursor-pointer"
                       title="Zoom Out"
                     >
-                      <Minus size={13} />
+                      <Minus size={11} />
                     </button>
 
                     <div className="relative" ref={zoomMenuRef}>
                       <button
                         onClick={() => setZoomDropdownOpen(prev => !prev)}
-                        className="px-2.5 text-xs font-semibold text-[#2d2a26] border-x border-[#e5ddd5] h-7 flex items-center justify-center select-none hover:bg-[#faf8f5] transition-colors cursor-pointer gap-1"
+                        className="px-2 text-[11px] font-semibold text-[#2d2a26] border-x border-[#e5ddd5] h-6 flex items-center justify-center select-none hover:bg-[#faf8f5] transition-colors cursor-pointer gap-1"
                         title="Select Zoom Level"
                       >
                         <span>{zoomLevel}%</span>
-                        <ChevronDown size={11} className={`text-[#8c827a] transition-transform ${zoomDropdownOpen ? 'rotate-180' : ''}`} />
+                        <ChevronDown size={10} className={`text-[#8c827a] transition-transform ${zoomDropdownOpen ? 'rotate-180' : ''}`} />
                       </button>
 
                       {zoomDropdownOpen && (
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-24 bg-white border border-[#e5ddd5] rounded-xl shadow-xl py-1 z-50 text-xs font-semibold text-[#2d2a26] animate-in fade-in zoom-in-95 duration-100">
-                          {[50, 75, 90, 100, 125, 150, 200].map((val) => (
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-20 bg-white border border-[#e5ddd5] rounded-lg shadow-xl py-0.5 z-50 text-[11px] font-semibold text-[#2d2a26] animate-in fade-in zoom-in-95 duration-100">
+                          {[50, 75, 90, 100, 110, 125, 150].map((val) => (
                             <button
                               key={val}
                               onClick={() => {
                                 setZoomLevel(val);
                                 setZoomDropdownOpen(false);
                               }}
-                              className={`w-full text-center py-1.5 px-2 hover:bg-[#f5f1eb] cursor-pointer transition-colors ${
+                              className={`w-full text-center py-1 px-1.5 hover:bg-[#f5f1eb] cursor-pointer transition-colors ${
                                 zoomLevel === val ? 'text-[#9A8B7A] font-bold bg-[#faf8f5]' : ''
                               }`}
                             >
@@ -2015,26 +2018,26 @@ export default function EFormsManagerPage() {
 
                     <button
                       onClick={() => setZoomLevel(prev => Math.min(200, prev + 10))}
-                      className="h-7 px-2.5 flex items-center justify-center text-[#6b5e52] hover:bg-[#faf8f5] text-xs font-bold transition-colors cursor-pointer"
+                      className="h-6 px-2 flex items-center justify-center text-[#6b5e52] hover:bg-[#faf8f5] text-xs font-bold transition-colors cursor-pointer"
                       title="Zoom In"
                     >
-                      <Plus size={13} />
+                      <Plus size={11} />
                     </button>
                   </div>
 
                   <button
                     onClick={handleToggleFullscreen}
-                    className="h-7 w-7 rounded-full border border-[#e5ddd5] bg-white hover:bg-[#faf8f5] flex items-center justify-center text-[#6b5e52] shadow-2xs transition-colors cursor-pointer ml-1"
+                    className="h-6 w-6 rounded-md border border-[#e5ddd5] bg-white hover:bg-[#faf8f5] flex items-center justify-center text-[#6b5e52] shadow-2xs transition-colors cursor-pointer ml-0.5"
                     title={isFullscreen ? "Exit Fullscreen" : "Toggle Fullscreen"}
                   >
-                    {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+                    {isFullscreen ? <Minimize2 size={11} /> : <Maximize2 size={11} />}
                   </button>
                 </div>
               </div>
 
               {/* Scrollable Viewport with Zoom Scale Applied */}
               <div 
-                className="flex-1 overflow-auto flex flex-col items-center justify-start bg-slate-50/50 p-2 sm:p-4 relative" 
+                className="flex-1 overflow-auto flex flex-col items-center justify-start bg-slate-50/50 p-1 sm:p-2 relative" 
                 id="eform-zoom-viewport"
               >
                 <div 
@@ -2184,6 +2187,7 @@ export default function EFormsManagerPage() {
                     c.children && c.children.some((child: any) => child.id === selectedNode)
                   );
                   const masterDesc = parentCert?.label || '';
+                  const holderIssueDateVal = h.issue_date || parentCert?.masterData?.form_data?.issueDate || parentCert?.masterData?.created_date || '';
                   const params = new URLSearchParams({
                     customerId: customerId || '',
                     ...commonCustomerParams,
@@ -2194,7 +2198,8 @@ export default function EFormsManagerPage() {
                     holderState: h.state,
                     holderZip: h.zip,
                     holderDesc: h.desc_of_ops,
-                    holderIssueDate: h.issue_date,
+                    holderIssueDate: holderIssueDateVal,
+                    issueDate: holderIssueDateVal,
                     holderNoticeDays: String(h.written_notice_days),
                     masterDesc: masterDesc,
                     additionalInsured: JSON.stringify(h.additional_insured || {}),
@@ -2237,10 +2242,13 @@ export default function EFormsManagerPage() {
                 } else if (isMasterNode) {
                   // Find the certificate description
                   const masterDesc = activeCert?.label || '';
+                  const masterIssueDateVal = activeCert?.form_data?.issueDate || activeCert?.created_date || '';
                   const params = new URLSearchParams({
                     customerId: customerId || '',
                     ...commonCustomerParams,
                     masterDesc: masterDesc,
+                    issueDate: masterIssueDateVal,
+                    masterIssueDate: masterIssueDateVal,
                     glPolicyNo: localGlPolicyNo,
                     glEffDate: localGlEffDate,
                     glExpDate: localGlExpDate,
@@ -2321,19 +2329,19 @@ export default function EFormsManagerPage() {
                         </div>
 
                         {/* Heading & Subtitle */}
-                        <h3 className="text-xl font-extrabold text-[#2d2a26] tracking-tight">eForms Preview</h3>
+                        <h3 className="text-xl font-extrabold text-[#2d2a26] tracking-tight">Certificate of Insurance Preview</h3>
                         <p className="text-xs text-[#8c827a] max-w-sm mt-1.5 mb-10 leading-relaxed">
                           Select a certificate holder from the tree to preview the ACORD form with holder details.
                         </p>
 
                         {/* 4 Feature Highlights */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-2xl w-full">
-                          {/* 1. View eForms */}
+                          {/* 1. View Certificate of Insurance */}
                           <div className="flex flex-col items-center text-center">
                             <div className="w-11 h-11 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-2 shadow-2xs">
                               <FileText size={18} />
                             </div>
-                            <span className="text-xs font-bold text-[#2d2a26]">View eForms</span>
+                            <span className="text-xs font-bold text-[#2d2a26]">View Certificate</span>
                             <span className="text-[11px] text-[#8c827a]">PDF Preview</span>
                           </div>
 

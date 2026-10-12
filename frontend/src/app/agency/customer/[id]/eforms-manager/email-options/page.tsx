@@ -238,7 +238,7 @@ function EmailOptionsContent() {
   }, [customerId, router, initialSelected]);
 
   useEffect(() => {
-    document.title = "eForm Manager Email Options";
+    document.title = "Certificate of Insurance Email Options";
     fetchData();
   }, [fetchData]);
 
@@ -432,9 +432,12 @@ function EmailOptionsContent() {
             };
 
             if (n.isMaster) {
+              const masterIssueDateVal = n.masterData?.form_data?.issueDate || n.masterData?.created_date || "";
               const params = new URLSearchParams({
                 customerId,
                 masterDesc: n.label || "",
+                issueDate: masterIssueDateVal,
+                masterIssueDate: masterIssueDateVal,
                 ...limitsObj,
                 overrides: JSON.stringify(n.overrides || {})
               });
@@ -444,6 +447,7 @@ function EmailOptionsContent() {
               });
             } else if (n.id.startsWith("holder-") && parentMaster) {
               const h = n.holderData;
+              const hIssueDate = h.issue_date || parentMaster?.masterData?.form_data?.issueDate || parentMaster?.masterData?.created_date || '';
               const params = new URLSearchParams({
                 customerId,
                 holderName: h.name || '',
@@ -453,7 +457,8 @@ function EmailOptionsContent() {
                 holderState: h.state || '',
                 holderZip: h.zip || '',
                 holderDesc: h.desc_of_ops || '',
-                holderIssueDate: h.issue_date || '',
+                holderIssueDate: hIssueDate,
+                issueDate: hIssueDate,
                 holderNoticeDays: String(h.written_notice_days ?? 10),
                 masterDesc: parentMaster?.label || "",
                 additionalInsured: JSON.stringify(h.additional_insured || {}),
@@ -786,7 +791,7 @@ function EmailOptionsContent() {
         <div>
           <h2 className="text-base font-extrabold text-text-main tracking-tight flex items-center gap-2">
             <span className="w-6 h-6 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-xs">360</span>
-            eForm Manager Email Options
+            Certificate of Insurance Email Options
           </h2>
         </div>
         <div className="flex items-center gap-2">

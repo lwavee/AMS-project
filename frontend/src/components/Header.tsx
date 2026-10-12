@@ -101,7 +101,7 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
   const quickActionsItems = [
     { name: "New Activity", icon: Calendar },
     { name: "New Suspense", icon: Clock },
-    { name: "eForms", icon: FileText },
+    { name: "Certificate of Insurance", icon: FileText },
     { name: "New Note", icon: StickyNote },
     { name: "Form Letters", icon: Mail },
     { name: "Daily Process", icon: RefreshCw },
@@ -258,6 +258,11 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
                                   const match = window.location.pathname.match(/\/agency\/customer\/([^\/]+)/);
                                   const cid = match ? match[1] : "search";
                                   window.open(`/agency/customer/${cid}/new-activity`, '_blank', 'width=1000,height=900');
+                                } else if (item.name === "Certificate of Insurance") {
+                                  const match = window.location.pathname.match(/\/agency\/customer\/([^\/]+)/);
+                                  if (match) {
+                                    window.open(`/agency/customer/${match[1]}/eforms-manager`, '_blank');
+                                  }
                                 }
                               }}
                               className="w-full text-left px-3 py-2 text-xs font-semibold text-[#2d2a26] hover:bg-[#f5f1eb] hover:text-[#9A8B7A] rounded-lg flex items-center gap-2.5 transition-colors cursor-pointer group"

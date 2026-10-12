@@ -39,7 +39,7 @@ export default function NewEpiPage() {
       {/* ── Modern Toolbar ── */}
       <div className="bg-white flex flex-col shrink-0 border-b border-border-main shadow-sm">
         <div className="flex items-center gap-4 px-4 py-2 border-b border-border-main/50">
-          {["File", "Edit", "eForms", "View", "Operation", "Toolbox", "Help"].map((item) => (
+          {["File", "Edit", "Certificate of Insurance", "View", "Operation", "Toolbox", "Help"].map((item) => (
             <span key={item} className="text-xs font-semibold text-text-muted hover:text-primary cursor-pointer transition-colors">
               {item}
             </span>

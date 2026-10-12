@@ -18,8 +18,9 @@
 
     .page {
       background: white;
-      width: 850px;
-      padding: 20px 30px;
+      width: 100%;
+      max-width: 850px;
+      padding: 14px 20px;
       box-shadow: none;
       color: black;
     }
@@ -444,7 +445,7 @@
       <div class="title">CERTIFICATE OF LIABILITY INSURANCE</div>
       <div class="date-box">
         <div class="date-title">DATE (MM/DD/YYYY)</div>
-        <div class="date-value">06/23/2026</div>
+        <div class="date-value" id="certificate-issue-date"></div>
       </div>
     </div>
 
@@ -1233,12 +1234,33 @@
 
       // A. Populate dynamic limits
       try {
-        // Helper: format YYYY-MM-DD to MM/DD/YYYY
+        // Helper: format date to MM/DD/YYYY
         function fmtDate(d) {
           if (!d) return '';
           const m = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
           if (m) return `${m[2]}/${m[3]}/${m[1]}`;
-          return d; // already formatted or unknown
+          if (d.includes('/')) {
+            const parts = d.split('/');
+            if (parts.length === 3) {
+              return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
+            }
+          }
+          return d;
+        }
+
+        // Populate Certificate Issue Date (Master creation date / issue date)
+        const rawIssueDate = params.get('issueDate') || params.get('holderIssueDate') || params.get('masterIssueDate');
+        const dateEl = document.getElementById('certificate-issue-date') || document.querySelector('.date-box .date-value');
+        if (dateEl) {
+          if (rawIssueDate) {
+            dateEl.innerText = fmtDate(rawIssueDate);
+          } else {
+            const today = new Date();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const yyyy = today.getFullYear();
+            dateEl.innerText = `${mm}/${dd}/${yyyy}`;
+          }
         }
 
         const mappings = {
@@ -1566,6 +1588,7 @@
       }
 
       const editableIds = [
+        'certificate-issue-date',
         'producer-name', 'producer-address', 'producer-address2', 'producer-city', 'producer-state-zip',
         'insured-name', 'insured-address', 'insured-city', 'insured-state-zip',
         'contact-name', 'contact-phone', 'contact-fax', 'contact-email',

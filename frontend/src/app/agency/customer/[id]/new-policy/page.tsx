@@ -2281,9 +2281,9 @@ export default function NewPolicyPage() {
   const [parentCompany, setParentCompany] = useState("Progressive");
   const [writingCompany, setWritingCompany] = useState("Progressive Casualty");
 
-  const [division, setDivision] = useState("Gamaty Insurance Agency");
-  const [branch, setBranch] = useState("Capital & Co");
-  const [department, setDepartment] = useState("Commercial");
+  const [division, setDivision] = useState("");
+  const [branch, setBranch] = useState("");
+  const [department, setDepartment] = useState("");
 
   const [billMethod, setBillMethod] = useState("Direct bill");
   const [payPlan, setPayPlan] = useState("Full Payment");
@@ -2352,7 +2352,8 @@ export default function NewPolicyPage() {
         });
         if (res.ok) {
           const data = await res.json();
-          setCustomerName(data.name || [data.first_name, data.last_name].filter(Boolean).join(" ") || "Unknown Customer");
+          const custName = data.firm_name || data.firmName || data.name || [data.first_name, data.last_name].filter(Boolean).join(" ") || "Unknown Customer";
+          setCustomerName(custName);
           if (data.executive) {
             setExecutive(data.executive);
             setExecDefault(data.executive);
@@ -2365,12 +2366,10 @@ export default function NewPolicyPage() {
           } else {
             setRepresentative("Parungao, Joana");
           }
-          if (data.division) {
-            setDivision(data.division);
-            setDivisionDefault(data.division);
-          }
-          if (data.branch) setBranch(data.branch);
-          if (data.department) setDepartment(data.department);
+          setDivision(data.division || "Gamaty Insurance Agency");
+          setDivisionDefault(data.division || "Gamaty Insurance Agency");
+          setBranch(data.branch || "Capital & Co");
+          setDepartment(data.department || "Commercial");
         } else {
           setCustomerName("Unknown Customer");
           setExecutive("Anatian, Yoav");
@@ -2621,7 +2620,7 @@ export default function NewPolicyPage() {
             />
           </FormRow>
 
-          <FormRow label="Submission #">
+          {/*<FormRow label="Submission #">
             <select
               value={submissionId}
               onChange={(e) => setSubmissionId(e.target.value)}
@@ -2631,42 +2630,35 @@ export default function NewPolicyPage() {
               <option value="SUB-2026-001">SUB-2026-001</option>
               <option value="SUB-2026-002">SUB-2026-002</option>
             </select>
-          </FormRow>
+          </FormRow>*/}
           <FormRow label="Division">
-            <select
+            <input
+              type="text"
               value={division}
-              onChange={(e) => setDivision(e.target.value)}
-              className={selectCls}
-            >
-              <option value="Gamaty Insurance Agency">Gamaty Insurance Agency</option>
-            </select>
+              disabled
+              placeholder="Loading..."
+              className={inputCls}
+            />
           </FormRow>
 
           <FormRow label="Branch">
-            <select
+            <input
+              type="text"
               value={branch}
-              onChange={(e) => setBranch(e.target.value)}
-              className={selectCls}
-            >
-              <option value="Armar Insurance">Armar Insurance</option>
-              <option value="CapCo Florida">CapCo Florida</option>
-              <option value="Capital & Co">Capital & Co</option>
-              <option value="JMB - DO NOT SERVICE">JMB - DO NOT SERVICE</option>
-              <option value="Pregill Insurance">Pregill Insurance</option>
-              <option value="WCFL Insurance Services">WCFL Insurance Services</option>
-            </select>
+              disabled
+              placeholder="Loading..."
+              className={inputCls}
+            />
           </FormRow>
 
           <FormRow label="Department">
-            <select
+            <input
+              type="text"
               value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              className={selectCls}
-            >
-              <option value="Commercial">Commercial</option>
-              <option value="Health">Health</option>
-              <option value="Personal">Personal</option>
-            </select>
+              disabled
+              placeholder="Loading..."
+              className={inputCls}
+            />
           </FormRow>
 
         </SectionCard>

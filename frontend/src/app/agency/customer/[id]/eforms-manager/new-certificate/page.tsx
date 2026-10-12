@@ -20,8 +20,32 @@ export default function NewCertificateFormPage() {
   const [rowSelections, setRowSelections] = useState<{ [key: number]: string }>({});
   const [description, setDescription] = useState("");
 
+  // Helper to format date as M/D/YYYY
+  const formatDisplayDate = (d?: string | Date | null) => {
+    if (!d) {
+      const now = new Date();
+      return `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+    }
+    if (typeof d === "string") {
+      if (d.includes("/")) return d;
+      const match = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (match) {
+        return `${parseInt(match[2], 10)}/${parseInt(match[3], 10)}/${match[1]}`;
+      }
+      const parsed = new Date(d);
+      if (!isNaN(parsed.getTime())) {
+        return `${parsed.getMonth() + 1}/${parsed.getDate()}/${parsed.getFullYear()}`;
+      }
+      return d;
+    }
+    return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+  };
+
+  // Default to today's date when creating master certificate
+  const [issueDate, setIssueDate] = useState<string>(() => formatDisplayDate());
+
   useEffect(() => {
-    document.title = `eForms - Policy #EGL0013969 Eff date 2/3/2026 to 2/3/2027`;
+    document.title = `Certificate of Insurance - Policy #EGL0013969 Eff date 2/3/2026 to 2/3/2027`;
     
     // Fetch basic customer info to populate
     const fetchData = async () => {
@@ -50,6 +74,12 @@ export default function NewCertificateFormPage() {
             if (certRes.ok) {
               const certData = await certRes.json();
               setDescription(certData.description || "");
+              // Use saved issueDate or master creation date
+              if (certData.form_data?.issueDate) {
+                setIssueDate(formatDisplayDate(certData.form_data.issueDate));
+              } else if (certData.created_date) {
+                setIssueDate(formatDisplayDate(certData.created_date));
+              }
               if (certData.form_data) {
                 if (certData.form_data.rowSelections) setRowSelections(certData.form_data.rowSelections);
                 if (certData.form_data.descriptionOfOperations) setDescriptionOfOperations(certData.form_data.descriptionOfOperations);
@@ -66,6 +96,48 @@ export default function NewCertificateFormPage() {
     ? (customer.name || [customer.first_name, customer.last_name].filter(Boolean).join(" "))
     : "KH Interiors, Inc.";
 
+  const handleSaveCertificate = async (closeWindow: boolean = true) => {
+    try {
+      const token = localStorage.getItem("token");
+      const url = isEdit 
+        ? `${API_BASE_URL}/api/customers/${customerId}/certificates/${certDbId}`
+        : `${API_BASE_URL}/api/customers/${customerId}/certificates`;
+      const method = isEdit ? 'PUT' : 'POST';
+      // Generate a sensible default description if user left it blank
+      const today = new Date();
+      const autoDesc = `Certificate ${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
+      const res = await fetch(url, {
+        method,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({
+          description: description.trim() || autoDesc,
+          form_type: "Certificates",
+          form_data: {
+            rowSelections,
+            descriptionOfOperations,
+            issueDate,
+          }
+        })
+      });
+      if (!res.ok) {
+        console.error("Failed to save master certificate, status:", res.status);
+        return;
+      }
+      const newCert = await res.json();
+      if (window.opener) {
+        window.opener.postMessage({ type: isEdit ? 'UPDATE_CERTIFICATE' : 'CREATE_CERTIFICATE', payload: { id: newCert.id, name: newCert.description } }, '*');
+      }
+      if (closeWindow) {
+        window.close();
+      }
+    } catch(e) {
+      console.error("Failed to save master", e);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-bg-base font-sans overflow-hidden">
       
@@ -76,48 +148,14 @@ export default function NewCertificateFormPage() {
           <p className="text-[11px] font-semibold text-text-muted mt-0.5">Policy #EGL0013969 • Eff: 2/3/2026 to 2/3/2027</p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">
+          <button 
+            onClick={() => handleSaveCertificate(false)}
+            className="h-8 px-4 flex items-center gap-1.5 border border-border-main bg-white hover:bg-secondary/60 text-text-muted hover:text-primary font-bold text-xs rounded-xl transition-all cursor-pointer">
             <Save size={13} />
             <span>Save</span>
           </button>
-          <button onClick={async () => {
-              try {
-                const token = localStorage.getItem("token");
-                const url = isEdit 
-                  ? `${API_BASE_URL}/api/customers/${customerId}/certificates/${certDbId}`
-                  : `${API_BASE_URL}/api/customers/${customerId}/certificates`;
-                const method = isEdit ? 'PUT' : 'POST';
-                // Generate a sensible default description if user left it blank
-                const today = new Date();
-                const autoDesc = `Certificate ${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
-                const res = await fetch(url, {
-                  method,
-                  headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` 
-                  },
-                  body: JSON.stringify({
-                    description: description.trim() || autoDesc,
-                    form_type: "Certificates",
-                    form_data: {
-                      rowSelections,
-                      descriptionOfOperations
-                    }
-                  })
-                });
-                if (!res.ok) {
-                  console.error("Failed to save master certificate, status:", res.status);
-                  return;
-                }
-                const newCert = await res.json();
-                if (window.opener) {
-                  window.opener.postMessage({ type: isEdit ? 'UPDATE_CERTIFICATE' : 'CREATE_CERTIFICATE', payload: { id: newCert.id, name: newCert.description } }, '*');
-                }
-                window.close();
-              } catch(e) {
-                console.error("Failed to save master", e);
-              }
-            }}
+          <button 
+            onClick={() => handleSaveCertificate(true)}
             className="h-8 px-4 flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm shadow-primary/20">
             {isEdit ? "Update" : "Create"}
           </button>
@@ -177,7 +215,12 @@ export default function NewCertificateFormPage() {
                 </label>
                 <div className="flex items-center gap-3">
                   <label className="text-[13px] font-semibold text-text-main">Issue Date:</label>
-                  <input type="text" defaultValue="6/22/2026" className="w-24 text-[13px] font-semibold text-text-main bg-white border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-center" />
+                  <input 
+                    type="text" 
+                    value={issueDate} 
+                    onChange={(e) => setIssueDate(e.target.value)}
+                    className="w-24 text-[13px] font-semibold text-text-main bg-white border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-center" 
+                  />
                 </div>
               </div>
             </div>
