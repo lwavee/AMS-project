@@ -356,6 +356,7 @@ export default function CustomerTable({
   const table = useReactTable({
     data,
     columns,
+    getRowId: (row) => String(row.id),
     state: {
       sorting,
       rowSelection: selectedRowIds,

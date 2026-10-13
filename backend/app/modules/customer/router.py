@@ -80,7 +80,12 @@ def delete_customer(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    customer_service.delete_customer(db, customer_id)
+    try:
+        customer_service.delete_customer(db, customer_id)
+    except HTTPException as e:
+        if e.status_code == 404:
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
+        raise e
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

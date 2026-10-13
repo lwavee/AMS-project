@@ -54,7 +54,7 @@ def update(db: Session, db_customer: Customer, data: dict) -> Customer:
 
 def delete(db: Session, db_customer: Customer) -> None:
     """Permanently remove a customer row."""
-    db.delete(db_customer)
+    db.query(Customer).filter(Customer.id == db_customer.id).delete(synchronize_session=False)
     db.commit()
 
 

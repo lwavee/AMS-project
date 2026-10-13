@@ -44,7 +44,7 @@ export default function Page() {
   const router = useRouter();
   const [currentTab, setCurrentTab] = useState("Customers");
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [selectedRowIds, setSelectedRowIds] = useState<RowSelectionState>({ "0": true });
+  const [selectedRowIds, setSelectedRowIds] = useState<RowSelectionState>({});
   const [isLoading, setIsLoading] = useState(true);
 
   // Search & Filtering State
@@ -230,7 +230,7 @@ export default function Page() {
 
   // Helper to get selected customer objects
   const selectedCustomers = useMemo(() => {
-    return customers.filter((_, index) => selectedRowIds[index]);
+    return customers.filter((c, index) => selectedRowIds[String(c.id)] || selectedRowIds[index]);
   }, [selectedRowIds, customers]);
 
   // Handle Search & Filter logic
@@ -298,6 +298,7 @@ export default function Page() {
       );
       if (confirmDelete) {
         setIsLoading(true);
+        const deletedIds = new Set<string | number>();
         try {
           for (const cust of selectedCustomers) {
             const res = await fetch(`${API_BASE_URL}/api/customers/${cust.id}`, {
@@ -306,13 +307,24 @@ export default function Page() {
                 "Authorization": `Bearer ${localStorage.getItem("token")}`
               }
             });
-            if (!res.ok) throw new Error(`Failed to delete ${cust.name}`);
+            // If already deleted / not found (404), treat as gone
+            if (!res.ok && res.status !== 404) {
+              const errData = await res.json().catch(() => ({}));
+              throw new Error(errData.detail || `Failed to delete ${cust.name}`);
+            }
+            deletedIds.add(cust.id);
           }
+          // Optimistically remove from state immediately
+          setCustomers(prev => prev.filter(c => !deletedIds.has(c.id)));
+          showToast(`Successfully deleted ${selectedCustomers.length} customer(s).`, "success");
+        } catch (error: any) {
+          showToast("Error deleting customer: " + (error?.message || error), "error");
+        } finally {
+          try {
+            sessionStorage.removeItem("cached_customers");
+          } catch {}
           await fetchCustomers();
           setSelectedRowIds({});
-        } catch (error) {
-          showToast("Error deleting customer: " + error, "error");
-        } finally {
           setIsLoading(false);
         }
       }
@@ -320,6 +332,9 @@ export default function Page() {
   };
 
   const handleRefresh = () => {
+    try {
+      sessionStorage.removeItem("cached_customers");
+    } catch {}
     fetchCustomers();
     setSelectedRowIds({});
     setFilterState(defaultFilterState);

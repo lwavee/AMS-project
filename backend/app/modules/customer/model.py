@@ -108,7 +108,11 @@ class Customer(Base):
     notation            = Column(String)
 
     # ── Relationships ─────────────────────────────────────────────────────────
-    policies            = relationship("Policy", back_populates="customer", cascade="all, delete-orphan")
+    policies            = relationship("Policy", back_populates="customer", cascade="all, delete-orphan", passive_deletes=True)
+    notes               = relationship("CustomerNote", back_populates="customer", cascade="all, delete-orphan", passive_deletes=True)
+    documents           = relationship("CustomerDocument", back_populates="customer", cascade="all, delete-orphan", passive_deletes=True)
+    master_certificates = relationship("MasterCertificate", back_populates="customer", cascade="all, delete-orphan", passive_deletes=True)
+    certificate_holders = relationship("CertificateHolder", back_populates="customer", cascade="all, delete-orphan", passive_deletes=True)
 
 
 class Policy(Base):
@@ -200,6 +204,8 @@ class CustomerNote(Base):
     author      = Column(String, nullable=False)
     role        = Column(String, nullable=False)
     created_at  = Column(String, nullable=False)
+
+    customer    = relationship("Customer", back_populates="notes")
 
 
 class GeneralLiabilityCoverage(Base):
@@ -387,7 +393,7 @@ class CustomerDocument(Base):
     created_at = Column(String)
     author = Column(String)
 
-    customer = relationship("Customer", backref="documents")
+    customer = relationship("Customer", back_populates="documents")
 
 class MasterCertificate(Base):
     __tablename__ = "master_certificates"
@@ -399,7 +405,7 @@ class MasterCertificate(Base):
     form_data = Column(JSON, nullable=True)
     created_date = Column(Date, default=date.today)
 
-    customer = relationship("Customer", backref="master_certificates")
+    customer = relationship("Customer", back_populates="master_certificates")
     holders = relationship("CertificateHolder", back_populates="certificate", cascade="all, delete-orphan")
 
 
@@ -438,4 +444,4 @@ class CertificateHolder(Base):
     created_at          = Column(String, nullable=True)
 
     certificate = relationship("MasterCertificate", back_populates="holders")
-    customer    = relationship("Customer", backref="certificate_holders")
+    customer    = relationship("Customer", back_populates="certificate_holders")
