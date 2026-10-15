@@ -133,7 +133,8 @@ export default function Page() {
           ...c,
           matchCode: c.match_code,
           createdDate: c.created_date,
-          primaryExec: c.primary_exec
+          primaryExec: c.primary_exec,
+          firmName: c.firm_name || c.firmName,
         }));
 
         setCustomers(mappedData);
@@ -250,7 +251,11 @@ export default function Page() {
 
       switch (filterState.searchBy) {
         case "Name":
-          return customer.name.toLowerCase().includes(query);
+          return (
+            (customer.name && customer.name.toLowerCase().includes(query)) ||
+            (customer.firmName && customer.firmName.toLowerCase().includes(query)) ||
+            (Boolean((customer as any).firm_name && (customer as any).firm_name.toLowerCase().includes(query)))
+          );
         case "Email":
           return customer.email ? customer.email.toLowerCase().includes(query) : false;
         case "Policy #":
@@ -260,13 +265,15 @@ export default function Page() {
         case "More":
         default:
           return (
-            customer.name.toLowerCase().includes(query) ||
-            customer.matchCode.toLowerCase().includes(query) ||
-            customer.phone.toLowerCase().includes(query) ||
-            customer.city.toLowerCase().includes(query) ||
-            customer.address.toLowerCase().includes(query) ||
-            customer.zip.toLowerCase().includes(query) ||
-            customer.primaryExec.toLowerCase().includes(query)
+            (customer.name && customer.name.toLowerCase().includes(query)) ||
+            (customer.firmName && customer.firmName.toLowerCase().includes(query)) ||
+            (Boolean((customer as any).firm_name && (customer as any).firm_name.toLowerCase().includes(query))) ||
+            (customer.matchCode && customer.matchCode.toLowerCase().includes(query)) ||
+            (customer.phone && customer.phone.toLowerCase().includes(query)) ||
+            (customer.city && customer.city.toLowerCase().includes(query)) ||
+            (customer.address && customer.address.toLowerCase().includes(query)) ||
+            (customer.zip && customer.zip.toLowerCase().includes(query)) ||
+            (customer.primaryExec && customer.primaryExec.toLowerCase().includes(query))
           );
       }
     });

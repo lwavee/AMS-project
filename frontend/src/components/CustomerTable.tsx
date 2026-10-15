@@ -135,23 +135,26 @@ export default function CustomerTable({
         ),
         size: 95,
       },
-      // Customer Name with Initials Avatar & Tag
+      // Customer Name / Company Name with Initials Avatar & Tag
       {
-        accessorKey: "name",
+        id: "name",
+        accessorFn: (row) => ((row.firmName || (row as any).firm_name || row.name || "").trim()),
         header: ({ column }) => (
           <button
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
             className="flex items-center gap-1 font-bold text-[#6b5e52] hover:text-[#1f1d1a] transition-colors outline-none uppercase tracking-wider text-[10px]"
           >
-            <span>NAME</span>
+            <span>COMPANY NAME</span>
             <ArrowUpDown size={10} className="text-[#9A8B7A]" />
           </button>
         ),
         cell: ({ row }) => {
-          const name = row.original.name;
+          const companyName = (row.original.firmName || (row.original as any).firm_name || (row.original as any).company_name || "").trim();
+          const individualName = (row.original.name || "").trim();
+          const displayName = companyName || individualName || "Unnamed Customer";
           const type = row.original.type;
           const isCom = type === "Commercial" || !type;
-          const initials = getInitials(name);
+          const initials = getInitials(displayName);
           const palette = AVATAR_PALETTES[row.index % AVATAR_PALETTES.length];
 
           return (
@@ -170,9 +173,9 @@ export default function CustomerTable({
                   router.push(`/agency/customer/${row.original.id}`);
                 }}
                 className="font-bold text-xs text-[#1f1d1a] hover:text-[#9A8B7A] hover:underline cursor-pointer truncate"
-                title="Click to open customer folder"
+                title={companyName && individualName && companyName !== individualName ? `${companyName} (${individualName})` : displayName}
               >
-                {name}
+                {displayName}
               </span>
 
               {/* COM / PERS pill badge */}
@@ -182,7 +185,7 @@ export default function CustomerTable({
             </div>
           );
         },
-        size: 190,
+        size: 210,
       },
       // Address
       {

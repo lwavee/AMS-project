@@ -326,8 +326,8 @@ function buildPayload(f: FormState) {
             out[snakeKey] = v === "" ? null : v;
         }
     }
-    // ensure name is never empty
-    let computedName = f.nameType === "Business" ? f.firmName || f.name : `${f.firstName} ${f.lastName}`.trim() || f.name;
+    // ensure name is never empty, prioritizing Company Name (firmName) if provided
+    let computedName = f.firmName?.trim() || (f.nameType === "Business" ? f.firmName || f.name : `${f.firstName} ${f.lastName}`.trim()) || f.name;
     if (!computedName) {
         computedName = "Unnamed Customer";
     }
