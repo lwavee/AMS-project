@@ -63,6 +63,13 @@ class CustomerBase(BaseModel):
     email2: Optional[str] = None
     web: Optional[str] = None
 
+    # --- Co-Applicant ---
+    has_co_applicant: Optional[str] = "No"
+    co_applicant_first_name: Optional[str] = None
+    co_applicant_last_name: Optional[str] = None
+    co_applicant_cell: Optional[str] = None
+    co_applicant_email: Optional[str] = None
+
     # --- Address extras ---
     address2: Optional[str] = None
     country: Optional[str] = None
@@ -151,6 +158,11 @@ class CustomerUpdate(BaseModel):
     phone_other_ext: Optional[str] = None
     email2: Optional[str] = None
     web: Optional[str] = None
+    has_co_applicant: Optional[str] = None
+    co_applicant_first_name: Optional[str] = None
+    co_applicant_last_name: Optional[str] = None
+    co_applicant_cell: Optional[str] = None
+    co_applicant_email: Optional[str] = None
     address2: Optional[str] = None
     country: Optional[str] = None
     county: Optional[str] = None

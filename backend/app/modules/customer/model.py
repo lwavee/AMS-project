@@ -69,6 +69,13 @@ class Customer(Base):
     email2  = Column(String)
     web     = Column(String)
 
+    # ── Co-Applicant ───────────────────────────────────────────────────────────
+    has_co_applicant        = Column(String, default="No")
+    co_applicant_first_name = Column(String, nullable=True)
+    co_applicant_last_name  = Column(String, nullable=True)
+    co_applicant_cell       = Column(String, nullable=True)
+    co_applicant_email      = Column(String, nullable=True)
+
     # ── Address Extras ─────────────────────────────────────────────────────────
     address2            = Column(String)
     country             = Column(String)

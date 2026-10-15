@@ -248,6 +248,9 @@ const defaultForm = {
     // Internet
     email2: "", web: "",
 
+    // Co-Applicant
+    hasCoApplicant: "No", coApplicantFirstName: "", coApplicantLastName: "", coApplicantCell: "", coApplicantEmail: "",
+
     // Address extras
     address2: "", country: "US", county: "", latitude: "", longitude: "", altAddressBilling: false,
 
@@ -306,7 +309,8 @@ const whitelistedPayloadFields = [
     "electronic_delivery", "notes", "acquisition", "business_origin", "customer_added_date",
     "referral_name", "referral_location", "auto_check_policies", "check_personal", "check_health",
     "check_commercial", "check_non_pc", "check_life", "check_financial", "check_benefits",
-    "known_since_year", "notation"
+    "known_since_year", "notation",
+    "has_co_applicant", "co_applicant_first_name", "co_applicant_last_name", "co_applicant_cell", "co_applicant_email"
 ];
 
 // ─── camelCase → snake_case payload builder ─────────────────
@@ -349,6 +353,21 @@ function buildPayload(f: FormState) {
         out.phone = f.cell || f.phoneBusiness || f.phoneResidence || f.phoneOther || null;
     }
 
+    // Co-Applicant payload mapping
+    if (f.hasCoApplicant !== "Yes") {
+        out.has_co_applicant = "No";
+        out.co_applicant_first_name = null;
+        out.co_applicant_last_name = null;
+        out.co_applicant_cell = null;
+        out.co_applicant_email = null;
+    } else {
+        out.has_co_applicant = "Yes";
+        out.co_applicant_first_name = f.coApplicantFirstName?.trim() || null;
+        out.co_applicant_last_name = f.coApplicantLastName?.trim() || null;
+        out.co_applicant_cell = f.coApplicantCell?.trim() || null;
+        out.co_applicant_email = f.coApplicantEmail?.trim() || null;
+    }
+
     return out;
 }
 
@@ -385,6 +404,9 @@ function NewCustomerContent() {
                         if (v !== null && v !== undefined) {
                             mappedData[camelKey] = v;
                         }
+                    }
+                    if (data.has_co_applicant) {
+                        mappedData.hasCoApplicant = data.has_co_applicant === true || data.has_co_applicant === "Yes" ? "Yes" : "No";
                     }
                     setF(prev => ({ ...prev, ...mappedData }));
                 }
@@ -553,6 +575,14 @@ function NewCustomerContent() {
             newErrors.email = "Please enter a valid email address.";
         }
 
+        if (f.hasCoApplicant === "Yes") {
+            if (!f.coApplicantFirstName?.trim()) newErrors.coApplicantFirstName = "First Name is required";
+            if (!f.coApplicantLastName?.trim()) newErrors.coApplicantLastName = "Last Name is required";
+            if (f.coApplicantEmail?.trim() && !f.coApplicantEmail.includes("@")) {
+                newErrors.coApplicantEmail = "Please enter a valid email address.";
+            }
+        }
+
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
             setError("Please fill out all required fields before submitting.");
@@ -561,7 +591,7 @@ function NewCustomerContent() {
                 "Application Information": prev["Application Information"] || !!(newErrors.firmName || newErrors.firstName || newErrors.lastName),
                 "Addresses": prev["Addresses"] || !!(newErrors.address || newErrors.city || newErrors.state || newErrors.country || newErrors.zip),
                 "Agency Personnel & Business Unit": prev["Agency Personnel & Business Unit"] || !!(newErrors.executive || newErrors.representative || newErrors.division || newErrors.branch || newErrors.department),
-                "Contact Information": prev["Contact Information"] || !!(newErrors.cell || newErrors.email),
+                "Contact Information": prev["Contact Information"] || !!(newErrors.cell || newErrors.email || newErrors.coApplicantFirstName || newErrors.coApplicantLastName || newErrors.coApplicantEmail),
                 "Business with Agency & Policy Checks": prev["Business with Agency & Policy Checks"] || !!newErrors.customerAddedDate,
             }));
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1057,6 +1087,82 @@ function NewCustomerContent() {
                     <FormRow label="Primary Email" required error={errors.email}>
                         <input type="email" className={inputCls} value={f.email} onChange={e => set({ email: e.target.value })} />
                     </FormRow>
+
+                    {/* Co-Applicant Selection */}
+                    <div className="grid grid-cols-1 sm:grid-cols-12 items-center gap-3 py-2.5 border-b border-[#F3F4F6]">
+                        <label className="sm:col-span-5 text-sm font-medium text-[#1F2937]">
+                            Co- Applicant
+                        </label>
+                        <div className="sm:col-span-7 flex items-center gap-6">
+                            <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-[#1F2937] select-none hover:text-[#7A6F64] transition-colors">
+                                <input
+                                    type="radio"
+                                    name="hasCoApplicant"
+                                    className={checkCls}
+                                    checked={f.hasCoApplicant === "No"}
+                                    onChange={() => set({ hasCoApplicant: "No" })}
+                                />
+                                <span>No</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-[#1F2937] select-none hover:text-[#7A6F64] transition-colors">
+                                <input
+                                    type="radio"
+                                    name="hasCoApplicant"
+                                    className={checkCls}
+                                    checked={f.hasCoApplicant === "Yes"}
+                                    onChange={() => set({ hasCoApplicant: "Yes" })}
+                                />
+                                <span>Yes</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Extended Form for Co-Applicant when Yes is selected */}
+                    {f.hasCoApplicant === "Yes" && (
+                        <div className="mt-3 p-4 sm:p-5 bg-[#FAF8F5] border border-[#E5DDD5] rounded-xl space-y-2 animate-in slide-in-from-top-2 fade-in duration-200">
+                            <div className="flex items-center justify-between pb-2 border-b border-[#E5DDD5] mb-2">
+                                <span className="text-xs font-bold uppercase tracking-wider text-[#7A6F64]">Co-Applicant Information</span>
+                                <span className="text-[11px] font-semibold text-[#8C827A] bg-white px-2 py-0.5 rounded border border-[#E5DDD5]">Details</span>
+                            </div>
+
+                            <FormRow label="First Name" required error={errors.coApplicantFirstName}>
+                                <input
+                                    type="text"
+                                    placeholder="First Name"
+                                    className={inputCls}
+                                    value={f.coApplicantFirstName}
+                                    onChange={e => set({ coApplicantFirstName: e.target.value })}
+                                />
+                            </FormRow>
+
+                            <FormRow label="Last Name" required error={errors.coApplicantLastName}>
+                                <input
+                                    type="text"
+                                    placeholder="Last Name"
+                                    className={inputCls}
+                                    value={f.coApplicantLastName}
+                                    onChange={e => set({ coApplicantLastName: e.target.value })}
+                                />
+                            </FormRow>
+
+                            <PhoneRow
+                                label="Cell Phone"
+                                value={f.coApplicantCell}
+                                error={errors.coApplicantCell}
+                                onChange={v => set({ coApplicantCell: v })}
+                            />
+
+                            <FormRow label="Email" error={errors.coApplicantEmail}>
+                                <input
+                                    type="email"
+                                    placeholder="coapplicant@example.com"
+                                    className={inputCls}
+                                    value={f.coApplicantEmail}
+                                    onChange={e => set({ coApplicantEmail: e.target.value })}
+                                />
+                            </FormRow>
+                        </div>
+                    )}
 
                     {/*
                     <FormRow label="Alternate Email">

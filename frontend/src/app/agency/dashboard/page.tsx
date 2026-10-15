@@ -274,7 +274,7 @@ export default function Page() {
 
   // Toolbar Handlers
   const handleNewCustomerClick = () => {
-    router.push("/agency/new-customer");
+    window.open("/agency/new-customer", "_blank");
   };
 
   const handleEditClick = () => {
