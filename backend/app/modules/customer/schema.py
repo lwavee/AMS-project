@@ -83,7 +83,7 @@ class CustomerBase(BaseModel):
     preferred_method: Optional[str] = None
     marketing_solicitation: Optional[str] = None
     electronic_delivery: Optional[str] = None
-    notes: Optional[str] = None
+    notes: Optional[Any] = None
 
     # --- Business with Agency ---
     acquisition: Optional[str] = None
@@ -173,7 +173,7 @@ class CustomerUpdate(BaseModel):
     preferred_method: Optional[str] = None
     marketing_solicitation: Optional[str] = None
     electronic_delivery: Optional[str] = None
-    notes: Optional[str] = None
+    notes: Optional[Any] = None
     acquisition: Optional[str] = None
     business_origin: Optional[str] = None
     customer_added_date: Optional[str] = None
@@ -200,6 +200,7 @@ class Customer(CustomerBase):
     id: int
     created_date: Optional[Any] = None
     contact_person: Optional[ContactPerson] = None
+    notes: Optional[Any] = None
 
     class Config:
         from_attributes = True
