@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 interface EditableDateProps {
   value: string;
@@ -15,14 +15,7 @@ export default function EditableDate({
   onChange,
   className = ''
 }: EditableDateProps) {
-  const [localValue, setLocalValue] = useState(value);
-
-  useEffect(() => {
-    setLocalValue(value);
-  }, [value]);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalValue(e.target.value);
     onChange(fieldId, e.target.value);
   };
 
@@ -30,7 +23,7 @@ export default function EditableDate({
     return (
       <input
         type="date"
-        value={localValue}
+        value={value}
         onChange={handleChange}
         className={`bg-yellow-50 border border-yellow-300 outline-none p-0.5 text-[8px] ${className}`}
       />

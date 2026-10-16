@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 interface EditableTextProps {
   value: string;
@@ -19,15 +19,7 @@ export default function EditableText({
   placeholder = '',
   multiline = false
 }: EditableTextProps) {
-  const [localValue, setLocalValue] = useState(value);
-
-  // Sync with upstream changes if any occur while not editing locally
-  useEffect(() => {
-    setLocalValue(value);
-  }, [value]);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setLocalValue(e.target.value);
     onChange(fieldId, e.target.value);
   };
 
@@ -35,7 +27,7 @@ export default function EditableText({
     if (multiline) {
       return (
         <textarea
-          value={localValue}
+          value={value}
           onChange={handleChange}
           placeholder={placeholder}
           className={`w-full bg-yellow-50 border border-yellow-300 outline-none p-0.5 resize-none ${className}`}
@@ -46,7 +38,7 @@ export default function EditableText({
     return (
       <input
         type="text"
-        value={localValue}
+        value={value}
         onChange={handleChange}
         placeholder={placeholder}
         className={`w-full bg-yellow-50 border border-yellow-300 outline-none p-0.5 ${className}`}

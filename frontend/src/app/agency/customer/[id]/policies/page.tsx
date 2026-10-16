@@ -1,7 +1,7 @@
 /* eslint-disable */
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/lib/config";
 import { confirmDialog, showToast } from "@/components/ToastProvider";
@@ -33,7 +33,11 @@ export default function CustomerPoliciesPage() {
   const params = useParams();
   const customerId = params?.id as string;
 
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    () => () => { },
+    () => true,
+    () => false
+  );
   const [customer, setCustomer] = useState<any>(null);
   const [policies, setPolicies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,9 +45,40 @@ export default function CustomerPoliciesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPolicyIds, setSelectedPolicyIds] = useState<string[]>([]);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // Helper to extract true Line of Business instead of generic policy category (Commercial Lines)
+  const getLineOfBusiness = (p: any): string => {
+    // 1. Check lobs array
+    if (Array.isArray(p.lobs) && p.lobs.length > 0) {
+      const names = p.lobs
+        .map((l: any) => {
+          if (!l) return "";
+          if (typeof l === "string") return l;
+          return l.type || l.level || l.name || l.coverage || "";
+        })
+        .filter(Boolean);
+      if (names.length > 0) {
+        return names.join(", ");
+      }
+    }
+
+    // 2. Check direct fields if present
+    if (p.line_of_business) return p.line_of_business;
+    if (p.lineOfBusiness) return p.lineOfBusiness;
+    if (p.lob) return p.lob;
+
+    // 3. Fallback: if p.type is NOT a generic policy class ("Commercial Lines", "Personal Lines")
+    const genericTypes = ["commercial lines", "personal lines", "commercial", "personal"];
+    if (p.type && !genericTypes.includes(p.type.trim().toLowerCase())) {
+      return p.type;
+    }
+
+    // 4. Fallback: if description has specific LOB names
+    if (p.description && !genericTypes.includes(p.description.trim().toLowerCase())) {
+      return p.description;
+    }
+
+    return p.type || "Commercial Lines";
+  };
 
   // ── Fetch Customer Data ──
   const fetchCustomer = useCallback(async () => {
@@ -72,18 +107,33 @@ export default function CustomerPoliciesPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        const formatted = data.map((p: any) => ({
-          id: p.id ? p.id.toString() : "pol-101",
-          policyNum: p.policy_num || "GLSISTC013411026",
-          status: p.status || "Active",
-          term: p.term || "12 Months",
-          type: p.type || "Commercial Lines",
-          company: p.company || "ISC, Brokerage Company, ISC",
-          description: p.description || "Comprehensive General Liability Insurance Coverage",
-          effDate: p.eff_date || "2026-10-28",
-          expDate: p.exp_date || "2027-10-28",
-          cost: p.cost || "$3,304.03",
-        }));
+
+        // Also check localStorage for any recently added/edited lobs
+        let storedPolicies: any[] = [];
+        try {
+          const storedStr = localStorage.getItem(`policies_${customerId}`);
+          if (storedStr) storedPolicies = JSON.parse(storedStr);
+        } catch { }
+
+        const formatted = data.map((p: any) => {
+          const stored = storedPolicies.find((sp: any) => sp.id?.toString() === p.id?.toString());
+          const lobs = (p.lobs && p.lobs.length > 0) ? p.lobs : (stored?.lobs || []);
+          const lobDisplay = getLineOfBusiness({ ...p, lobs });
+          return {
+            id: p.id ? p.id.toString() : "pol-101",
+            policyNum: p.policy_num || "GLSISTC013411026",
+            status: p.status || "Active",
+            term: p.term || "12 Months",
+            type: p.type || "Commercial Lines",
+            lobs: lobs,
+            lineOfBusiness: lobDisplay,
+            company: p.company || "ISC, Brokerage Company, ISC",
+            description: p.description || "Comprehensive General Liability Insurance Coverage",
+            effDate: p.eff_date || "2026-10-28",
+            expDate: p.exp_date || "2027-10-28",
+            cost: p.cost || "$3,304.03",
+          };
+        });
         setPolicies(formatted);
       }
     } catch (e) {
@@ -96,6 +146,12 @@ export default function CustomerPoliciesPage() {
   useEffect(() => {
     fetchCustomer();
     loadPolicies();
+
+    const handleStorage = () => {
+      loadPolicies();
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, [fetchCustomer, loadPolicies]);
 
   // Filter based on sidebar status, search, and top search
@@ -118,6 +174,7 @@ export default function CustomerPoliciesPage() {
       const q = searchTerm.toLowerCase();
       const matchesSearch =
         p.policyNum?.toLowerCase().includes(q) ||
+        p.lineOfBusiness?.toLowerCase().includes(q) ||
         p.type?.toLowerCase().includes(q) ||
         p.company?.toLowerCase().includes(q) ||
         p.status?.toLowerCase().includes(q);
@@ -246,7 +303,13 @@ export default function CustomerPoliciesPage() {
         <div className="max-w-[1550px] mx-auto flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => router.push(`/agency/customer/${customerId}`)}
+              onClick={() => {
+                if (typeof window !== "undefined" && window.opener && !window.opener.closed) {
+                  window.close();
+                } else {
+                  router.push(`/agency/customer/${customerId}`);
+                }
+              }}
               className="h-9 px-3 rounded-xl bg-[#FAF8F5] hover:bg-[#F5EDE5] text-[#9A8B7A] border border-[#e5ddd5] flex items-center gap-2 text-xs font-bold transition-all shadow-2xs cursor-pointer"
             >
               <ArrowLeft size={15} />
@@ -502,9 +565,15 @@ export default function CustomerPoliciesPage() {
                             <tr
                               key={p.id}
                               onClick={() => toggleSelectPolicy(p.id)}
-                              className={`hover:bg-[#FAF8F5]/60 transition-colors cursor-pointer ${
-                                isSelected ? "bg-[#FAF8F5]/80" : ""
-                              }`}
+                              onDoubleClick={() => {
+                                window.open(
+                                  `/agency/customer/${customerId}/policy/${p.id}`,
+                                  "_blank",
+                                  "width=1100,height=850"
+                                );
+                              }}
+                              className={`hover:bg-[#FAF8F5]/60 transition-colors cursor-pointer ${isSelected ? "bg-[#FAF8F5]/80" : ""
+                                }`}
                             >
                               {/* Checkbox */}
                               <td
@@ -517,7 +586,7 @@ export default function CustomerPoliciesPage() {
                                 <input
                                   type="checkbox"
                                   checked={isSelected}
-                                  onChange={() => {}}
+                                  onChange={() => { }}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     toggleSelectPolicy(p.id);
@@ -555,7 +624,7 @@ export default function CustomerPoliciesPage() {
 
                               {/* Line of Business */}
                               <td className="px-4 py-4 font-extrabold text-[#1f1d1a]">
-                                {p.type}
+                                {p.lineOfBusiness || p.type}
                               </td>
 
                               {/* Insurance Carrier */}

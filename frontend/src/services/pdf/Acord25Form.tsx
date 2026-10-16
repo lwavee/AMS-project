@@ -272,7 +272,7 @@ export default function Acord25Form({
                       <div className="w-3 h-3 border border-black flex items-center justify-center font-bold mx-1 ml-3">X</div> OCCUR
                     </div>
                     <div className="ml-1 mt-2 text-[7px]">
-                      <div className="font-bold">GEN'L AGGREGATE LIMIT APPLIES PER:</div>
+                      <div className="font-bold">GEN&apos;L AGGREGATE LIMIT APPLIES PER:</div>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="flex items-center gap-0.5"><span className="w-2.5 h-2.5 border border-black inline-flex items-center justify-center text-[6px] font-bold">X</span> POLICY</span>
                         <span className="flex items-center gap-0.5"><span className="w-2.5 h-2.5 border border-black inline-flex"></span> PRO-JECT</span>

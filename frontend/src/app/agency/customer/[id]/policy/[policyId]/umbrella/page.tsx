@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useSyncExternalStore } from "react";
 import { useParams } from "next/navigation";
 import { API_BASE_URL } from "@/lib/config";
 import { FileText, Shield, Save, Printer, Check, X } from "lucide-react";
@@ -9,11 +9,12 @@ export default function UmbrellaPage() {
   const customerId = params?.id as string;
   const policyId = params?.policyId as string;
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+
 
   const [covMode, setCovMode] = useState<"view" | "add" | "edit">("view");
   const [selectedIdx, setSelectedIdx] = useState<number | null>(0);
@@ -51,7 +52,7 @@ export default function UmbrellaPage() {
       .then(res => { if (res.status === 204) return null; return res.json(); })
       .then(data => { if (data) setInfo(data); })
       .catch(err => console.error("Failed to load umbrella info", err));
-  }, [customerId, policyId, API_BASE_URL]);
+  }, [customerId, policyId]);
 
   const handleFormatAmount = (val: string) => {
     const clean = val.replace(/,/g, '').replace(/\$/g, '');

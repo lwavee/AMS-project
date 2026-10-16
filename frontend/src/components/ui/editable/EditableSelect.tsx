@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 interface EditableSelectProps {
   value: string;
@@ -17,21 +17,14 @@ export default function EditableSelect({
   onChange,
   className = ''
 }: EditableSelectProps) {
-  const [localValue, setLocalValue] = useState(value);
-
-  useEffect(() => {
-    setLocalValue(value);
-  }, [value]);
-
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setLocalValue(e.target.value);
     onChange(fieldId, e.target.value);
   };
 
   if (isEditing) {
     return (
       <select
-        value={localValue}
+        value={value}
         onChange={handleChange}
         className={`bg-yellow-50 border border-yellow-300 outline-none p-0.5 ${className}`}
       >

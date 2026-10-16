@@ -48,6 +48,7 @@ export default function NewCertPropPage() {
   // Note/Message
   const [noteMessage, setNoteMessage] = useState("");
   const [printNote, setPrintNote] = useState(true);
+  const [authRep, setAuthRep] = useState("");
 
   // Helper to format date as M/D/YYYY
   const formatDisplayDate = (d?: string | Date | null) => {

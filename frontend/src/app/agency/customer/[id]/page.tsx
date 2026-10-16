@@ -879,7 +879,7 @@ export default function CustomerProfilePage() {
                 badgeColor: "bg-[#F5EDE5] text-[#9A8B7A]",
                 bubbleColor: "bg-[#F5EDE5]/70",
                 href: `/agency/customer/${customerId}/policies`,
-                openInNewTab: false,
+                openInNewTab: true,
               },
               {
                 id: "eforms_manager" as const,
@@ -956,7 +956,10 @@ export default function CustomerProfilePage() {
                   target={isNewTab ? "_blank" : undefined}
                   rel={isNewTab ? "noopener noreferrer" : undefined}
                   onClick={(e) => {
-                    if (!isNewTab) {
+                    if (isNewTab) {
+                      e.preventDefault();
+                      window.open(tab.href, "_blank");
+                    } else {
                       e.preventDefault();
                       router.push(tab.href);
                     }

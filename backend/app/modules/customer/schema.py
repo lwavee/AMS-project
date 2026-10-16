@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Union
 from datetime import date
 
 class CustomerBase(BaseModel):
@@ -196,11 +196,30 @@ class ContactPerson(BaseModel):
     email: Optional[str] = None
     fax: Optional[str] = None
 
+class CustomerNoteBase(BaseModel):
+    text: str
+    author: str
+    role: str
+
+class CustomerNoteCreate(CustomerNoteBase):
+    pass
+
+class CustomerNoteUpdate(BaseModel):
+    text: str
+
+class CustomerNote(CustomerNoteBase):
+    id: int
+    customer_id: int
+    created_at: str
+
+    class Config:
+        from_attributes = True
+
 class Customer(CustomerBase):
     id: int
     created_date: Optional[Any] = None
     contact_person: Optional[ContactPerson] = None
-    notes: Optional[Any] = None
+    notes: Optional[Union[str, List[CustomerNote]]] = None
 
     class Config:
         from_attributes = True
@@ -260,27 +279,7 @@ class Policy(PolicyBase):
 
 
 
-class CustomerNoteBase(BaseModel):
-    text: str
-    author: str
-    role: str
 
-
-class CustomerNoteCreate(CustomerNoteBase):
-    pass
-
-
-class CustomerNoteUpdate(BaseModel):
-    text: str
-
-
-class CustomerNote(CustomerNoteBase):
-    id: int
-    customer_id: int
-    created_at: str
-
-    class Config:
-        from_attributes = True
 
 class GeneralLiabilityCoverageBase(BaseModel):
     coverage: Optional[str] = None

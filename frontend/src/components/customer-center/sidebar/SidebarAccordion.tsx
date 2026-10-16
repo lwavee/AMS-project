@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import {
   Eye,
   FileSignature,
@@ -44,7 +43,6 @@ export default function SidebarAccordion({
   setActiveTab,
   customerId,
 }: SidebarAccordionProps) {
-  const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
       try {

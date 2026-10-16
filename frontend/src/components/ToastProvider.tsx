@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { CheckCircle2, AlertTriangle, Info, X, ShieldCheck, Trash2, HelpCircle } from "lucide-react";
+import { AlertTriangle, Info, X, ShieldCheck, Trash2, HelpCircle } from "lucide-react";
 
 export interface ToastItem {
   id: string;
@@ -56,6 +56,10 @@ export default function ToastProvider() {
     message: "",
   });
 
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
   const addToast = useCallback((message: string, type: "success" | "error" | "info" | "warning" = "success") => {
     const id = Math.random().toString(36).substring(2, 9);
     const newToast: ToastItem = { id, message, type, timestamp: Date.now() };
@@ -65,11 +69,7 @@ export default function ToastProvider() {
     setTimeout(() => {
       removeToast(id);
     }, 4200);
-  }, []);
-
-  const removeToast = (id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
+  }, [removeToast]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {

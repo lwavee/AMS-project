@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 interface EditableCheckboxProps {
   checked: boolean;
@@ -15,14 +15,7 @@ export default function EditableCheckbox({
   onChange,
   className = ''
 }: EditableCheckboxProps) {
-  const [localChecked, setLocalChecked] = useState(checked);
-
-  useEffect(() => {
-    setLocalChecked(checked);
-  }, [checked]);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalChecked(e.target.checked);
     onChange(fieldId, e.target.checked);
   };
 
@@ -30,7 +23,7 @@ export default function EditableCheckbox({
     return (
       <input
         type="checkbox"
-        checked={localChecked}
+        checked={checked}
         onChange={handleChange}
         className={`accent-yellow-600 ${className}`}
       />
@@ -38,7 +31,7 @@ export default function EditableCheckbox({
   }
 
   // View Mode matches ACORD form typical checked box
-  if (localChecked) {
+  if (checked) {
     return <span className={`w-3 h-3 border border-black flex items-center justify-center font-bold inline-flex ${className}`}>X</span>;
   }
   return <span className={`w-3 h-3 border border-black inline-flex ${className}`}></span>;

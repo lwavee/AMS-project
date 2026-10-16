@@ -68,7 +68,6 @@ interface SearchBarProps {
 export default function SearchBar({
   filters,
   setFilters,
-  totalCount,
 }: SearchBarProps) {
   const updateFilter = <K extends keyof AdvancedFilterState>(
     key: K,

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useSyncExternalStore } from "react";
 import { useParams } from "next/navigation";
 import { API_BASE_URL } from "@/lib/config";
 import {
@@ -27,10 +27,12 @@ export default function WorkersCompPage() {
   const customerId = params?.id as string;
   const policyId = params?.policyId as string;
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+
 
   const [mode, setMode] = useState<"view" | "add" | "edit">("view");
   const [selectedIdx, setSelectedIdx] = useState<number | null>(0);
