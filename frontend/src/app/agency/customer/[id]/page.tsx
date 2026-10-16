@@ -879,7 +879,8 @@ export default function CustomerProfilePage() {
                 badgeColor: "bg-[#F5EDE5] text-[#9A8B7A]",
                 bubbleColor: "bg-[#F5EDE5]/70",
                 href: `/agency/customer/${customerId}/policies`,
-                openInNewTab: true,
+                openInNewTab: false,
+                openInWindow: true,
               },
               {
                 id: "eforms_manager" as const,
@@ -944,19 +945,31 @@ export default function CustomerProfilePage() {
                 badgeColor: "bg-orange-100/70 text-orange-700",
                 bubbleColor: "bg-orange-50/70",
                 href: `/agency/customer/${customerId}/contact-info`,
-                openInNewTab: false,
+                openInNewTab: true,
               },
             ].map((tab) => {
               const Icon = tab.icon;
+              const isNewWindow = Boolean((tab as any).openInWindow);
               const isNewTab = Boolean(tab.openInNewTab);
               return (
                 <a
                   key={tab.id}
                   href={tab.href}
-                  target={isNewTab ? "_blank" : undefined}
-                  rel={isNewTab ? "noopener noreferrer" : undefined}
+                  target={isNewTab || isNewWindow ? "_blank" : undefined}
+                  rel={isNewTab || isNewWindow ? "noopener noreferrer" : undefined}
                   onClick={(e) => {
-                    if (isNewTab) {
+                    if (isNewWindow) {
+                      e.preventDefault();
+                      const width = Math.min(1440, Math.max(1024, Math.floor(window.screen.availWidth * 0.92)));
+                      const height = Math.min(920, Math.max(700, Math.floor(window.screen.availHeight * 0.9)));
+                      const left = Math.max(0, Math.floor((window.screen.availWidth - width) / 2));
+                      const top = Math.max(0, Math.floor((window.screen.availHeight - height) / 2));
+                      window.open(
+                        tab.href,
+                        "_blank",
+                        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+                      );
+                    } else if (isNewTab) {
                       e.preventDefault();
                       window.open(tab.href, "_blank");
                     } else {

@@ -67,6 +67,14 @@ export default function CustomerContactInfoPage() {
       ? `${customer.first_name.toLowerCase()}.${customer.last_name.toLowerCase()}@client.com`
       : "info@business.com");
 
+  const hasCoApplicant = Boolean(
+    customer?.has_co_applicant === "Yes" ||
+    customer?.co_applicant_first_name?.trim() ||
+    customer?.co_applicant_last_name?.trim() ||
+    customer?.co_applicant_cell?.trim() ||
+    customer?.co_applicant_email?.trim()
+  );
+
   if (!mounted) return null;
 
   return (
@@ -137,7 +145,11 @@ export default function CustomerContactInfoPage() {
           </div>
 
           {/* Contact Details Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
+          <div
+            className={`grid grid-cols-1 md:grid-cols-2 ${
+              hasCoApplicant ? "lg:grid-cols-4" : "lg:grid-cols-3"
+            } gap-6 text-xs`}
+          >
             {/* General Info Card */}
             <div className="space-y-4 bg-[#FAF8F5] p-5 rounded-2xl border border-[#e5ddd5] shadow-2xs">
               <div className="flex items-center gap-2 border-b border-[#e5ddd5] pb-2.5">
@@ -185,25 +197,25 @@ export default function CustomerContactInfoPage() {
                 <p><span className="text-[#8c827a] font-medium block text-[11px]">Account Status</span> <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#ECFDF5] text-[#059669]"><span className="h-1.5 w-1.5 rounded-full bg-[#059669]"></span> Active</span></p>
               </div>
             </div>
-          </div>
 
-          {/* Co-Applicant Card if present */}
-          {customer?.has_co_applicant === "Yes" && (
-            <div className="bg-[#FAF8F5] p-5 rounded-2xl border border-[#e5ddd5] shadow-2xs space-y-4 text-xs">
-              <div className="flex items-center gap-2 border-b border-[#e5ddd5] pb-2.5">
-                <Users size={16} className="text-[#9A8B7A]" />
-                <h2 className="font-bold text-[#9A8B7A] uppercase text-[11px] tracking-wider">
-                  Co-Applicant Details
-                </h2>
+            {/* Co-Applicant Information Card (Only shown if available, matching Screenshot 1 style in same line) */}
+            {hasCoApplicant && (
+              <div className="space-y-4 bg-[#FAF8F5] p-5 rounded-2xl border border-[#e5ddd5] shadow-2xs">
+                <div className="flex items-center gap-2 border-b border-[#e5ddd5] pb-2.5">
+                  <Users size={16} className="text-[#9A8B7A]" />
+                  <h2 className="font-bold text-[#9A8B7A] uppercase text-[11px] tracking-wider">
+                    Co-Applicant Information
+                  </h2>
+                </div>
+                <div className="space-y-2.5 text-[#2d2a26]">
+                  <p><span className="text-[#8c827a] font-medium block text-[11px]">First Name</span> <strong className="font-bold">{customer?.co_applicant_first_name || "—"}</strong></p>
+                  <p><span className="text-[#8c827a] font-medium block text-[11px]">Last Name</span> <strong className="font-bold">{customer?.co_applicant_last_name || "—"}</strong></p>
+                  <p><span className="text-[#8c827a] font-medium block text-[11px]">Cell Phone</span> <strong className="font-bold">{customer?.co_applicant_cell || "—"}</strong></p>
+                  <p><span className="text-[#8c827a] font-medium block text-[11px]">Email Address</span> <strong className="font-bold text-blue-600 hover:underline">{customer?.co_applicant_email ? <a href={`mailto:${customer.co_applicant_email}`}>{customer.co_applicant_email}</a> : "—"}</strong></p>
+                </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-[#2d2a26]">
-                <p><span className="text-[#8c827a] font-medium block text-[11px]">First Name</span> <strong className="font-bold">{customer?.co_applicant_first_name || "—"}</strong></p>
-                <p><span className="text-[#8c827a] font-medium block text-[11px]">Last Name</span> <strong className="font-bold">{customer?.co_applicant_last_name || "—"}</strong></p>
-                <p><span className="text-[#8c827a] font-medium block text-[11px]">Cell Phone</span> <strong className="font-bold">{customer?.co_applicant_cell || "—"}</strong></p>
-                <p><span className="text-[#8c827a] font-medium block text-[11px]">Email</span> <strong className="font-bold text-blue-600 hover:underline">{customer?.co_applicant_email ? <a href={`mailto:${customer.co_applicant_email}`}>{customer.co_applicant_email}</a> : "—"}</strong></p>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </main>
     </div>

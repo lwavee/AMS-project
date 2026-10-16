@@ -160,6 +160,7 @@ export default function PolicyDetailPage() {
             exp_date: "08/17/2027",
             premium: "$3,304.03",
             cost: "$3,304.03",
+            location: "—",
             lobs: [
               {
                 type: "General Liability",
@@ -377,10 +378,12 @@ export default function PolicyDetailPage() {
       slug = "umbrella";
     } else if (t.includes("workers") || t.includes("comp")) {
       slug = "workers-compensation";
+    } else if (t.includes("inland") || t.includes("marine")) {
+      slug = "inland-marine";
     } else {
       slug = "general-liability";
     }
-    window.open(`/agency/customer/${customerId}/policy/${policyId}/${slug}`, '_blank', 'width=1100,height=850');
+    window.open(`/agency/customer/${customerId}/policy/${policyId}/${slug}?lob=${encodeURIComponent(lobType)}`, '_blank', 'width=1100,height=850');
   };
 
   return (
@@ -535,7 +538,11 @@ export default function PolicyDetailPage() {
                     <span className={labelCls}>Signature on App</span>
                     <input type="text" readOnly value={policy.signature_on_app || "—"} className={inputCls} />
                   </div>
-                  <div className="col-span-2 flex items-center gap-2 flex-wrap">
+                  <div>
+                    <span className={labelCls}>Location</span>
+                    <input type="text" readOnly value={policy.location || "—"} className={inputCls} />
+                  </div>
+                  <div className="col-span-1 md:col-span-1 flex items-center gap-2 flex-wrap">
                     {renderBadge(policy.is_continuous, "Continuous")}
                     {renderBadge(policy.is_reinsurance, "Reinsurance")}
                     {renderBadge(policy.is_not_renewable, "Not Renewable")}

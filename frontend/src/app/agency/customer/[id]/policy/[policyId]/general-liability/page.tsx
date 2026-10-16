@@ -9,9 +9,11 @@ import {
   X,
   FileText,
   Shield,
+  ShieldCheck,
   MapPin,
   List,
-  Check
+  Check,
+  Plus
 } from "lucide-react";
 
 export default function GeneralLiabilityPage() {
@@ -38,7 +40,7 @@ export default function GeneralLiabilityPage() {
   const [selectedIdx, setSelectedIdx] = useState<number | null>(0);
   const [isSaving, setIsSaving] = useState(false);
 
-  const [coverages, setCoverages] = useState([
+  const GL_DEFAULT_COVERAGES = [
     { coverage: "General Aggregate", limit1: "2,000,000", limit2: "", ded: "", dedType: "", basis: "", appliesTo: "", premium: "6,514.30", sortOrder: "1", level: "Line of Business", state: "", location: "", appliesPer: "", otherDesc: "", exposure: "", rate: "", misc: "", numEmp: "", retroDate: "", comments: "", defaultStdCov: false },
     { coverage: "Products/Completed Ops Aggregate", limit1: "2,000,000", limit2: "", ded: "", dedType: "", basis: "", appliesTo: "", premium: "", sortOrder: "2", level: "Line of Business", state: "", location: "", appliesPer: "", otherDesc: "", exposure: "", rate: "", misc: "", numEmp: "", retroDate: "", comments: "", defaultStdCov: false },
     { coverage: "Personal & Advertising Injury", limit1: "1,000,000", limit2: "", ded: "", dedType: "", basis: "", appliesTo: "", premium: "", sortOrder: "3", level: "Line of Business", state: "", location: "", appliesPer: "", otherDesc: "", exposure: "", rate: "", misc: "", numEmp: "", retroDate: "", comments: "", defaultStdCov: false },
@@ -46,10 +48,27 @@ export default function GeneralLiabilityPage() {
     { coverage: "Fire Damage", limit1: "50,000", limit2: "", ded: "", dedType: "", basis: "", appliesTo: "", premium: "", sortOrder: "5", level: "Line of Business", state: "", location: "", appliesPer: "", otherDesc: "", exposure: "", rate: "", misc: "", numEmp: "", retroDate: "", comments: "", defaultStdCov: false },
     { coverage: "Medical Expense", limit1: "5,000", limit2: "", ded: "", dedType: "", basis: "", appliesTo: "", premium: "", sortOrder: "6", level: "Line of Business", state: "", location: "", appliesPer: "", otherDesc: "", exposure: "", rate: "", misc: "", numEmp: "", retroDate: "", comments: "", defaultStdCov: false },
     { coverage: "Self Ins Retention", limit1: "2,500", limit2: "", ded: "", dedType: "", basis: "", appliesTo: "", premium: "", sortOrder: "7", level: "Line of Business", state: "", location: "", appliesPer: "", otherDesc: "", exposure: "", rate: "", misc: "", numEmp: "", retroDate: "", comments: "", defaultStdCov: false },
-  ]);
+  ];
+
+  const INLAND_MARINE_DEFAULT_COVERAGES = [
+    { coverage: "Scheduled Equipment", limit1: "", limit2: "", ded: "", dedType: "", basis: "", appliesTo: "", premium: "", sortOrder: "1", level: "Line of Business", state: "", location: "", appliesPer: "", otherDesc: "", exposure: "", rate: "", misc: "", numEmp: "", retroDate: "", comments: "", defaultStdCov: false },
+    { coverage: "Unscheduled Tools & Equipment", limit1: "", limit2: "", ded: "", dedType: "", basis: "", appliesTo: "", premium: "", sortOrder: "2", level: "Line of Business", state: "", location: "", appliesPer: "", otherDesc: "", exposure: "", rate: "", misc: "", numEmp: "", retroDate: "", comments: "", defaultStdCov: false },
+    { coverage: "Leased / Rented Equipment", limit1: "", limit2: "", ded: "", dedType: "", basis: "", appliesTo: "", premium: "", sortOrder: "3", level: "Line of Business", state: "", location: "", appliesPer: "", otherDesc: "", exposure: "", rate: "", misc: "", numEmp: "", retroDate: "", comments: "", defaultStdCov: false },
+    { coverage: "Newly Acquired Equipment", limit1: "", limit2: "", ded: "", dedType: "", basis: "", appliesTo: "", premium: "", sortOrder: "4", level: "Line of Business", state: "", location: "", appliesPer: "", otherDesc: "", exposure: "", rate: "", misc: "", numEmp: "", retroDate: "", comments: "", defaultStdCov: false },
+    { coverage: "Total Insured Value", limit1: "", limit2: "", ded: "", dedType: "", basis: "", appliesTo: "", premium: "", sortOrder: "5", level: "Line of Business", state: "", location: "", appliesPer: "", otherDesc: "", exposure: "", rate: "", misc: "", numEmp: "", retroDate: "", comments: "", defaultStdCov: false },
+  ];
+
+  const [coverages, setCoverages] = useState(GL_DEFAULT_COVERAGES);
 
   const emptyCoverage = { coverage: "", limit1: "", limit2: "", ded: "", dedType: "", basis: "", appliesTo: "", premium: "", sortOrder: "", level: "Line of Business", state: "", location: "", appliesPer: "", otherDesc: "", exposure: "", rate: "", misc: "", numEmp: "", retroDate: "", comments: "", defaultStdCov: false };
   const [activeItem, setActiveItem] = useState(emptyCoverage);
+
+  // -- ADDITIONAL COVERAGES STATE --
+  const initialAdditionalCoverages = [
+    { id: "add-cov-1", coverage: "", limit1: "", ded: "", dedType: "", basis: "", appliesTo: "", premium: "", sortOrder: "" }
+  ];
+  const [additionalCoverages, setAdditionalCoverages] = useState(initialAdditionalCoverages);
+  const [selectedRowIdx, setSelectedRowIdx] = useState<number | null>(0);
 
   const [info, setInfo] = useState({
     liabilityCoverageType: "Commercial General Liability",
@@ -57,19 +76,31 @@ export default function GeneralLiabilityPage() {
     otherCoverages: ""
   });
 
+  const handleCoverageTypeChange = (newType: string) => {
+    setInfo(prev => ({ ...prev, liabilityCoverageType: newType }));
+    if (newType === "Inland Marine") {
+      const storedIm = typeof window !== "undefined" ? localStorage.getItem(`im_coverages_${customerId}_${policyId}`) : null;
+      if (storedIm) {
+        try { setCoverages(JSON.parse(storedIm)); } catch (e) { setCoverages(INLAND_MARINE_DEFAULT_COVERAGES); }
+      } else {
+        setCoverages(INLAND_MARINE_DEFAULT_COVERAGES);
+      }
+    } else {
+      const storedGl = typeof window !== "undefined" ? localStorage.getItem(`gl_coverages_${customerId}_${policyId}`) : null;
+      if (storedGl) {
+        try { setCoverages(JSON.parse(storedGl)); } catch (e) { setCoverages(GL_DEFAULT_COVERAGES); }
+      } else {
+        setCoverages(GL_DEFAULT_COVERAGES);
+      }
+    }
+  };
+
   useEffect(() => {
     if (customerId && policyId) {
       const token = localStorage.getItem("token");
-      fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${policyId}/general-liability`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.length > 0) {
-            setCoverages(data);
-          }
-        })
-        .catch(err => console.error("Failed to load coverages", err));
+      const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+      const urlLob = urlParams?.get("lob") || "";
+      const isUrlInlandMarine = urlLob.toLowerCase().includes("inland") || urlLob.toLowerCase().includes("marine");
 
       fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${policyId}/general-liability/info`, {
         headers: { "Authorization": `Bearer ${token}` }
@@ -79,15 +110,85 @@ export default function GeneralLiabilityPage() {
           return res.json();
         })
         .then(data => {
+          let covType = data?.liabilityCoverageType || "Commercial General Liability";
+          if (isUrlInlandMarine) {
+            covType = "Inland Marine";
+          }
           if (data) {
             setInfo({
-              liabilityCoverageType: data.liabilityCoverageType || "Commercial General Liability",
+              liabilityCoverageType: covType,
               coverageBasis: data.coverageBasis || "Occurrence",
               otherCoverages: data.otherCoverages || ""
             });
+          } else if (isUrlInlandMarine) {
+            setInfo(prev => ({ ...prev, liabilityCoverageType: "Inland Marine" }));
           }
         })
         .catch(err => console.error("Failed to load info", err));
+
+      // Check policy LOB to auto-switch to Inland Marine if policy LOB is Inland Marine
+      fetch(`${API_BASE_URL}/api/customers/${customerId}/policies`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(policies => {
+          const match = Array.isArray(policies) ? policies.find((p: any) => p.id?.toString() === policyId.toString()) : null;
+          const policyHasInlandMarine = match?.lobs?.some((l: any) => l.type?.toLowerCase().includes("inland") || l.type?.toLowerCase().includes("marine")) ||
+                                        match?.type?.toLowerCase().includes("inland") || match?.type?.toLowerCase().includes("marine");
+          const policyHasGL = match?.lobs?.some((l: any) => l.type?.toLowerCase().includes("general liability")) ||
+                              match?.type?.toLowerCase().includes("general liability");
+          
+          if (isUrlInlandMarine || (policyHasInlandMarine && !policyHasGL)) {
+            setInfo(prev => ({ ...prev, liabilityCoverageType: "Inland Marine" }));
+            const storedIm = typeof window !== "undefined" ? localStorage.getItem(`im_coverages_${customerId}_${policyId}`) : null;
+            if (storedIm) {
+              try { setCoverages(JSON.parse(storedIm)); } catch (e) { setCoverages(INLAND_MARINE_DEFAULT_COVERAGES); }
+            } else {
+              setCoverages(INLAND_MARINE_DEFAULT_COVERAGES);
+            }
+          } else {
+            fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${policyId}/general-liability`, {
+              headers: { "Authorization": `Bearer ${token}` }
+            })
+              .then(res => res.json())
+              .then(data => {
+                if (data && data.length > 0) {
+                  setCoverages(data);
+                }
+              })
+              .catch(err => console.error("Failed to load coverages", err));
+          }
+        })
+        .catch(() => {
+          if (isUrlInlandMarine) {
+            setInfo(prev => ({ ...prev, liabilityCoverageType: "Inland Marine" }));
+            setCoverages(INLAND_MARINE_DEFAULT_COVERAGES);
+          }
+        });
+
+      if (typeof window !== "undefined") {
+        try {
+          const storedAdd = localStorage.getItem(`gl_additional_coverages_${customerId}_${policyId}`);
+          if (storedAdd) {
+            const parsed = JSON.parse(storedAdd);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const hasOldMockData = parsed.some((p: any) => 
+                p.coverage === "Employee Benefits Liability" || 
+                p.coverage === "Contractual Liability" ||
+                p.coverage === "Electronic Data Liability"
+              );
+              if (!hasOldMockData) {
+                setAdditionalCoverages(parsed);
+              } else {
+                localStorage.removeItem(`gl_additional_coverages_${customerId}_${policyId}`);
+                setAdditionalCoverages(initialAdditionalCoverages);
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Failed to load additional coverages from local storage", e);
+        }
+      }
     }
   }, [customerId, policyId]);
 
@@ -137,6 +238,66 @@ export default function GeneralLiabilityPage() {
     }
   };
 
+  // -- ADDITIONAL COVERAGES HANDLERS --
+  const handleUpdateAdditionalCoverage = (idx: number, field: string, val: string) => {
+    const updated = [...additionalCoverages];
+    updated[idx] = { ...updated[idx], [field]: val };
+    setAdditionalCoverages(updated);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(`gl_additional_coverages_${customerId}_${policyId}`, JSON.stringify(updated));
+    }
+  };
+
+  const handleAddRow = () => {
+    const newRow = {
+      id: `add-cov-${Date.now()}`,
+      coverage: "",
+      limit1: "",
+      ded: "",
+      dedType: "",
+      basis: "",
+      appliesTo: "",
+      premium: "",
+      sortOrder: ""
+    };
+    const updated = [...additionalCoverages, newRow];
+    setAdditionalCoverages(updated);
+    setSelectedRowIdx(updated.length - 1);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(`gl_additional_coverages_${customerId}_${policyId}`, JSON.stringify(updated));
+    }
+  };
+
+  const handleDeleteRow = (idx: number) => {
+    let updated = additionalCoverages.filter((_, i) => i !== idx);
+    if (updated.length === 0) {
+      updated = [{
+        id: `add-cov-${Date.now()}`,
+        coverage: "",
+        limit1: "",
+        ded: "",
+        dedType: "",
+        basis: "",
+        appliesTo: "",
+        premium: "",
+        sortOrder: ""
+      }];
+    }
+    setAdditionalCoverages(updated);
+    setSelectedRowIdx(Math.max(0, Math.min(idx, updated.length - 1)));
+    if (typeof window !== "undefined") {
+      localStorage.setItem(`gl_additional_coverages_${customerId}_${policyId}`, JSON.stringify(updated));
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedRowIdx !== null) {
+      handleDeleteRow(selectedRowIdx);
+    } else {
+      handleDeleteRow(additionalCoverages.length - 1);
+    }
+  };
+
   const handleSave = async () => {
     if (isSaving) return;
     setIsSaving(true);
@@ -150,6 +311,16 @@ export default function GeneralLiabilityPage() {
     
     setCoverages(newCoverages);
     setMode("view");
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem(`gl_additional_coverages_${customerId}_${policyId}`, JSON.stringify(additionalCoverages));
+      if (info.liabilityCoverageType === "Inland Marine") {
+        localStorage.setItem(`im_coverages_${customerId}_${policyId}`, JSON.stringify(newCoverages));
+        localStorage.setItem(`im_info_${customerId}_${policyId}`, JSON.stringify(info));
+      } else {
+        localStorage.setItem(`gl_coverages_${customerId}_${policyId}`, JSON.stringify(newCoverages));
+      }
+    }
 
     try {
       const token = localStorage.getItem("token");
@@ -177,12 +348,28 @@ export default function GeneralLiabilityPage() {
     }
   };
 
-  const COVERAGE_OPTIONS = [
+  const GL_COVERAGE_OPTIONS = [
     "2 Million Liab", "2+ Cov Forms Used by Us", "2009 FIGA Reg Assmt", "2orMoreCovFormUsedByUs",
     "A&E Extend", "AACS AFFILATION CR", "AAFPS AFFILIATION", "AbMol Cnsir ClssSpc",
     "Each Occurrence", "Fire Damage", "General Aggregate", "Medical Expense", 
     "Personal & Advertising Injury", "Products/Completed Ops Aggregate", "Self Ins Retention"
   ];
+
+  const IM_COVERAGE_OPTIONS = [
+    "Scheduled Equipment",
+    "Unscheduled Tools & Equipment",
+    "Leased / Rented Equipment",
+    "Newly Acquired Equipment",
+    "Total Insured Value",
+    "Installation Floater",
+    "Contractors Equipment",
+    "Builders Risk",
+    "Transit / Cargo",
+    "Electronic Data Processing",
+    "Miscellaneous Inland Marine"
+  ];
+
+  const COVERAGE_OPTIONS = info.liabilityCoverageType === "Inland Marine" ? IM_COVERAGE_OPTIONS : GL_COVERAGE_OPTIONS;
 
   const DED_TYPE_OPTIONS = [
     "", "Coinsurance", "Disappearing", "Dollars", "Flat", "Hours",
@@ -219,7 +406,9 @@ export default function GeneralLiabilityPage() {
             <Shield className="text-white size-5" />
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-base tracking-tight text-text-main leading-tight font-sans">General Liability</span>
+            <span className="font-bold text-base tracking-tight text-text-main leading-tight font-sans">
+              {info.liabilityCoverageType === "Inland Marine" ? "Inland Marine" : "General Liability"}
+            </span>
             <span className="text-[9px] uppercase tracking-wider text-primary font-bold leading-none mt-0.5">Line of Business Details</span>
           </div>
         </div>
@@ -293,17 +482,18 @@ export default function GeneralLiabilityPage() {
                 <select 
                   className={inputCls} 
                   value={info.liabilityCoverageType}
-                  onChange={e => setInfo({...info, liabilityCoverageType: e.target.value})}
+                  onChange={e => handleCoverageTypeChange(e.target.value)}
                 >
-                  <option>Commercial General Liability</option>
-                  <option>Contractual Liability</option>
-                  <option>Liquor Liability</option>
-                  <option>Manufacturers and Contractors</option>
-                  <option>Owners & Contractors Protective</option>
-                  <option>Owners, Landlord and Tenants</option>
-                  <option>Pollution Liability</option>
-                  <option>Prod/Completed Operations Liab</option>
-                  <option>Railroad Protective Liability</option>
+                  <option value="Commercial General Liability">Commercial General Liability</option>
+                  <option value="Inland Marine">Inland Marine</option>
+                  <option value="Contractual Liability">Contractual Liability</option>
+                  <option value="Liquor Liability">Liquor Liability</option>
+                  <option value="Manufacturers and Contractors">Manufacturers and Contractors</option>
+                  <option value="Owners & Contractors Protective">Owners & Contractors Protective</option>
+                  <option value="Owners, Landlord and Tenants">Owners, Landlord and Tenants</option>
+                  <option value="Pollution Liability">Pollution Liability</option>
+                  <option value="Prod/Completed Operations Liab">Prod/Completed Operations Liab</option>
+                  <option value="Railroad Protective Liability">Railroad Protective Liability</option>
                 </select>
               </div>
 
@@ -380,14 +570,14 @@ export default function GeneralLiabilityPage() {
             <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
                 <tr className="bg-slate-50 border-b border-border-main text-[10px] text-slate-500 uppercase tracking-wider font-extrabold">
-                  <th className="px-3 py-2 border-r border-border-main/50">Coverage</th>
-                  <th className="px-3 py-2 border-r border-border-main/50">Limit 1</th>
-                  <th className="px-3 py-2 border-r border-border-main/50">Deductible</th>
-                  <th className="px-3 py-2 border-r border-border-main/50">Deductible Type</th>
-                  <th className="px-3 py-2 border-r border-border-main/50">Basis</th>
-                  <th className="px-3 py-2 border-r border-border-main/50">Applies To</th>
-                  <th className="px-3 py-2 border-r border-border-main/50">Premium</th>
-                  <th className="px-3 py-2 text-center">Sort #</th>
+                  <th className="px-3 py-2 border-r border-border-main/50">COVERAGE</th>
+                  <th className="px-3 py-2 border-r border-border-main/50">LIMIT 1</th>
+                  <th className="px-3 py-2 border-r border-border-main/50">DEDUCTIBLE</th>
+                  <th className="px-3 py-2 border-r border-border-main/50">DEDUCTIBLE TYPE</th>
+                  <th className="px-3 py-2 border-r border-border-main/50">BASIS</th>
+                  <th className="px-3 py-2 border-r border-border-main/50">APPLIES TO</th>
+                  <th className="px-3 py-2 border-r border-border-main/50">PREMIUM</th>
+                  <th className="px-3 py-2 text-center">SORT #</th>
                 </tr>
               </thead>
               <tbody className="text-xs text-text-main font-semibold bg-white">
@@ -577,6 +767,151 @@ export default function GeneralLiabilityPage() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Panel 2: Additional Coverages */}
+        <div className={panelContainerCls + " overflow-hidden"}>
+          <div className={panelHeaderCls + " justify-between"}>
+            <div className="flex items-center gap-2">
+              <ShieldCheck size={15} className="text-primary" />
+              <span>Additional Coverages</span>
+            </div>
+            <div className="flex items-center gap-4 text-[10px] font-extrabold uppercase tracking-widest text-slate-500">
+              <button 
+                type="button"
+                onClick={handleAddRow} 
+                className="hover:text-primary transition-colors cursor-pointer flex items-center gap-1"
+              >
+                <Plus size={11} className="stroke-[3]" /> Add
+              </button>
+              <button 
+                type="button"
+                onClick={handleDeleteSelected} 
+                disabled={selectedRowIdx === null} 
+                className={`transition-colors cursor-pointer flex items-center gap-1 ${selectedRowIdx === null ? "text-slate-300 cursor-not-allowed" : "hover:text-danger"}`}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse whitespace-nowrap">
+              <thead>
+                <tr className="bg-slate-50 border-b border-border-main text-[10px] text-slate-500 uppercase tracking-wider font-extrabold">
+                  <th className="px-3 py-2.5 border-r border-border-main/50">COVERAGE</th>
+                  <th className="px-3 py-2.5 border-r border-border-main/50 w-36">LIMIT 1</th>
+                  <th className="px-3 py-2.5 border-r border-border-main/50 w-28">DEDUCTIBLE</th>
+                  <th className="px-3 py-2.5 border-r border-border-main/50 w-36">DEDUCTIBLE TYPE</th>
+                  <th className="px-3 py-2.5 border-r border-border-main/50 w-28">BASIS</th>
+                  <th className="px-3 py-2.5 border-r border-border-main/50 w-32">APPLIES TO</th>
+                  <th className="px-3 py-2.5 border-r border-border-main/50 w-32">PREMIUM</th>
+                  <th className="px-3 py-2.5 text-center w-20">SORT #</th>
+                  <th className="px-2 py-2.5 text-center w-10"></th>
+                </tr>
+              </thead>
+              <tbody className="text-xs text-text-main font-semibold bg-white divide-y divide-border-main/40">
+                {additionalCoverages.map((row, i) => (
+                  <tr 
+                    key={row.id || i}
+                    onClick={() => setSelectedRowIdx(i)}
+                    className={`transition-colors ${selectedRowIdx === i ? 'bg-primary/5' : 'hover:bg-slate-50/60'}`}
+                  >
+                    <td className="p-1.5 border-r border-border-main/40">
+                      <input 
+                        type="text" 
+                        value={row.coverage} 
+                        onChange={e => handleUpdateAdditionalCoverage(i, "coverage", e.target.value)} 
+                        className="w-full h-8 px-2.5 text-xs font-semibold bg-white border border-border-main/60 rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all text-text-main"
+                      />
+                    </td>
+                    <td className="p-1.5 border-r border-border-main/40">
+                      <input 
+                        type="text" 
+                        value={row.limit1} 
+                        onChange={e => handleUpdateAdditionalCoverage(i, "limit1", e.target.value)} 
+                        className="w-full h-8 px-2.5 text-xs font-semibold bg-white border border-border-main/60 rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all text-text-main"
+                      />
+                    </td>
+                    <td className="p-1.5 border-r border-border-main/40">
+                      <input 
+                        type="text" 
+                        value={row.ded} 
+                        onChange={e => handleUpdateAdditionalCoverage(i, "ded", e.target.value)} 
+                        className="w-full h-8 px-2.5 text-xs font-semibold bg-white border border-border-main/60 rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all text-text-main"
+                      />
+                    </td>
+                    <td className="p-1.5 border-r border-border-main/40">
+                      <input 
+                        type="text" 
+                        value={row.dedType} 
+                        onChange={e => handleUpdateAdditionalCoverage(i, "dedType", e.target.value)} 
+                        className="w-full h-8 px-2.5 text-xs font-semibold bg-white border border-border-main/60 rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all text-text-main"
+                      />
+                    </td>
+                    <td className="p-1.5 border-r border-border-main/40">
+                      <input 
+                        type="text" 
+                        value={row.basis} 
+                        onChange={e => handleUpdateAdditionalCoverage(i, "basis", e.target.value)} 
+                        className="w-full h-8 px-2.5 text-xs font-semibold bg-white border border-border-main/60 rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all text-text-main"
+                      />
+                    </td>
+                    <td className="p-1.5 border-r border-border-main/40">
+                      <input 
+                        type="text" 
+                        value={row.appliesTo} 
+                        onChange={e => handleUpdateAdditionalCoverage(i, "appliesTo", e.target.value)} 
+                        className="w-full h-8 px-2.5 text-xs font-semibold bg-white border border-border-main/60 rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all text-text-main"
+                      />
+                    </td>
+                    <td className="p-1.5 border-r border-border-main/40">
+                      <input 
+                        type="text" 
+                        value={row.premium} 
+                        onChange={e => handleUpdateAdditionalCoverage(i, "premium", e.target.value)} 
+                        className="w-full h-8 px-2.5 text-xs font-semibold bg-white border border-border-main/60 rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all text-text-main"
+                      />
+                    </td>
+                    <td className="p-1.5 text-center">
+                      <input 
+                        type="text" 
+                        value={row.sortOrder} 
+                        onChange={e => handleUpdateAdditionalCoverage(i, "sortOrder", e.target.value)} 
+                        className="w-12 mx-auto h-8 text-center text-xs font-semibold bg-white border border-border-main/60 rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all text-text-main"
+                      />
+                    </td>
+                    <td className="p-1.5 text-center">
+                      <button 
+                        type="button" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteRow(i);
+                        }} 
+                        className="p-1.5 text-slate-400 hover:text-danger hover:bg-danger/10 rounded-lg transition-all cursor-pointer"
+                        title="Delete line"
+                      >
+                        <X size={14} className="stroke-[2.5]" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="p-3 bg-slate-50/60 border-t border-border-main/50 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={handleAddRow}
+              className="h-8 px-3 bg-white border border-border-main text-primary hover:bg-secondary/40 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
+            >
+              <Plus size={13} className="stroke-[2.5]" /> Add Line
+            </button>
+            <span className="text-[10px] font-semibold text-slate-400">
+              {additionalCoverages.length} {additionalCoverages.length === 1 ? 'line' : 'lines'}
+            </span>
+          </div>
         </div>
       </div>
     </div>

@@ -80,6 +80,50 @@ export default function CustomerPoliciesPage() {
     return p.type || "Commercial Lines";
   };
 
+  // Helper to format date to US format: MM/DD/YYYY
+  const formatUSDate = (dateStr?: string | null): string => {
+    if (!dateStr) return "—";
+    const str = String(dateStr).trim();
+    if (!str || str === "—" || str === "N/A") return str;
+
+    // Already MM/DD/YYYY
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+      return str;
+    }
+    // M/D/YYYY or MM/D/YYYY or M/DD/YYYY
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
+      const [m, d, y] = str.split("/");
+      return `${m.padStart(2, "0")}/${d.padStart(2, "0")}/${y}`;
+    }
+
+    // YYYY-MM-DD or YYYY/MM/DD
+    const ymdMatch = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (ymdMatch) {
+      const [, year, month, day] = ymdMatch;
+      return `${month.padStart(2, "0")}/${day.padStart(2, "0")}/${year}`;
+    }
+
+    // MM-DD-YYYY
+    const mdyMatch = str.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);
+    if (mdyMatch) {
+      const [, month, day, year] = mdyMatch;
+      return `${month.padStart(2, "0")}/${day.padStart(2, "0")}/${year}`;
+    }
+
+    // Fallback Date parser
+    try {
+      const d = new Date(str);
+      if (!isNaN(d.getTime())) {
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        const year = d.getFullYear();
+        return `${month}/${day}/${year}`;
+      }
+    } catch {}
+
+    return str;
+  };
+
   // ── Fetch Customer Data ──
   const fetchCustomer = useCallback(async () => {
     if (!customerId) return;
@@ -129,8 +173,8 @@ export default function CustomerPoliciesPage() {
             lineOfBusiness: lobDisplay,
             company: p.company || "ISC, Brokerage Company, ISC",
             description: p.description || "Comprehensive General Liability Insurance Coverage",
-            effDate: p.eff_date || "2026-10-28",
-            expDate: p.exp_date || "2027-10-28",
+            effDate: formatUSDate(p.eff_date || "2026-10-28"),
+            expDate: formatUSDate(p.exp_date || "2027-10-28"),
             cost: p.cost || "$3,304.03",
           };
         });
@@ -634,12 +678,12 @@ export default function CustomerPoliciesPage() {
 
                               {/* Effective Date */}
                               <td className="px-4 py-4 text-[#4a423b] font-medium whitespace-nowrap">
-                                {p.effDate}
+                                {formatUSDate(p.effDate)}
                               </td>
 
                               {/* Expiration Date */}
                               <td className="px-4 py-4 text-[#4a423b] font-medium whitespace-nowrap">
-                                {p.expDate}
+                                {formatUSDate(p.expDate)}
                               </td>
                             </tr>
                           );
