@@ -34,6 +34,10 @@ export default function PolicyDetailPage() {
 
   const [customer, setCustomer] = useState<any>(null);
   const [policy, setPolicy] = useState<any>(null);
+  const [originalPolicy, setOriginalPolicy] = useState<any>(null);
+  const [isEditable, setIsEditable] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [toast, setToast] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isAddingLob, setIsAddingLob] = useState(false);
@@ -49,11 +53,21 @@ export default function PolicyDetailPage() {
     sort: "1"
   });
 
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    basic: true,
+    lob: true,
+  });
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   const LOB_OPTIONS: Record<string, string[]> = {
     "Commercial Lines": [
@@ -176,6 +190,7 @@ export default function PolicyDetailPage() {
         }
 
         setPolicy(match);
+        setOriginalPolicy(JSON.parse(JSON.stringify(match)));
         setLobs(match.lobs || (storedLobs.length > 0 ? storedLobs : []));
         const matchedWritingCo = match?.writing_company || match?.writingCompany || match?.company || "";
         setNewLob(prev => ({
@@ -228,7 +243,10 @@ export default function PolicyDetailPage() {
 
   // Standard CSS classes for reuse
   const labelCls = "block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1 truncate";
-  const inputCls = "w-full h-9 px-3 bg-white border border-border-main text-xs font-semibold rounded-xl shadow-sm outline-none text-text-main focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all truncate";
+  const baseInputCls = "w-full h-9 px-3 text-xs font-semibold rounded-xl outline-none transition-all truncate";
+  const readOnlyInputCls = `${baseInputCls} bg-white border border-border-main text-text-main cursor-default`;
+  const editableInputCls = `${baseInputCls} bg-white border-primary/50 text-text-main focus:border-primary focus:ring-2 focus:ring-primary/20 hover:border-primary shadow-xs`;
+  const inputCls = isEditable ? editableInputCls : readOnlyInputCls;
 
   // Collapsible headers
   const panelHeaderCls = "w-full px-5 py-3.5 bg-secondary/20 flex items-center justify-between text-xs font-bold text-primary cursor-pointer hover:bg-secondary/30 transition-colors";
@@ -236,6 +254,184 @@ export default function PolicyDetailPage() {
 
   const btnCls = "h-8 px-3.5 bg-white border-border-main text-text-main hover:bg-secondary/60 hover:text-primary text-xs font-bold rounded-xl transition-all cursor-pointer active:scale-[0.98] border shadow-sm flex items-center gap-1.5";
   const btnPrimaryCls = "h-8 px-3.5 bg-primary border-primary text-white shadow-primary/20 hover:bg-primary/95 text-xs font-bold rounded-xl transition-all cursor-pointer active:scale-[0.98] border shadow-sm flex items-center gap-1.5";
+
+  const POLICY_FLAGS = [
+    { key: "is_continuous", label: "Continuous" },
+    { key: "is_reinsurance", label: "Reinsurance" },
+    { key: "is_not_renewable", label: "Not Renewable" },
+    { key: "auditable", label: "Auditable" },
+    { key: "premium_financed", label: "Premium Financed" },
+    { key: "business_new_to_agency", label: "Business New to Agency" },
+    { key: "exclude_from_download", label: "Exclude from Download" },
+    { key: "exclude_from_purge", label: "Exclude from Purge" },
+    { key: "filter_data_entry", label: "Filter Data Entry" }
+  ];
+
+  const handlePolicyChange = (field: string, value: any) => {
+    setPolicy((prev: any) => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleEndorse = () => {
+    if (!isEditable) {
+      if (!originalPolicy && policy) {
+        setOriginalPolicy(JSON.parse(JSON.stringify(policy)));
+      }
+      setIsEditable(true);
+      // Auto-set transaction to "Endorsement" if empty or new business
+      setPolicy((prev: any) => ({
+        ...prev,
+        transaction: (prev?.transaction === "New business" || !prev?.transaction) ? "Endorsement" : prev.transaction
+      }));
+      setExpandedSections(prev => ({ ...prev, basic: true, lob: true }));
+      setToast({ text: "Endorsement mode active. All policy values are now editable.", type: "info" });
+    } else {
+      setIsEditable(false);
+      setToast({ text: "Endorsement mode deactivated.", type: "info" });
+    }
+  };
+
+  const handleSavePolicy = async () => {
+    setIsSaving(true);
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const updatedPolicy = {
+        ...policy,
+        lobs: lobs
+      };
+
+      // 1. Update localStorage cache so all views reflect instantly
+      if (typeof window !== "undefined" && customerId) {
+        const storedPoliciesStr = localStorage.getItem(`policies_${customerId}`);
+        if (storedPoliciesStr) {
+          try {
+            const storedPolicies = JSON.parse(storedPoliciesStr);
+            const pIndex = storedPolicies.findIndex((p: any) => p.id?.toString() === policyId?.toString());
+            if (pIndex !== -1) {
+              storedPolicies[pIndex] = { ...storedPolicies[pIndex], ...updatedPolicy };
+              localStorage.setItem(`policies_${customerId}`, JSON.stringify(storedPolicies));
+            } else {
+              storedPolicies.push(updatedPolicy);
+              localStorage.setItem(`policies_${customerId}`, JSON.stringify(storedPolicies));
+            }
+            window.dispatchEvent(new Event("storage"));
+          } catch (e) {
+            console.error("Local storage error:", e);
+          }
+        }
+      }
+
+      // 2. Persist to Backend API
+      if (customerId && policyId && !policyId.toString().startsWith("lob-")) {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${policyId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(updatedPolicy)
+          });
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            console.warn("Backend update response warning:", errData);
+          }
+        } catch (backendErr) {
+          console.warn("Backend fetch failed, stored locally:", backendErr);
+        }
+      }
+
+      // 3. Log activity
+      logLobActivity(
+        "Policy Endorsement",
+        `Policy #${policy.policy_num || policyId} endorsed (${policy.transaction || "Endorsement"}) - ${policy.description || "Details updated"}`
+      );
+
+      // 4. Update original reference & exit edit mode
+      setOriginalPolicy(JSON.parse(JSON.stringify(updatedPolicy)));
+      setIsEditable(false);
+      setToast({ text: "Policy endorsed and saved successfully!", type: "success" });
+    } catch (err: any) {
+      console.error("Save error:", err);
+      setToast({ text: err.message || "Failed to save policy endorsement.", type: "error" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveAndClose = async () => {
+    await handleSavePolicy();
+    setTimeout(() => {
+      window.close();
+    }, 600);
+  };
+
+  const handleCancel = () => {
+    if (isEditable) {
+      if (originalPolicy) {
+        setPolicy(JSON.parse(JSON.stringify(originalPolicy)));
+        if (originalPolicy.lobs) setLobs(JSON.parse(JSON.stringify(originalPolicy.lobs)));
+      }
+      setIsEditable(false);
+      setToast({ text: "Endorsement changes discarded.", type: "info" });
+    } else {
+      window.close();
+    }
+  };
+
+  const handleRenew = () => {
+    setIsEditable(true);
+    setPolicy((prev: any) => {
+      let newEff = prev.exp_date || prev.eff_date;
+      let newExp = "";
+      if (newEff && /^\d{4}-\d{2}-\d{2}$/.test(newEff)) {
+        const d = new Date(newEff);
+        d.setFullYear(d.getFullYear() + 1);
+        newExp = d.toISOString().split("T")[0];
+      }
+      return {
+        ...prev,
+        transaction: "Renewal",
+        eff_date: newEff || prev.eff_date,
+        exp_date: newExp || prev.exp_date
+      };
+    });
+    setExpandedSections(prev => ({ ...prev, basic: true, lob: true }));
+    setToast({ text: "Renewal mode active. Review updated dates and click Save.", type: "info" });
+  };
+
+  const handleCancelPolicy = async () => {
+    const confirmed = window.confirm("Are you sure you want to cancel this policy?");
+    if (!confirmed) return;
+
+    const updated = {
+      ...policy,
+      status: "Cancelled",
+      carrier_status: "Cancelled",
+      transaction: "Cancellation"
+    };
+    setPolicy(updated);
+
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      if (customerId && policyId && !policyId.toString().startsWith("lob-")) {
+        await fetch(`${API_BASE_URL}/api/customers/${customerId}/policies/${policyId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(updated)
+        });
+      }
+      logLobActivity("Policy Cancelled", `Policy #${policy.policy_num || policyId} was cancelled.`);
+      setToast({ text: "Policy cancelled successfully.", type: "info" });
+    } catch (e) {
+      console.error("Cancellation error:", e);
+    }
+  };
 
   const saveLobsToBackendAndLocal = async (updatedLobs: any[]) => {
     try {
@@ -418,30 +614,88 @@ export default function PolicyDetailPage() {
 
       {/* ── 2. Action Toolbar ── */}
       <div className="bg-white border-b border-border-main px-4 sm:px-6 py-3 flex items-center gap-2.5 shrink-0 shadow-sm sticky top-16 z-40 overflow-x-auto">
-        <button className={btnPrimaryCls}>
-          <Save size={13} className="stroke-[2.5]" /> Save
-        </button>
         <button
-          onClick={() => window.close()}
+          onClick={handleSavePolicy}
+          disabled={!isEditable || isSaving}
+          className={`${
+            isEditable
+              ? btnPrimaryCls
+              : "h-8 px-3.5 bg-slate-100 border-slate-200 text-slate-400 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-not-allowed border shadow-xs"
+          }`}
+          title={isEditable ? "Save endorsement changes" : "Click Endorse to edit and save"}
+        >
+          {isSaving ? (
+            <RefreshCw size={13} className="animate-spin stroke-[2.5]" />
+          ) : (
+            <Save size={13} className="stroke-[2.5]" />
+          )}
+          {isSaving ? "Saving..." : "Save"}
+        </button>
+
+        <button
+          onClick={handleSaveAndClose}
+          disabled={isSaving}
           className={btnCls}
+          title="Save changes and close window"
         >
           <Check size={13} /> Save & Close
         </button>
+
         <button
-          onClick={() => window.close()}
+          onClick={handleCancel}
           className={btnCls}
+          title={isEditable ? "Discard endorsement changes" : "Close window"}
         >
-          <X size={13} /> Cancel
+          <X size={13} /> {isEditable ? "Cancel Edit" : "Cancel"}
         </button>
 
         <div className="h-5 w-px bg-border-main mx-1"></div>
 
-        <button className={btnCls}>✦ Endorse</button>
-        <button className={btnCls}>↻ Renew</button>
-        <button className="h-8 px-3.5 bg-white border-danger/40 text-danger hover:bg-danger/5 text-xs font-bold rounded-xl transition-all cursor-pointer active:scale-[0.98] border shadow-sm ml-auto shrink-0">
+        <button
+          onClick={handleEndorse}
+          className={`${btnCls} ${
+            isEditable
+              ? "bg-amber-500 text-white border-amber-600 hover:bg-amber-600 shadow-sm shadow-amber-500/20 font-extrabold"
+              : "hover:bg-primary/10 hover:text-primary hover:border-primary/30"
+          }`}
+          title="Click to enable editing on all policy values"
+        >
+          ✦ {isEditable ? "Endorsing (Active)" : "Endorse"}
+        </button>
+
+        <button
+          onClick={handleRenew}
+          className={btnCls}
+          title="Renew policy"
+        >
+          ↻ Renew
+        </button>
+
+        <button
+          onClick={handleCancelPolicy}
+          className="h-8 px-3.5 bg-white border-danger/40 text-danger hover:bg-danger/5 text-xs font-bold rounded-xl transition-all cursor-pointer active:scale-[0.98] border shadow-sm ml-auto shrink-0"
+          title="Cancel Policy"
+        >
           ✕ Cancel Policy
         </button>
       </div>
+
+      {/* ── Endorsement Active Banner ── */}
+      {isEditable && (
+        <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3 text-amber-900 text-xs font-semibold animate-in fade-in duration-200 sticky top-28 z-30 backdrop-blur-md">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+            <span className="font-extrabold uppercase tracking-wider text-[11px] text-amber-950">Endorsement Mode Active</span>
+            <span className="hidden sm:inline text-amber-800 text-[11px] font-medium">— All policy values are now editable. Make your revisions and click <strong>Save</strong> or <strong>Save & Close</strong>.</span>
+          </div>
+          <button
+            onClick={handleCancel}
+            className="text-[11px] font-bold text-amber-800 hover:text-amber-950 hover:underline cursor-pointer shrink-0"
+          >
+            Discard Changes
+          </button>
+        </div>
+      )}
 
       <div className="max-w-6xl mx-auto px-3 sm:px-6 mt-4 sm:mt-8 space-y-6 w-full">
 
@@ -449,15 +703,51 @@ export default function PolicyDetailPage() {
         <div className="bg-white border border-border-main rounded-2xl p-4 sm:p-6 shadow-sm grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-5 items-end">
           <div>
             <label className={labelCls}>Effective Date</label>
-            <input type="text" readOnly value={policy.eff_date || "—"} className={inputCls} />
+            <input
+              type="text"
+              value={isEditable ? (policy.eff_date ?? "") : (policy.eff_date || "—")}
+              onChange={(e) => handlePolicyChange("eff_date", e.target.value)}
+              readOnly={!isEditable}
+              placeholder={isEditable ? "YYYY-MM-DD" : "—"}
+              className={inputCls}
+            />
           </div>
           <div>
             <label className={labelCls}>Transaction</label>
-            <input type="text" readOnly value={policy.transaction || "New business"} className={inputCls} />
+            {isEditable ? (
+              <select
+                value={policy.transaction || "Endorsement"}
+                onChange={(e) => handlePolicyChange("transaction", e.target.value)}
+                className={inputCls}
+              >
+                <option value="Endorsement">Endorsement</option>
+                <option value="Policy Change">Policy Change</option>
+                <option value="New business">New business</option>
+                <option value="Renewal">Renewal</option>
+                <option value="Rewrite">Rewrite</option>
+                <option value="Reinstatement">Reinstatement</option>
+                <option value="Cancellation">Cancellation</option>
+                <option value="Audit">Audit</option>
+              </select>
+            ) : (
+              <input
+                type="text"
+                readOnly
+                value={policy.transaction || "New business"}
+                className={inputCls}
+              />
+            )}
           </div>
           <div className="md:col-span-2">
             <label className={labelCls}>Description</label>
-            <input type="text" readOnly value={policy.description || "Policy Details View"} className={inputCls} />
+            <input
+              type="text"
+              value={isEditable ? (policy.description ?? "") : (policy.description || "Policy Details View")}
+              onChange={(e) => handlePolicyChange("description", e.target.value)}
+              readOnly={!isEditable}
+              placeholder={isEditable ? "Policy description..." : "—"}
+              className={inputCls}
+            />
           </div>
         </div>
 
@@ -479,79 +769,285 @@ export default function PolicyDetailPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-5">
                   <div>
                     <span className={labelCls}>Policy Number</span>
-                    <input type="text" readOnly value={policy.policy_num || "—"} className={inputCls} />
+                    <input
+                      type="text"
+                      value={isEditable ? (policy.policy_num ?? "") : (policy.policy_num || "—")}
+                      onChange={(e) => handlePolicyChange("policy_num", e.target.value)}
+                      readOnly={!isEditable}
+                      placeholder={isEditable ? "Policy number..." : "—"}
+                      className={inputCls}
+                    />
                   </div>
                   <div>
                     <span className={labelCls}>Issue State</span>
-                    <input type="text" readOnly value={policy.issue_state || "FL"} className={inputCls} />
+                    <input
+                      type="text"
+                      value={isEditable ? (policy.issue_state ?? "") : (policy.issue_state || "FL")}
+                      onChange={(e) => handlePolicyChange("issue_state", e.target.value)}
+                      readOnly={!isEditable}
+                      placeholder={isEditable ? "State (e.g. CA, FL)" : "—"}
+                      className={inputCls}
+                    />
                   </div>
                   <div>
                     <span className={labelCls}>Type of Business</span>
-                    <input type="text" readOnly value={policy.business_type || policy.type || "Commercial Lines"} className={inputCls} />
+                    {isEditable ? (
+                      <select
+                        value={policy.business_type || policy.type || "Commercial Lines"}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          handlePolicyChange("business_type", val);
+                          handlePolicyChange("type", val);
+                        }}
+                        className={inputCls}
+                      >
+                        {Object.keys(LOB_OPTIONS).map((opt) => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        readOnly
+                        value={policy.business_type || policy.type || "Commercial Lines"}
+                        className={inputCls}
+                      />
+                    )}
                   </div>
                   <div>
                     <span className={labelCls}>Status</span>
-                    <div className="h-9 flex items-center">
-                      <span className="text-xs font-bold text-success px-2 py-1 bg-success/10 rounded-md border border-success/20">{policy.status || "Active"}</span>
-                    </div>
+                    {isEditable ? (
+                      <select
+                        value={policy.status || "Active"}
+                        onChange={(e) => handlePolicyChange("status", e.target.value)}
+                        className={inputCls}
+                      >
+                        <option value="Active">Active</option>
+                        <option value="Pending">Pending</option>
+                        <option value="In Force">In Force</option>
+                        <option value="Cancelled">Cancelled</option>
+                        <option value="Expired">Expired</option>
+                        <option value="Non-Renewed">Non-Renewed</option>
+                      </select>
+                    ) : (
+                      <div className="h-9 flex items-center">
+                        <span className={`text-xs font-bold px-2 py-1 rounded-md border ${
+                          policy.status === "Cancelled"
+                            ? "text-danger bg-danger/10 border-danger/20"
+                            : policy.status === "Pending"
+                            ? "text-amber-600 bg-amber-500/10 border-amber-500/20"
+                            : "text-success bg-success/10 border-success/20"
+                        }`}>
+                          {policy.status || "Active"}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div>
                     <span className={labelCls}>Carrier Status</span>
-                    <input type="text" readOnly value={policy.carrier_status || "Active"} className={inputCls} />
+                    {isEditable ? (
+                      <select
+                        value={policy.carrier_status || "Active"}
+                        onChange={(e) => handlePolicyChange("carrier_status", e.target.value)}
+                        className={inputCls}
+                      >
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        readOnly
+                        value={policy.carrier_status || "Active"}
+                        className={inputCls}
+                      />
+                    )}
                   </div>
                   <div>
                     <span className={labelCls}>Policy Type</span>
-                    <input type="text" readOnly value={policy.type || "BOP"} className={inputCls} />
+                    <input
+                      type="text"
+                      value={isEditable ? (policy.type ?? "") : (policy.type || "Commercial Lines")}
+                      onChange={(e) => handlePolicyChange("type", e.target.value)}
+                      readOnly={!isEditable}
+                      placeholder={isEditable ? "Policy type..." : "—"}
+                      className={inputCls}
+                    />
                   </div>
                   <div>
                     <span className={labelCls}>Prior Policy</span>
-                    <input type="text" readOnly value={policy.prior_policy || "—"} className={inputCls} />
+                    <input
+                      type="text"
+                      value={isEditable ? (policy.prior_policy ?? "") : (policy.prior_policy || "—")}
+                      onChange={(e) => handlePolicyChange("prior_policy", e.target.value)}
+                      readOnly={!isEditable}
+                      placeholder={isEditable ? "Prior policy #..." : "—"}
+                      className={inputCls}
+                    />
                   </div>
                   <div>
                     <span className={labelCls}>Renewal List</span>
-                    <input type="text" readOnly value={policy.renewal_list || "At expiration"} className={inputCls} />
+                    {isEditable ? (
+                      <select
+                        value={policy.renewal_list || "At expiration"}
+                        onChange={(e) => handlePolicyChange("renewal_list", e.target.value)}
+                        className={inputCls}
+                      >
+                        <option value="At expiration">At expiration</option>
+                        <option value="Do not renew">Do not renew</option>
+                        <option value="Auto renew">Auto renew</option>
+                        <option value="Renew with changes">Renew with changes</option>
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        readOnly
+                        value={policy.renewal_list || "At expiration"}
+                        className={inputCls}
+                      />
+                    )}
                   </div>
 
                   <div>
                     <span className={labelCls}>Renewal/Term</span>
-                    <input type="text" readOnly value={policy.term || "12 Months"} className={inputCls} />
+                    {isEditable ? (
+                      <select
+                        value={policy.term || "12 Months"}
+                        onChange={(e) => handlePolicyChange("term", e.target.value)}
+                        className={inputCls}
+                      >
+                        <option value="12 Months">12 Months</option>
+                        <option value="6 Months">6 Months</option>
+                        <option value="1 Month">1 Month</option>
+                        <option value="3 Months">3 Months</option>
+                        <option value="1 Year">1 Year</option>
+                        <option value="Continuous">Continuous</option>
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        readOnly
+                        value={policy.term || "12 Months"}
+                        className={inputCls}
+                      />
+                    )}
                   </div>
                   <div>
                     <span className={labelCls}>Notation</span>
-                    <input type="text" readOnly value={policy.notation || "—"} className={inputCls} />
+                    <input
+                      type="text"
+                      value={isEditable ? (policy.notation ?? "") : (policy.notation || "—")}
+                      onChange={(e) => handlePolicyChange("notation", e.target.value)}
+                      readOnly={!isEditable}
+                      placeholder={isEditable ? "Notation notes..." : "—"}
+                      className={inputCls}
+                    />
                   </div>
                   <div>
                     <span className={labelCls}>Description</span>
-                    <input type="text" readOnly value={policy.description || "CGL"} className={inputCls} />
+                    <input
+                      type="text"
+                      value={isEditable ? (policy.description ?? "") : (policy.description || "CGL")}
+                      onChange={(e) => handlePolicyChange("description", e.target.value)}
+                      readOnly={!isEditable}
+                      placeholder={isEditable ? "Description..." : "—"}
+                      className={inputCls}
+                    />
                   </div>
                   <div>
                     <span className={labelCls}>Origin</span>
-                    <input type="text" readOnly value={policy.origin || "Data entry"} className={inputCls} />
+                    {isEditable ? (
+                      <select
+                        value={policy.origin || "Data entry"}
+                        onChange={(e) => handlePolicyChange("origin", e.target.value)}
+                        className={inputCls}
+                      >
+                        <option value="Data entry">Data entry</option>
+                        <option value="Download">Download</option>
+                        <option value="Bridge">Bridge</option>
+                        <option value="Manual">Manual</option>
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        readOnly
+                        value={policy.origin || "Data entry"}
+                        className={inputCls}
+                      />
+                    )}
                   </div>
 
                   <div>
                     <span className={labelCls}>Frequency</span>
-                    <input type="text" readOnly value={policy.frequency || "—"} className={inputCls} />
+                    <input
+                      type="text"
+                      value={isEditable ? (policy.frequency ?? "") : (policy.frequency || "—")}
+                      onChange={(e) => handlePolicyChange("frequency", e.target.value)}
+                      readOnly={!isEditable}
+                      placeholder={isEditable ? "e.g. Annual, Monthly" : "—"}
+                      className={inputCls}
+                    />
                   </div>
                   <div>
                     <span className={labelCls}>Signature on App</span>
-                    <input type="text" readOnly value={policy.signature_on_app || "—"} className={inputCls} />
+                    {isEditable ? (
+                      <select
+                        value={policy.signature_on_app || "No"}
+                        onChange={(e) => handlePolicyChange("signature_on_app", e.target.value)}
+                        className={inputCls}
+                      >
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                        <option value="Electronic">Electronic</option>
+                        <option value="Waived">Waived</option>
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        readOnly
+                        value={policy.signature_on_app || "—"}
+                        className={inputCls}
+                      />
+                    )}
                   </div>
                   <div>
                     <span className={labelCls}>Location</span>
-                    <input type="text" readOnly value={policy.location || "—"} className={inputCls} />
+                    <input
+                      type="text"
+                      value={isEditable ? (policy.location ?? "") : (policy.location || "—")}
+                      onChange={(e) => handlePolicyChange("location", e.target.value)}
+                      readOnly={!isEditable}
+                      placeholder={isEditable ? "Location / Territory..." : "—"}
+                      className={inputCls}
+                    />
                   </div>
-                  <div className="col-span-1 md:col-span-1 flex items-center gap-2 flex-wrap">
-                    {renderBadge(policy.is_continuous, "Continuous")}
-                    {renderBadge(policy.is_reinsurance, "Reinsurance")}
-                    {renderBadge(policy.is_not_renewable, "Not Renewable")}
-                    {renderBadge(policy.auditable, "Auditable")}
-                    {renderBadge(policy.premium_financed, "Premium Financed")}
-                    {renderBadge(policy.business_new_to_agency, "Business New to Agency")}
-                    {renderBadge(policy.exclude_from_download, "Exclude from Download")}
-                    {renderBadge(policy.exclude_from_purge, "Exclude from Purge")}
-                    {renderBadge(policy.filter_data_entry, "Filter Data Entry")}
+                  <div className="col-span-1 md:col-span-1 flex items-center gap-1.5 flex-wrap">
+                    {isEditable ? (
+                      POLICY_FLAGS.map((flag) => {
+                        const active = Boolean(policy[flag.key]);
+                        return (
+                          <button
+                            key={flag.key}
+                            type="button"
+                            onClick={() => handlePolicyChange(flag.key, !active)}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-lg border transition-all cursor-pointer ${
+                              active
+                                ? "bg-primary text-white border-primary shadow-xs"
+                                : "bg-slate-100 hover:bg-slate-200 text-slate-500 border-slate-200"
+                            }`}
+                            title={`Click to toggle ${flag.label}`}
+                          >
+                            <Check size={11} className={active ? "stroke-[3] opacity-100" : "opacity-30 stroke-[2]"} />
+                            {flag.label}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      POLICY_FLAGS.map((flag) => renderBadge(Boolean(policy[flag.key]), flag.label))
+                    )}
                   </div>
                 </div>
 
@@ -560,19 +1056,62 @@ export default function PolicyDetailPage() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div>
                       <span className={labelCls}>Company Type</span>
-                      <input type="text" readOnly value={policy.company_type || "Insurance"} className={inputCls} />
+                      {isEditable ? (
+                        <select
+                          value={policy.company_type || "Insurance"}
+                          onChange={(e) => handlePolicyChange("company_type", e.target.value)}
+                          className={inputCls}
+                        >
+                          <option value="Insurance">Insurance</option>
+                          <option value="Brokerage">Brokerage</option>
+                          <option value="Wholesaler">Wholesaler</option>
+                          <option value="Managing General Agent">Managing General Agent</option>
+                          <option value="Direct Writer">Direct Writer</option>
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          readOnly
+                          value={policy.company_type || "Insurance"}
+                          className={inputCls}
+                        />
+                      )}
                     </div>
                     <div>
                       <span className={labelCls}>Parent Company</span>
-                      <input type="text" readOnly value={policy.parent_company || policy.company || "ISC"} className={inputCls} />
+                      <input
+                        type="text"
+                        value={isEditable ? (policy.parent_company || policy.company || "") : (policy.parent_company || policy.company || "ISC")}
+                        onChange={(e) => {
+                          handlePolicyChange("parent_company", e.target.value);
+                          handlePolicyChange("company", e.target.value);
+                        }}
+                        readOnly={!isEditable}
+                        placeholder={isEditable ? "Parent company name..." : "—"}
+                        className={inputCls}
+                      />
                     </div>
                     <div>
                       <span className={labelCls}>Writing Company</span>
-                      <input type="text" readOnly value={policy.writing_company || "Sutton Specialty"} className={inputCls} />
+                      <input
+                        type="text"
+                        value={isEditable ? (policy.writing_company ?? "") : (policy.writing_company || "Sutton Specialty")}
+                        onChange={(e) => handlePolicyChange("writing_company", e.target.value)}
+                        readOnly={!isEditable}
+                        placeholder={isEditable ? "Writing company name..." : "—"}
+                        className={inputCls}
+                      />
                     </div>
                     <div>
                       <span className={labelCls}>Underwriter</span>
-                      <input type="text" readOnly value={policy.underwriter || "—"} className={inputCls} />
+                      <input
+                        type="text"
+                        value={isEditable ? (policy.underwriter ?? "") : (policy.underwriter || "—")}
+                        onChange={(e) => handlePolicyChange("underwriter", e.target.value)}
+                        readOnly={!isEditable}
+                        placeholder={isEditable ? "Underwriter name..." : "—"}
+                        className={inputCls}
+                      />
                     </div>
                   </div>
                 </div>
@@ -1068,6 +1607,28 @@ export default function PolicyDetailPage() {
 
         </div>
       </div>
+
+      {/* ── Toast Notification ── */}
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-lg border text-xs font-bold flex items-center gap-2.5 transition-all animate-in slide-in-from-bottom-3 duration-300 ${
+          toast.type === "success"
+            ? "bg-emerald-600 text-white border-emerald-700 shadow-emerald-600/20"
+            : toast.type === "error"
+            ? "bg-rose-600 text-white border-rose-700 shadow-rose-600/20"
+            : "bg-slate-900 text-white border-slate-950 shadow-slate-900/30"
+        }`}>
+          {toast.type === "success" && <Check size={15} className="stroke-[3]" />}
+          {toast.type === "error" && <X size={15} className="stroke-[3]" />}
+          {toast.type === "info" && <Info size={15} className="stroke-[2.5]" />}
+          <span>{toast.text}</span>
+          <button
+            onClick={() => setToast(null)}
+            className="ml-2 hover:opacity-75 transition-opacity cursor-pointer"
+          >
+            <X size={13} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

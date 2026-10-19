@@ -265,6 +265,23 @@ class PolicyBase(BaseModel):
     default_dba: Optional[bool] = True
     default_contacts: Optional[bool] = True
     lobs: Optional[List[Any]] = None
+    prior_policy: Optional[str] = None
+    renewal_list: Optional[str] = None
+    notation: Optional[str] = None
+    origin: Optional[str] = None
+    frequency: Optional[str] = None
+    signature_on_app: Optional[str] = None
+    location: Optional[str] = None
+    underwriter: Optional[str] = None
+    auditable: Optional[bool] = False
+    premium_financed: Optional[bool] = False
+    business_new_to_agency: Optional[bool] = False
+    exclude_from_download: Optional[bool] = False
+    exclude_from_purge: Optional[bool] = False
+    filter_data_entry: Optional[bool] = False
+    cost: Optional[str] = None
+
+    model_config = {"extra": "ignore"}
 
 class PolicyCreate(PolicyBase):
     pass
