@@ -78,6 +78,9 @@ export default function CustomerProfilePage() {
   const [policies, setPolicies] = useState<any[]>([]);
   const [selectedPolicyIndex, setSelectedPolicyIndex] = useState(0);
 
+  // Submissions State
+  const [submissions, setSubmissions] = useState<any[]>([]);
+
   // Tabs State - Documents, Notes, Status History, Contact Information (Policies opens on separate dedicated page)
   const [activeTab, setActiveTab] = useState<
     "documents" | "notes" | "status_history" | "contact_info" | null
@@ -305,6 +308,43 @@ export default function CustomerProfilePage() {
     }
   }, [customerId]);
 
+  // ── Fetch Submissions ──
+  const loadSubmissions = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/submissions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const formatted = data.map((s: any) => ({
+          id: s.id.toString(),
+          submissionId: s.submission_id || s.quote_id || "SUB-2026-001",
+          quoteId: s.submission_id || s.quote_id || "SUB-2026-001",
+          status: s.status || "Submitted",
+          term: s.term || "12 Months",
+          type: s.type || "Commercial Lines",
+          company: s.company || s.parent_company || "ISC, Brokerage Company",
+          description: s.description || "Commercial Submission",
+          effDate: s.eff_date || "—",
+          expDate: s.exp_date || "—",
+          cost: s.total_premium || s.premium || "$0.00",
+        }));
+        setSubmissions(formatted);
+      } else {
+        const storedStr = localStorage.getItem(`submissions_${customerId}`);
+        if (storedStr) {
+          setSubmissions(JSON.parse(storedStr));
+        }
+      }
+    } catch (e) {
+      const storedStr = localStorage.getItem(`submissions_${customerId}`);
+      if (storedStr) {
+        setSubmissions(JSON.parse(storedStr));
+      }
+    }
+  }, [customerId]);
+
   // ── Fetch Documents ──
   const loadDocuments = useCallback(async () => {
     setDocLoading(true);
@@ -430,11 +470,21 @@ export default function CustomerProfilePage() {
     if (customerId) {
       fetchCustomer();
       loadPolicies();
+      loadSubmissions();
       loadDocuments();
       loadNotes();
       loadActivities();
     }
-  }, [customerId, fetchCustomer, loadPolicies, loadDocuments, loadNotes, loadActivities]);
+  }, [customerId, fetchCustomer, loadPolicies, loadSubmissions, loadDocuments, loadNotes, loadActivities]);
+
+  useEffect(() => {
+    const handleStorage = () => {
+      loadPolicies();
+      loadSubmissions();
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, [loadPolicies, loadSubmissions]);
 
   // ── Upload Document Handler ──
   const handleFileDrop = (e: React.DragEvent) => {
@@ -879,6 +929,20 @@ export default function CustomerProfilePage() {
                 badgeColor: "bg-[#F5EDE5] text-[#9A8B7A]",
                 bubbleColor: "bg-[#F5EDE5]/70",
                 href: `/agency/customer/${customerId}/policies`,
+                openInNewTab: false,
+                openInWindow: true,
+              },
+              {
+                id: "submissions" as const,
+                name: `Submissions (${submissions.length})`,
+                shortName: "Submissions",
+                description: "View and manage quote submissions, proposals & underwriting",
+                icon: Layers,
+                iconBg: "bg-[#0d9488]",
+                badge: submissions.length.toString(),
+                badgeColor: "bg-[#ccfbf1] text-[#0f766e]",
+                bubbleColor: "bg-[#ccfbf1]/60",
+                href: `/agency/customer/${customerId}/submissions`,
                 openInNewTab: false,
                 openInWindow: true,
               },

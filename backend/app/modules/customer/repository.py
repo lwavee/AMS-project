@@ -6,7 +6,7 @@ Routers and services call these functions — they never query the DB directly.
 """
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from app.modules.customer.model import Customer, Policy, CustomerNote
+from app.modules.customer.model import Customer, Policy, Submission, CustomerNote
 
 
 def get_all(db: Session) -> list[Customer]:
@@ -99,6 +99,50 @@ def update_policy(db: Session, db_policy: Policy, data: dict) -> Policy:
     db.commit()
     db.refresh(db_policy)
     return db_policy
+
+
+def get_submissions_by_customer_id(db: Session, customer_id: int) -> list[Submission]:
+    """Return all submissions for the given customer ordered by newest first."""
+    return db.query(Submission).filter(Submission.customer_id == customer_id).order_by(Submission.id.desc()).all()
+
+
+def create_submission(db: Session, customer_id: int, data: dict) -> Submission:
+    """Insert a new submission row for the customer."""
+    valid_keys = {c.name for c in Submission.__table__.columns}
+    clean_data = {k: v for k, v in data.items() if k in valid_keys}
+    clean_data["customer_id"] = customer_id
+    db_submission = Submission(**clean_data)
+    db.add(db_submission)
+    db.commit()
+    db.refresh(db_submission)
+    return db_submission
+
+
+def get_submission_by_id(db: Session, submission_id: int) -> Submission | None:
+    """Return a single submission by primary key, or None."""
+    return db.query(Submission).filter(Submission.id == submission_id).first()
+
+
+def get_submission_for_customer_by_id(db: Session, customer_id: int, submission_id: int) -> Submission | None:
+    """Return a submission by ID only if it belongs to the given customer."""
+    return db.query(Submission).filter(Submission.id == submission_id, Submission.customer_id == customer_id).first()
+
+
+def update_submission(db: Session, db_submission: Submission, data: dict) -> Submission:
+    """Apply a partial update to an existing submission row."""
+    valid_keys = {c.name for c in Submission.__table__.columns}
+    for key, value in data.items():
+        if key in valid_keys:
+            setattr(db_submission, key, value)
+    db.commit()
+    db.refresh(db_submission)
+    return db_submission
+
+
+def delete_submission(db: Session, db_submission: Submission) -> None:
+    """Permanently delete a submission."""
+    db.delete(db_submission)
+    db.commit()
 
 
 def get_notes_by_customer_id(db: Session, customer_id: int) -> list[CustomerNote]:

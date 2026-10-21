@@ -120,6 +120,7 @@ class Customer(Base):
     documents           = relationship("CustomerDocument", back_populates="customer", cascade="all, delete-orphan", passive_deletes=True)
     master_certificates = relationship("MasterCertificate", back_populates="customer", cascade="all, delete-orphan", passive_deletes=True)
     certificate_holders = relationship("CertificateHolder", back_populates="customer", cascade="all, delete-orphan", passive_deletes=True)
+    submissions         = relationship("Submission", back_populates="customer", cascade="all, delete-orphan", passive_deletes=True)
 
 
 class Policy(Base):
@@ -169,6 +170,55 @@ class Policy(Base):
     created_date    = Column(Date, default=date.today)
 
     customer = relationship("Customer", back_populates="policies")
+
+
+class Submission(Base):
+    __tablename__ = "submissions"
+
+    id              = Column(Integer, primary_key=True, index=True)
+    customer_id     = Column(Integer, ForeignKey("customers.id", ondelete="CASCADE"), nullable=False, index=True)
+    quote_id        = Column(String, index=True, nullable=False)
+    status          = Column(String, default="Quoted")
+    term            = Column(String, nullable=True)
+    type            = Column(String, nullable=True)
+    company         = Column(String, nullable=True)
+    description     = Column(String, nullable=True)
+    eff_date        = Column(String, nullable=True)
+    exp_date        = Column(String, nullable=True)
+    
+    # Detailed form fields matching AMS360 layout
+    submission_id   = Column(String, nullable=True)
+    sub_eff_date    = Column(String, nullable=True)
+    is_continuous   = Column(Boolean, default=False)
+    is_not_renewable= Column(Boolean, default=False)
+    issue_state     = Column(String, default="FL")
+    carrier_status  = Column(String, default="Active")
+    is_reinsurance  = Column(Boolean, default=False)
+    business_type   = Column(String, nullable=True)
+    transaction     = Column(String, nullable=True)
+    company_type    = Column(String, default="Insurance")
+    parent_company  = Column(String, nullable=True)
+    writing_company = Column(String, nullable=True)
+    division        = Column(String, nullable=True)
+    branch          = Column(String, nullable=True)
+    department      = Column(String, nullable=True)
+    bill_method     = Column(String, default="Direct bill")
+    pay_plan        = Column(String, nullable=True)
+    executive       = Column(String, nullable=True)
+    representative  = Column(String, nullable=True)
+    broker          = Column(String, nullable=True)
+    total_premium   = Column(String, nullable=True)
+    premium         = Column(String, nullable=True)
+    include_notes   = Column(Boolean, default=False)
+    exclude_lines   = Column(Boolean, default=False)
+    default_insured = Column(Boolean, default=True)
+    default_co_insured = Column(Boolean, default=True)
+    default_dba     = Column(Boolean, default=True)
+    default_contacts= Column(Boolean, default=True)
+    lobs            = Column(JSON, nullable=True)
+    created_date    = Column(Date, default=date.today)
+
+    customer = relationship("Customer", back_populates="submissions")
 
 
 class Agency(Base):

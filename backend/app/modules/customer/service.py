@@ -11,7 +11,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
-from app.modules.customer.model import Customer, Policy, CustomerNote
+from app.modules.customer.model import Customer, Policy, Submission, CustomerNote
 from app.modules.customer import repository as repo
 
 logger = logging.getLogger(__name__)
@@ -226,6 +226,132 @@ def update_policy(db: Session, customer_id: int, policy_id: int, data: dict) -> 
         return updated
     except Exception as e:
         logger.error(f"update_policy failed for ID {policy_id}: {e}")
+        traceback.print_exc()
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def list_submissions(db: Session, customer_id: int) -> list[Submission]:
+    """Fetch all submissions/quotes for the given customer ID."""
+    get_customer(db, customer_id)
+    try:
+        submissions = repo.get_submissions_by_customer_id(db, customer_id)
+        logger.info(f"list_submissions: found {len(submissions)} submissions for customer ID {customer_id}")
+        return submissions
+    except Exception as e:
+        logger.error(f"list_submissions failed: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching customer submissions")
+
+
+def create_submission(db: Session, customer_id: int, data: dict) -> Submission:
+    """Create a new submission/quote record for a customer."""
+    get_customer(db, customer_id)
+    sub_id = data.get("submission_id") or data.get("quote_id")
+    if not sub_id:
+        raise HTTPException(status_code=422, detail="Submission ID is required")
+    data["quote_id"] = sub_id
+    data["submission_id"] = sub_id
+    if not data.get("eff_date"):
+        raise HTTPException(status_code=422, detail="Effective date is required")
+
+    try:
+        submission = repo.create_submission(db, customer_id, data)
+        logger.info(f"create_submission: created Submission '{submission.quote_id}' (ID {submission.id}) for customer ID {customer_id}")
+        return submission
+    except Exception as e:
+        logger.error(f"create_submission failed: {e}")
+        traceback.print_exc()
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def ensure_submission_belongs_to_customer(db: Session, customer_id: int, submission_id: int) -> Submission:
+    submission = repo.get_submission_for_customer_by_id(db, customer_id, submission_id)
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    return submission
+
+
+def get_submission(db: Session, customer_id: int, submission_id: int) -> Submission:
+    """Get single submission for customer."""
+    return ensure_submission_belongs_to_customer(db, customer_id, submission_id)
+
+
+def update_submission(db: Session, customer_id: int, submission_id: int, data: dict) -> Submission:
+    """Update an existing submission for a customer."""
+    submission = ensure_submission_belongs_to_customer(db, customer_id, submission_id)
+    try:
+        updated = repo.update_submission(db, submission, data)
+        logger.info(f"update_submission: updated Submission '{updated.quote_id}' (ID {submission_id}) for customer ID {customer_id}")
+        return updated
+    except Exception as e:
+        logger.error(f"update_submission failed for ID {submission_id}: {e}")
+        traceback.print_exc()
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def delete_submission(db: Session, customer_id: int, submission_id: int) -> None:
+    """Delete a submission."""
+    submission = ensure_submission_belongs_to_customer(db, customer_id, submission_id)
+    try:
+        repo.delete_submission(db, submission)
+        logger.info(f"delete_submission: deleted Submission ID {submission_id} for customer ID {customer_id}")
+    except Exception as e:
+        logger.error(f"delete_submission failed for ID {submission_id}: {e}")
+        traceback.print_exc()
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def bind_submission_to_policy(db: Session, customer_id: int, submission_id: int) -> dict:
+    """Convert/bind a submission into an active Policy."""
+    submission = ensure_submission_belongs_to_customer(db, customer_id, submission_id)
+    try:
+        # 1. Generate Policy Number if needed, or use formatted version
+        clean_quote = submission.quote_id.replace("QTE-", "POL-")
+        policy_data = {
+            "policy_num": clean_quote if clean_quote != submission.quote_id else f"POL-{submission.quote_id}",
+            "status": "Active",
+            "term": submission.term or "12 Months",
+            "type": submission.type or "Commercial Lines",
+            "company": submission.company,
+            "description": submission.description or f"Bound Policy from Quote #{submission.quote_id}",
+            "eff_date": submission.eff_date,
+            "exp_date": submission.exp_date,
+            "submission_id": submission.quote_id,
+            "sub_eff_date": submission.sub_eff_date,
+            "is_continuous": submission.is_continuous,
+            "is_not_renewable": submission.is_not_renewable,
+            "issue_state": submission.issue_state,
+            "carrier_status": "Active",
+            "is_reinsurance": submission.is_reinsurance,
+            "business_type": submission.business_type or submission.type,
+            "transaction": "New business",
+            "company_type": submission.company_type,
+            "parent_company": submission.parent_company,
+            "writing_company": submission.writing_company,
+            "division": submission.division,
+            "branch": submission.branch,
+            "department": submission.department,
+            "bill_method": submission.bill_method,
+            "pay_plan": submission.pay_plan,
+            "executive": submission.executive,
+            "representative": submission.representative,
+            "broker": submission.broker,
+            "total_premium": submission.total_premium or submission.premium,
+            "premium": submission.total_premium or submission.premium,
+            "lobs": submission.lobs
+        }
+        policy = repo.create_policy(db, customer_id, policy_data)
+
+        # 2. Mark submission as Bound
+        repo.update_submission(db, submission, {"status": "Bound"})
+
+        logger.info(f"bind_submission_to_policy: successfully bound Quote '{submission.quote_id}' into Policy '{policy.policy_num}' (ID {policy.id})")
+        return {"policy": policy, "submission": submission}
+    except Exception as e:
+        logger.error(f"bind_submission_to_policy failed for Quote ID {submission_id}: {e}")
         traceback.print_exc()
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))

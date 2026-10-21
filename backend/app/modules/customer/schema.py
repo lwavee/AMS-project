@@ -295,7 +295,62 @@ class Policy(PolicyBase):
         from_attributes = True
 
 
+class SubmissionBase(BaseModel):
+    quote_id: Optional[str] = None
+    submission_id: Optional[str] = None
+    status: str = "Quoted"
+    term: Optional[str] = None
+    type: Optional[str] = None
+    company: Optional[str] = None
+    description: Optional[str] = None
+    eff_date: Optional[str] = None
+    exp_date: Optional[str] = None
+    
+    submission_id: Optional[str] = None
+    sub_eff_date: Optional[str] = None
+    is_continuous: Optional[bool] = False
+    is_not_renewable: Optional[bool] = False
+    issue_state: Optional[str] = "FL"
+    carrier_status: Optional[str] = "Active"
+    is_reinsurance: Optional[bool] = False
+    business_type: Optional[str] = None
+    transaction: Optional[str] = None
+    company_type: Optional[str] = "Insurance"
+    parent_company: Optional[str] = None
+    writing_company: Optional[str] = None
+    division: Optional[str] = None
+    branch: Optional[str] = None
+    department: Optional[str] = None
+    bill_method: Optional[str] = "Direct bill"
+    pay_plan: Optional[str] = None
+    executive: Optional[str] = None
+    representative: Optional[str] = None
+    broker: Optional[str] = None
+    total_premium: Optional[str] = None
+    premium: Optional[str] = None
+    include_notes: Optional[bool] = False
+    exclude_lines: Optional[bool] = False
+    default_insured: Optional[bool] = True
+    default_co_insured: Optional[bool] = True
+    default_dba: Optional[bool] = True
+    default_contacts: Optional[bool] = True
+    lobs: Optional[List[Any]] = None
+    cost: Optional[str] = None
 
+    model_config = {"extra": "ignore"}
+
+
+class SubmissionCreate(SubmissionBase):
+    pass
+
+
+class Submission(SubmissionBase):
+    id: int
+    customer_id: int
+    created_date: Optional[Any] = None
+
+    class Config:
+        from_attributes = True
 
 
 class GeneralLiabilityCoverageBase(BaseModel):

@@ -29,6 +29,8 @@ from app.modules.customer.schema import (
     Customer as CustomerSchema,
     Policy as PolicySchema,
     PolicyCreate,
+    Submission as SubmissionSchema,
+    SubmissionCreate,
     CustomerNote as CustomerNoteSchema,
     CustomerNoteCreate,
     CustomerNoteUpdate,
@@ -117,6 +119,67 @@ def update_policy(
     current_user: dict = Depends(get_current_user),
 ):
     return customer_service.update_policy(db, customer_id, policy_id, policy.model_dump())
+
+
+@router.get("/{customer_id}/submissions", response_model=List[SubmissionSchema])
+def list_submissions(
+    customer_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    return customer_service.list_submissions(db, customer_id)
+
+
+@router.post("/{customer_id}/submissions", response_model=SubmissionSchema, status_code=status.HTTP_201_CREATED)
+def create_submission(
+    customer_id: int,
+    submission: SubmissionCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    return customer_service.create_submission(db, customer_id, submission.model_dump())
+
+
+@router.get("/{customer_id}/submissions/{submission_id}", response_model=SubmissionSchema)
+def get_submission(
+    customer_id: int,
+    submission_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    return customer_service.get_submission(db, customer_id, submission_id)
+
+
+@router.put("/{customer_id}/submissions/{submission_id}", response_model=SubmissionSchema)
+def update_submission(
+    customer_id: int,
+    submission_id: int,
+    submission: SubmissionCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    return customer_service.update_submission(db, customer_id, submission_id, submission.model_dump())
+
+
+@router.delete("/{customer_id}/submissions/{submission_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_submission(
+    customer_id: int,
+    submission_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    customer_service.delete_submission(db, customer_id, submission_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/{customer_id}/submissions/{submission_id}/bind")
+def bind_submission_to_policy(
+    customer_id: int,
+    submission_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    return customer_service.bind_submission_to_policy(db, customer_id, submission_id)
 
 
 @router.get("/{customer_id}/notes", response_model=List[CustomerNoteSchema])
