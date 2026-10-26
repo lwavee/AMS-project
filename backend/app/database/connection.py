@@ -7,20 +7,30 @@ from app.core.config import settings
 
 logger = logging.getLogger("ams360.database")
 
-if not settings.DATABASE_URL:
+def normalize_db_url(url: str | None) -> str | None:
+    if not url:
+        return url
+    # Render and Heroku often provide URLs starting with postgres://, which SQLAlchemy deprecated
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql://", 1)
+    return url
+
+
+primary_db_url = normalize_db_url(settings.DATABASE_URL)
+if not primary_db_url:
     raise ValueError("DATABASE_URL is not set in environment or .env")
 
 # 1. Primary Engine Setup (Main Supabase Instance)
-is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+is_sqlite = primary_db_url.startswith("sqlite")
 
 if is_sqlite:
     primary_engine = create_engine(
-        settings.DATABASE_URL,
+        primary_db_url,
         connect_args={"timeout": 10},
     )
 else:
     primary_engine = create_engine(
-        settings.DATABASE_URL,
+        primary_db_url,
         pool_pre_ping=True,
         pool_size=20,
         max_overflow=10,
@@ -39,10 +49,11 @@ else:
 backup_engine = None
 BackupSessionLocal = None
 
-if settings.BACKUP_DATABASE_URL:
+backup_db_url = normalize_db_url(settings.BACKUP_DATABASE_URL)
+if backup_db_url:
     try:
         temp_backup_engine = create_engine(
-            settings.BACKUP_DATABASE_URL,
+            backup_db_url,
             pool_pre_ping=True,
             pool_size=5,
             max_overflow=5,
@@ -76,11 +87,14 @@ active_db_mode = "primary"
 # For SQLite, attach database
 @event.listens_for(primary_engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
-    if is_sqlite:
-        cursor = dbapi_connection.cursor()
-        db_name = settings.DATABASE_URL.split("///")[-1]
-        cursor.execute(f"ATTACH DATABASE '{db_name}' AS auth")
-        cursor.close()
+    if is_sqlite and primary_db_url:
+        try:
+            cursor = dbapi_connection.cursor()
+            db_name = primary_db_url.split("///")[-1]
+            cursor.execute(f"ATTACH DATABASE '{db_name}' AS auth")
+            cursor.close()
+        except Exception:
+            pass
 
 def get_db():
     """
