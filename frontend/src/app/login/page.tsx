@@ -360,12 +360,12 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* STEP 1: Connect Outlook Email */}
+            {/* STEP 1: Connect Business Email */}
             {onboardingStep === 1 && (
               <form onSubmit={handleConnectOutlook} className="space-y-4">
                 <div>
                   <label className="block text-[11px] font-bold text-[#2d2a26] mb-1.5 uppercase tracking-wider">
-                    Outlook Email Address
+                    Business Email Address
                   </label>
                   <div className="relative">
                     <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9A8B7A]" />

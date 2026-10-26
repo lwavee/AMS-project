@@ -1,6 +1,12 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database.connection import Base
+
+
+def utc_now() -> datetime:
+    """Return timezone-aware current UTC datetime."""
+    return datetime.now(timezone.utc)
+
 
 class CertificateFieldOverride(Base):
     __tablename__ = "certificate_field_overrides"
@@ -11,5 +17,5 @@ class CertificateFieldOverride(Base):
     field_value = Column(Text, nullable=True)
     created_by = Column(String, nullable=True)
     updated_by = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)

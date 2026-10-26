@@ -321,7 +321,7 @@ class TestAgentInvitationWorkflow(unittest.TestCase):
             status="Invitation Prepared",
             token=expired_token,
             code="999888",
-            expires_at=datetime.utcnow() - timedelta(hours=1)  # expired 1 hr ago
+            expires_at=datetime.now(timezone.utc) - timedelta(hours=1)  # expired 1 hr ago
         )
         self.db.add(inv)
         self.db.commit()
@@ -330,7 +330,8 @@ class TestAgentInvitationWorkflow(unittest.TestCase):
         self.assertIsNotNone(queried)
         assert queried is not None
         assert queried.expires_at is not None
-        self.assertTrue(datetime.utcnow() > queried.expires_at, "Token should be detected as expired")
+        exp = queried.expires_at if queried.expires_at.tzinfo else queried.expires_at.replace(tzinfo=timezone.utc)
+        self.assertTrue(datetime.now(timezone.utc) > exp, "Token should be detected as expired")
 
     def test_format_invitation_response(self):
         """Verifies _format_invitation_response includes demo flags, verification URL, code, and agency metadata."""
@@ -345,9 +346,9 @@ class TestAgentInvitationWorkflow(unittest.TestCase):
             status="Invitation Prepared",
             token=token,
             code="849201",
-            expires_at=datetime.utcnow() + timedelta(days=7),
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc)
         )
         res = _format_invitation_response(inv, self.agency_a, {"email": "agency@capco.com"})
         self.assertEqual(res.name, "David Miller")

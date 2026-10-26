@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text, func
 from app.database.connection import get_db
 from app.modules.auth.deps import require_role, get_current_user
-from app.modules.customer.model import Agency, Agent, AgentInvitation
+from app.modules.customer.model import Agency, Agent, AgentInvitation, AgentMailbox, EmailAuditLog
+from app.modules.agency.email_service import MicrosoftEmailService
+from app.modules.agency.email_security import encrypt_token, decrypt_token
 from app.core.config import settings
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional, List, cast, Any
@@ -537,7 +540,7 @@ def create_agent_invitation(
     token = secrets.token_urlsafe(32)
     # 6-digit numeric verification code to include in email
     code = f"{secrets.randbelow(900000) + 100000}"
-    expires_at = datetime.utcnow() + timedelta(days=7)
+    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
 
     invitation = AgentInvitation(
         agency_id=agency.id,
@@ -549,8 +552,8 @@ def create_agent_invitation(
         token=token,
         code=code,
         expires_at=expires_at,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc)
     )
 
     try:
@@ -608,7 +611,7 @@ def update_invitation_status(
         raise HTTPException(status_code=404, detail="Invitation not found under this Agency")
 
     invitation.status = req.status
-    invitation.updated_at = datetime.utcnow()
+    invitation.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(invitation)
 
@@ -656,11 +659,13 @@ def verify_invitation_token(
     if invitation.status == "Cancelled":
         raise HTTPException(status_code=400, detail="This invitation has been cancelled. Please request a new invitation.")
 
-    if invitation.expires_at and datetime.utcnow() > invitation.expires_at:
-        if invitation.status != "Expired":
-            invitation.status = "Expired"
-            db.commit()
-        raise HTTPException(status_code=400, detail="This invitation link has expired. Please contact your agency administrator.")
+    if invitation.expires_at:
+        exp = invitation.expires_at if invitation.expires_at.tzinfo else invitation.expires_at.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > exp:
+            if invitation.status != "Expired":
+                invitation.status = "Expired"
+                db.commit()
+            raise HTTPException(status_code=400, detail="This invitation link has expired. Please contact your agency administrator.")
 
     agency = db.query(Agency).filter(Agency.id == invitation.agency_id).first()
     agency_name = agency.name if agency else "Sterling Agency"
@@ -710,8 +715,10 @@ def activate_agent_account(
     if invitation.status == "Cancelled":
         raise HTTPException(status_code=400, detail="This invitation has been cancelled. Please request a new invitation.")
 
-    if invitation.expires_at and datetime.utcnow() > invitation.expires_at:
-        raise HTTPException(status_code=400, detail="This invitation link has expired. Please request a new invitation.")
+    if invitation.expires_at:
+        exp = invitation.expires_at if invitation.expires_at.tzinfo else invitation.expires_at.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > exp:
+            raise HTTPException(status_code=400, detail="This invitation link has expired. Please request a new invitation.")
 
     # Ensure invitation has a 6-digit verification code
     if not invitation.code:
@@ -829,7 +836,7 @@ def activate_agent_account(
         existing_agent.user_id = new_user_id
 
     invitation.status = "Verified"
-    invitation.updated_at = datetime.utcnow()
+    invitation.updated_at = datetime.now(timezone.utc)
     db.commit()
 
     # Create JWT access token
@@ -855,4 +862,253 @@ def activate_agent_account(
         "access_token": access_token,
         "role": "agent"
     }
+
+
+# =========================================================================
+# Business Mailbox Connection & OAuth Integration Endpoints (Task 5 & 7)
+# Visible Agent-Facing Button: "Connect Email" (provider-neutral)
+# =========================================================================
+
+@router.get("/mail/status")
+def get_mailbox_status(
+    email: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """
+    Returns current mailbox connection status.
+    States: Not Connected, Connecting, Connected, Connection Expired, Connection Error.
+    If OAuth credentials are not configured, returns clear configuration message.
+    """
+    configured = MicrosoftEmailService.is_configured()
+    target_email = email.strip().lower() if email else ""
+
+    if not target_email:
+        return {
+            "configured": configured,
+            "provider": "microsoft",
+            "status": "Not Connected",
+            "email": None,
+            "display_name": None,
+            "connected_at": None,
+            "message": (
+                "Mailbox is not connected."
+                if configured
+                else "Microsoft OAuth credentials are not configured in backend environment variables (MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET). Please contact your administrator."
+            )
+        }
+
+    agent = db.query(Agent).filter(func.lower(Agent.email) == target_email).first()
+    mailbox = None
+    if agent:
+        mailbox = db.query(AgentMailbox).filter(AgentMailbox.agent_id == agent.id).first()
+    if not mailbox:
+        mailbox = db.query(AgentMailbox).filter(func.lower(AgentMailbox.email) == target_email).first()
+
+    if not mailbox:
+        return {
+            "configured": configured,
+            "provider": "microsoft",
+            "status": "Not Connected",
+            "email": None,
+            "display_name": None,
+            "connected_at": None,
+            "message": (
+                "Mailbox is not connected."
+                if configured
+                else "Microsoft OAuth credentials are not configured in backend environment variables (MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET). Please contact your administrator."
+            )
+        }
+
+    return {
+        "configured": configured,
+        "provider": mailbox.provider,
+        "status": mailbox.status,
+        "email": mailbox.email,
+        "display_name": mailbox.display_name,
+        "connected_at": mailbox.connected_at.isoformat() if mailbox.connected_at else None,
+        "last_error": mailbox.last_error,
+        "message": (
+            f"Successfully connected to business mailbox: {mailbox.email}"
+            if mailbox.status == "Connected"
+            else (mailbox.last_error or "Mailbox requires attention.")
+        )
+    }
+
+
+@router.get("/mail/oauth/authorize")
+def authorize_mailbox_oauth(
+    email: str = Query(...),
+    db: Session = Depends(get_db)
+):
+    """
+    Initiates Microsoft OAuth 2.0 authorization code flow.
+    Rejects with 400 if credentials are unconfigured without faking a connection.
+    """
+    if not MicrosoftEmailService.is_configured():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Microsoft OAuth 2.0 is not configured on the server. "
+                "Please configure MICROSOFT_CLIENT_ID and MICROSOFT_CLIENT_SECRET in backend environment variables."
+            )
+        )
+
+    target_email = email.strip().lower()
+    agent = db.query(Agent).filter(func.lower(Agent.email) == target_email).first()
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Agent with email '{target_email}' not found."
+        )
+
+    state_payload = {
+        "agent_id": agent.id,
+        "agency_id": agent.agency_id,
+        "email": target_email,
+        "nonce": secrets.token_hex(16),
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=15)
+    }
+    state_token = jwt.encode(state_payload, settings.SECRET_KEY, algorithm="HS256")
+    auth_url = MicrosoftEmailService.get_authorization_url(agent.id, agent.agency_id, state_token)
+
+    return {
+        "authorize_url": auth_url,
+        "state": state_token,
+        "provider": "microsoft"
+    }
+
+
+@router.get("/mail/oauth/callback")
+async def mailbox_oauth_callback(
+    code: Optional[str] = Query(None),
+    state: Optional[str] = Query(None),
+    error: Optional[str] = Query(None),
+    error_description: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """
+    Handles OAuth 2.0 callback from Microsoft.
+    Retrieves and validates mailbox identity, encrypts refresh token at rest, and redirects to frontend.
+    """
+    frontend_base = settings.FRONTEND_URL.rstrip('/') if settings.FRONTEND_URL else "http://localhost:3000"
+
+    if error:
+        logger.error(f"OAuth callback error from Microsoft: {error} - {error_description}")
+        return RedirectResponse(
+            url=f"{frontend_base}/verify-invitation?mail_status=error&error_msg={error_description or error}"
+        )
+
+    if not code or not state:
+        return RedirectResponse(
+            url=f"{frontend_base}/verify-invitation?mail_status=error&error_msg=Missing+code+or+state"
+        )
+
+    try:
+        decoded_state = jwt.decode(state, settings.SECRET_KEY, algorithms=["HS256"])
+        agent_id = decoded_state["agent_id"]
+        agency_id = decoded_state["agency_id"]
+        expected_email = decoded_state.get("email", "").strip().lower()
+    except Exception as e:
+        logger.error(f"Invalid OAuth state token: {e}")
+        return RedirectResponse(
+            url=f"{frontend_base}/verify-invitation?mail_status=error&error_msg=Invalid+or+expired+OAuth+session"
+        )
+
+    try:
+        token_data = await MicrosoftEmailService.exchange_code_for_tokens(code)
+    except Exception as e:
+        logger.error(f"Error exchanging OAuth code: {e}")
+        return RedirectResponse(
+            url=f"{frontend_base}/verify-invitation?mail_status=error&error_msg=Token+exchange+failed"
+        )
+
+    access_token = token_data.get("access_token")
+    refresh_token = token_data.get("refresh_token")
+    expires_in = token_data.get("expires_in", 3600)
+
+    if not access_token or not isinstance(access_token, str):
+        logger.error("OAuth token response is missing a valid access_token")
+        return RedirectResponse(
+            url=f"{frontend_base}/verify-invitation?mail_status=error&error_msg=Missing+access+token+in+provider+response"
+        )
+
+    try:
+        mailbox_identity = await MicrosoftEmailService.get_user_mailbox_identity(access_token)
+    except Exception as e:
+        logger.error(f"Error fetching user mailbox identity: {e}")
+        return RedirectResponse(
+            url=f"{frontend_base}/verify-invitation?mail_status=error&error_msg=Could+not+retrieve+mailbox+profile"
+        )
+
+    connected_email = mailbox_identity["email"]
+    display_name = mailbox_identity["display_name"]
+
+    # Validate business organization domain policy
+    if expected_email and connected_email != expected_email:
+        agent_domain = expected_email.split("@")[-1] if "@" in expected_email else ""
+        connected_domain = connected_email.split("@")[-1] if "@" in connected_email else ""
+        if agent_domain and connected_domain and agent_domain != connected_domain:
+            logger.warning(f"Mailbox domain policy mismatch: expected {expected_email}, connected {connected_email}")
+            return RedirectResponse(
+                url=f"{frontend_base}/verify-invitation?mail_status=error&error_msg=Connected+mailbox+domain+does+not+match+business+organization"
+            )
+
+    encrypted_rt = encrypt_token(refresh_token) if refresh_token else None
+
+    # Upsert AgentMailbox
+    mailbox = db.query(AgentMailbox).filter(AgentMailbox.agent_id == agent_id).first()
+    if not mailbox:
+        mailbox = AgentMailbox(
+            agent_id=agent_id,
+            agency_id=agency_id,
+            provider="microsoft",
+            email=connected_email,
+            display_name=display_name,
+            encrypted_refresh_token=encrypted_rt,
+            status="Connected",
+            scopes=token_data.get("scope"),
+            connected_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+            expires_at=datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+        )
+        db.add(mailbox)
+    else:
+        mailbox.email = connected_email
+        mailbox.display_name = display_name
+        if encrypted_rt:
+            mailbox.encrypted_refresh_token = encrypted_rt
+        mailbox.status = "Connected"
+        mailbox.last_error = None
+        mailbox.scopes = token_data.get("scope")
+        mailbox.updated_at = datetime.now(timezone.utc)
+        mailbox.expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+
+    db.commit()
+
+    return RedirectResponse(
+        url=f"{frontend_base}/verify-invitation?mail_status=connected&email={connected_email}"
+    )
+
+
+@router.post("/mail/disconnect")
+def disconnect_mailbox(
+    email: str = Query(...),
+    db: Session = Depends(get_db)
+):
+    """
+    Disconnects the agent's business mailbox and purges tokens.
+    """
+    target_email = email.strip().lower()
+    agent = db.query(Agent).filter(func.lower(Agent.email) == target_email).first()
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent profile not found.")
+
+    mailbox = db.query(AgentMailbox).filter(AgentMailbox.agent_id == agent.id).first()
+    if mailbox:
+        mailbox.status = "Not Connected"
+        mailbox.encrypted_refresh_token = None
+        mailbox.updated_at = datetime.now(timezone.utc)
+        db.commit()
+
+    return {"success": True, "message": "Business mailbox disconnected successfully."}
 

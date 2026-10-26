@@ -1,3 +1,4 @@
+from app.database.connection import is_sqlite
 from fastapi import FastAPI, HTTPException
 from app.core.config import settings
 from app.database.connection import test_connection, engine, Base
@@ -116,9 +117,87 @@ async def lifespan(app: FastAPI):
                         conn.execute(text("ALTER TABLE agent_invitations ADD COLUMN IF NOT EXISTS code VARCHAR;"))
                     except Exception:
                         pass
+
+                # Safe creation of agent_mailboxes and email_audit_logs
+                if is_sqlite:
+                    conn.execute(text("""
+                        CREATE TABLE IF NOT EXISTS agent_mailboxes (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            agent_id INTEGER NOT NULL UNIQUE REFERENCES agents(id) ON DELETE CASCADE,
+                            agency_id INTEGER NOT NULL REFERENCES agencies(id) ON DELETE CASCADE,
+                            provider VARCHAR NOT NULL DEFAULT 'microsoft',
+                            email VARCHAR NOT NULL,
+                            display_name VARCHAR,
+                            encrypted_refresh_token TEXT,
+                            status VARCHAR NOT NULL DEFAULT 'Connected',
+                            scopes VARCHAR,
+                            connected_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            expires_at DATETIME,
+                            last_error TEXT
+                        );
+                    """))
+                    conn.execute(text("""
+                        CREATE TABLE IF NOT EXISTS email_audit_logs (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            agency_id INTEGER NOT NULL REFERENCES agencies(id) ON DELETE CASCADE,
+                            agent_id INTEGER REFERENCES agents(id) ON DELETE SET NULL,
+                            sender_email VARCHAR NOT NULL,
+                            recipient_email VARCHAR NOT NULL,
+                            subject VARCHAR NOT NULL,
+                            body_preview TEXT,
+                            has_attachments BOOLEAN NOT NULL DEFAULT 0,
+                            attachment_names TEXT,
+                            customer_id INTEGER REFERENCES customers(id) ON DELETE SET NULL,
+                            policy_id INTEGER,
+                            graph_message_id VARCHAR,
+                            status VARCHAR NOT NULL DEFAULT 'sent',
+                            error_message TEXT,
+                            sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                        );
+                    """))
+                else:
+                    conn.execute(text("""
+                        CREATE TABLE IF NOT EXISTS agent_mailboxes (
+                            id SERIAL PRIMARY KEY,
+                            agent_id INTEGER NOT NULL UNIQUE REFERENCES agents(id) ON DELETE CASCADE,
+                            agency_id INTEGER NOT NULL REFERENCES agencies(id) ON DELETE CASCADE,
+                            provider VARCHAR NOT NULL DEFAULT 'microsoft',
+                            email VARCHAR NOT NULL,
+                            display_name VARCHAR,
+                            encrypted_refresh_token TEXT,
+                            status VARCHAR NOT NULL DEFAULT 'Connected',
+                            scopes VARCHAR,
+                            connected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            expires_at TIMESTAMP,
+                            last_error TEXT
+                        );
+                    """))
+                    conn.execute(text("""
+                        CREATE TABLE IF NOT EXISTS email_audit_logs (
+                            id SERIAL PRIMARY KEY,
+                            agency_id INTEGER NOT NULL REFERENCES agencies(id) ON DELETE CASCADE,
+                            agent_id INTEGER REFERENCES agents(id) ON DELETE SET NULL,
+                            sender_email VARCHAR NOT NULL,
+                            recipient_email VARCHAR NOT NULL,
+                            subject VARCHAR NOT NULL,
+                            body_preview TEXT,
+                            has_attachments BOOLEAN NOT NULL DEFAULT FALSE,
+                            attachment_names TEXT,
+                            customer_id INTEGER REFERENCES customers(id) ON DELETE SET NULL,
+                            policy_id INTEGER,
+                            graph_message_id VARCHAR,
+                            status VARCHAR NOT NULL DEFAULT 'sent',
+                            error_message TEXT,
+                            sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        );
+                    """))
                 conn.commit()
             except Exception as schema_err:
-                logger.warning(f"Note on agent_invitations table initialization: {schema_err}")
+                logger.warning(f"Note on mailbox/audit table initialization: {schema_err}")
         db_status = "Connected"
         api_status = "Healthy"
     except Exception as e:

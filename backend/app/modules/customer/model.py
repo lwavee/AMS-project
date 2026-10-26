@@ -2,7 +2,12 @@ from typing import Any
 from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime, Text, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from app.database.connection import Base
-from datetime import date, datetime
+from datetime import date, datetime, timezone
+
+
+def utc_now() -> datetime:
+    """Return timezone-aware current UTC datetime."""
+    return datetime.now(timezone.utc)
 
 
 class Customer(Base):
@@ -225,17 +230,17 @@ class Submission(Base):
 class Agency(Base):
     __tablename__ = "agencies"
 
-    id           = Column(Integer, primary_key=True, index=True)
-    name         = Column(String, index=True, nullable=False)
-    email        = Column(String, unique=True, index=True, nullable=False)
-    user_id      = Column(String, unique=True, index=True, nullable=True)
-    address      = Column(String, nullable=True)
-    city         = Column(String, nullable=True)
-    state        = Column(String, nullable=True)
-    zip          = Column(String, nullable=True)
-    phone        = Column(String, nullable=True)
-    fax          = Column(String, nullable=True)
-    created_date = Column(Date, default=date.today)
+    id: Any           = Column(Integer, primary_key=True, index=True)
+    name: Any         = Column(String, index=True, nullable=False)
+    email: Any        = Column(String, unique=True, index=True, nullable=False)
+    user_id: Any      = Column(String, unique=True, index=True, nullable=True)
+    address: Any      = Column(String, nullable=True)
+    city: Any         = Column(String, nullable=True)
+    state: Any        = Column(String, nullable=True)
+    zip: Any          = Column(String, nullable=True)
+    phone: Any        = Column(String, nullable=True)
+    fax: Any          = Column(String, nullable=True)
+    created_date: Any = Column(Date, default=date.today)
 
     agents = relationship("Agent", back_populates="agency", cascade="all, delete-orphan")
     invitations = relationship("AgentInvitation", back_populates="agency", cascade="all, delete-orphan")
@@ -244,14 +249,15 @@ class Agency(Base):
 class Agent(Base):
     __tablename__ = "agents"
 
-    id           = Column(Integer, primary_key=True, index=True)
-    name         = Column(String, index=True, nullable=False)
-    email        = Column(String, unique=True, index=True, nullable=False)
-    agency_id    = Column(Integer, ForeignKey("agencies.id", ondelete="CASCADE"), nullable=False, index=True)
-    user_id      = Column(String, unique=True, index=True, nullable=True)
-    created_date = Column(Date, default=date.today)
+    id: Any           = Column(Integer, primary_key=True, index=True)
+    name: Any         = Column(String, index=True, nullable=False)
+    email: Any        = Column(String, unique=True, index=True, nullable=False)
+    agency_id: Any    = Column(Integer, ForeignKey("agencies.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id: Any      = Column(String, unique=True, index=True, nullable=True)
+    created_date: Any = Column(Date, default=date.today)
 
     agency = relationship("Agency", back_populates="agents")
+    mailbox = relationship("AgentMailbox", back_populates="agent", uselist=False, cascade="all, delete-orphan")
 
 
 class AgentInvitation(Base):
@@ -267,10 +273,63 @@ class AgentInvitation(Base):
     token: Any        = Column(String, unique=True, index=True, nullable=True)
     code: Any         = Column(String, nullable=True)
     expires_at: Any   = Column(DateTime, nullable=True)
-    created_at: Any   = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at: Any   = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at: Any   = Column(DateTime, default=utc_now, nullable=False)
+    updated_at: Any   = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
     agency = relationship("Agency", back_populates="invitations")
+
+
+class AgentMailbox(Base):
+    """
+    Connected agent email mailbox identity and credentials (encrypted at rest).
+    Provider-neutral architecture supporting Microsoft 365, Outlook, and future providers.
+    """
+    __tablename__ = "agent_mailboxes"
+
+    id: Any                      = Column(Integer, primary_key=True, index=True)
+    agent_id: Any                = Column(Integer, ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    agency_id: Any               = Column(Integer, ForeignKey("agencies.id", ondelete="CASCADE"), nullable=False, index=True)
+    provider: Any                = Column(String, default="microsoft", nullable=False)
+    email: Any                   = Column(String, nullable=False, index=True)
+    display_name: Any            = Column(String, nullable=True)
+    encrypted_refresh_token: Any = Column(Text, nullable=True)
+    status: Any                  = Column(String, default="Connected", nullable=False)  # "Not Connected", "Connecting", "Connected", "Connection Expired", "Connection Error"
+    scopes: Any                  = Column(String, nullable=True)
+    connected_at: Any            = Column(DateTime, default=utc_now, nullable=False)
+    updated_at: Any              = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+    expires_at: Any              = Column(DateTime, nullable=True)
+    last_error: Any              = Column(Text, nullable=True)
+
+    agent = relationship("Agent", back_populates="mailbox")
+    agency = relationship("Agency")
+
+
+class EmailAuditLog(Base):
+    """
+    AMS email audit log for outbound emails sent from agent's connected business mailbox.
+    Records sender, recipient, attachments, policy/customer association, and Microsoft Graph ID.
+    """
+    __tablename__ = "email_audit_logs"
+
+    id: Any               = Column(Integer, primary_key=True, index=True)
+    agency_id: Any        = Column(Integer, ForeignKey("agencies.id", ondelete="CASCADE"), nullable=False, index=True)
+    agent_id: Any         = Column(Integer, ForeignKey("agents.id", ondelete="SET NULL"), nullable=True, index=True)
+    sender_email: Any     = Column(String, nullable=False)
+    recipient_email: Any  = Column(String, nullable=False)
+    subject: Any          = Column(String, nullable=False)
+    body_preview: Any     = Column(Text, nullable=True)
+    has_attachments: Any  = Column(Boolean, default=False, nullable=False)
+    attachment_names: Any = Column(Text, nullable=True)
+    customer_id: Any      = Column(Integer, ForeignKey("customers.id", ondelete="SET NULL"), nullable=True, index=True)
+    policy_id: Any        = Column(Integer, nullable=True, index=True)
+    graph_message_id: Any = Column(String, nullable=True, index=True)
+    status: Any           = Column(String, default="sent", nullable=False)  # "sent", "delivered", "failed", "draft"
+    error_message: Any    = Column(Text, nullable=True)
+    sent_at: Any          = Column(DateTime, default=utc_now, nullable=False)
+    created_at: Any       = Column(DateTime, default=utc_now, nullable=False)
+
+    agency = relationship("Agency")
+    agent = relationship("Agent")
 
 
 class CustomerNote(Base):

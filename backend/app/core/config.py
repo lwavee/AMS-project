@@ -27,5 +27,17 @@ class Settings:
     BACKUP_SUPABASE_ANON_KEY: str | None = os.getenv("BACKUP_SUPABASE_ANON_KEY")
     BACKUP_SUPABASE_SECRET_KEY: str | None = os.getenv("BACKUP_SUPABASE_SECRET_KEY")
 
+    # Email & Microsoft OAuth Integration Settings
+    BACKEND_URL: str = os.getenv("BACKEND_URL", "http://localhost:8000")
+    MICROSOFT_CLIENT_ID: str | None = os.getenv("MICROSOFT_CLIENT_ID")
+    MICROSOFT_CLIENT_SECRET: str | None = os.getenv("MICROSOFT_CLIENT_SECRET")
+    MICROSOFT_TENANT_ID: str = os.getenv("MICROSOFT_TENANT_ID", "organizations")
+    MICROSOFT_REDIRECT_URI: str = os.getenv(
+        "MICROSOFT_REDIRECT_URI",
+        f"{os.getenv('BACKEND_URL', 'http://localhost:8000')}/api/agency/mail/oauth/callback"
+    )
+    TOKEN_ENCRYPTION_KEY: str | None = os.getenv("TOKEN_ENCRYPTION_KEY")
+    INVITATION_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("INVITATION_TOKEN_EXPIRE_MINUTES", "1440"))
+
 settings = Settings()
 
