@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, Boolean, Date, Text, ForeignKey, JSON
+from typing import Any
+from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime, Text, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from app.database.connection import Base
-from datetime import date
+from datetime import date, datetime
 
 
 class Customer(Base):
@@ -237,6 +238,7 @@ class Agency(Base):
     created_date = Column(Date, default=date.today)
 
     agents = relationship("Agent", back_populates="agency", cascade="all, delete-orphan")
+    invitations = relationship("AgentInvitation", back_populates="agency", cascade="all, delete-orphan")
 
 
 class Agent(Base):
@@ -250,6 +252,25 @@ class Agent(Base):
     created_date = Column(Date, default=date.today)
 
     agency = relationship("Agency", back_populates="agents")
+
+
+class AgentInvitation(Base):
+    __tablename__ = "agent_invitations"
+
+    id: Any           = Column(Integer, primary_key=True, index=True)
+    agency_id: Any    = Column(Integer, ForeignKey("agencies.id", ondelete="CASCADE"), nullable=False, index=True)
+    name: Any         = Column(String, index=True, nullable=False)
+    email: Any        = Column(String, index=True, nullable=False)
+    phone: Any        = Column(String, nullable=True)
+    location: Any     = Column(String, nullable=True)
+    status: Any       = Column(String, default="Invitation Prepared", nullable=False)
+    token: Any        = Column(String, unique=True, index=True, nullable=True)
+    code: Any         = Column(String, nullable=True)
+    expires_at: Any   = Column(DateTime, nullable=True)
+    created_at: Any   = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Any   = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    agency = relationship("Agency", back_populates="invitations")
 
 
 class CustomerNote(Base):

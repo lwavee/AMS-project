@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from app.core.config import settings
 from app.database.connection import test_connection, engine, Base
 from app.api.v1.router import api_router
-from app.modules.customer.model import Customer, Policy, Submission, Agency, Agent, MasterCertificate, CertificateHolder  # noqa: F401 — ensures tables are registered
+from app.modules.customer.model import Customer, Policy, Submission, Agency, Agent, AgentInvitation, MasterCertificate, CertificateHolder  # noqa: F401 — ensures tables are registered
 from app.modules.eforms.model import CertificateFieldOverride # noqa: F401
 from sqlalchemy import text
 import os
@@ -73,6 +73,52 @@ async def lifespan(app: FastAPI):
         Base.metadata.create_all(bind=engine)
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
+            try:
+                if engine.url.drivername.startswith("sqlite"):
+                    conn.execute(text("""
+                        CREATE TABLE IF NOT EXISTS agent_invitations (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            agency_id INTEGER NOT NULL REFERENCES agencies(id) ON DELETE CASCADE,
+                            name VARCHAR NOT NULL,
+                            email VARCHAR NOT NULL,
+                            phone VARCHAR,
+                            location VARCHAR,
+                            status VARCHAR NOT NULL DEFAULT 'Invitation Prepared',
+                            token VARCHAR UNIQUE,
+                            code VARCHAR,
+                            expires_at DATETIME,
+                            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                        );
+                    """))
+                    try:
+                        conn.execute(text("ALTER TABLE agent_invitations ADD COLUMN code VARCHAR;"))
+                    except Exception:
+                        pass
+                else:
+                    conn.execute(text("""
+                        CREATE TABLE IF NOT EXISTS agent_invitations (
+                            id SERIAL PRIMARY KEY,
+                            agency_id INTEGER NOT NULL REFERENCES agencies(id) ON DELETE CASCADE,
+                            name VARCHAR NOT NULL,
+                            email VARCHAR NOT NULL,
+                            phone VARCHAR,
+                            location VARCHAR,
+                            status VARCHAR NOT NULL DEFAULT 'Invitation Prepared',
+                            token VARCHAR UNIQUE,
+                            code VARCHAR,
+                            expires_at TIMESTAMP,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        );
+                    """))
+                    try:
+                        conn.execute(text("ALTER TABLE agent_invitations ADD COLUMN IF NOT EXISTS code VARCHAR;"))
+                    except Exception:
+                        pass
+                conn.commit()
+            except Exception as schema_err:
+                logger.warning(f"Note on agent_invitations table initialization: {schema_err}")
         db_status = "Connected"
         api_status = "Healthy"
     except Exception as e:

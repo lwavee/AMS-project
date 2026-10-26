@@ -1,16 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import text, func
 from app.database.connection import get_db
 from app.modules.auth.deps import require_role, get_current_user
-from app.modules.customer.model import Agency, Agent
-from pydantic import BaseModel, EmailStr
+from app.modules.customer.model import Agency, Agent, AgentInvitation
+from app.core.config import settings
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional, List, cast, Any
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
+import os
+import jwt
 import uuid
 import bcrypt
 import json
 import logging
+import secrets
+import re
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -38,7 +43,7 @@ class AgencyProfileUpdateRequest(BaseModel):
 
 class AgentCreateRequest(BaseModel):
     name: str
-    password: str
+    password: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
 
@@ -47,6 +52,96 @@ class AgentResponse(BaseModel):
     name: str
     email: str
     created_date: Optional[date] = None
+
+class AgentInvitationCreateRequest(BaseModel):
+    name: str
+    email: EmailStr
+    phone: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    location: Optional[str] = None
+
+    @field_validator("name")
+    def validate_name(cls, v: str) -> str:
+        v = v.strip()
+        if not v or len(v) < 2:
+            raise ValueError("Full Name is required and must be at least 2 characters.")
+        if len(v) > 100:
+            raise ValueError("Full Name cannot exceed 100 characters.")
+        return v
+
+    @field_validator("email")
+    def validate_email(cls, v: str) -> str:
+        v = v.strip().lower()
+        if not v:
+            raise ValueError("Business Email is required.")
+        return v
+
+    @field_validator("phone")
+    def validate_phone(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            v = v.strip()
+            if v:
+                digits = re.sub(r'\D', '', v)
+                if len(digits) < 7 or len(digits) > 15:
+                    raise ValueError("Phone number must contain between 7 and 15 digits.")
+                return v
+        return None
+
+class AgentInvitationResponse(BaseModel):
+    id: int
+    agency_id: int
+    name: str
+    email: str
+    phone: Optional[str] = None
+    location: Optional[str] = None
+    status: str
+    token: Optional[str] = None
+    code: Optional[str] = None
+    verification_url: Optional[str] = None
+    expires_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    agency_name: Optional[str] = None
+    agency_email: Optional[str] = None
+    admin_name: Optional[str] = None
+    admin_email: Optional[str] = None
+    demo_mode: bool = True
+
+class AgentInvitationStatusUpdateRequest(BaseModel):
+    status: str
+
+    @field_validator("status")
+    def validate_status(cls, v: str) -> str:
+        allowed = {"Draft", "Invitation Prepared", "Pending Verification", "Verified", "Expired", "Cancelled"}
+        if v not in allowed:
+            raise ValueError(f"Invalid status '{v}'. Allowed statuses: {', '.join(sorted(allowed))}")
+        return v
+
+class AgentInvitationActivateRequest(BaseModel):
+    token: str
+    code: str
+    password: str
+    confirm_password: str
+
+    @field_validator("token")
+    def validate_token(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("Token is required.")
+        return v
+
+    @field_validator("code")
+    def validate_code(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("Verification code is required.")
+        return v
+
+    @field_validator("password")
+    def validate_password(cls, v: str) -> str:
+        if len(v) < 6:
+            raise ValueError("Password must be at least 6 characters long.")
+        return v
 
 # Dependencies
 agency_or_admin_dependency = Depends(require_role(["agency", "admin"]))
@@ -235,7 +330,8 @@ def create_agent(req: AgentCreateRequest, current_user: dict = Depends(get_curre
     
     # Hash password in python
     salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(req.password.encode('utf-8'), salt).decode('utf-8')
+    password_to_hash = req.password if req.password else secrets.token_urlsafe(16)
+    hashed_password = bcrypt.hashpw(password_to_hash.encode('utf-8'), salt).decode('utf-8')
     
     user_inserted = False
     try:
@@ -332,4 +428,431 @@ def delete_agent(agent_id: int, current_user: dict = Depends(get_current_user), 
         raise HTTPException(status_code=500, detail="Failed to delete agent profile.")
         
     return {"message": "Agent deleted successfully"}
+
+
+# =========================================================================
+# Agent Invitation Workflow Endpoints (Demo Mode)
+# =========================================================================
+
+def _format_invitation_response(inv: AgentInvitation, agency: Agency, current_user: Optional[dict] = None) -> AgentInvitationResponse:
+    frontend_base = settings.FRONTEND_URL.rstrip('/') if settings.FRONTEND_URL else "http://localhost:3000"
+    verification_url = f"{frontend_base}/verify-invitation?token={inv.token}&demo=true" if inv.token else None
+
+    admin_name = agency.name
+    admin_email = agency.email
+    if current_user and current_user.get("email"):
+        admin_email = current_user.get("email")
+
+    return AgentInvitationResponse(
+        id=inv.id,
+        agency_id=inv.agency_id,
+        name=inv.name,
+        email=inv.email,
+        phone=inv.phone,
+        location=inv.location,
+        status=inv.status,
+        token=inv.token,
+        code=inv.code,
+        verification_url=verification_url,
+        expires_at=inv.expires_at,
+        created_at=inv.created_at,
+        agency_name=agency.name,
+        agency_email=agency.email,
+        admin_name=admin_name,
+        admin_email=admin_email,
+        demo_mode=True
+    )
+
+@router.post("/invitations", response_model=AgentInvitationResponse, dependencies=[agency_only_dependency])
+def create_agent_invitation(
+    req: AgentInvitationCreateRequest,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Creates an Agent Invitation in DEMO MODE.
+    Validates agent details, ensures email uniqueness across auth tables, agents,
+    and active invitations, and prepares the invitation without activating the account.
+    """
+    # Enforce Agency Admin multi-tenant isolation
+    agency = db.query(Agency).filter(Agency.user_id == current_user["id"]).first()
+    if not agency:
+        agency = db.query(Agency).filter(Agency.email == current_user["email"]).first()
+        if not agency:
+            raise HTTPException(status_code=404, detail="Agency profile not found. Cannot invite agent.")
+
+    agent_email = req.email.strip().lower()
+
+    # Reject duplicate email addresses across auth.users, users, agents, and active invitations
+    user_exists = False
+    try:
+        user_exists = db.execute(
+            text("select id from auth.users where lower(email) = :email"),
+            {"email": agent_email}
+        ).first() is not None
+    except Exception:
+        pass
+
+    if not user_exists:
+        try:
+            user_exists = db.execute(
+                text("select id from users where lower(email) = :email"),
+                {"email": agent_email}
+            ).first() is not None
+        except Exception:
+            pass
+
+    if not user_exists:
+        try:
+            user_exists = db.query(Agent).filter(func.lower(Agent.email) == agent_email).first() is not None
+        except Exception:
+            pass
+
+    if not user_exists:
+        try:
+            existing_active_inv = db.query(AgentInvitation).filter(
+                func.lower(AgentInvitation.email) == agent_email,
+                AgentInvitation.status.in_(["Draft", "Invitation Prepared", "Pending Verification", "Verified"])
+            ).first()
+            if existing_active_inv:
+                user_exists = True
+        except Exception:
+            pass
+
+    if user_exists:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"An account or active invitation already exists with email '{agent_email}'."
+        )
+
+    # Compute location
+    location = None
+    if req.location and req.location.strip():
+        location = req.location.strip()
+    elif req.city or req.state:
+        parts = [p.strip() for p in [req.city, req.state] if p and p.strip()]
+        location = ", ".join(parts) if parts else None
+
+    # Cryptographically secure URL-safe token for demo verification
+    token = secrets.token_urlsafe(32)
+    # 6-digit numeric verification code to include in email
+    code = f"{secrets.randbelow(900000) + 100000}"
+    expires_at = datetime.utcnow() + timedelta(days=7)
+
+    invitation = AgentInvitation(
+        agency_id=agency.id,
+        name=req.name.strip(),
+        email=agent_email,
+        phone=req.phone.strip() if req.phone else None,
+        location=location,
+        status="Invitation Prepared",
+        token=token,
+        code=code,
+        expires_at=expires_at,
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
+    )
+
+    try:
+        db.add(invitation)
+        db.commit()
+        db.refresh(invitation)
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to persist agent invitation: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save agent invitation.")
+
+    return _format_invitation_response(invitation, agency, current_user)
+
+@router.get("/invitations", response_model=List[AgentInvitationResponse], dependencies=[agency_only_dependency])
+def list_agent_invitations(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Returns all invitations issued by the current agency.
+    """
+    agency = db.query(Agency).filter(Agency.user_id == current_user["id"]).first()
+    if not agency:
+        agency = db.query(Agency).filter(Agency.email == current_user["email"]).first()
+        if not agency:
+            return []
+
+    invitations = db.query(AgentInvitation).filter(
+        AgentInvitation.agency_id == agency.id
+    ).order_by(AgentInvitation.created_at.desc()).all()
+
+    return [_format_invitation_response(inv, agency, current_user) for inv in invitations]
+
+@router.patch("/invitations/{invitation_id}/status", response_model=AgentInvitationResponse, dependencies=[agency_only_dependency])
+def update_invitation_status(
+    invitation_id: int,
+    req: AgentInvitationStatusUpdateRequest,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Updates status of an invitation for the agency (e.g. to 'Pending Verification' upon opening Outlook).
+    """
+    agency = db.query(Agency).filter(Agency.user_id == current_user["id"]).first()
+    if not agency:
+        agency = db.query(Agency).filter(Agency.email == current_user["email"]).first()
+        if not agency:
+            raise HTTPException(status_code=404, detail="Agency profile not found")
+
+    invitation = db.query(AgentInvitation).filter(
+        AgentInvitation.id == invitation_id,
+        AgentInvitation.agency_id == agency.id
+    ).first()
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found under this Agency")
+
+    invitation.status = req.status
+    invitation.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(invitation)
+
+    return _format_invitation_response(invitation, agency, current_user)
+
+@router.delete("/invitations/{invitation_id}", dependencies=[agency_only_dependency])
+def delete_invitation(
+    invitation_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Deletes or cancels an invitation under the agency.
+    """
+    agency = db.query(Agency).filter(Agency.user_id == current_user["id"]).first()
+    if not agency:
+        agency = db.query(Agency).filter(Agency.email == current_user["email"]).first()
+        if not agency:
+            raise HTTPException(status_code=404, detail="Agency profile not found")
+
+    invitation = db.query(AgentInvitation).filter(
+        AgentInvitation.id == invitation_id,
+        AgentInvitation.agency_id == agency.id
+    ).first()
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found under this Agency")
+
+    db.delete(invitation)
+    db.commit()
+    return {"message": "Invitation deleted successfully"}
+
+@router.get("/invitations/verify")
+def verify_invitation_token(
+    token: str = Query(..., min_length=10),
+    db: Session = Depends(get_db)
+):
+    """
+    Public demo verification endpoint preparing for Phase 2.
+    Validates token integrity and expiry, returning clear status without premature activation.
+    """
+    invitation = db.query(AgentInvitation).filter(AgentInvitation.token == token).first()
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Invalid or non-existent invitation token.")
+
+    if invitation.status == "Cancelled":
+        raise HTTPException(status_code=400, detail="This invitation has been cancelled. Please request a new invitation.")
+
+    if invitation.expires_at and datetime.utcnow() > invitation.expires_at:
+        if invitation.status != "Expired":
+            invitation.status = "Expired"
+            db.commit()
+        raise HTTPException(status_code=400, detail="This invitation link has expired. Please contact your agency administrator.")
+
+    agency = db.query(Agency).filter(Agency.id == invitation.agency_id).first()
+    agency_name = agency.name if agency else "Sterling Agency"
+
+    # Ensure invitation has a 6-digit code
+    if not invitation.code:
+        invitation.code = f"{secrets.randbelow(900000) + 100000}"
+        try:
+            db.commit()
+            db.refresh(invitation)
+        except Exception:
+            db.rollback()
+
+    return {
+        "valid": True,
+        "demo_mode": True,
+        "status": invitation.status,
+        "invitation_id": invitation.id,
+        "name": invitation.name,
+        "email": invitation.email,
+        "phone": invitation.phone,
+        "location": invitation.location,
+        "agency_name": agency_name,
+        "code": invitation.code,
+        "created_at": invitation.created_at,
+        "expires_at": invitation.expires_at,
+        "message": (
+            "Demo invitation verification link is valid. Enter your verification code and set your password to activate your account."
+        )
+    }
+
+@router.post("/invitations/activate")
+def activate_agent_account(
+    req: AgentInvitationActivateRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Validates token, code, and sets password, then activates agent account and marks invitation as Verified.
+    """
+    if req.password != req.confirm_password:
+        raise HTTPException(status_code=400, detail="Passwords do not match.")
+
+    invitation = db.query(AgentInvitation).filter(AgentInvitation.token == req.token).first()
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Invalid invitation token.")
+
+    if invitation.status == "Cancelled":
+        raise HTTPException(status_code=400, detail="This invitation has been cancelled. Please request a new invitation.")
+
+    if invitation.expires_at and datetime.utcnow() > invitation.expires_at:
+        raise HTTPException(status_code=400, detail="This invitation link has expired. Please request a new invitation.")
+
+    # Ensure invitation has a 6-digit verification code
+    if not invitation.code:
+        invitation.code = f"{secrets.randbelow(900000) + 100000}"
+        try:
+            db.commit()
+            db.refresh(invitation)
+        except Exception:
+            db.rollback()
+
+    # Validate verification code strictly
+    if not req.code or req.code.strip() != invitation.code.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Verification code is incorrect. Please check the code sent in your invitation email."
+        )
+
+    agent_email = invitation.email.strip().lower()
+
+    # Look up user existence
+    user_exists = False
+    existing_user_id = None
+    try:
+        user_row = db.execute(
+            text("select id from auth.users where lower(email) = :email"),
+            {"email": agent_email}
+        ).first()
+        if user_row:
+            user_exists = True
+            existing_user_id = str(user_row.id)
+    except Exception:
+        pass
+
+    if not user_exists:
+        try:
+            user_row = db.execute(
+                text("select id from users where lower(email) = :email"),
+                {"email": agent_email}
+            ).first()
+            if user_row:
+                user_exists = True
+                existing_user_id = str(user_row.id)
+        except Exception:
+            pass
+
+    # Hash new password
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(req.password.encode('utf-8'), salt).decode('utf-8')
+    meta_str = json.dumps({"role": "agent", "full_name": invitation.name})
+
+    if user_exists and existing_user_id:
+        new_user_id = existing_user_id
+        # Update existing credentials
+        try:
+            db.execute(
+                text("update auth.users set encrypted_password = :pwd, raw_user_meta_data = :meta where id = :id"),
+                {"pwd": hashed_password, "meta": meta_str, "id": new_user_id}
+            )
+        except Exception:
+            pass
+        try:
+            db.execute(
+                text("update users set encrypted_password = :pwd, raw_user_meta_data = :meta where id = :id"),
+                {"pwd": hashed_password, "meta": meta_str, "id": new_user_id}
+            )
+        except Exception:
+            pass
+    else:
+        new_user_id = str(uuid.uuid4())
+        user_inserted = False
+        try:
+            db.execute(
+                text("""
+                    insert into auth.users (id, email, encrypted_password, raw_user_meta_data, email_confirmed_at, role, aud)
+                    values (:id, :email, :password, :meta, now(), 'agent', 'authenticated')
+                """),
+                {"id": new_user_id, "email": agent_email, "password": hashed_password, "meta": meta_str}
+            )
+            user_inserted = True
+        except Exception as e:
+            logger.warning(f"Could not insert agent into auth.users: {e}. Trying public.users fallback.")
+            db.rollback()
+
+        if not user_inserted:
+            try:
+                db.execute(
+                    text("""
+                        insert into users (id, email, encrypted_password, raw_user_meta_data, email_confirmed_at, role, aud)
+                        values (:id, :email, :password, :meta, :confirmed_at, 'agent', 'authenticated')
+                    """),
+                    {
+                        "id": new_user_id,
+                        "email": agent_email,
+                        "password": hashed_password,
+                        "meta": meta_str,
+                        "confirmed_at": datetime.now()
+                    }
+                )
+            except Exception as e:
+                db.rollback()
+                logger.error(f"Failed to create agent user credentials: {e}")
+                raise HTTPException(status_code=500, detail="Failed to create agent credentials in database.")
+
+    # Create Agent profile if not exists
+    existing_agent = db.query(Agent).filter(func.lower(Agent.email) == agent_email).first()
+    if not existing_agent:
+        new_agent = Agent(
+            name=invitation.name,
+            email=agent_email,
+            agency_id=invitation.agency_id,
+            user_id=new_user_id
+        )
+        db.add(new_agent)
+    else:
+        existing_agent.user_id = new_user_id
+
+    invitation.status = "Verified"
+    invitation.updated_at = datetime.utcnow()
+    db.commit()
+
+    # Create JWT access token
+    ALGORITHM = os.getenv("ALGORITHM", "HS256")
+    expire = datetime.now(timezone.utc) + timedelta(minutes=43200)
+    payload = {
+        "sub": new_user_id,
+        "email": agent_email,
+        "role": "agent",
+        "exp": expire
+    }
+    access_token = jwt.encode(payload, settings.SECRET_KEY, algorithm=ALGORITHM)
+
+    agency = db.query(Agency).filter(Agency.id == invitation.agency_id).first()
+    agency_name = agency.name if agency else "Sterling Agency"
+
+    return {
+        "success": True,
+        "message": "Account successfully verified and activated! Please connect your Outlook mailbox.",
+        "email": agent_email,
+        "name": invitation.name,
+        "agency_name": agency_name,
+        "access_token": access_token,
+        "role": "agent"
+    }
 

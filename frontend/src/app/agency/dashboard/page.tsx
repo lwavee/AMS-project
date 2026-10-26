@@ -34,7 +34,11 @@ import {
   CheckCircle,
   AlertCircle,
   Clock,
-  XCircle
+  XCircle,
+  Copy,
+  ExternalLink,
+  Send,
+  Info
 } from "lucide-react";
 
 import { API_BASE_URL } from "../../../lib/config";
@@ -76,11 +80,24 @@ export default function Page() {
     name: "",
     email: "",
     phone: "",
-    password: ""
+    city: "",
+    state: ""
   });
   const [agentFormLoading, setAgentFormLoading] = useState(false);
   const [agentFormError, setAgentFormError] = useState("");
   const [agentFormSuccess, setAgentFormSuccess] = useState("");
+
+  // Agent Invitations & Workflow State (Demo Mode)
+  const [invitations, setInvitations] = useState<any[]>([]);
+  const [agentTab, setAgentTab] = useState<"agents" | "invitations">("agents");
+  const [isInvitationEmailModalOpen, setIsInvitationEmailModalOpen] = useState(false);
+  const [currentInvitation, setCurrentInvitation] = useState<any>(null);
+  const [invitationEmailRecipient, setInvitationEmailRecipient] = useState("");
+  const [invitationEmailSubject, setInvitationEmailSubject] = useState("You're invited to join Sterling AMS");
+  const [invitationEmailBody, setInvitationEmailBody] = useState("");
+  const [outlookNoticeShown, setOutlookNoticeShown] = useState(false);
+  const [emailCopiedFeedback, setEmailCopiedFeedback] = useState(false);
+  const [emailModalViewMode, setEmailModalViewMode] = useState<"preview" | "text">("preview");
 
 
   // Fetch customers from FastAPI with retry resilience
@@ -189,6 +206,21 @@ export default function Page() {
     }
   };
 
+  const fetchInvitations = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      const res = await fetch(`${API_BASE_URL}/api/agency/invitations`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to fetch invitations");
+      const data = await res.json();
+      setInvitations(data);
+    } catch (error) {
+      console.error("Error fetching invitations:", error);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -200,6 +232,7 @@ export default function Page() {
       if (role === "agency") {
         fetchAgencyProfile();
         fetchAgents();
+        fetchInvitations();
 
         // Check if tab parameter is specified in the URL
         const params = new URLSearchParams(window.location.search);
@@ -468,46 +501,256 @@ export default function Page() {
     }
   };
 
+  const openInvitationEmailModal = (invitation: any) => {
+    setCurrentInvitation(invitation);
+    const agentName = invitation.name || "Agent";
+    const agencyName = invitation.agency_name || agencyProfile?.name || "Our Agency";
+    const adminName = invitation.admin_name || agencyProfile?.name || "Agency Administrator";
+    const verificationLink = invitation.verification_url || `${window.location.origin}/verify-invitation?token=${invitation.token}&demo=true`;
+    const verificationCode = invitation.code || "849201";
+
+    const defaultBody = `Hello ${agentName},
+
+${agencyName} has invited you to join Sterling AMS.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔐 YOUR 6-DIGIT VERIFICATION CODE:
+👉  ${verificationCode}  👈
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+(Enter this code on the verification page to activate your account)
+
+Please click the button link below to open your account setup:
+
+👉 [ VERIFY & SET UP ACCOUNT ]
+${verificationLink}
+
+After entering your verification code (${verificationCode}), you will be able to set your password and connect your Outlook email.
+
+If you were not expecting this invitation, please contact your agency administrator.
+
+Regards,
+${adminName}
+${agencyName}`;
+
+    setInvitationEmailRecipient(invitation.email);
+    setInvitationEmailSubject(`Invitation to join ${agencyName} on Sterling AMS`);
+    setInvitationEmailBody(defaultBody);
+    setOutlookNoticeShown(false);
+    setEmailCopiedFeedback(false);
+    setEmailModalViewMode("preview");
+    setIsInvitationEmailModalOpen(true);
+  };
+
+  const handleCopyHtmlEmail = async () => {
+    if (!currentInvitation) return;
+    const agentName = currentInvitation.name || "Agent";
+    const agencyName = currentInvitation.agency_name || agencyProfile?.name || "Our Agency";
+    const adminName = currentInvitation.admin_name || agencyProfile?.name || "Agency Administrator";
+    const verificationLink = currentInvitation.verification_url || `${window.location.origin}/verify-invitation?token=${currentInvitation.token}&demo=true`;
+    const verificationCode = currentInvitation.code || "849201";
+
+    const htmlContent = `
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; border: 1px solid #e5ddd5; border-radius: 16px; background-color: #ffffff; color: #2d2a26;">
+  <div style="text-align: center; margin-bottom: 20px;">
+    <h2 style="color: #2d2a26; margin: 0 0 4px 0; font-size: 20px; font-weight: 800;">Sterling AMS</h2>
+    <p style="color: #9A8B7A; margin: 0; font-size: 12px; font-weight: 600;">Insurance Agency Management Platform</p>
+  </div>
+  
+  <p style="font-size: 15px; line-height: 1.5; margin: 0 0 12px 0;">Hello <strong>${agentName}</strong>,</p>
+  <p style="font-size: 14px; color: #555555; line-height: 1.6; margin: 0 0 20px 0;"><strong>${agencyName}</strong> has invited you to join Sterling AMS as an authorized Insurance Agent.</p>
+  
+  <div style="background-color: #FDF6F0; border: 2px dashed #F5E6D8; border-radius: 12px; padding: 18px; text-align: center; margin: 20px 0;">
+    <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #9A8B7A; letter-spacing: 1px; margin-bottom: 6px;">Your 6-Digit Verification Code</div>
+    <div style="font-size: 32px; font-weight: 900; color: #c2a07e; letter-spacing: 6px; font-family: monospace;">${verificationCode}</div>
+    <div style="font-size: 11px; color: #6b5e52; margin-top: 6px; font-weight: 500;">Enter this code on the verification page to activate your account</div>
+  </div>
+
+  <div style="text-align: center; margin: 26px 0;">
+    <a href="${verificationLink}" style="background-color: #c2a07e; color: #ffffff; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; padding: 14px 28px; text-decoration: none; border-radius: 10px; display: inline-block; box-shadow: 0 4px 10px rgba(194, 160, 126, 0.35);">
+      Verify &amp; Set Up Account &rarr;
+    </a>
+  </div>
+
+  <p style="font-size: 11px; color: #888888; line-height: 1.5; margin-top: 24px; border-top: 1px solid #eeeeee; padding-top: 16px;">
+    Button not clicking? Copy and paste this URL into your browser:<br/>
+    <a href="${verificationLink}" style="color: #c2a07e; word-break: break-all;">${verificationLink}</a>
+  </p>
+
+  <p style="font-size: 13px; color: #555555; margin-top: 18px;">
+    Best regards,<br/>
+    <strong>${adminName}</strong><br/>
+    ${agencyName}
+  </p>
+</div>
+`;
+
+    try {
+      const blobHtml = new Blob([htmlContent], { type: "text/html" });
+      const blobText = new Blob([invitationEmailBody], { type: "text/plain" });
+      const data = [new ClipboardItem({ "text/html": blobHtml, "text/plain": blobText })];
+      await navigator.clipboard.write(data);
+      setEmailCopiedFeedback(true);
+      showToast("Formatted email with interactive button copied to clipboard! Paste directly into Outlook.", "success");
+      setTimeout(() => setEmailCopiedFeedback(false), 3500);
+    } catch {
+      await navigator.clipboard.writeText(invitationEmailBody);
+      showToast("Email text copied to clipboard!", "success");
+    }
+  };
+
   const handleCreateAgentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAgentFormLoading(true);
     setAgentFormError("");
     setAgentFormSuccess("");
 
-    if (!addAgentForm.name || !addAgentForm.email || !addAgentForm.password) {
-      setAgentFormError("Agent Name, Email, and Password are required.");
+    const name = addAgentForm.name.trim();
+    const email = addAgentForm.email.trim().toLowerCase();
+    const phone = addAgentForm.phone.trim();
+    const city = addAgentForm.city.trim();
+    const state = addAgentForm.state.trim();
+
+    // Client-side validations
+    if (!name) {
+      setAgentFormError("Agent Full Name is required.");
       setAgentFormLoading(false);
       return;
+    }
+    if (name.length < 2) {
+      setAgentFormError("Full Name must be at least 2 characters.");
+      setAgentFormLoading(false);
+      return;
+    }
+    if (!email) {
+      setAgentFormError("Business Email is required.");
+      setAgentFormLoading(false);
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setAgentFormError("Please enter a valid business email address (e.g. agent@domain.com).");
+      setAgentFormLoading(false);
+      return;
+    }
+    if (phone) {
+      const digits = phone.replace(/\D/g, "");
+      if (digits.length < 7 || digits.length > 15) {
+        setAgentFormError("Phone number must contain between 7 and 15 digits.");
+        setAgentFormLoading(false);
+        return;
+      }
     }
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/api/agency/agents`, {
+      const res = await fetch(`${API_BASE_URL}/api/agency/invitations`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify(addAgentForm)
+        body: JSON.stringify({
+          name,
+          email,
+          phone: phone || null,
+          city: city || null,
+          state: state || null,
+        })
       });
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.detail || "Failed to create agent");
+        throw new Error(errData.detail || "Failed to create agent invitation");
       }
 
-      setAgentFormSuccess("Agent created successfully!");
-      setAddAgentForm({ name: "", email: "", phone: "", password: "" });
-      fetchAgents();
-      // Auto close modal after a short delay
-      setTimeout(() => {
-        setIsAddAgentModalOpen(false);
-        setAgentFormSuccess("");
-      }, 1000);
+      const invitationData = await res.json();
+      setAgentFormSuccess("Agent invitation prepared successfully!");
+      setAddAgentForm({ name: "", email: "", phone: "", city: "", state: "" });
+      setIsAddAgentModalOpen(false);
+      fetchInvitations();
+
+      // Open Invitation Email Modal directly
+      openInvitationEmailModal(invitationData);
     } catch (error: any) {
-      setAgentFormError(error.message || "Failed to create agent");
+      setAgentFormError(error.message || "Failed to prepare invitation");
     } finally {
       setAgentFormLoading(false);
+    }
+  };
+
+  const handleOpenInOutlook = async () => {
+    if (!currentInvitation) return;
+
+    const to = invitationEmailRecipient.trim();
+    const subject = invitationEmailSubject.trim();
+    const body = invitationEmailBody.trim();
+
+    // Outlook Web compose deeplink with correctly URL-encoded parameters
+    const outlookWebUrl = `https://outlook.office.com/mail/deeplink/compose?to=${encodeURIComponent(to)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    window.open(outlookWebUrl, "_blank", "noopener,noreferrer");
+
+    // Transition invitation status to 'Pending Verification' (Demo Mode)
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/agency/invitations/${currentInvitation.id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: "Pending Verification" })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setCurrentInvitation(updated);
+        fetchInvitations();
+      }
+    } catch (err) {
+      console.error("Failed to update status to Pending Verification:", err);
+    }
+
+    setOutlookNoticeShown(true);
+    showToast("Outlook compose opened in a new tab. Review and send the email from Outlook.", "info");
+  };
+
+  const handleOpenInDesktopMail = () => {
+    const to = invitationEmailRecipient.trim();
+    const subject = invitationEmailSubject.trim();
+    const body = invitationEmailBody.trim();
+    window.location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
+  const handleCopyEmailContent = async () => {
+    const fullText = `To: ${invitationEmailRecipient}\nSubject: ${invitationEmailSubject}\n\n${invitationEmailBody}`;
+    try {
+      await navigator.clipboard.writeText(fullText);
+      setEmailCopiedFeedback(true);
+      showToast("Email content copied to clipboard!", "success");
+      setTimeout(() => setEmailCopiedFeedback(false), 3000);
+    } catch {
+      showToast("Could not copy automatically. Please select the text manually.", "error");
+    }
+  };
+
+  const handleCancelInvitation = async (invitationId: number, agentName: string) => {
+    const confirm = await confirmDialog(
+      `Are you sure you want to cancel the invitation for "${agentName}"?`,
+      "Cancel Invitation"
+    );
+    if (!confirm) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/agency/invitations/${invitationId}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to cancel invitation");
+      showToast("Invitation cancelled successfully", "success");
+      fetchInvitations();
+    } catch (error: any) {
+      showToast("Error cancelling invitation: " + error.message, "error");
     }
   };
 
@@ -632,14 +875,16 @@ export default function Page() {
                   <Users size={20} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-text-main">Agency Agents</h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Manage your agents ({agents.length})</p>
+                  <h3 className="text-sm font-bold text-text-main">Agency Team</h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                    {agents.length} Active {agents.length === 1 ? 'Agent' : 'Agents'} • {invitations.length} Pending {invitations.length === 1 ? 'Invitation' : 'Invitations'}
+                  </p>
                 </div>
               </div>
 
               <button
                 onClick={() => {
-                  setAddAgentForm({ name: "", email: "", phone: "", password: "" });
+                  setAddAgentForm({ name: "", email: "", phone: "", city: "", state: "" });
                   setAgentFormError("");
                   setAgentFormSuccess("");
                   setIsAddAgentModalOpen(true);
@@ -651,61 +896,204 @@ export default function Page() {
               </button>
             </div>
 
-            {/* Agents Table Wrapper */}
-            <div className="flex-1 border border-border-main/60 rounded-xl bg-white min-h-[250px] overflow-hidden flex flex-col shadow-inner">
-              {agents.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center py-20 text-center px-4">
-                  <Users className="text-slate-300 size-8 mb-2" />
-                  <span className="text-xs text-slate-400 font-bold">No Agents Registered</span>
-                  <p className="text-[10px] text-slate-300 mt-1 max-w-xs leading-relaxed">
-                    Add agents to let employees log in using auto-derived `@{domain}` emails.
-                  </p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto w-full">
-                  <table className="premium-table w-full text-left">
-                    <thead>
-                      <tr className="bg-secondary/40 border-b border-border-main">
-                        <th className="table-header w-[35%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Name</th>
-                        <th className="table-header w-[40%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Email Address</th>
-                        <th className="table-header w-[15%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Registered</th>
-                        <th className="table-header w-[10%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {agents.map((agent) => (
-                        <tr key={agent.id} className="hover:bg-slate-50 transition-colors border-b border-border-main/40 last:border-b-0">
-                          <td className="table-body text-xs font-bold text-text-main truncate px-4 py-3">
-                            <button
-                              onClick={() => router.push(`/agency/agent/${agent.id}`)}
-                              className="text-primary hover:text-primary/80 hover:underline font-bold transition-colors cursor-pointer text-left"
-                              title="View agent profile"
-                            >
-                              {agent.name}
-                            </button>
-                          </td>
-                          <td className="table-body text-xs font-semibold text-slate-600 truncate px-4 py-3">
-                            {agent.email}
-                          </td>
-                          <td className="table-body text-xs font-medium text-slate-400 px-4 py-3">
-                            {agent.created_date ? new Date(agent.created_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
-                          </td>
-                          <td className="table-body text-center px-4 py-3">
-                            <button
-                              onClick={() => handleDeleteAgent(agent.id, agent.name)}
-                              className="text-slate-400 hover:text-danger hover:bg-danger/5 p-1.5 rounded-lg transition-colors cursor-pointer"
-                              title="Delete Agent Credentials"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+            {/* Segmented Sub-Tabs */}
+            <div className="flex items-center gap-2 mb-4 bg-slate-100/80 p-1 rounded-xl w-fit border border-border-main/50">
+              <button
+                onClick={() => setAgentTab("agents")}
+                className={`h-8 px-3.5 text-xs font-bold rounded-lg transition-all cursor-pointer border-none flex items-center gap-1.5 ${
+                  agentTab === "agents"
+                    ? "bg-white text-primary shadow-xs"
+                    : "text-slate-500 hover:text-slate-800 bg-transparent"
+                }`}
+              >
+                <Users size={13} />
+                Active Agents
+                <span className="ml-1 text-[10px] bg-slate-200/70 text-slate-700 px-1.5 py-0.2 rounded-full font-mono">
+                  {agents.length}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setAgentTab("invitations")}
+                className={`h-8 px-3.5 text-xs font-bold rounded-lg transition-all cursor-pointer border-none flex items-center gap-1.5 ${
+                  agentTab === "invitations"
+                    ? "bg-white text-primary shadow-xs"
+                    : "text-slate-500 hover:text-slate-800 bg-transparent"
+                }`}
+              >
+                <Mail size={13} />
+                Invitations
+                <span className="ml-1 text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded-full font-mono">
+                  {invitations.length}
+                </span>
+                <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/80">
+                  Demo
+                </span>
+              </button>
             </div>
+
+            {/* Tab 1: Active Agents Table */}
+            {agentTab === "agents" && (
+              <div className="flex-1 border border-border-main/60 rounded-xl bg-white min-h-[250px] overflow-hidden flex flex-col shadow-inner">
+                {agents.length === 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-center py-20 text-center px-4">
+                    <Users className="text-slate-300 size-8 mb-2" />
+                    <span className="text-xs text-slate-400 font-bold">No Active Agents</span>
+                    <p className="text-[10px] text-slate-300 mt-1 max-w-xs leading-relaxed">
+                      Invite agents to complete account setup and access the agency workspace.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto w-full">
+                    <table className="premium-table w-full text-left">
+                      <thead>
+                        <tr className="bg-secondary/40 border-b border-border-main">
+                          <th className="table-header w-[35%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Name</th>
+                          <th className="table-header w-[40%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Email Address</th>
+                          <th className="table-header w-[15%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Registered</th>
+                          <th className="table-header w-[10%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {agents.map((agent) => (
+                          <tr key={agent.id} className="hover:bg-slate-50 transition-colors border-b border-border-main/40 last:border-b-0">
+                            <td className="table-body text-xs font-bold text-text-main truncate px-4 py-3">
+                              <button
+                                onClick={() => router.push(`/agency/agent/${agent.id}`)}
+                                className="text-primary hover:text-primary/80 hover:underline font-bold transition-colors cursor-pointer text-left"
+                                title="View agent profile"
+                              >
+                                {agent.name}
+                              </button>
+                            </td>
+                            <td className="table-body text-xs font-semibold text-slate-600 truncate px-4 py-3">
+                              {agent.email}
+                            </td>
+                            <td className="table-body text-xs font-medium text-slate-400 px-4 py-3">
+                              {agent.created_date ? new Date(agent.created_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                            </td>
+                            <td className="table-body text-center px-4 py-3">
+                              <button
+                                onClick={() => handleDeleteAgent(agent.id, agent.name)}
+                                className="text-slate-400 hover:text-danger hover:bg-danger/5 p-1.5 rounded-lg transition-colors cursor-pointer"
+                                title="Delete Agent Credentials"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab 2: Invitations Table (Demo Mode) */}
+            {agentTab === "invitations" && (
+              <div className="flex-1 border border-border-main/60 rounded-xl bg-white min-h-[250px] overflow-hidden flex flex-col shadow-inner">
+                {invitations.length === 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-center py-20 text-center px-4">
+                    <Mail className="text-slate-300 size-8 mb-2" />
+                    <span className="text-xs text-slate-400 font-bold">No Agent Invitations</span>
+                    <p className="text-[10px] text-slate-300 mt-1 max-w-xs leading-relaxed">
+                      Click &ldquo;Add Agent&rdquo; above to invite an agent in Demo Mode.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto w-full">
+                    <table className="premium-table w-full text-left">
+                      <thead>
+                        <tr className="bg-secondary/40 border-b border-border-main">
+                          <th className="table-header w-[28%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Agent Name & Location</th>
+                          <th className="table-header w-[28%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Email Address</th>
+                          <th className="table-header w-[20%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                          <th className="table-header w-[12%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Created</th>
+                          <th className="table-header w-[12%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {invitations.map((inv) => {
+                          const isPrepared = inv.status === "Invitation Prepared";
+                          const isPending = inv.status === "Pending Verification";
+                          const isVerified = inv.status === "Verified";
+                          const isCancelled = inv.status === "Cancelled";
+
+                          return (
+                            <tr key={inv.id} className="hover:bg-slate-50 transition-colors border-b border-border-main/40 last:border-b-0">
+                              <td className="table-body text-xs px-4 py-3">
+                                <div className="font-bold text-text-main">{inv.name}</div>
+                                {inv.location && (
+                                  <div className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                    <MapPin size={11} className="shrink-0" />
+                                    <span>{inv.location}</span>
+                                  </div>
+                                )}
+                              </td>
+                              <td className="table-body text-xs font-semibold text-slate-600 px-4 py-3">
+                                <div>{inv.email}</div>
+                                {inv.phone && (
+                                  <div className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                    <Phone size={11} className="shrink-0" />
+                                    <span>{inv.phone}</span>
+                                  </div>
+                                )}
+                              </td>
+                              <td className="table-body px-4 py-3">
+                                <div className="flex flex-col gap-1 items-start">
+                                  <span
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                                      isPrepared
+                                        ? "bg-amber-50 text-amber-700 border-amber-200"
+                                        : isPending
+                                        ? "bg-blue-50 text-blue-700 border-blue-200"
+                                        : isVerified
+                                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                        : isCancelled
+                                        ? "bg-slate-100 text-slate-500 border-slate-200"
+                                        : "bg-slate-50 text-slate-600 border-slate-200"
+                                    }`}
+                                  >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                    {inv.status}
+                                  </span>
+                                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                                    Demo Mode
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="table-body text-xs font-medium text-slate-400 px-4 py-3">
+                                {inv.created_at ? new Date(inv.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                              </td>
+                              <td className="table-body text-center px-4 py-3">
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <button
+                                    onClick={() => openInvitationEmailModal(inv)}
+                                    className="px-2.5 py-1 text-[11px] font-bold bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors cursor-pointer border-none flex items-center gap-1"
+                                    title="Review and send invitation in Outlook"
+                                  >
+                                    <Send size={11} />
+                                    Review
+                                  </button>
+                                  <button
+                                    onClick={() => handleCancelInvitation(inv.id, inv.name)}
+                                    className="text-slate-400 hover:text-danger hover:bg-danger/5 p-1.5 rounded-lg transition-colors cursor-pointer border-none"
+                                    title="Cancel Invitation"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
         </div>
@@ -1174,73 +1562,93 @@ export default function Page() {
       {isAddAgentModalOpen && (
         <Modal>
           <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl border border-border-main shadow-2xl w-full max-w-md overflow-hidden flex flex-col font-sans animate-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-2xl border border-border-main shadow-2xl w-full max-w-lg overflow-hidden flex flex-col font-sans animate-in zoom-in-95 duration-200">
 
               {/* Header */}
               <div className="bg-secondary/40 px-5 py-4 border-b border-border-main flex justify-between items-center">
-                <span className="card-title">Add New Agent Credentials</span>
+                <div className="flex items-center gap-2.5">
+                  <span className="card-title">Invite New Agent</span>
+                  <span className="text-[10px] uppercase tracking-wider font-extrabold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
+                    Demo Mode
+                  </span>
+                </div>
                 <button
-                  onClick={() => setIsAddAgentModalOpen(false)}
+                  onClick={() => {
+                    const isDirty = Boolean(addAgentForm.name || addAgentForm.email || addAgentForm.phone || addAgentForm.city || addAgentForm.state);
+                    if (isDirty && !window.confirm("You have unsaved agent details. Are you sure you want to discard them?")) {
+                      return;
+                    }
+                    setIsAddAgentModalOpen(false);
+                  }}
                   className="bg-white hover:bg-secondary text-text-muted hover:text-text-main border border-border-main h-7 w-7 flex items-center justify-center rounded-xl transition-all font-bold text-xs cursor-pointer shadow-sm"
                 >
-                  X
+                  ✕
                 </button>
               </div>
 
               {/* Form */}
               <form onSubmit={handleCreateAgentSubmit} className="p-5 space-y-4 text-left">
 
+                <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3 text-[11px] text-amber-900 flex items-start gap-2 leading-relaxed">
+                  <Info size={15} className="shrink-0 text-amber-700 mt-0.5" />
+                  <div>
+                    <span className="font-bold">Agent Invitation Workflow (Phase 1): </span>
+                    Enter the agent&apos;s details to validate and prepare their invitation email. An editable modal will open allowing you to review the message and open it in Outlook.
+                  </div>
+                </div>
+
                 {agentFormError && (
                   <div className="bg-danger/5 border border-danger/20 text-danger text-xs font-semibold rounded-xl p-3 flex items-center gap-2">
-                    <AlertCircle size={14} />
+                    <AlertCircle size={14} className="shrink-0" />
                     <span>{agentFormError}</span>
                   </div>
                 )}
 
                 {agentFormSuccess && (
                   <div className="bg-success/5 border border-success/20 text-success text-xs font-semibold rounded-xl p-3 flex items-center gap-2">
-                    <CheckCircle size={14} />
+                    <CheckCircle size={14} className="shrink-0" />
                     <span>{agentFormSuccess}</span>
                   </div>
                 )}
 
-                {/* Agent Name */}
+                {/* Agent Full Name */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider">Agent Name <span className="text-danger">*</span></label>
+                  <label className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider">
+                    Full Name <span className="text-danger">*</span>
+                  </label>
                   <input
                     type="text"
                     required
                     value={addAgentForm.name}
-                    onChange={(e) => {
-                      const newName = e.target.value;
-                      const derivedEmail = newName.trim() ? `${newName.toLowerCase().trim().replace(/\s+/g, '')}@${agencyProfile?.domain || 'capco.com'}` : "";
-                      setAddAgentForm((prev) => ({
-                        ...prev,
-                        name: newName,
-                        email: prev.email && !prev.email.includes('@') ? derivedEmail : prev.email || derivedEmail
-                      }));
-                    }}
+                    onChange={(e) => setAddAgentForm({ ...addAgentForm, name: e.target.value })}
                     className="w-full h-10 px-3.5 border border-border-main rounded-xl text-sm bg-white text-text-main focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all shadow-sm"
-                    placeholder="e.g. Kapil Sharma"
+                    placeholder="e.g. Jane Doe"
                   />
                 </div>
 
-                {/* Agent Email */}
+                {/* Agent Business Email */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider">Agent Email <span className="text-danger">*</span></label>
+                  <label className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider">
+                    Business Email <span className="text-danger">*</span>
+                  </label>
                   <input
                     type="email"
                     required
                     value={addAgentForm.email}
                     onChange={(e) => setAddAgentForm({ ...addAgentForm, email: e.target.value })}
                     className="w-full h-10 px-3.5 border border-border-main rounded-xl text-sm bg-white text-text-main focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all shadow-sm"
-                    placeholder={`e.g. kapil@${agencyProfile?.domain || 'capco.com'}`}
+                    placeholder="e.g. jane.doe@agencyname.com"
                   />
+                  <span className="text-[10px] text-slate-400">
+                    The agent will receive their verification link at this address.
+                  </span>
                 </div>
 
-                {/* Contact Number */}
+                {/* Contact Phone Number */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider">Contact Number</label>
+                  <label className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider">
+                    Phone Number
+                  </label>
                   <input
                     type="tel"
                     value={addAgentForm.phone}
@@ -1250,18 +1658,31 @@ export default function Page() {
                   />
                 </div>
 
-                {/* Password */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider">Login Password <span className="text-danger">*</span></label>
-                  <div className="relative">
-                    <Lock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                {/* Location (City & State) */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider">
+                      City
+                    </label>
                     <input
-                      type="password"
-                      required
-                      value={addAgentForm.password}
-                      onChange={(e) => setAddAgentForm({ ...addAgentForm, password: e.target.value })}
-                      className="w-full h-10 pl-10 pr-3.5 border border-border-main rounded-xl text-sm bg-white text-text-main focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all shadow-sm"
-                      placeholder="••••••••"
+                      type="text"
+                      value={addAgentForm.city}
+                      onChange={(e) => setAddAgentForm({ ...addAgentForm, city: e.target.value })}
+                      className="w-full h-10 px-3.5 border border-border-main rounded-xl text-sm bg-white text-text-main focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all shadow-sm"
+                      placeholder="e.g. Dallas"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider">
+                      State
+                    </label>
+                    <input
+                      type="text"
+                      value={addAgentForm.state}
+                      onChange={(e) => setAddAgentForm({ ...addAgentForm, state: e.target.value })}
+                      className="w-full h-10 px-3.5 border border-border-main rounded-xl text-sm bg-white text-text-main focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all shadow-sm"
+                      placeholder="e.g. TX"
                     />
                   </div>
                 </div>
@@ -1271,7 +1692,13 @@ export default function Page() {
                   <button
                     type="button"
                     disabled={agentFormLoading}
-                    onClick={() => setIsAddAgentModalOpen(false)}
+                    onClick={() => {
+                      const isDirty = Boolean(addAgentForm.name || addAgentForm.email || addAgentForm.phone || addAgentForm.city || addAgentForm.state);
+                      if (isDirty && !window.confirm("You have unsaved agent details. Are you sure you want to discard them?")) {
+                        return;
+                      }
+                      setIsAddAgentModalOpen(false);
+                    }}
                     className="h-10 px-5 border border-border-main bg-white hover:bg-secondary/60 text-text-main font-bold text-xs rounded-xl cursor-pointer active:scale-98 transition-all"
                   >
                     Cancel
@@ -1281,10 +1708,314 @@ export default function Page() {
                     disabled={agentFormLoading}
                     className="h-10 px-6 bg-primary hover:bg-primary/95 text-white font-bold text-xs rounded-xl shadow-md shadow-primary/20 cursor-pointer active:scale-98 transition-all flex items-center justify-center gap-1.5 border-none"
                   >
-                    {agentFormLoading ? "Creating..." : "Save Agent"}
+                    {agentFormLoading ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin" />
+                        <span>Validating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Mail size={13} />
+                        <span>Prepare Invitation</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
+
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* ==================== INVITATION EMAIL MODAL (DEMO MODE) ==================== */}
+      {isInvitationEmailModalOpen && (
+        <Modal>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl border border-border-main shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col font-sans animate-in zoom-in-95 duration-200">
+
+              {/* Header */}
+              <div className="bg-secondary/50 px-6 py-4 border-b border-border-main flex justify-between items-center shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                    <Mail size={16} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="card-title text-sm">Review Invitation Email</span>
+                      <span className="text-[10px] uppercase tracking-wider font-extrabold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
+                        Demo Mode
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      Edit the email content below, then open in Outlook to review and send.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsInvitationEmailModalOpen(false)}
+                  className="bg-white hover:bg-secondary text-text-muted hover:text-text-main border border-border-main h-7 w-7 flex items-center justify-center rounded-xl transition-all font-bold text-xs cursor-pointer shadow-sm"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 space-y-4 overflow-y-auto text-left">
+
+                {/* Demo Mode Notice */}
+                <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-3.5 text-xs text-amber-900 flex items-start gap-2.5 leading-relaxed">
+                  <Info size={16} className="shrink-0 text-amber-700 mt-0.5" />
+                  <div>
+                    <span className="font-bold">How Outlook Demo Mode Works: </span>
+                    Clicking <span className="font-semibold">&ldquo;Open in Outlook&rdquo;</span> will launch your Outlook Web compose window with recipient, subject, and invitation body pre-filled. You must review and click <span className="font-semibold">Send</span> inside Outlook. Opening Outlook does not send the email automatically and does not mark the agent as verified.
+                  </div>
+                </div>
+
+                {outlookNoticeShown && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-900 flex items-start gap-2.5">
+                    <CheckCircle size={16} className="shrink-0 text-blue-600 mt-0.5" />
+                    <div>
+                      <span className="font-bold">Outlook compose window opened! </span>
+                      The invitation status is now marked as <span className="font-semibold">Pending Verification (Demo Mode)</span>. Remember to click Send inside Outlook to deliver the message.
+                    </div>
+                  </div>
+                )}
+
+                {/* Email Metadata Grid */}
+                <div className="bg-slate-50/80 border border-border-main/70 rounded-xl p-3.5 space-y-2.5 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                        To (Agent Business Email)
+                      </label>
+                      <input
+                        type="email"
+                        value={invitationEmailRecipient}
+                        onChange={(e) => setInvitationEmailRecipient(e.target.value)}
+                        className="w-full mt-1 h-8 px-2.5 bg-white border border-border-main rounded-lg text-xs font-semibold text-text-main focus:outline-none focus:border-primary"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                        From (Agency Administrator)
+                      </label>
+                      <div className="mt-1 h-8 px-2.5 bg-white border border-border-main rounded-lg text-xs font-medium text-slate-600 flex items-center truncate">
+                        {agencyProfile?.email
+                          ? `${agencyProfile.name || 'Agency Admin'} <${agencyProfile.email}>`
+                          : (agencyProfile?.name || 'Authorized Agency Administrator')}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                      Subject Line
+                    </label>
+                    <input
+                      type="text"
+                      value={invitationEmailSubject}
+                      onChange={(e) => setInvitationEmailSubject(e.target.value)}
+                      className="w-full mt-1 h-8 px-2.5 bg-white border border-border-main rounded-lg text-xs font-semibold text-text-main focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                </div>
+
+                {/* View Mode Toggle: Interactive Button Preview vs Plain Text Editor */}
+                <div className="flex items-center justify-between border-b border-border-main/70 pb-2">
+                  <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setEmailModalViewMode("preview")}
+                      className={`h-7 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        emailModalViewMode === "preview"
+                          ? "bg-white text-primary shadow-xs"
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                    >
+                      Email Preview (with Button)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEmailModalViewMode("text")}
+                      className={`h-7 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        emailModalViewMode === "text"
+                          ? "bg-white text-primary shadow-xs"
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                    >
+                      Plain Text / Compose
+                    </button>
+                  </div>
+
+                  <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
+                    {emailModalViewMode === "preview" ? "Includes styled CTA button and verification code" : "Editable raw text"}
+                  </span>
+                </div>
+
+                {/* VIEW 1: Interactive Email Button Preview */}
+                {emailModalViewMode === "preview" && (
+                  <div className="bg-[#FAF8F5] border border-[#e5ddd5] rounded-2xl p-5 space-y-4 shadow-xs">
+                    {/* Branded Header */}
+                    <div className="flex items-center justify-between pb-3 border-b border-[#e5ddd5]/60">
+                      <div className="flex items-center gap-2">
+                        <div className="size-7 rounded-lg bg-[#FDF6F0] border border-[#F5E6D8] text-[#c2a07e] flex items-center justify-center font-bold text-xs">
+                          S
+                        </div>
+                        <div>
+                          <span className="text-xs font-extrabold text-[#2d2a26]">Sterling AMS</span>
+                          <span className="text-[10px] text-slate-400 block font-medium">Agency Onboarding</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] bg-emerald-50 text-emerald-800 font-bold px-2 py-0.5 rounded-full border border-emerald-200">
+                        Agent Invitation
+                      </span>
+                    </div>
+
+                    <div className="text-xs space-y-2 text-[#2d2a26]">
+                      <p>
+                        Hello <strong className="text-text-main">{currentInvitation?.name || "Agent"}</strong>,
+                      </p>
+                      <p className="text-slate-600 leading-relaxed">
+                        <strong className="text-[#2d2a26]">{currentInvitation?.agency_name || agencyProfile?.name || "Our Agency"}</strong> has invited you to join Sterling AMS as an Insurance Agent.
+                      </p>
+                    </div>
+
+                    {/* Verification Code Highlight Card */}
+                    <div className="bg-white border-2 border-dashed border-[#c2a07e]/40 rounded-xl p-4 text-center">
+                      <span className="text-[10px] font-extrabold text-[#9A8B7A] uppercase tracking-wider block mb-1">
+                        Your 6-Digit Verification Code
+                      </span>
+                      <span className="text-2xl font-black font-mono tracking-[0.25em] text-[#c2a07e] block my-1">
+                        {currentInvitation?.code || "849201"}
+                      </span>
+                      <span className="text-[11px] text-slate-500 font-medium">
+                        Enter this code on the verification page to verify and set your password
+                      </span>
+                    </div>
+
+                    {/* Styled Invitation Action Button */}
+                    <div className="text-center pt-2">
+                      <a
+                        href={currentInvitation?.verification_url || "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-2 h-11 px-7 bg-[#c2a07e] hover:bg-[#b08d6a] text-white text-xs font-extrabold uppercase tracking-wider rounded-xl shadow-md shadow-[#c2a07e]/30 transition-all cursor-pointer"
+                      >
+                        <span>Verify &amp; Set Up Account</span>
+                        <ExternalLink size={14} />
+                      </a>
+                      <p className="text-[10px] text-slate-400 mt-2 font-medium">
+                        Clicking this button will open the account setup form in your browser.
+                      </p>
+                    </div>
+
+                    <div className="pt-3 border-t border-[#e5ddd5]/60 text-[11px] text-slate-500 space-y-1">
+                      <p>Best regards,</p>
+                      <p className="font-bold text-[#2d2a26]">{agencyProfile?.name || "Agency Administrator"}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* VIEW 2: Plain Text Editor */}
+                {emailModalViewMode === "text" && (
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider">
+                        Invitation Message Body (Editable)
+                      </label>
+                      <span className="text-[10px] text-slate-400">
+                        Editable before opening in Outlook
+                      </span>
+                    </div>
+                    <textarea
+                      rows={9}
+                      value={invitationEmailBody}
+                      onChange={(e) => setInvitationEmailBody(e.target.value)}
+                      className="w-full p-3.5 border border-border-main rounded-xl text-xs font-mono leading-relaxed bg-white text-text-main focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all shadow-sm resize-y"
+                    />
+                  </div>
+                )}
+
+                {/* Verification Link Callout */}
+                {currentInvitation?.verification_url && (
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <div className="truncate mr-2">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                        Direct Verification Link:
+                      </span>
+                      <span className="font-mono text-[11px] text-primary truncate select-all block mt-0.5">
+                        {currentInvitation.verification_url}
+                      </span>
+                      <div className="mt-1 flex items-center gap-1.5">
+                        <span className="text-[10px] text-slate-500 font-bold">Verification Code:</span>
+                        <span className="font-mono font-bold text-xs bg-amber-100 text-amber-900 px-2 py-0.5 rounded border border-amber-300">
+                          {currentInvitation.code || "849201"}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(currentInvitation.verification_url);
+                        showToast("Verification link copied!", "success");
+                      }}
+                      className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-border-main rounded-lg text-[11px] font-bold text-slate-700 transition-colors shrink-0 cursor-pointer self-start sm:self-center"
+                    >
+                      Copy Link
+                    </button>
+                  </div>
+                )}
+
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-slate-50/80 px-6 py-4 border-t border-border-main flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={handleCopyHtmlEmail}
+                    className="h-9 px-3.5 bg-white hover:bg-slate-100 border border-border-main text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                    title="Copy formatted email with styled button to clipboard"
+                  >
+                    <Copy size={13} />
+                    <span>{emailCopiedFeedback ? "Copied!" : "Copy Styled Button"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCopyEmailContent}
+                    className="h-9 px-3 bg-white hover:bg-slate-100 border border-border-main text-slate-600 font-semibold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                    title="Copy plain text"
+                  >
+                    <Copy size={12} />
+                    <span className="hidden md:inline">Plain Text</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsInvitationEmailModalOpen(false)}
+                    className="h-9 px-4 border border-border-main bg-white hover:bg-secondary text-text-main font-bold text-xs rounded-xl cursor-pointer active:scale-98 transition-all"
+                  >
+                    Close
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleCopyHtmlEmail();
+                      handleOpenInOutlook();
+                    }}
+                    className="h-9 px-5 bg-[#0078D4] hover:bg-[#006cbd] text-white font-bold text-xs rounded-xl shadow-md shadow-[#0078D4]/25 cursor-pointer active:scale-98 transition-all flex items-center justify-center gap-1.5 border-none"
+                  >
+                    <Send size={13} />
+                    <span>Open in Outlook</span>
+                  </button>
+                </div>
+              </div>
 
             </div>
           </div>
