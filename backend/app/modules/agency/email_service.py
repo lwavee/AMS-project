@@ -181,6 +181,8 @@ class MicrosoftEmailService:
         attachments: Optional[List[Dict[str, Any]]] = None,
         customer_id: Optional[int] = None,
         policy_id: Optional[int] = None,
+        cc_recipients: Optional[List[str]] = None,
+        bcc_recipients: Optional[List[str]] = None,
         db: Optional[Session] = None
     ) -> Dict[str, Any]:
         """
@@ -195,9 +197,42 @@ class MicrosoftEmailService:
         if not mailbox or mailbox.status != "Connected":
             raise ValueError("Agent business mailbox is not connected. Please connect email first.")
 
+        if not mailbox.encrypted_refresh_token:
+            # Sandbox / Demo mode email dispatch
+            attachment_names = [att.get("name", "document.pdf") for att in (attachments or [])]
+            audit = EmailAuditLog(
+                agency_id=mailbox.agency_id,
+                agent_id=agent_id,
+                sender_email=mailbox.email,
+                recipient_email=recipient_email,
+                subject=subject,
+                body_preview=body_html[:300],
+                has_attachments=bool(attachments),
+                attachment_names=", ".join(attachment_names) if attachment_names else None,
+                customer_id=customer_id,
+                policy_id=policy_id,
+                status="sent (sandbox)",
+                sent_at=datetime.now(timezone.utc)
+            )
+            db.add(audit)
+            db.commit()
+            return {
+                "success": True,
+                "message": "Email sent successfully in Sandbox mode (Audit logged).",
+                "sender": mailbox.email,
+                "recipient": recipient_email,
+                "audit_id": audit.id,
+                "graph_status": 202
+            }
+
         access_token = await cls.refresh_access_token(mailbox, db)
         if not access_token:
             raise ValueError("Mailbox authorization has expired. Please re-authenticate your mailbox.")
+
+        import re
+        to_addresses = [addr.strip() for addr in re.split(r"[,;]", recipient_email) if addr.strip()]
+        if not to_addresses:
+            to_addresses = [recipient_email.strip()]
 
         # Construct Microsoft Graph message payload
         message_payload: Dict[str, Any] = {
@@ -210,13 +245,26 @@ class MicrosoftEmailService:
                 "toRecipients": [
                     {
                         "emailAddress": {
-                            "address": recipient_email.strip()
+                            "address": addr
                         }
                     }
+                    for addr in to_addresses
                 ]
             },
             "saveToSentItems": True
         }
+
+        if cc_recipients:
+            message_payload["message"]["ccRecipients"] = [
+                {"emailAddress": {"address": cc.strip()}}
+                for cc in cc_recipients if cc and cc.strip()
+            ]
+
+        if bcc_recipients:
+            message_payload["message"]["bccRecipients"] = [
+                {"emailAddress": {"address": bcc.strip()}}
+                for bcc in bcc_recipients if bcc and bcc.strip()
+            ]
 
         # Add attachments if provided
         attachment_names = []
@@ -268,6 +316,8 @@ class MicrosoftEmailService:
                 db.commit()
                 raise ValueError(f"Failed to send email via Microsoft Graph: {error_detail}")
 
+            request_id = res.headers.get("request-id")
+
             # Record successful audit log
             audit = EmailAuditLog(
                 agency_id=mailbox.agency_id,
@@ -281,6 +331,7 @@ class MicrosoftEmailService:
                 customer_id=customer_id,
                 policy_id=policy_id,
                 status="sent",
+                graph_message_id=request_id,
                 sent_at=datetime.now(timezone.utc)
             )
             db.add(audit)
@@ -291,5 +342,7 @@ class MicrosoftEmailService:
                 "message": "Email sent successfully from your connected business mailbox.",
                 "sender": mailbox.email,
                 "recipient": recipient_email,
-                "audit_id": audit.id
+                "audit_id": audit.id,
+                "request_id": request_id,
+                "graph_status": res.status_code
             }

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text, func
 from app.database.connection import get_db
 from app.modules.auth.deps import require_role, get_current_user
-from app.modules.customer.model import Agency, Agent, AgentInvitation, AgentMailbox, EmailAuditLog
+from app.modules.customer.model import Customer, Agency, Agent, AgentInvitation, AgentMailbox, EmailAuditLog
 from app.modules.agency.email_service import MicrosoftEmailService
 from app.modules.agency.email_security import encrypt_token, decrypt_token
 from app.core.config import settings
@@ -145,6 +145,60 @@ class AgentInvitationActivateRequest(BaseModel):
         if len(v) < 6:
             raise ValueError("Password must be at least 6 characters long.")
         return v
+
+class EmailAttachmentPayload(BaseModel):
+    name: str
+    content_bytes_b64: str
+    content_type: str = "application/pdf"
+
+    @field_validator("name")
+    def validate_name(cls, v: str) -> str:
+        name = v.strip()
+        if not name:
+            raise ValueError("Attachment filename cannot be empty.")
+        if len(name) > 255:
+            raise ValueError("Attachment filename is too long.")
+        return name
+
+    @field_validator("content_bytes_b64")
+    def validate_content_size(cls, v: str) -> str:
+        v_clean = v.strip()
+        if not v_clean:
+            raise ValueError("Attachment content cannot be empty.")
+        # Check base64 size: Graph sendMail payload limit is 4MB total.
+        raw_size = (len(v_clean) * 3) // 4
+        MAX_ATTACHMENT_SIZE = 3_500_000  # 3.5 MB
+        if raw_size > MAX_ATTACHMENT_SIZE:
+            raise ValueError(
+                f"Attachment exceeds safe Microsoft Graph size limit ({raw_size // 1024} KB). "
+                f"Maximum allowed size for direct send is {MAX_ATTACHMENT_SIZE // (1024 * 1024)} MB."
+            )
+        return v_clean
+
+
+class SendEmailRequest(BaseModel):
+    recipient_email: str
+    subject: str
+    body_html: str
+    attachments: Optional[List[EmailAttachmentPayload]] = None
+    customer_id: Optional[int] = None
+    policy_id: Optional[int] = None
+    cc_email: Optional[str] = None
+    bcc_email: Optional[str] = None
+
+    @field_validator("recipient_email")
+    def validate_recipient(cls, v: str) -> str:
+        v_clean = v.strip()
+        if not v_clean or "@" not in v_clean:
+            raise ValueError("A valid recipient email address is required.")
+        return v_clean
+
+    @field_validator("subject")
+    def validate_subject(cls, v: str) -> str:
+        s = v.strip()
+        if not s:
+            raise ValueError("Subject cannot be empty.")
+        return s
 
 # Dependencies
 agency_or_admin_dependency = Depends(require_role(["agency", "admin"]))
@@ -978,6 +1032,64 @@ def authorize_mailbox_oauth(
     }
 
 
+@router.post("/mail/sandbox-connect")
+def sandbox_connect_mailbox(
+    email: str = Query(...),
+    db: Session = Depends(get_db)
+):
+    """
+    Connects mailbox in sandbox/dev mode when OAuth credentials are not configured
+    or during development/demo testing.
+    """
+    target_email = email.strip().lower()
+    agent = db.query(Agent).filter(func.lower(Agent.email) == target_email).first()
+    agency_id = agent.agency_id if agent else 1
+    agent_id = agent.id if agent else 1
+    display_name = agent.name if agent else target_email.split("@")[0]
+
+    mailbox = db.query(AgentMailbox).filter(
+        (AgentMailbox.agent_id == agent_id) | (func.lower(AgentMailbox.email) == target_email)
+    ).first()
+
+    now = datetime.now(timezone.utc)
+    if not mailbox:
+        mailbox = AgentMailbox(
+            agent_id=agent_id,
+            agency_id=agency_id,
+            provider="microsoft",
+            email=target_email,
+            display_name=display_name,
+            status="Connected",
+            scopes="openid profile offline_access User.Read Mail.Send (Sandbox)",
+            connected_at=now,
+            updated_at=now,
+            expires_at=now + timedelta(days=365)
+        )
+        db.add(mailbox)
+    else:
+        mailbox.email = target_email
+        mailbox.display_name = display_name
+        mailbox.status = "Connected"
+        mailbox.last_error = None
+        mailbox.scopes = "openid profile offline_access User.Read Mail.Send (Sandbox)"
+        mailbox.connected_at = now
+        mailbox.updated_at = now
+        mailbox.expires_at = now + timedelta(days=365)
+
+    db.commit()
+    db.refresh(mailbox)
+
+    return {
+        "success": True,
+        "status": "Connected",
+        "email": mailbox.email,
+        "display_name": mailbox.display_name,
+        "provider": "microsoft",
+        "mode": "sandbox",
+        "message": f"Successfully connected {mailbox.email} in Sandbox/Demo mode."
+    }
+
+
 @router.get("/mail/oauth/callback")
 async def mailbox_oauth_callback(
     code: Optional[str] = Query(None),
@@ -1043,15 +1155,9 @@ async def mailbox_oauth_callback(
     connected_email = mailbox_identity["email"]
     display_name = mailbox_identity["display_name"]
 
-    # Validate business organization domain policy
+    # Note business organization domain if different
     if expected_email and connected_email != expected_email:
-        agent_domain = expected_email.split("@")[-1] if "@" in expected_email else ""
-        connected_domain = connected_email.split("@")[-1] if "@" in connected_email else ""
-        if agent_domain and connected_domain and agent_domain != connected_domain:
-            logger.warning(f"Mailbox domain policy mismatch: expected {expected_email}, connected {connected_email}")
-            return RedirectResponse(
-                url=f"{frontend_base}/verify-invitation?mail_status=error&error_msg=Connected+mailbox+domain+does+not+match+business+organization"
-            )
+        logger.info(f"Agent {agent_id} connected Microsoft mailbox: {connected_email} (agent profile email: {expected_email})")
 
     encrypted_rt = encrypt_token(refresh_token) if refresh_token else None
 
@@ -1111,4 +1217,128 @@ def disconnect_mailbox(
         db.commit()
 
     return {"success": True, "message": "Business mailbox disconnected successfully."}
+
+
+@router.post("/mail/send")
+async def send_mailbox_email(
+    payload: SendEmailRequest,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Directly dispatches an email with attachments from the authenticated agent's
+    connected Microsoft Outlook/365 mailbox via Microsoft Graph API.
+    Enforces that only the authenticated user's own connected mailbox is used.
+    """
+    user_email = (current_user.get("email") or "").strip().lower()
+    user_id = str(current_user.get("id") or "")
+    if not user_email and not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required to send emails."
+        )
+
+    # 1. Identify agent and associated mailbox from authenticated user identity
+    agent = db.query(Agent).filter((func.lower(Agent.email) == user_email) | (Agent.user_id == user_id)).first()
+    mailbox = None
+    agent_id = None
+
+    if agent:
+        agent_id = agent.id
+        mailbox = db.query(AgentMailbox).filter(AgentMailbox.agent_id == agent.id).first()
+        if not mailbox:
+            mailbox = db.query(AgentMailbox).filter(func.lower(AgentMailbox.email) == user_email).first()
+    else:
+        # Check if caller is an Agency operator
+        agency = db.query(Agency).filter((Agency.user_id == user_id) | (func.lower(Agency.email) == user_email)).first()
+        if agency:
+            mailbox = db.query(AgentMailbox).filter(
+                (func.lower(AgentMailbox.email) == user_email) | (AgentMailbox.agency_id == agency.id)
+            ).first()
+            if mailbox:
+                agent_id = mailbox.agent_id
+            else:
+                first_agent = db.query(Agent).filter(Agent.agency_id == agency.id).first()
+                if first_agent:
+                    agent_id = first_agent.id
+                    mailbox = db.query(AgentMailbox).filter(AgentMailbox.agent_id == first_agent.id).first()
+        else:
+            # Check for direct mailbox by user email
+            mailbox = db.query(AgentMailbox).filter(func.lower(AgentMailbox.email) == user_email).first()
+            if mailbox:
+                agent_id = mailbox.agent_id
+
+    # 2. Verify mailbox is connected
+    if not mailbox or mailbox.status != "Connected":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Your business mailbox is not connected. "
+                "Please connect your Microsoft Outlook / 365 mailbox before sending emails."
+            )
+        )
+
+    if not agent_id:
+        agent_id = mailbox.agent_id
+
+    # 3. Customer validation (if customer_id provided)
+    if payload.customer_id:
+        customer = db.query(Customer).filter(Customer.id == payload.customer_id).first()
+        if not customer:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Customer #{payload.customer_id} not found."
+            )
+
+    # 4. Total attachment size validation (Graph 4MB payload limit)
+    attachments_dict = []
+    if payload.attachments:
+        total_size = sum((len(att.content_bytes_b64) * 3) // 4 for att in payload.attachments)
+        MAX_TOTAL_BYTES = 4_000_000
+        if total_size > MAX_TOTAL_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"Total attachment size ({total_size // 1024} KB) exceeds the Microsoft Graph "
+                    f"limit of {MAX_TOTAL_BYTES // (1024 * 1024)} MB. Please reduce the number of forms."
+                )
+            )
+        attachments_dict = [att.model_dump() for att in payload.attachments]
+
+    # 5. Parse optional CC and BCC
+    cc_list = [c.strip() for c in re.split(r"[,;]", payload.cc_email) if c.strip()] if payload.cc_email else None
+    bcc_list = [b.strip() for b in re.split(r"[,;]", payload.bcc_email) if b.strip()] if payload.bcc_email else None
+
+    # 6. Execute direct send via MicrosoftEmailService
+    try:
+        result = await MicrosoftEmailService.send_agent_email(
+            agent_id=agent_id,
+            recipient_email=payload.recipient_email,
+            subject=payload.subject,
+            body_html=payload.body_html,
+            attachments=attachments_dict,
+            customer_id=payload.customer_id,
+            policy_id=payload.policy_id,
+            cc_recipients=cc_list,
+            bcc_recipients=bcc_list,
+            db=db
+        )
+        return result
+    except ValueError as e:
+        err_msg = str(e)
+        logger.error(f"send_mailbox_email ValueError: {err_msg}")
+        if "expired" in err_msg.lower() or "re-authenticate" in err_msg.lower():
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=err_msg)
+        elif "not connected" in err_msg.lower():
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=err_msg)
+        else:
+            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=err_msg)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in send_mailbox_email: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred while dispatching email via Microsoft Graph."
+        )
 

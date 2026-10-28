@@ -674,7 +674,7 @@ function EmailOptionsContent() {
     }
   };
 
-  // ── Action: Send Email (Opens Email Client with PDF Attached or Downloads PDF & Opens Mailto) ──
+  // ── Action: Direct Outlook Email Sending via Microsoft Graph API ──
   const handleSendEmail = async () => {
     const items = getSelectedItems();
     if (items.length === 0) {
@@ -682,58 +682,104 @@ function EmailOptionsContent() {
       return;
     }
 
-    setIsProcessing(true);
-    setProcessingStatus("Preparing PDF attachment & launching email...");
-    try {
-      // 1. Generate the PDF blob and create a File object
-      const { blob, fileName } = await generatePdfBlob();
-      const file = new File([blob], fileName, { type: "application/pdf" });
+    const cleanTo = toEmail.trim();
+    if (!cleanTo || !cleanTo.includes("@")) {
+      showToast("Please enter a valid recipient email address.", "warning");
+      return;
+    }
 
-      // 2. Attempt to use the Web Share API (Level 2)
-      // When supported (Edge, Chrome, Windows 10/11, macOS), this opens the OS share sheet
-      // where clicking Mail or Outlook creates a new email WITH the PDF file attached!
-      if (typeof navigator !== "undefined" && navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: subject || "Certificate of Insurance",
-            text: message || "",
-          });
-          showToast("Email opened with attached PDF!", "success");
-          return;
-        } catch (shareErr: any) {
-          // If the user cancelled the dialog, do not force the fallback mailto
-          if (shareErr?.name === "AbortError") {
-            return;
-          }
-          console.warn("Native share failed, falling back to mailto:", shareErr);
-        }
+    const cleanSubject = subject.trim();
+    if (!cleanSubject) {
+      showToast("Please enter an email subject.", "warning");
+      return;
+    }
+
+    const token = localStorage.getItem("token") || localStorage.getItem("access_token");
+    if (!token) {
+      showToast("You must be signed in to dispatch emails. Please log in.", "error");
+      return;
+    }
+
+    setIsProcessing(true);
+    setProcessingStatus("Generating PDF certificate bundle...");
+    try {
+      // 1. Generate the PDF blob using existing pdf-lib engine
+      const { blob, fileName } = await generatePdfBlob();
+
+      // 2. Safe attachment size check (Microsoft Graph limit is 4MB payload, 3.5MB file)
+      if (blob.size > 3.5 * 1024 * 1024) {
+        showToast(
+          `The generated PDF (${(blob.size / (1024 * 1024)).toFixed(1)} MB) exceeds the 3.5 MB Microsoft Graph limit. Please select fewer forms.`,
+          "error"
+        );
+        setIsProcessing(false);
+        return;
       }
 
-      // 3. Fallback for browsers/environments where Web Share with files is unavailable:
-      // Download the PDF so the user has it ready, and open the mailto: client
-      const pdfUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = pdfUrl;
-      a.download = fileName;
-      a.click();
-      URL.revokeObjectURL(pdfUrl);
+      setProcessingStatus("Encoding PDF attachment...");
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const res = reader.result as string;
+          const b64 = res.split(",")[1] || "";
+          resolve(b64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
 
-      // Format mailto link with standard percent-encoding
-      const mailtoParams: string[] = [];
-      if (ccEmail) mailtoParams.push(`cc=${encodeURIComponent(ccEmail)}`);
-      if (bccEmail) mailtoParams.push(`bcc=${encodeURIComponent(bccEmail)}`);
-      if (subject) mailtoParams.push(`subject=${encodeURIComponent(subject)}`);
-      if (message) mailtoParams.push(`body=${encodeURIComponent(message)}`);
+      setProcessingStatus("Dispatching email via Microsoft Outlook / 365...");
 
-      const queryString = mailtoParams.length > 0 ? `?${mailtoParams.join("&")}` : "";
-      const mailtoUrl = `mailto:${encodeURIComponent(toEmail)}${queryString}`;
-      window.open(mailtoUrl, "_blank");
+      const formattedBody = message.trim()
+        ? message.replace(/\n/g, "<br/>")
+        : "<p>Please find attached your Certificate of Insurance.</p>";
 
-      showToast(`PDF "${fileName}" saved to Downloads! Attach it to your email.`, "success");
-    } catch (err) {
-      console.error(err);
-      showToast("Error preparing email. Check console.", "error");
+      // 3. Dispatch directly to backend /api/agency/mail/send endpoint
+      const res = await fetch(`${API_BASE_URL}/api/agency/mail/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          recipient_email: cleanTo,
+          subject: cleanSubject,
+          body_html: formattedBody,
+          customer_id: customerId ? parseInt(customerId, 10) : null,
+          cc_email: ccEmail.trim() || null,
+          bcc_email: bccEmail.trim() || null,
+          attachments: [
+            {
+              name: fileName,
+              content_bytes_b64: base64Data,
+              content_type: "application/pdf"
+            }
+          ]
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        const detail = data.detail || data.message || "Failed to dispatch email.";
+        if (res.status === 400 && detail.toLowerCase().includes("not connected")) {
+          showToast("Your business mailbox is not connected. Please connect your Microsoft Outlook account under Agency Settings or Invitation Setup.", "error");
+        } else if (res.status === 401) {
+          showToast("Mailbox authorization has expired. Please re-authenticate your mailbox in Agency Settings.", "error");
+        } else {
+          showToast(detail, "error");
+        }
+        return;
+      }
+
+      // 4. Success feedback reflecting Microsoft Graph processing
+      showToast(
+        data.message || `Email accepted by Microsoft Graph! Sent from ${data.sender || 'your mailbox'} with attachment "${fileName}".`,
+        "success"
+      );
+    } catch (err: any) {
+      console.error("Direct email sending error:", err);
+      showToast(err.message || "Error sending email via Microsoft Graph. Check console.", "error");
     } finally {
       setIsProcessing(false);
     }
@@ -879,7 +925,7 @@ function EmailOptionsContent() {
                     <p className="text-[11px] font-bold text-text-main truncate">
                       {selectedCount > 1 ? `Combined_Certificates (${selectedCount} forms).pdf` : `Certificate_${customer?.name || 'Document'}.pdf`}
                     </p>
-                    <p className="text-[10px] text-primary font-semibold">Auto-downloads to your Downloads folder to attach in Outlook</p>
+                    <p className="text-[10px] text-primary font-semibold">Attached automatically & dispatched directly via your connected Outlook mailbox</p>
                   </div>
                 </div>
                 <button 

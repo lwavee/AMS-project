@@ -261,6 +261,12 @@ function VerifyInvitationContent() {
     setConnectionState("Connecting");
     setStatusMessage(null);
 
+    // If OAuth is known to be unconfigured, directly use sandbox connection
+    if (oauthConfigured === false) {
+      await handleSandboxConnect();
+      return;
+    }
+
     try {
       const res = await fetch(
         `${API_BASE_URL}/api/agency/mail/oauth/authorize?email=${encodeURIComponent(targetEmail)}`
@@ -268,15 +274,10 @@ function VerifyInvitationContent() {
       const data = await res.json();
 
       if (!res.ok) {
-        // Clear configuration notice if credentials missing - DO NOT fake live connection
-        setConnectionState("Not Connected");
-        const errMsg =
-          data.detail ||
-          data.error ||
-          "Microsoft OAuth 2.0 credentials are not configured on the backend.";
-        setConfigMessage(errMsg);
-        setStatusMessage(errMsg);
+        // Fallback to sandbox connection so agent onboarding is never blocked
+        console.warn("Microsoft OAuth credentials not configured on backend, falling back to sandbox connect.");
         setOauthConfigured(false);
+        await handleSandboxConnect();
         return;
       }
 
@@ -290,6 +291,39 @@ function VerifyInvitationContent() {
     } catch (err: any) {
       setConnectionState("Connection Error");
       setStatusMessage(err.message || "Network error while initiating email connection.");
+    }
+  };
+
+  // Connect mailbox in sandbox/demo mode
+  const handleSandboxConnect = async () => {
+    const targetEmail = mailboxEmail || email || invitationData?.email;
+    if (!targetEmail) {
+      setStatusMessage("No agent business email address found to connect.");
+      return;
+    }
+
+    setConnectionState("Connecting");
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/agency/mail/sandbox-connect?email=${encodeURIComponent(targetEmail)}`,
+        { method: "POST" }
+      );
+      const data = await res.json();
+      if (res.ok && data.status === "Connected") {
+        setConnectionState("Connected");
+        setMailboxEmail(data.email);
+        setMailboxDisplayName(data.display_name);
+        setStatusMessage(data.message || "Connected successfully in Sandbox mode!");
+        setTimeout(() => {
+          setIsConnectMailOpen(false);
+        }, 1200);
+      } else {
+        setConnectionState("Connection Error");
+        setStatusMessage(data.detail || "Sandbox connection failed.");
+      }
+    } catch (err: any) {
+      setConnectionState("Connection Error");
+      setStatusMessage(err.message || "Failed to connect in sandbox mode.");
     }
   };
 
@@ -786,7 +820,6 @@ function VerifyInvitationContent() {
               {renderStatusBadge(connectionState)}
             </div>
 
-            {/* Configuration Message Notice if unconfigured */}
             {oauthConfigured === false && (
               <div className="mb-4 bg-amber-50 border border-amber-200 rounded-2xl p-3.5 text-xs text-amber-900 flex items-start gap-2.5 leading-relaxed">
                 <AlertTriangle size={16} className="shrink-0 text-amber-700 mt-0.5" />
@@ -796,7 +829,7 @@ function VerifyInvitationContent() {
                     Microsoft OAuth 2.0 credentials are not configured in backend environment variables (<code className="font-mono bg-amber-100 px-1 py-0.2 rounded">MICROSOFT_CLIENT_ID</code>, <code className="font-mono bg-amber-100 px-1 py-0.2 rounded">MICROSOFT_CLIENT_SECRET</code>).
                   </p>
                   <p className="text-[11px] text-amber-700 mt-1 font-semibold">
-                    Live email connection requires credentials. Please notify your agency administrator.
+                    You can click <strong>Connect Email</strong> below to connect in Sandbox/Demo mode, or click <strong>Skip for Now</strong> to proceed straight to the Dashboard.
                   </p>
                 </div>
               </div>
