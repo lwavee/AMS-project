@@ -1108,9 +1108,7 @@ ${agencyName}`;
       <Header
         onToggleDrawer={() => setDrawerOpen(true)}
         onProfileClick={() => {
-          if (userRole === "agency") {
-            router.push("/agency/agency-profile");
-          }
+          router.push("/agency/agency-profile");
         }}
       />
       <RightDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />

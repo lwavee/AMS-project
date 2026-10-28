@@ -205,7 +205,7 @@ export default function Header({ onToggleDrawer, onProfileClick }: HeaderProps) 
                                   if (onProfileClick) {
                                     onProfileClick();
                                   } else {
-                                    router.push("/agency/dashboard?tab=Agent%20Control");
+                                    router.push("/agency/agency-profile");
                                   }
                                   setIsProfileOpen(false);
                                 } else if (item.onClick) {

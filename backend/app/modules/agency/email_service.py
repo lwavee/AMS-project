@@ -46,9 +46,9 @@ class MicrosoftEmailService:
         )
 
     @classmethod
-    def get_authorization_url(cls, agent_id: int, agency_id: int, state_token: str) -> str:
+    def get_authorization_url(cls, agent_id: int, agency_id: int, state_token: str, login_hint: Optional[str] = None) -> str:
         """
-        Builds the Microsoft OAuth 2.0 authorization code URL.
+        Builds the Microsoft OAuth 2.0 authorization code URL with optional login_hint.
         """
         if not cls.is_configured():
             raise ValueError(
@@ -69,6 +69,8 @@ class MicrosoftEmailService:
             "state": state_token,
             "prompt": "select_account"
         }
+        if login_hint:
+            params["login_hint"] = login_hint.strip()
 
         # Build URL with encoded parameters
         import urllib.parse
@@ -198,32 +200,10 @@ class MicrosoftEmailService:
             raise ValueError("Agent business mailbox is not connected. Please connect email first.")
 
         if not mailbox.encrypted_refresh_token:
-            # Sandbox / Demo mode email dispatch
-            attachment_names = [att.get("name", "document.pdf") for att in (attachments or [])]
-            audit = EmailAuditLog(
-                agency_id=mailbox.agency_id,
-                agent_id=agent_id,
-                sender_email=mailbox.email,
-                recipient_email=recipient_email,
-                subject=subject,
-                body_preview=body_html[:300],
-                has_attachments=bool(attachments),
-                attachment_names=", ".join(attachment_names) if attachment_names else None,
-                customer_id=customer_id,
-                policy_id=policy_id,
-                status="sent (sandbox)",
-                sent_at=datetime.now(timezone.utc)
+            raise ValueError(
+                "Mailbox is not authorized for real email sending. "
+                "Please connect your Microsoft Outlook account to authenticate with Microsoft Graph."
             )
-            db.add(audit)
-            db.commit()
-            return {
-                "success": True,
-                "message": "Email sent successfully in Sandbox mode (Audit logged).",
-                "sender": mailbox.email,
-                "recipient": recipient_email,
-                "audit_id": audit.id,
-                "graph_status": 202
-            }
 
         access_token = await cls.refresh_access_token(mailbox, db)
         if not access_token:
@@ -234,13 +214,38 @@ class MicrosoftEmailService:
         if not to_addresses:
             to_addresses = [recipient_email.strip()]
 
+        # Ensure body is formatted with a clean, spam-safe HTML envelope
+        if not body_html.strip().lower().startswith("<!doctype") and not body_html.strip().lower().startswith("<html"):
+            formatted_html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #2d2a26; margin: 0; padding: 20px; background-color: #ffffff;">
+    <div style="max-width: 600px; margin: 0 auto;">
+        <div style="margin-bottom: 24px;">
+            {body_html}
+        </div>
+        <hr style="border: none; border-top: 1px solid #e5ddd5; margin: 24px 0 16px 0;" />
+        <div style="font-size: 11px; color: #6b5e52; line-height: 1.4;">
+            <p style="margin: 0 0 4px 0;"><strong>Sterling Insurance Agency Management System</strong></p>
+            <p style="margin: 0;">This email and any attached certificate documents are confidential and intended solely for the recipient.</p>
+        </div>
+    </div>
+</body>
+</html>"""
+        else:
+            formatted_html = body_html
+
         # Construct Microsoft Graph message payload
         message_payload: Dict[str, Any] = {
             "message": {
                 "subject": subject,
+                "importance": "normal",
                 "body": {
                     "contentType": "HTML",
-                    "content": body_html
+                    "content": formatted_html
                 },
                 "toRecipients": [
                     {
@@ -278,7 +283,8 @@ class MicrosoftEmailService:
                     "@odata.type": "#microsoft.graph.fileAttachment",
                     "name": name,
                     "contentType": c_type,
-                    "contentBytes": content
+                    "contentBytes": content,
+                    "isInline": False
                 })
                 attachment_names.append(name)
             message_payload["message"]["attachments"] = msg_attachments

@@ -6,7 +6,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { showToast } from "@/components/ToastProvider";
 import {
   X, Mail, Send, FileText, CheckSquare, Square, MinusSquare, PlusSquare, 
-  Loader2, Download, Eye, Paperclip, Check
+  Loader2, Download, Eye, Paperclip, Check, AlertCircle
 } from "lucide-react";
 import { PDFDocument } from "pdf-lib";
 import { toJpeg } from "html-to-image";
@@ -100,6 +100,48 @@ function EmailOptionsContent() {
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState("Generating PDF...");
+  const [mailboxInfo, setMailboxInfo] = useState<{ configured: boolean; status: string; email?: string; has_token?: boolean } | null>(null);
+  const [isConnectingMailbox, setIsConnectingMailbox] = useState(false);
+
+  const checkMailbox = useCallback(async () => {
+    try {
+      const email = typeof window !== "undefined"
+        ? (localStorage.getItem("email") || localStorage.getItem("user_email") || "")
+        : "";
+      const res = await fetch(`${API_BASE_URL}/api/agency/mail/status?email=${encodeURIComponent(email)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setMailboxInfo(data);
+      }
+    } catch (e) {
+      console.error("Failed to check mailbox status", e);
+    }
+  }, []);
+
+  const handleConnectOutlook = async () => {
+    try {
+      setIsConnectingMailbox(true);
+      const email = typeof window !== "undefined"
+        ? (localStorage.getItem("email") || localStorage.getItem("user_email") || mailboxInfo?.email || "")
+        : "";
+      const res = await fetch(`${API_BASE_URL}/api/agency/mail/oauth/authorize?email=${encodeURIComponent(email)}`);
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.detail || "Failed to initiate Microsoft login.", "error");
+        return;
+      }
+      if (data.authorize_url) {
+        const w = 600, h = 700;
+        const left = (window.innerWidth - w) / 2 + window.screenX;
+        const top = (window.innerHeight - h) / 2 + window.screenY;
+        window.open(data.authorize_url, "Connect Microsoft Outlook", `width=${w},height=${h},top=${top},left=${left}`);
+      }
+    } catch (err: any) {
+      showToast(err.message || "Failed to connect Outlook.", "error");
+    } finally {
+      setIsConnectingMailbox(false);
+    }
+  };
 
   // ── Fetch Data ──
   const fetchData = useCallback(async () => {
@@ -240,7 +282,17 @@ function EmailOptionsContent() {
   useEffect(() => {
     document.title = "Certificate of Insurance Email Options";
     fetchData();
-  }, [fetchData]);
+    checkMailbox();
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "OUTLOOK_CONNECTED") {
+        showToast(`Microsoft Outlook connected: ${event.data.email || ''}`, "success");
+        checkMailbox();
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [fetchData, checkMailbox]);
 
   // ── Tree Logic ──
   const toggleExpand = (id: string) => {
@@ -694,6 +746,11 @@ function EmailOptionsContent() {
       return;
     }
 
+    if (mailboxInfo && !mailboxInfo.has_token) {
+      showToast("Microsoft Outlook authorization is required for real email sending. Please click 'Connect Outlook' above.", "warning");
+      return;
+    }
+
     const token = localStorage.getItem("token") || localStorage.getItem("access_token");
     if (!token) {
       showToast("You must be signed in to dispatch emails. Please log in.", "error");
@@ -855,10 +912,57 @@ function EmailOptionsContent() {
           
           {/* Email Recipient Card */}
           <div className="bg-white border border-border-main p-4 rounded-2xl shadow-sm flex flex-col gap-3">
-            <h3 className="text-[11px] font-bold text-text-muted uppercase tracking-widest border-b border-border-main/50 pb-2 flex items-center gap-1.5">
-              <Mail size={13} className="text-primary" />
-              Email Recipients
+            <h3 className="text-[11px] font-bold text-text-muted uppercase tracking-widest border-b border-border-main/50 pb-2 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Mail size={13} className="text-primary" />
+                Email Recipients
+              </span>
+              {mailboxInfo?.has_token ? (
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <Check size={10} className="text-emerald-600" />
+                  Outlook Connected
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleConnectOutlook}
+                  disabled={isConnectingMailbox}
+                  className="text-[10px] font-bold text-primary hover:text-primary/80 bg-primary/10 hover:bg-primary/15 px-2 py-0.5 rounded-full flex items-center gap-1 transition-all cursor-pointer"
+                >
+                  <Mail size={10} />
+                  Connect Outlook
+                </button>
+              )}
             </h3>
+
+            {/* Connection Banner if not authorized */}
+            {mailboxInfo && !mailboxInfo.has_token && (
+              <div className="p-2.5 bg-amber-50/80 border border-amber-200/70 rounded-xl flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <AlertCircle size={14} className="text-amber-600 shrink-0" />
+                  <div className="text-[11px] text-amber-900 leading-tight">
+                    <p className="font-bold">Real Email Mode</p>
+                    <p className="text-[10px] text-amber-700">Connect Outlook for {mailboxInfo.email || 'your business email'} to send real emails to inboxes &amp; Sent Items.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleConnectOutlook}
+                  disabled={isConnectingMailbox}
+                  className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold rounded-lg shadow-sm transition-all shrink-0 cursor-pointer flex items-center gap-1"
+                >
+                  {isConnectingMailbox ? <Loader2 size={10} className="animate-spin" /> : <Mail size={10} />}
+                  Connect
+                </button>
+              </div>
+            )}
+
+            {mailboxInfo?.has_token && (
+              <div className="p-2 bg-emerald-50/80 border border-emerald-200/60 rounded-xl flex items-center gap-2 text-[11px] text-emerald-800">
+                <Check size={13} className="text-emerald-600 shrink-0" />
+                <span>Sending via authorized Outlook: <strong>{mailboxInfo.email}</strong></span>
+              </div>
+            )}
             
             <div className="flex flex-col gap-2.5">
               <div>

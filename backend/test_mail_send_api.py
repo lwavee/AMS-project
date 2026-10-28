@@ -145,6 +145,7 @@ class TestMailSendAPI(unittest.TestCase):
             agency_id=self.agency.id,
             provider="microsoft",
             email=self.agent.email,
+            encrypted_refresh_token=encrypt_token("mock_token"),
             status="Connected",
             connected_at=datetime.now(timezone.utc)
         )
@@ -189,6 +190,7 @@ class TestMailSendAPI(unittest.TestCase):
             agency_id=self.agency.id,
             provider="microsoft",
             email=self.agent.email,
+            encrypted_refresh_token=encrypt_token("mock_token"),
             status="Connected",
             connected_at=datetime.now(timezone.utc)
         )
@@ -222,8 +224,8 @@ class TestMailSendAPI(unittest.TestCase):
         res = self.client.post("/api/agency/mail/send", json=payload)
         self.assertEqual(res.status_code, 422)
 
-    def test_send_mail_sandbox_success(self):
-        """When mailbox is connected in sandbox mode (no refresh token), dispatch succeeds with audit log."""
+    def test_send_mail_sandbox_rejected_without_real_token(self):
+        """When mailbox has no refresh token, real sending rejects dummy send."""
         mailbox = AgentMailbox(
             agent_id=self.agent.id,
             agency_id=self.agency.id,
@@ -237,9 +239,7 @@ class TestMailSendAPI(unittest.TestCase):
 
         payload = {
             "recipient_email": "client@acmelogistics.com",
-            "cc_email": "compliance@acmelogistics.com",
-            "bcc_email": "archive@sterling-demo.com",
-            "subject": "Certificate of Liability Insurance - ACME Logistics",
+            "subject": "Certificate of Liability Insurance",
             "body_html": "<p>Please review attached certificate.</p>",
             "customer_id": self.customer.id,
             "attachments": [
@@ -252,22 +252,8 @@ class TestMailSendAPI(unittest.TestCase):
         }
 
         res = self.client.post("/api/agency/mail/send", json=payload)
-        self.assertEqual(res.status_code, 200)
-        data = res.json()
-        self.assertTrue(data["success"])
-        self.assertEqual(data["graph_status"], 202)
-        self.assertEqual(data["sender"], self.agent.email)
-        self.assertEqual(data["recipient"], "client@acmelogistics.com")
-
-        # Verify EmailAuditLog was created in the database
-        audit = self.db.query(EmailAuditLog).filter(EmailAuditLog.agent_id == self.agent.id).first()
-        self.assertIsNotNone(audit)
-        self.assertEqual(audit.recipient_email, "client@acmelogistics.com")
-        self.assertEqual(audit.subject, "Certificate of Liability Insurance - ACME Logistics")
-        self.assertTrue(audit.has_attachments)
-        self.assertIn("Certificate_Acme.pdf", audit.attachment_names)
-        self.assertEqual(audit.customer_id, self.customer.id)
-        self.assertEqual(audit.status, "sent (sandbox)")
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("not connected with Microsoft OAuth authorization", res.json()["detail"])
 
     def test_send_mail_graph_oauth_success_mocked(self):
         """When mailbox has encrypted refresh token, mock Graph refresh & sendMail return HTTP 202."""

@@ -121,6 +121,7 @@ class TestMailboxAPI(unittest.TestCase):
             provider="microsoft",
             email=self.agent.email,
             display_name="Sarah Jenkins",
+            encrypted_refresh_token=encrypt_token("mock_refresh_token"),
             status="Connected",
             connected_at=datetime.now(timezone.utc)
         )

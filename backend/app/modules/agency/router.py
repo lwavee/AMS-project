@@ -29,12 +29,19 @@ class AgencyProfileResponse(BaseModel):
     name: str
     email: str
     domain: str
+    role: str = "agency"
     phone: Optional[str] = None
     address: Optional[str] = None
     city: Optional[str] = None
     state: Optional[str] = None
     zip: Optional[str] = None
     created_date: Optional[date] = None
+    agency_id: Optional[int] = None
+    agency_name: Optional[str] = None
+    agency_email: Optional[str] = None
+    mailbox_status: Optional[str] = "Not Connected"
+    mailbox_email: Optional[str] = None
+    mailbox_connected_at: Optional[datetime] = None
 
 class AgencyProfileUpdateRequest(BaseModel):
     name: str
@@ -258,79 +265,209 @@ def get_reports(db: Session = Depends(get_db)):
             "state_distribution": {}
         }
 
-@router.get("/profile", response_model=AgencyProfileResponse, dependencies=[agency_only_dependency])
+@router.get("/profile", response_model=AgencyProfileResponse)
 def get_profile(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    agency = db.query(Agency).filter(Agency.user_id == current_user["id"]).first()
+    user_id = str(current_user.get("id")) if current_user.get("id") else None
+    user_email = (current_user.get("email") or "").strip().lower()
+    user_role = (current_user.get("role") or "").strip().lower()
+
+    # 1. Check if user is an Agent
+    agent = None
+    if user_role == "agent" or not user_role or user_role != "agency":
+        if user_id:
+            agent = db.query(Agent).filter(Agent.user_id == user_id).first()
+        if not agent and user_email:
+            agent = db.query(Agent).filter(func.lower(Agent.email) == user_email).first()
+
+    if agent:
+        agency = db.query(Agency).filter(Agency.id == agent.agency_id).first() if agent.agency_id else None
+        mailbox = db.query(AgentMailbox).filter(AgentMailbox.agent_id == agent.id).first()
+        if not mailbox and agent.email:
+            mailbox = db.query(AgentMailbox).filter(func.lower(AgentMailbox.email) == agent.email.lower()).first()
+
+        has_token = bool(mailbox and mailbox.encrypted_refresh_token)
+        mb_status = mailbox.status if (mailbox and has_token) else "Not Connected"
+        domain = agent.email.split("@")[-1] if "@" in agent.email else "capco.com"
+
+        return AgencyProfileResponse(
+            id=agent.id,
+            name=agent.name,
+            email=agent.email,
+            domain=domain,
+            role="agent",
+            phone=agency.phone if agency else None,
+            address=agency.address if agency else None,
+            city=agency.city if agency else None,
+            state=agency.state if agency else None,
+            zip=agency.zip if agency else None,
+            created_date=agent.created_date,
+            agency_id=agency.id if agency else None,
+            agency_name=agency.name if agency else "Sterling Insurance Agency",
+            agency_email=agency.email if agency else None,
+            mailbox_status=mb_status,
+            mailbox_email=mailbox.email if mailbox else agent.email,
+            mailbox_connected_at=mailbox.connected_at if mailbox else None
+        )
+
+    # 2. Otherwise Agency profile
+    agency = None
+    if user_id:
+        agency = db.query(Agency).filter(Agency.user_id == user_id).first()
+    if not agency and user_email:
+        agency = db.query(Agency).filter(func.lower(Agency.email) == user_email).first()
+
     if not agency:
-        # Fallback to matching by email
-        agency = db.query(Agency).filter(Agency.email == current_user["email"]).first()
-        if not agency:
-            # Create a default record for this logged-in agency account if it somehow doesn't exist
-            agency = Agency(
-                name=current_user["email"].split("@")[0].capitalize() + " Agency",
-                email=current_user["email"],
-                user_id=current_user["id"]
-            )
-            db.add(agency)
-            db.commit()
-            db.refresh(agency)
-            
+        # Create a default record for this logged-in agency account if it somehow doesn't exist
+        agency = Agency(
+            name=user_email.split("@")[0].capitalize() + " Agency" if user_email else "Sterling Agency",
+            email=user_email,
+            user_id=user_id
+        )
+        db.add(agency)
+        db.commit()
+        db.refresh(agency)
+
     agency_any: Any = agency
     domain = agency_any.email.split("@")[-1] if "@" in agency_any.email else "capco.com"
+
+    mailbox = db.query(AgentMailbox).filter(func.lower(AgentMailbox.email) == agency_any.email.lower()).first()
+    has_token = bool(mailbox and mailbox.encrypted_refresh_token)
+    mb_status = mailbox.status if (mailbox and has_token) else "Not Connected"
+
     return AgencyProfileResponse(
         id=agency_any.id,
         name=agency_any.name,
         email=agency_any.email,
         domain=domain,
+        role="agency",
         phone=agency_any.phone,
         address=agency_any.address,
         city=agency_any.city,
         state=agency_any.state,
         zip=agency_any.zip,
-        created_date=agency_any.created_date
+        created_date=agency_any.created_date,
+        agency_id=agency_any.id,
+        agency_name=agency_any.name,
+        agency_email=agency_any.email,
+        mailbox_status=mb_status,
+        mailbox_email=mailbox.email if mailbox else agency_any.email,
+        mailbox_connected_at=mailbox.connected_at if mailbox else None
     )
 
-@router.put("/profile", response_model=AgencyProfileResponse, dependencies=[agency_only_dependency])
+@router.put("/profile", response_model=AgencyProfileResponse)
 def update_profile(req: AgencyProfileUpdateRequest, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    agency = db.query(Agency).filter(Agency.user_id == current_user["id"]).first()
+    user_id = str(current_user.get("id")) if current_user.get("id") else None
+    user_email = (current_user.get("email") or "").strip().lower()
+    user_role = (current_user.get("role") or "").strip().lower()
+
+    # 1. Check if user is an Agent
+    agent = None
+    if user_role == "agent" or not user_role or user_role != "agency":
+        if user_id:
+            agent = db.query(Agent).filter(Agent.user_id == user_id).first()
+        if not agent and user_email:
+            agent = db.query(Agent).filter(func.lower(Agent.email) == user_email).first()
+
+    if agent:
+        if req.name and req.name.strip():
+            setattr(agent, "name", req.name.strip())
+        db.commit()
+        db.refresh(agent)
+
+        agency = db.query(Agency).filter(Agency.id == agent.agency_id).first() if agent.agency_id else None
+        mailbox = db.query(AgentMailbox).filter(AgentMailbox.agent_id == agent.id).first()
+        has_token = bool(mailbox and mailbox.encrypted_refresh_token)
+        domain = agent.email.split("@")[-1] if "@" in agent.email else "capco.com"
+
+        return AgencyProfileResponse(
+            id=agent.id,
+            name=agent.name,
+            email=agent.email,
+            domain=domain,
+            role="agent",
+            phone=agency.phone if agency else None,
+            address=agency.address if agency else None,
+            city=agency.city if agency else None,
+            state=agency.state if agency else None,
+            zip=agency.zip if agency else None,
+            created_date=agent.created_date,
+            agency_id=agency.id if agency else None,
+            agency_name=agency.name if agency else "Sterling Insurance Agency",
+            agency_email=agency.email if agency else None,
+            mailbox_status=mailbox.status if (mailbox and has_token) else "Not Connected",
+            mailbox_email=mailbox.email if mailbox else agent.email,
+            mailbox_connected_at=mailbox.connected_at if mailbox else None
+        )
+
+    # 2. Agency update
+    agency = None
+    if user_id:
+        agency = db.query(Agency).filter(Agency.user_id == user_id).first()
+    if not agency and user_email:
+        agency = db.query(Agency).filter(func.lower(Agency.email) == user_email).first()
+
     if not agency:
-        agency = db.query(Agency).filter(Agency.email == current_user["email"]).first()
-        if not agency:
-            raise HTTPException(status_code=404, detail="Agency profile not found")
-            
+        raise HTTPException(status_code=404, detail="Agency profile not found")
+
     setattr(agency, "name", req.name)
     setattr(agency, "phone", req.phone)
     setattr(agency, "address", req.address)
     setattr(agency, "city", req.city)
     setattr(agency, "state", req.state)
     setattr(agency, "zip", req.zip)
-    
+
     db.commit()
     db.refresh(agency)
-    
+
     agency_any: Any = agency
     domain = agency_any.email.split("@")[-1] if "@" in agency_any.email else "capco.com"
+    mailbox = db.query(AgentMailbox).filter(func.lower(AgentMailbox.email) == agency_any.email.lower()).first()
+    has_token = bool(mailbox and mailbox.encrypted_refresh_token)
+
     return AgencyProfileResponse(
         id=agency_any.id,
         name=agency_any.name,
         email=agency_any.email,
         domain=domain,
+        role="agency",
         phone=agency_any.phone,
         address=agency_any.address,
         city=agency_any.city,
         state=agency_any.state,
         zip=agency_any.zip,
-        created_date=agency_any.created_date
+        created_date=agency_any.created_date,
+        agency_id=agency_any.id,
+        agency_name=agency_any.name,
+        agency_email=agency_any.email,
+        mailbox_status=mailbox.status if (mailbox and has_token) else "Not Connected",
+        mailbox_email=mailbox.email if mailbox else agency_any.email,
+        mailbox_connected_at=mailbox.connected_at if mailbox else None
     )
 
-@router.get("/agents", response_model=List[AgentResponse], dependencies=[agency_only_dependency])
+@router.get("/agents", response_model=List[AgentResponse])
 def list_agents(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    agency = db.query(Agency).filter(Agency.user_id == current_user["id"]).first()
+    user_id = str(current_user.get("id")) if current_user.get("id") else None
+    user_email = (current_user.get("email") or "").strip().lower()
+
+    agency = None
+    if user_id:
+        agency = db.query(Agency).filter(Agency.user_id == user_id).first()
+    if not agency and user_email:
+        agency = db.query(Agency).filter(func.lower(Agency.email) == user_email).first()
+
     if not agency:
-        agency = db.query(Agency).filter(Agency.email == current_user["email"]).first()
-        if not agency:
-            return []
-            
+        # Check if caller is an agent belonging to an agency
+        agent = None
+        if user_id:
+            agent = db.query(Agent).filter(Agent.user_id == user_id).first()
+        if not agent and user_email:
+            agent = db.query(Agent).filter(func.lower(Agent.email) == user_email).first()
+        if agent and agent.agency_id:
+            agency = db.query(Agency).filter(Agency.id == agent.agency_id).first()
+
+    if not agency:
+        return []
+
     agents: List[Any] = db.query(Agent).filter(Agent.agency_id == agency.id).order_by(Agent.name.asc()).all()
     return [
         AgentResponse(
@@ -941,16 +1078,14 @@ def get_mailbox_status(
             "configured": configured,
             "provider": "microsoft",
             "status": "Not Connected",
+            "has_token": False,
             "email": None,
             "display_name": None,
             "connected_at": None,
-            "message": (
-                "Mailbox is not connected."
-                if configured
-                else "Microsoft OAuth credentials are not configured in backend environment variables (MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET). Please contact your administrator."
-            )
+            "message": "Mailbox is not connected."
         }
 
+    # Strictly find the specific agent's own mailbox
     agent = db.query(Agent).filter(func.lower(Agent.email) == target_email).first()
     mailbox = None
     if agent:
@@ -963,28 +1098,29 @@ def get_mailbox_status(
             "configured": configured,
             "provider": "microsoft",
             "status": "Not Connected",
-            "email": None,
+            "has_token": False,
+            "email": target_email,
             "display_name": None,
             "connected_at": None,
-            "message": (
-                "Mailbox is not connected."
-                if configured
-                else "Microsoft OAuth credentials are not configured in backend environment variables (MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET). Please contact your administrator."
-            )
+            "message": f"Mailbox for {target_email} is not connected."
         }
+
+    has_token = bool(mailbox.encrypted_refresh_token)
+    effective_status = mailbox.status if has_token else "Not Connected"
 
     return {
         "configured": configured,
         "provider": mailbox.provider,
-        "status": mailbox.status,
+        "status": effective_status,
+        "has_token": has_token,
         "email": mailbox.email,
         "display_name": mailbox.display_name,
         "connected_at": mailbox.connected_at.isoformat() if mailbox.connected_at else None,
         "last_error": mailbox.last_error,
         "message": (
             f"Successfully connected to business mailbox: {mailbox.email}"
-            if mailbox.status == "Connected"
-            else (mailbox.last_error or "Mailbox requires attention.")
+            if has_token and mailbox.status == "Connected"
+            else f"Mailbox for {mailbox.email} requires Microsoft Outlook authorization."
         )
     }
 
@@ -1010,10 +1146,16 @@ def authorize_mailbox_oauth(
     target_email = email.strip().lower()
     agent = db.query(Agent).filter(func.lower(Agent.email) == target_email).first()
     if not agent:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Agent with email '{target_email}' not found."
-        )
+        agency = db.query(Agency).filter(func.lower(Agency.email) == target_email).first()
+        if agency:
+            agent = db.query(Agent).filter(Agent.agency_id == agency.id).first()
+        if not agent:
+            agency = db.query(Agency).first()
+            agency_id = agency.id if agency else 1
+            agent = Agent(name=target_email.split('@')[0], email=target_email, agency_id=agency_id)
+            db.add(agent)
+            db.commit()
+            db.refresh(agent)
 
     state_payload = {
         "agent_id": agent.id,
@@ -1023,7 +1165,7 @@ def authorize_mailbox_oauth(
         "exp": datetime.now(timezone.utc) + timedelta(minutes=15)
     }
     state_token = jwt.encode(state_payload, settings.SECRET_KEY, algorithm="HS256")
-    auth_url = MicrosoftEmailService.get_authorization_url(agent.id, agent.agency_id, state_token)
+    auth_url = MicrosoftEmailService.get_authorization_url(agent.id, agent.agency_id, state_token, login_hint=target_email)
 
     return {
         "authorize_url": auth_url,
@@ -1162,14 +1304,17 @@ async def mailbox_oauth_callback(
     encrypted_rt = encrypt_token(refresh_token) if refresh_token else None
 
     # Upsert AgentMailbox
+    agent = db.query(Agent).filter(Agent.id == agent_id).first()
+    official_email = agent.email if agent and agent.email else (expected_email or connected_email)
+
     mailbox = db.query(AgentMailbox).filter(AgentMailbox.agent_id == agent_id).first()
     if not mailbox:
         mailbox = AgentMailbox(
             agent_id=agent_id,
             agency_id=agency_id,
             provider="microsoft",
-            email=connected_email,
-            display_name=display_name,
+            email=official_email,
+            display_name=display_name or (agent.name if agent else ""),
             encrypted_refresh_token=encrypted_rt,
             status="Connected",
             scopes=token_data.get("scope"),
@@ -1179,8 +1324,8 @@ async def mailbox_oauth_callback(
         )
         db.add(mailbox)
     else:
-        mailbox.email = connected_email
-        mailbox.display_name = display_name
+        mailbox.email = official_email
+        mailbox.display_name = display_name or mailbox.display_name
         if encrypted_rt:
             mailbox.encrypted_refresh_token = encrypted_rt
         mailbox.status = "Connected"
@@ -1191,9 +1336,43 @@ async def mailbox_oauth_callback(
 
     db.commit()
 
-    return RedirectResponse(
-        url=f"{frontend_base}/verify-invitation?mail_status=connected&email={connected_email}"
-    )
+    from fastapi.responses import HTMLResponse
+    target_url = f"{frontend_base}/verify-invitation?mail_status=connected&email={connected_email}"
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Microsoft Outlook Connected</title>
+        <style>
+            body {{ font-family: system-ui, -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f8fafc; }}
+            .card {{ background: white; padding: 32px 40px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); text-align: center; max-width: 420px; }}
+            h2 {{ color: #059669; margin: 0 0 12px; font-size: 20px; }}
+            p {{ color: #64748b; font-size: 13px; line-height: 1.5; margin: 0 0 16px; }}
+            .email {{ color: #0f172a; font-weight: 700; background: #f1f5f9; padding: 4px 10px; border-radius: 6px; }}
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <h2>✓ Microsoft Outlook Connected!</h2>
+            <p>Your mailbox <span class="email">{connected_email}</span> is now authorized for real email sending.</p>
+            <p>This window will close automatically...</p>
+        </div>
+        <script>
+            try {{
+                if (window.opener) {{
+                    window.opener.postMessage({{ type: 'OUTLOOK_CONNECTED', email: '{connected_email}' }}, '*');
+                    setTimeout(function() {{ window.close(); }}, 1200);
+                }} else {{
+                    setTimeout(function() {{ window.location.href = "{target_url}"; }}, 1500);
+                }}
+            }} catch(e) {{
+                window.location.href = "{target_url}";
+            }}
+        </script>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
 
 
 @router.post("/mail/disconnect")
@@ -1268,13 +1447,13 @@ async def send_mailbox_email(
             if mailbox:
                 agent_id = mailbox.agent_id
 
-    # 2. Verify mailbox is connected
-    if not mailbox or mailbox.status != "Connected":
+    # 2. Verify mailbox is connected with real Microsoft OAuth authorization strictly for this agent
+    if not mailbox or mailbox.status != "Connected" or not mailbox.encrypted_refresh_token:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
-                "Your business mailbox is not connected. "
-                "Please connect your Microsoft Outlook / 365 mailbox before sending emails."
+                f"Your business mailbox ({user_email}) is not connected with Microsoft OAuth authorization. "
+                "Please connect your own Microsoft Outlook / 365 mailbox before sending real emails."
             )
         )
 
