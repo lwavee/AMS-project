@@ -1,10 +1,12 @@
 /* eslint-disable */
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../../../components/Header";
 import Sidebar from "../../../components/Sidebar";
+import Modal from "../../../components/Modal";
+import { confirmDialog, showToast } from "@/components/ToastProvider";
 import {
   Building2,
   Mail,
@@ -29,7 +31,13 @@ import {
   Unlink,
   Check,
   User,
-  LayoutDashboard
+  LayoutDashboard,
+  UserPlus,
+  Plus,
+  Search,
+  Trash2,
+  Copy,
+  Eye
 } from "lucide-react";
 import { API_BASE_URL } from "../../../lib/config";
 
@@ -64,6 +72,21 @@ export default function AgencyProfilePage() {
   const [isConnectingMailbox, setIsConnectingMailbox] = useState(false);
   const [isDisconnectingMailbox, setIsDisconnectingMailbox] = useState(false);
   const [mailboxActionMsg, setMailboxActionMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Agent management modals & search state
+  const [isAddAgentModalOpen, setIsAddAgentModalOpen] = useState(false);
+  const [isViewAllAgentsModalOpen, setIsViewAllAgentsModalOpen] = useState(false);
+  const [agentSearchTerm, setAgentSearchTerm] = useState("");
+  const [isAddingAgent, setIsAddingAgent] = useState(false);
+  const [addAgentError, setAddAgentError] = useState("");
+  const [addAgentSuccess, setAddAgentSuccess] = useState("");
+  const [copiedAgentId, setCopiedAgentId] = useState<number | null>(null);
+  const [newAgentForm, setNewAgentForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    phone: "",
+  });
 
   const [editForm, setEditForm] = useState({
     name: "",
@@ -307,6 +330,114 @@ export default function AgencyProfilePage() {
     });
   };
 
+  const filteredAgents = useMemo(() => {
+    if (!agentSearchTerm.trim()) return agents || [];
+    const term = agentSearchTerm.toLowerCase().trim();
+    return (agents || []).filter(
+      (a: any) =>
+        (a.name && a.name.toLowerCase().includes(term)) ||
+        (a.email && a.email.toLowerCase().includes(term))
+    );
+  }, [agents, agentSearchTerm]);
+
+  const handleAddAgentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddAgentError("");
+    setAddAgentSuccess("");
+
+    const name = newAgentForm.name.trim();
+    const email = newAgentForm.email.trim().toLowerCase();
+    const phone = newAgentForm.phone.trim();
+    const password = newAgentForm.password.trim();
+
+    if (!name || name.length < 2) {
+      setAddAgentError("Agent full name is required (minimum 2 characters).");
+      return;
+    }
+
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        setAddAgentError("Please enter a valid email address (e.g. agent@capco.com).");
+        return;
+      }
+    }
+
+    setIsAddingAgent(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/agency/agents`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name,
+          email: email || undefined,
+          password: password || undefined,
+          phone: phone || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "Failed to create agent");
+      }
+
+      const createdAgent = await res.json();
+      setAddAgentSuccess(`Agent "${createdAgent.name}" added successfully!`);
+      showToast(`Agent "${createdAgent.name}" added successfully!`, "success");
+      setNewAgentForm({ name: "", email: "", password: "", phone: "" });
+      await fetchAgents();
+      setTimeout(() => {
+        setIsAddAgentModalOpen(false);
+        setAddAgentSuccess("");
+      }, 1000);
+    } catch (err: any) {
+      setAddAgentError(err.message || "Failed to add agent.");
+    } finally {
+      setIsAddingAgent(false);
+    }
+  };
+
+  const handleDeleteAgent = async (agentId: number, agentName: string) => {
+    const confirmed = await confirmDialog(
+      `Are you sure you want to remove agent "${agentName}"? This will deactivate their login and remove them from the agency team roster.`,
+      "Remove Agent",
+      "Delete Agent",
+      "danger"
+    );
+    if (!confirmed) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/agency/agents/${agentId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "Failed to delete agent");
+      }
+      showToast(`Agent "${agentName}" removed successfully.`, "success");
+      fetchAgents();
+    } catch (err: any) {
+      showToast(err.message || "Failed to remove agent.", "error");
+    }
+  };
+
+  const handleCopyEmail = async (agentId: number, email: string) => {
+    try {
+      await navigator.clipboard.writeText(email);
+      setCopiedAgentId(agentId);
+      showToast(`Copied ${email} to clipboard!`, "info");
+      setTimeout(() => setCopiedAgentId(null), 2500);
+    } catch {
+      showToast("Unable to copy to clipboard", "error");
+    }
+  };
+
   if (!mounted) return null;
 
   const isAgent = profile?.role === "agent" || userRole === "agent";
@@ -371,6 +502,43 @@ export default function AgencyProfilePage() {
                 <LayoutDashboard size={13} className="text-[#9A8B7A]" />
                 <span>Go to Dashboard</span>
               </button>
+
+              {!isAgent && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAgentSearchTerm("");
+                      setIsViewAllAgentsModalOpen(true);
+                    }}
+                    className="h-8.5 px-3 flex items-center gap-1.5 bg-white border border-[#e5ddd5] text-[#2d2a26] hover:bg-[#FAF8F5] text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                    title="View all agency team agents"
+                  >
+                    <Users size={13} className="text-[#9A8B7A]" />
+                    <span>View All Agents</span>
+                    {agents.length > 0 && (
+                      <span className="text-[10px] font-mono font-bold bg-[#9A8B7A]/15 text-[#9A8B7A] px-1.5 py-0.2 rounded-full">
+                        {agents.length}
+                      </span>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewAgentForm({ name: "", email: "", password: "", phone: "" });
+                      setAddAgentError("");
+                      setAddAgentSuccess("");
+                      setIsAddAgentModalOpen(true);
+                    }}
+                    className="h-8.5 px-3 flex items-center gap-1.5 bg-[#9A8B7A]/15 border border-[#9A8B7A]/30 text-[#9A8B7A] hover:bg-[#9A8B7A]/25 text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                    title="Add new agent to agency"
+                  >
+                    <UserPlus size={13} />
+                    <span>Add Agent</span>
+                  </button>
+                </>
+              )}
 
               {!isEditing ? (
                 <button
@@ -888,6 +1056,26 @@ export default function AgencyProfilePage() {
                           </div>
                           <ChevronRight size={13} className="text-[#6b5e52] group-hover:text-[#2d2a26] transition-colors" />
                         </button>
+
+                        {!isAgent && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAgentSearchTerm("");
+                              setIsViewAllAgentsModalOpen(true);
+                            }}
+                            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#FAF8F5] hover:bg-[#f5f1eb] border border-[#e5ddd5] text-left transition-colors cursor-pointer group"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <Users size={15} className="text-[#9A8B7A]" />
+                              <div>
+                                <p className="text-xs font-bold text-[#2d2a26]">All Agents Roster</p>
+                                <p className="text-[10px] text-[#6b5e52]">View & manage {agents.length} active agents</p>
+                              </div>
+                            </div>
+                            <ChevronRight size={13} className="text-[#6b5e52] group-hover:text-[#2d2a26] transition-colors" />
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -934,34 +1122,110 @@ export default function AgencyProfilePage() {
                     </div>
 
                     {/* Team Members List (If agency or agents available) */}
-                    {agents.length > 0 && (
+                    {!isAgent && (
                       <div className="bg-white border border-[#e5ddd5] rounded-2xl shadow-xs overflow-hidden">
                         <div className="bg-[#FAF8F5] px-5 py-3.5 border-b border-[#e5ddd5] flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Users size={15} className="text-[#9A8B7A]" />
                             <h3 className="text-xs font-bold text-[#2d2a26]">Agency Team</h3>
+                            <span className="text-[10px] font-bold bg-[#9A8B7A] text-white px-2 py-0.5 rounded-full">
+                              {agents.length}
+                            </span>
                           </div>
-                          <span className="text-[10px] font-bold bg-[#9A8B7A] text-white px-2 py-0.5 rounded-full">
-                            {agents.length}
-                          </span>
+
+                          <div className="flex items-center gap-1.5">
+                            {agents.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAgentSearchTerm("");
+                                  setIsViewAllAgentsModalOpen(true);
+                                }}
+                                className="text-[11px] font-bold text-[#9A8B7A] hover:text-[#8a6f4d] hover:underline px-2 py-1 rounded transition-colors cursor-pointer flex items-center gap-0.5"
+                              >
+                                <span>View All</span>
+                                <ChevronRight size={12} />
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setNewAgentForm({ name: "", email: "", password: "", phone: "" });
+                                setAddAgentError("");
+                                setAddAgentSuccess("");
+                                setIsAddAgentModalOpen(true);
+                              }}
+                              className="h-7 px-2.5 bg-[#9A8B7A] hover:bg-[#8a6f4d] text-white text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 shadow-xs cursor-pointer border-none"
+                              title="Add new agent"
+                            >
+                              <UserPlus size={12} />
+                              <span>Add Agent</span>
+                            </button>
+                          </div>
                         </div>
 
-                        <div className="divide-y divide-[#e5ddd5]/60 max-h-[260px] overflow-y-auto">
-                          {agents.map((agent) => (
-                            <div
-                              key={agent.id}
-                              className="w-full flex items-center gap-3 px-5 py-2.5 text-left"
+                        {agents.length === 0 ? (
+                          <div className="p-6 text-center space-y-2">
+                            <Users size={24} className="text-[#9A8B7A]/50 mx-auto" />
+                            <p className="text-xs font-bold text-[#2d2a26]">No agents in your team yet</p>
+                            <p className="text-[10px] text-[#6b5e52]">
+                              Add agents to allow team members to access client rosters and issue policies.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setNewAgentForm({ name: "", email: "", password: "", phone: "" });
+                                setAddAgentError("");
+                                setAddAgentSuccess("");
+                                setIsAddAgentModalOpen(true);
+                              }}
+                              className="mt-2 h-7 px-3 bg-[#9A8B7A] text-white text-[11px] font-bold rounded-lg hover:bg-[#8a6f4d] cursor-pointer inline-flex items-center gap-1 shadow-xs"
                             >
-                              <div className="h-7 w-7 rounded-full bg-[#9A8B7A]/15 flex items-center justify-center text-[#9A8B7A] font-extrabold text-[11px] shrink-0">
-                                {agent.name?.charAt(0)?.toUpperCase()}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-bold text-[#2d2a26] truncate">{agent.name}</p>
-                                <p className="text-[10px] text-[#6b5e52] truncate">{agent.email}</p>
-                              </div>
+                              <UserPlus size={12} />
+                              <span>Add Your First Agent</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="divide-y divide-[#e5ddd5]/60 max-h-[260px] overflow-y-auto">
+                              {agents.map((agent) => (
+                                <div
+                                  key={agent.id}
+                                  onClick={() => router.push(`/agency/agent/${agent.id}`)}
+                                  className="w-full flex items-center gap-3 px-5 py-2.5 text-left hover:bg-[#FAF8F5] transition-colors cursor-pointer group"
+                                  title={`View ${agent.name}'s profile`}
+                                >
+                                  <div className="h-7 w-7 rounded-full bg-[#9A8B7A]/15 flex items-center justify-center text-[#9A8B7A] font-extrabold text-[11px] shrink-0 group-hover:bg-[#9A8B7A] group-hover:text-white transition-colors">
+                                    {agent.name?.charAt(0)?.toUpperCase()}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold text-[#2d2a26] truncate group-hover:text-[#9A8B7A] transition-colors">
+                                      {agent.name}
+                                    </p>
+                                    <p className="text-[10px] text-[#6b5e52] truncate">{agent.email}</p>
+                                  </div>
+                                  <ChevronRight size={13} className="text-slate-300 group-hover:text-[#9A8B7A] group-hover:translate-x-0.5 transition-all shrink-0" />
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
+
+                            {/* Card Footer: View All Agents Button */}
+                            <div className="p-2.5 bg-[#FAF8F5] border-t border-[#e5ddd5] flex items-center justify-between gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAgentSearchTerm("");
+                                  setIsViewAllAgentsModalOpen(true);
+                                }}
+                                className="flex-1 py-1.5 px-3 bg-white hover:bg-[#FAF8F5] border border-[#e5ddd5] text-xs font-bold text-[#2d2a26] hover:text-[#9A8B7A] rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                              >
+                                <Users size={13} className="text-[#9A8B7A]" />
+                                <span>View All Agents ({agents.length})</span>
+                                <ChevronRight size={12} />
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     )}
 
@@ -987,6 +1251,328 @@ export default function AgencyProfilePage() {
           </div>
         </main>
       </div>
+
+      {/* ── MODAL: ADD AGENT ── */}
+      {isAddAgentModalOpen && (
+        <Modal>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl border border-[#e5ddd5] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col font-sans animate-in zoom-in-95 duration-200">
+              {/* Modal Header */}
+              <div className="bg-[#FAF8F5] px-6 py-4 border-b border-[#e5ddd5] flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-lg bg-[#9A8B7A]/15 text-[#9A8B7A] flex items-center justify-center font-bold">
+                    <UserPlus size={16} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-[#2d2a26]">Add New Agent</h3>
+                    <p className="text-[10px] text-[#6b5e52]">Create credentials for a new team member</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAddAgentModalOpen(false)}
+                  className="h-7 w-7 rounded-lg border border-[#e5ddd5] bg-white hover:bg-[#FAF8F5] text-[#6b5e52] hover:text-[#2d2a26] flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+
+              {/* Modal Form */}
+              <form onSubmit={handleAddAgentSubmit} className="p-6 space-y-4">
+                {addAgentError && (
+                  <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold px-4 py-2.5 rounded-xl">
+                    <AlertCircle size={14} className="shrink-0" />
+                    <span>{addAgentError}</span>
+                  </div>
+                )}
+
+                {addAgentSuccess && (
+                  <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold px-4 py-2.5 rounded-xl">
+                    <CheckCircle size={14} className="shrink-0" />
+                    <span>{addAgentSuccess}</span>
+                  </div>
+                )}
+
+                {/* Agent Full Name */}
+                <div>
+                  <label className="text-[11px] font-bold text-[#6b5e52] uppercase tracking-wider block mb-1.5">
+                    Full Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newAgentForm.name}
+                    onChange={(e) => setNewAgentForm({ ...newAgentForm, name: e.target.value })}
+                    placeholder="e.g. Sarah Connor"
+                    className="w-full h-10 px-3.5 text-xs bg-white border border-[#e5ddd5] rounded-xl focus:outline-none focus:border-[#9A8B7A] transition-colors"
+                  />
+                </div>
+
+                {/* Business Email */}
+                <div>
+                  <label className="text-[11px] font-bold text-[#6b5e52] uppercase tracking-wider block mb-1.5">
+                    Business Email Address <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={newAgentForm.email}
+                    onChange={(e) => setNewAgentForm({ ...newAgentForm, email: e.target.value })}
+                    placeholder={`e.g. sarah@${profile?.domain || "capco.com"}`}
+                    className="w-full h-10 px-3.5 text-xs bg-white border border-[#e5ddd5] rounded-xl focus:outline-none focus:border-[#9A8B7A] transition-colors"
+                  />
+                  <p className="text-[10px] text-[#6b5e52] mt-1">
+                    Agent will use this email address to log into their agency workspace.
+                  </p>
+                </div>
+
+                {/* Password (Optional) */}
+                <div>
+                  <label className="text-[11px] font-bold text-[#6b5e52] uppercase tracking-wider block mb-1.5">
+                    Temporary Password <span className="text-slate-400 font-normal">(Optional)</span>
+                  </label>
+                  <input
+                    type="password"
+                    value={newAgentForm.password}
+                    onChange={(e) => setNewAgentForm({ ...newAgentForm, password: e.target.value })}
+                    placeholder="Leave blank to auto-generate password"
+                    className="w-full h-10 px-3.5 text-xs bg-white border border-[#e5ddd5] rounded-xl focus:outline-none focus:border-[#9A8B7A] transition-colors"
+                  />
+                  <p className="text-[10px] text-[#6b5e52] mt-1">
+                    If left blank, a secure random password will be assigned automatically.
+                  </p>
+                </div>
+
+                {/* Phone (Optional) */}
+                <div>
+                  <label className="text-[11px] font-bold text-[#6b5e52] uppercase tracking-wider block mb-1.5">
+                    Direct Phone <span className="text-slate-400 font-normal">(Optional)</span>
+                  </label>
+                  <input
+                    type="tel"
+                    value={newAgentForm.phone}
+                    onChange={(e) => setNewAgentForm({ ...newAgentForm, phone: e.target.value })}
+                    placeholder="(555) 000-0000"
+                    className="w-full h-10 px-3.5 text-xs bg-white border border-[#e5ddd5] rounded-xl focus:outline-none focus:border-[#9A8B7A] transition-colors"
+                  />
+                </div>
+
+                {/* Modal Footer */}
+                <div className="pt-3 border-t border-[#e5ddd5] flex items-center justify-end gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddAgentModalOpen(false)}
+                    className="h-9 px-4 border border-[#e5ddd5] bg-white hover:bg-[#FAF8F5] text-[#2d2a26] text-xs font-bold rounded-xl transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isAddingAgent}
+                    className="h-9 px-4.5 bg-[#9A8B7A] hover:bg-[#8a6f4d] active:scale-[0.98] text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-xs cursor-pointer border-none disabled:opacity-50"
+                  >
+                    {isAddingAgent ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin" />
+                        <span>Creating Agent...</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus size={13} />
+                        <span>Add Agent</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* ── MODAL: VIEW ALL AGENTS ── */}
+      {isViewAllAgentsModalOpen && (
+        <Modal>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl border border-[#e5ddd5] shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col font-sans animate-in zoom-in-95 duration-200">
+              {/* Modal Header */}
+              <div className="bg-[#FAF8F5] px-6 py-4 border-b border-[#e5ddd5] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-xl bg-[#9A8B7A]/15 text-[#9A8B7A] flex items-center justify-center font-bold">
+                    <Users size={18} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-black text-[#2d2a26]">All Agency Agents</h3>
+                      <span className="text-[10px] font-bold bg-[#9A8B7A] text-white px-2 py-0.5 rounded-full">
+                        {agents.length} Total
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#6b5e52]">
+                      Complete team roster for {profile?.agency_name || profile?.name || "your agency"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {!isAgent && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewAgentForm({ name: "", email: "", password: "", phone: "" });
+                        setAddAgentError("");
+                        setAddAgentSuccess("");
+                        setIsAddAgentModalOpen(true);
+                      }}
+                      className="h-8 px-3 bg-[#9A8B7A] hover:bg-[#8a6f4d] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all shadow-xs cursor-pointer border-none"
+                    >
+                      <UserPlus size={13} />
+                      <span>Add Agent</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setIsViewAllAgentsModalOpen(false)}
+                    className="h-8 w-8 rounded-xl border border-[#e5ddd5] bg-white hover:bg-[#FAF8F5] text-[#6b5e52] hover:text-[#2d2a26] flex items-center justify-center transition-colors cursor-pointer"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Search Bar */}
+              <div className="p-4 border-b border-[#e5ddd5] bg-white">
+                <div className="relative">
+                  <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={agentSearchTerm}
+                    onChange={(e) => setAgentSearchTerm(e.target.value)}
+                    placeholder="Search agents by name or email address..."
+                    className="w-full h-9 pl-9 pr-8 text-xs bg-[#FAF8F5] border border-[#e5ddd5] rounded-xl focus:outline-none focus:border-[#9A8B7A] focus:bg-white transition-all"
+                  />
+                  {agentSearchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => setAgentSearchTerm("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Agent Roster List */}
+              <div className="flex-1 overflow-y-auto divide-y divide-[#e5ddd5]/60">
+                {filteredAgents.length === 0 ? (
+                  <div className="py-12 px-4 text-center space-y-2">
+                    <Users size={28} className="text-[#9A8B7A]/40 mx-auto" />
+                    <p className="text-xs font-bold text-[#2d2a26]">
+                      {agentSearchTerm ? `No agents found matching "${agentSearchTerm}"` : "No agents registered yet"}
+                    </p>
+                    <p className="text-[10px] text-[#6b5e52]">
+                      {agentSearchTerm ? "Try searching by another name or email." : "Click 'Add Agent' to add your first team member."}
+                    </p>
+                  </div>
+                ) : (
+                  filteredAgents.map((agent: any) => (
+                    <div
+                      key={agent.id}
+                      className="p-4 px-6 flex items-center justify-between gap-4 hover:bg-[#FAF8F5] transition-colors"
+                    >
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <div className="h-10 w-10 rounded-xl bg-[#9A8B7A]/15 text-[#9A8B7A] flex items-center justify-center font-extrabold text-sm shrink-0">
+                          {agent.name?.charAt(0)?.toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsViewAllAgentsModalOpen(false);
+                                router.push(`/agency/agent/${agent.id}`);
+                              }}
+                              className="text-xs font-black text-[#2d2a26] hover:text-[#9A8B7A] hover:underline truncate cursor-pointer text-left"
+                            >
+                              {agent.name}
+                            </button>
+                            <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              Active
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 text-[11px] text-[#6b5e52] mt-0.5 flex-wrap">
+                            <span className="flex items-center gap-1 font-mono">
+                              <Mail size={11} className="text-[#9A8B7A]" />
+                              <span>{agent.email}</span>
+                            </span>
+                            {agent.created_date && (
+                              <span className="flex items-center gap-1">
+                                <Calendar size={11} className="text-[#9A8B7A]" />
+                                <span>Joined {new Date(agent.created_date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyEmail(agent.id, agent.email)}
+                          className="h-8 px-2.5 text-xs font-bold text-[#6b5e52] hover:text-[#2d2a26] bg-white hover:bg-[#ebe5dd] border border-[#e5ddd5] rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                          title="Copy email to clipboard"
+                        >
+                          {copiedAgentId === agent.id ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                          <span className="hidden sm:inline">{copiedAgentId === agent.id ? "Copied" : "Copy"}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsViewAllAgentsModalOpen(false);
+                            router.push(`/agency/agent/${agent.id}`);
+                          }}
+                          className="h-8 px-3 text-xs font-bold text-[#2d2a26] bg-white hover:bg-[#FAF8F5] border border-[#e5ddd5] rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                          title="View Agent Profile"
+                        >
+                          <Eye size={12} className="text-[#9A8B7A]" />
+                          <span>Profile</span>
+                        </button>
+
+                        {!isAgent && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteAgent(agent.id, agent.name)}
+                            className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 rounded-lg transition-colors flex items-center justify-center cursor-pointer"
+                            title="Remove agent from agency"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-3.5 px-6 border-t border-[#e5ddd5] bg-[#FAF8F5] flex items-center justify-between text-xs font-semibold text-[#6b5e52]">
+                <span>
+                  Showing {filteredAgents.length} of {agents.length} {agents.length === 1 ? "agent" : "agents"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsViewAllAgentsModalOpen(false)}
+                  className="h-8 px-4 border border-[#e5ddd5] bg-white hover:bg-[#FAF8F5] text-[#2d2a26] text-xs font-bold rounded-xl transition-all cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
