@@ -46,7 +46,7 @@ export default function AgentProfilePage() {
       router.push("/login");
       return;
     }
-    if (role !== "agency") {
+    if (role !== "agency" && role !== "agent") {
       router.push("/agency/dashboard");
       return;
     }

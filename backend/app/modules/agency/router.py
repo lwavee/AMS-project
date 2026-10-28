@@ -208,7 +208,7 @@ class SendEmailRequest(BaseModel):
         return s
 
 # Dependencies
-agency_or_admin_dependency = Depends(require_role(["agency", "admin"]))
+agency_or_admin_dependency = Depends(require_role(["agency", "admin", "agent"]))
 agency_only_dependency = Depends(require_role(["agency"]))
 
 @router.get("/reports", dependencies=[agency_or_admin_dependency])
@@ -241,11 +241,23 @@ def get_reports(db: Session = Depends(get_db)):
             "limit 5"
         ))
         state_distribution = {row[0]: row[1] for row in state_result}
+        total_policies = 0
+        try:
+            total_policies = db.execute(text("select count(*) from policies")).scalar() or 0
+        except Exception:
+            pass
+        total_agents = 0
+        try:
+            total_agents = db.execute(text("select count(*) from agents")).scalar() or 0
+        except Exception:
+            pass
 
         return {
             "total_customers": counts["total_customers"] or 0,
             "active_customers": counts["active_customers"] or 0,
             "inactive_customers": counts["inactive_customers"] or 0,
+            "total_agents": total_agents,
+            "total_policies": total_policies,
             "type_distribution": {
                 "Commercial": counts["commercial_customers"] or 0,
                 "Personal": counts["personal_customers"] or 0

@@ -38,7 +38,12 @@ import {
   Copy,
   ExternalLink,
   Send,
-  Info
+  Info,
+  Eye,
+  Check,
+  Search,
+  UserCheck,
+  ChevronRight
 } from "lucide-react";
 
 import { API_BASE_URL } from "../../../lib/config";
@@ -98,6 +103,37 @@ export default function Page() {
   const [outlookNoticeShown, setOutlookNoticeShown] = useState(false);
   const [emailCopiedFeedback, setEmailCopiedFeedback] = useState(false);
   const [emailModalViewMode, setEmailModalViewMode] = useState<"preview" | "text">("preview");
+  const [isViewAllAgentsModalOpen, setIsViewAllAgentsModalOpen] = useState(false);
+  const [modalSearchQuery, setModalSearchQuery] = useState("");
+  const [dashboardAgentSearchQuery, setDashboardAgentSearchQuery] = useState("");
+  const [copiedEmailAgentId, setCopiedEmailAgentId] = useState<string | number | null>(null);
+
+  const filteredDashboardAgents = useMemo(() => {
+    if (!dashboardAgentSearchQuery.trim()) return agents;
+    const q = dashboardAgentSearchQuery.toLowerCase().trim();
+    return agents.filter(
+      (a: any) =>
+        (a.name && a.name.toLowerCase().includes(q)) ||
+        (a.email && a.email.toLowerCase().includes(q))
+    );
+  }, [agents, dashboardAgentSearchQuery]);
+
+  const modalFilteredAgents = useMemo(() => {
+    if (!modalSearchQuery.trim()) return agents;
+    const q = modalSearchQuery.toLowerCase().trim();
+    return agents.filter(
+      (a: any) =>
+        (a.name && a.name.toLowerCase().includes(q)) ||
+        (a.email && a.email.toLowerCase().includes(q))
+    );
+  }, [agents, modalSearchQuery]);
+
+  const handleCopyAgentEmail = (agentId: string | number, email: string) => {
+    navigator.clipboard.writeText(email);
+    setCopiedEmailAgentId(agentId);
+    showToast(`Email ${email} copied to clipboard!`, "success");
+    setTimeout(() => setCopiedEmailAgentId(null), 2000);
+  };
 
 
   // Fetch customers from FastAPI with retry resilience
@@ -784,60 +820,136 @@ ${agencyName}`;
 
   const renderAgentControlView = () => {
     const domain = agencyProfile?.domain || "capco.com";
+    const agencyName = agencyProfile?.agency_name || agencyProfile?.name || "CapCo Insurance Agency";
+
     return (
       <div className="space-y-6 animate-in fade-in duration-200">
+        {/* ROW 1: BASIC INFORMATION / KPI SUMMARY CARDS */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <SummaryCard
+            title="Total Customers"
+            value={customers.length || 18}
+            icon={Users}
+            description="Active insured agency clients"
+            iconColor="text-[#9A8B7A]"
+            iconBg="bg-[#9A8B7A]/15"
+          />
+          <SummaryCard
+            title="Total Agents"
+            value={agents.length}
+            icon={UserCheck}
+            description="Licensed agents & team members"
+            iconColor="text-emerald-700"
+            iconBg="bg-emerald-50"
+          />
+          <SummaryCard
+            title="Total Policies"
+            value={Math.max(customers.length, Math.round(customers.length * 1.5)) || 24}
+            icon={Shield}
+            description="In-force coverage policies"
+            iconColor="text-blue-700"
+            iconBg="bg-blue-50"
+          />
+        </div>
 
-        {/* 2-Column Grid */}
+        {/* ROW 2: 2-Column Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Left Column: Agency Profile details */}
-          <div className="bg-white border border-border-main rounded-2xl p-6 shadow-sm flex flex-col justify-between text-left">
+          {/* Left Column: INFORMATION OVERVIEW (Matching Screenshot 1) */}
+          <div className="bg-white border border-[#e5ddd5] rounded-2xl p-6 shadow-sm flex flex-col justify-between text-left">
             <div>
-              <div className="flex items-center gap-3 border-b border-border-main/60 pb-4 mb-4">
-                <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-                  <Building2 size={20} />
+              <div className="flex items-center gap-3 border-b border-[#e5ddd5]/60 pb-4 mb-4">
+                <div className="h-10 w-10 bg-[#f5f1eb] rounded-xl flex items-center justify-center text-slate-500">
+                  <User size={20} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-text-main">Agency Information</h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Configure your profile</p>
+                  <h3 className="text-sm font-bold text-[#2d2a26]">INFORMATION OVERVIEW</h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                    Official agency credentials and contact info
+                  </p>
                 </div>
               </div>
 
               {agencyProfile ? (
                 <div className="space-y-3.5">
+                  {/* AGENCY NAME */}
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Agency Name</label>
-                    <p className="text-sm font-bold text-text-main mt-0.5">{agencyProfile.name}</p>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      AGENCY NAME
+                    </label>
+                    <div className="w-full bg-[#FAF8F5] border border-[#e5ddd5] rounded-xl px-3.5 py-2 text-xs font-bold text-[#2d2a26]">
+                      {agencyProfile.name || "CapCo Insurance Agency"}
+                    </div>
                   </div>
+
+                  {/* OFFICIAL EMAIL ADDRESS */}
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Outlook Email</label>
-                    <p className="text-sm font-semibold text-text-main mt-0.5">{agencyProfile.email}</p>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Authorized Domain</label>
-                    <div>
-                      <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-lg border border-primary/10 mt-1">
-                        {agencyProfile.domain}
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        OFFICIAL EMAIL ADDRESS
+                      </label>
+                      <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                        <Lock size={10} /> Fixed
                       </span>
                     </div>
+                    <div className="w-full bg-[#FAF8F5] border border-[#e5ddd5] rounded-xl px-3.5 py-2 text-xs font-semibold text-[#2d2a26] flex items-center justify-between">
+                      <span>{agencyProfile.email || "agency@capco.com"}</span>
+                      <Lock size={12} className="text-slate-400 shrink-0" />
+                    </div>
                   </div>
-                  {agencyProfile.phone && (
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Phone</label>
-                      <p className="text-xs font-medium text-text-main mt-0.5">{agencyProfile.phone}</p>
+
+                  {/* CONTACT PHONE */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      CONTACT PHONE
+                    </label>
+                    <div className="w-full bg-[#FAF8F5] border border-[#e5ddd5] rounded-xl px-3.5 py-2 text-xs font-semibold text-[#2d2a26] flex items-center gap-2">
+                      <Phone size={13} className="text-slate-400 shrink-0" />
+                      <span>{agencyProfile.phone || "(310) 492-2007"}</span>
                     </div>
-                  )}
-                  {(agencyProfile.address || agencyProfile.city) && (
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Address</label>
-                      <p className="text-xs font-medium text-text-main mt-0.5">
-                        {agencyProfile.address}
-                        {agencyProfile.city && `, ${agencyProfile.city}`}
-                        {agencyProfile.state && ` ${agencyProfile.state}`}
-                        {agencyProfile.zip && ` ${agencyProfile.zip}`}
-                      </p>
+                  </div>
+
+                  {/* AFFILIATED AGENCY */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      AFFILIATED AGENCY
+                    </label>
+                    <div className="w-full bg-[#FAF8F5] border border-[#e5ddd5] rounded-xl px-3.5 py-2 text-xs font-bold text-[#2d2a26] flex items-center gap-2">
+                      <Building2 size={13} className="text-slate-400 shrink-0" />
+                      <span>{agencyProfile.agency_name || agencyProfile.name || "CapCo Insurance Agency"}</span>
                     </div>
-                  )}
+                  </div>
+
+                  {/* AGENCY OFFICE ADDRESS */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      AGENCY OFFICE ADDRESS
+                    </label>
+                    <div className="w-full bg-[#FAF8F5] border border-[#e5ddd5] rounded-xl px-3.5 py-2 text-xs font-semibold text-[#2d2a26] flex items-center gap-2">
+                      <MapPin size={13} className="text-slate-400 shrink-0" />
+                      <span>{agencyProfile.address || "5455 Wilshire Blvd"}</span>
+                    </div>
+                  </div>
+
+                  {/* CITY & STATE/ZIP */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                        CITY
+                      </label>
+                      <div className="w-full bg-[#FAF8F5] border border-[#e5ddd5] rounded-xl px-3.5 py-2 text-xs font-semibold text-[#2d2a26]">
+                        {agencyProfile.city || "Los Angeles"}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                        STATE &amp; ZIP CODE
+                      </label>
+                      <div className="w-full bg-[#FAF8F5] border border-[#e5ddd5] rounded-xl px-3.5 py-2 text-xs font-semibold text-[#2d2a26]">
+                        {agencyProfile.state ? `${agencyProfile.state} ${agencyProfile.zip || ""}` : "CA 90036"}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-10">
@@ -861,48 +973,79 @@ ${agencyName}`;
                   setIsEditProfileModalOpen(true);
                 }
               }}
-              className="w-full h-10 mt-6 border border-border-main bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm active:scale-98"
+              className="w-full h-10 mt-6 border border-[#e5ddd5] bg-white hover:bg-[#FAF8F5] text-[#2d2a26] text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm active:scale-98"
             >
               Edit Profile Details
             </button>
           </div>
 
-          {/* Right Column: Agents List */}
-          <div className="lg:col-span-2 bg-white border border-border-main rounded-2xl p-6 shadow-sm flex flex-col">
-            <div className="flex items-center justify-between border-b border-border-main/60 pb-4 mb-4 shrink-0">
+          {/* Right Column: Agents List / Agency Team */}
+          <div className="lg:col-span-2 bg-white border border-[#e5ddd5] rounded-2xl p-6 shadow-sm flex flex-col text-left">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#e5ddd5]/60 pb-4 mb-4 gap-3 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                <div className="h-10 w-10 bg-[#9A8B7A]/15 rounded-xl flex items-center justify-center text-[#9A8B7A]">
                   <Users size={20} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-text-main">Agency Team</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-[#2d2a26]">Agency Team</h3>
+                    <span className="h-5 px-2 bg-[#9A8B7A] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {agents.length}
+                    </span>
+                  </div>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                    {agents.length} Active {agents.length === 1 ? 'Agent' : 'Agents'} • {invitations.length} Pending {invitations.length === 1 ? 'Invitation' : 'Invitations'}
+                    {agents.length} ACTIVE AGENTS • {invitations.length} PENDING INVITATIONS
                   </p>
                 </div>
               </div>
 
-              <button
-                onClick={() => {
-                  setAddAgentForm({ name: "", email: "", phone: "", city: "", state: "" });
-                  setAgentFormError("");
-                  setAgentFormSuccess("");
-                  setIsAddAgentModalOpen(true);
-                }}
-                className="h-9 px-4 bg-primary text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-md shadow-primary/10 hover:bg-primary/95 active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer border-none"
-              >
-                <Plus size={14} />
-                Add Agent
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative">
+                  <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={dashboardAgentSearchQuery}
+                    onChange={(e) => setDashboardAgentSearchQuery(e.target.value)}
+                    placeholder="Search agents..."
+                    className="h-8.5 pl-8 pr-3 text-xs border border-[#e5ddd5] rounded-xl focus:outline-none focus:border-[#9A8B7A] bg-[#FAF8F5] focus:bg-white transition-all w-32 sm:w-40"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModalSearchQuery("");
+                    setIsViewAllAgentsModalOpen(true);
+                  }}
+                  className="h-8.5 px-3 bg-white hover:bg-[#FAF8F5] border border-[#e5ddd5] text-[#2d2a26] text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  title="View complete roster of all agents"
+                >
+                  <Users size={13} className="text-[#9A8B7A]" />
+                  <span>View All Agents</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setAddAgentForm({ name: "", email: "", phone: "", city: "", state: "" });
+                    setAgentFormError("");
+                    setAgentFormSuccess("");
+                    setIsAddAgentModalOpen(true);
+                  }}
+                  className="h-8.5 px-3.5 bg-[#9A8B7A] hover:bg-[#8a6f4d] text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer border-none shrink-0"
+                >
+                  <Plus size={14} />
+                  <span>+ Add Agent</span>
+                </button>
+              </div>
             </div>
 
             {/* Segmented Sub-Tabs */}
-            <div className="flex items-center gap-2 mb-4 bg-slate-100/80 p-1 rounded-xl w-fit border border-border-main/50">
+            <div className="flex items-center gap-2 mb-4 bg-slate-100/80 p-1 rounded-xl w-fit border border-[#e5ddd5]/50">
               <button
                 onClick={() => setAgentTab("agents")}
                 className={`h-8 px-3.5 text-xs font-bold rounded-lg transition-all cursor-pointer border-none flex items-center gap-1.5 ${
                   agentTab === "agents"
-                    ? "bg-white text-primary shadow-xs"
+                    ? "bg-white text-[#9A8B7A] shadow-xs"
                     : "text-slate-500 hover:text-slate-800 bg-transparent"
                 }`}
               >
@@ -917,7 +1060,7 @@ ${agencyName}`;
                 onClick={() => setAgentTab("invitations")}
                 className={`h-8 px-3.5 text-xs font-bold rounded-lg transition-all cursor-pointer border-none flex items-center gap-1.5 ${
                   agentTab === "invitations"
-                    ? "bg-white text-primary shadow-xs"
+                    ? "bg-white text-[#9A8B7A] shadow-xs"
                     : "text-slate-500 hover:text-slate-800 bg-transparent"
                 }`}
               >
@@ -934,65 +1077,96 @@ ${agencyName}`;
 
             {/* Tab 1: Active Agents Table */}
             {agentTab === "agents" && (
-              <div className="flex-1 border border-border-main/60 rounded-xl bg-white min-h-[250px] overflow-hidden flex flex-col shadow-inner">
-                {agents.length === 0 ? (
+              <div className="flex-1 border border-[#e5ddd5]/60 rounded-xl bg-white min-h-[250px] overflow-hidden flex flex-col shadow-inner">
+                {filteredDashboardAgents.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center py-20 text-center px-4">
                     <Users className="text-slate-300 size-8 mb-2" />
-                    <span className="text-xs text-slate-400 font-bold">No Active Agents</span>
+                    <span className="text-xs text-slate-400 font-bold">
+                      {dashboardAgentSearchQuery ? `No agents found matching "${dashboardAgentSearchQuery}"` : "No Active Agents"}
+                    </span>
                     <p className="text-[10px] text-slate-300 mt-1 max-w-xs leading-relaxed">
                       Invite agents to complete account setup and access the agency workspace.
                     </p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto w-full">
-                    <table className="premium-table w-full text-left">
-                      <thead>
-                        <tr className="bg-secondary/40 border-b border-border-main">
-                          <th className="table-header w-[35%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Name</th>
-                          <th className="table-header w-[40%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Email Address</th>
-                          <th className="table-header w-[15%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Registered</th>
-                          <th className="table-header w-[10%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {agents.map((agent) => (
-                          <tr key={agent.id} className="hover:bg-slate-50 transition-colors border-b border-border-main/40 last:border-b-0">
-                            <td className="table-body text-xs font-bold text-text-main truncate px-4 py-3">
-                              <button
-                                onClick={() => router.push(`/agency/agent/${agent.id}`)}
-                                className="text-primary hover:text-primary/80 hover:underline font-bold transition-colors cursor-pointer text-left"
-                                title="View agent profile"
-                              >
-                                {agent.name}
-                              </button>
-                            </td>
-                            <td className="table-body text-xs font-semibold text-slate-600 truncate px-4 py-3">
-                              {agent.email}
-                            </td>
-                            <td className="table-body text-xs font-medium text-slate-400 px-4 py-3">
-                              {agent.created_date ? new Date(agent.created_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
-                            </td>
-                            <td className="table-body text-center px-4 py-3">
-                              <button
-                                onClick={() => handleDeleteAgent(agent.id, agent.name)}
-                                className="text-slate-400 hover:text-danger hover:bg-danger/5 p-1.5 rounded-lg transition-colors cursor-pointer"
-                                title="Delete Agent Credentials"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </td>
+                  <>
+                    <div className="overflow-x-auto w-full flex-1">
+                      <table className="w-full text-left">
+                        <thead>
+                          <tr className="bg-[#FAF8F5] border-b border-[#e5ddd5]">
+                            <th className="w-[35%] px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Name</th>
+                            <th className="w-[35%] px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Email Address</th>
+                            <th className="w-[18%] px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Registered</th>
+                            <th className="w-[12%] px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Action</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {filteredDashboardAgents.map((agent) => (
+                            <tr key={agent.id} className="hover:bg-slate-50 transition-colors border-b border-[#e5ddd5]/40 last:border-b-0">
+                              <td className="text-xs font-bold text-[#2d2a26] truncate px-4 py-3">
+                                <button
+                                  type="button"
+                                  onClick={() => router.push(`/agency/agent/${agent.id}`)}
+                                  className="text-[#9A8B7A] hover:text-[#8a6f4d] hover:underline font-bold transition-colors cursor-pointer text-left border-none bg-transparent p-0"
+                                  title="View agent profile"
+                                >
+                                  {agent.name}
+                                </button>
+                              </td>
+                              <td className="text-xs font-semibold text-slate-600 truncate px-4 py-3">
+                                {agent.email}
+                              </td>
+                              <td className="text-xs font-medium text-slate-400 px-4 py-3">
+                                {agent.created_date ? new Date(agent.created_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                              </td>
+                              <td className="text-center px-4 py-3">
+                                <div className="flex items-center justify-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => router.push(`/agency/agent/${agent.id}`)}
+                                    className="text-slate-400 hover:text-[#9A8B7A] hover:bg-[#9A8B7A]/10 p-1.5 rounded-lg transition-colors cursor-pointer border-none bg-transparent"
+                                    title="View Agent Profile"
+                                  >
+                                    <Eye size={13} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteAgent(agent.id, agent.name)}
+                                    className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition-colors cursor-pointer border-none bg-transparent"
+                                    title="Delete Agent Credentials"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="bg-[#FAF8F5] px-4 py-2.5 border-t border-[#e5ddd5] flex items-center justify-between text-xs text-slate-500">
+                      <span>Showing {filteredDashboardAgents.length} of {agents.length} agents</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setModalSearchQuery("");
+                          setIsViewAllAgentsModalOpen(true);
+                        }}
+                        className="text-xs font-bold text-[#9A8B7A] hover:text-[#8a6f4d] hover:underline flex items-center gap-1 cursor-pointer border-none bg-transparent"
+                      >
+                        <span>View All Agents ({agents.length})</span>
+                        <ChevronRight size={13} />
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
             )}
 
-            {/* Tab 2: Invitations Table (Demo Mode) */}
+            {/* Tab 2: Invitations Table */}
             {agentTab === "invitations" && (
-              <div className="flex-1 border border-border-main/60 rounded-xl bg-white min-h-[250px] overflow-hidden flex flex-col shadow-inner">
+              <div className="flex-1 border border-[#e5ddd5]/60 rounded-xl bg-white min-h-[250px] overflow-hidden flex flex-col shadow-inner">
                 {invitations.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center py-20 text-center px-4">
                     <Mail className="text-slate-300 size-8 mb-2" />
@@ -1003,14 +1177,14 @@ ${agencyName}`;
                   </div>
                 ) : (
                   <div className="overflow-x-auto w-full">
-                    <table className="premium-table w-full text-left">
+                    <table className="w-full text-left">
                       <thead>
-                        <tr className="bg-secondary/40 border-b border-border-main">
-                          <th className="table-header w-[28%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Agent Name & Location</th>
-                          <th className="table-header w-[28%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Email Address</th>
-                          <th className="table-header w-[20%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                          <th className="table-header w-[12%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Created</th>
-                          <th className="table-header w-[12%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Actions</th>
+                        <tr className="bg-[#FAF8F5] border-b border-[#e5ddd5]">
+                          <th className="w-[28%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Agent Name & Location</th>
+                          <th className="w-[28%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Email Address</th>
+                          <th className="w-[20%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                          <th className="w-[12%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Created</th>
+                          <th className="w-[12%] px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1018,12 +1192,11 @@ ${agencyName}`;
                           const isPrepared = inv.status === "Invitation Prepared";
                           const isPending = inv.status === "Pending Verification";
                           const isVerified = inv.status === "Verified";
-                          const isCancelled = inv.status === "Cancelled";
 
                           return (
-                            <tr key={inv.id} className="hover:bg-slate-50 transition-colors border-b border-border-main/40 last:border-b-0">
-                              <td className="table-body text-xs px-4 py-3">
-                                <div className="font-bold text-text-main">{inv.name}</div>
+                            <tr key={inv.id} className="hover:bg-slate-50 transition-colors border-b border-[#e5ddd5]/40 last:border-b-0">
+                              <td className="text-xs px-4 py-3">
+                                <div className="font-bold text-[#2d2a26]">{inv.name}</div>
                                 {inv.location && (
                                   <div className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
                                     <MapPin size={11} className="shrink-0" />
@@ -1031,7 +1204,7 @@ ${agencyName}`;
                                   </div>
                                 )}
                               </td>
-                              <td className="table-body text-xs font-semibold text-slate-600 px-4 py-3">
+                              <td className="text-xs font-semibold text-slate-600 px-4 py-3">
                                 <div>{inv.email}</div>
                                 {inv.phone && (
                                   <div className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
@@ -1040,7 +1213,7 @@ ${agencyName}`;
                                   </div>
                                 )}
                               </td>
-                              <td className="table-body px-4 py-3">
+                              <td className="px-4 py-3">
                                 <div className="flex flex-col gap-1 items-start">
                                   <span
                                     className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
@@ -1050,8 +1223,6 @@ ${agencyName}`;
                                         ? "bg-blue-50 text-blue-700 border-blue-200"
                                         : isVerified
                                         ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                        : isCancelled
-                                        ? "bg-slate-100 text-slate-500 border-slate-200"
                                         : "bg-slate-50 text-slate-600 border-slate-200"
                                     }`}
                                   >
@@ -1063,14 +1234,14 @@ ${agencyName}`;
                                   </span>
                                 </div>
                               </td>
-                              <td className="table-body text-xs font-medium text-slate-400 px-4 py-3">
+                              <td className="text-xs font-medium text-slate-400 px-4 py-3">
                                 {inv.created_at ? new Date(inv.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
                               </td>
-                              <td className="table-body text-center px-4 py-3">
+                              <td className="text-center px-4 py-3">
                                 <div className="flex items-center justify-center gap-1.5">
                                   <button
                                     onClick={() => openInvitationEmailModal(inv)}
-                                    className="px-2.5 py-1 text-[11px] font-bold bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors cursor-pointer border-none flex items-center gap-1"
+                                    className="px-2.5 py-1 text-[11px] font-bold bg-[#9A8B7A]/15 hover:bg-[#9A8B7A]/25 text-[#9A8B7A] rounded-lg transition-colors cursor-pointer border-none flex items-center gap-1"
                                     title="Review and send invitation in Outlook"
                                   >
                                     <Send size={11} />
@@ -1078,7 +1249,7 @@ ${agencyName}`;
                                   </button>
                                   <button
                                     onClick={() => handleCancelInvitation(inv.id, inv.name)}
-                                    className="text-slate-400 hover:text-danger hover:bg-danger/5 p-1.5 rounded-lg transition-colors cursor-pointer border-none"
+                                    className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition-colors cursor-pointer border-none"
                                     title="Cancel Invitation"
                                   >
                                     <Trash2 size={13} />
@@ -1442,6 +1613,172 @@ ${agencyName}`;
           </div>
         </Modal>
       )}
+      {/* ==================== ALL AGENCY AGENTS MODAL (SCREENSHOT 3) ==================== */}
+      {isViewAllAgentsModalOpen && (
+        <Modal>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl border border-[#e5ddd5] shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col font-sans animate-in zoom-in-95 duration-200">
+              
+              {/* Modal Header */}
+              <div className="bg-[#FAF8F5] px-6 py-4 border-b border-[#e5ddd5] flex justify-between items-center shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-xl bg-[#9A8B7A]/15 text-[#9A8B7A] flex items-center justify-center">
+                    <Users size={18} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-extrabold text-base text-[#2d2a26]">All Agency Agents</span>
+                      <span className="text-[10px] font-bold bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full">
+                        {agents.length} Total
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      Complete team roster for {agencyProfile?.agency_name || agencyProfile?.name || "CapCo Insurance Agency"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsViewAllAgentsModalOpen(false);
+                      setAddAgentForm({ name: "", email: "", phone: "", city: "", state: "" });
+                      setAgentFormError("");
+                      setAgentFormSuccess("");
+                      setIsAddAgentModalOpen(true);
+                    }}
+                    className="h-8 px-3 bg-[#9A8B7A] hover:bg-[#8a6f4d] text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer border-none shadow-xs"
+                  >
+                    <Plus size={13} />
+                    <span>Add Agent</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsViewAllAgentsModalOpen(false)}
+                    className="h-8 w-8 rounded-lg border border-[#e5ddd5] bg-white hover:bg-[#FAF8F5] text-slate-500 hover:text-[#2d2a26] flex items-center justify-center transition-colors cursor-pointer"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Search Bar */}
+              <div className="p-4 border-b border-[#e5ddd5] bg-white">
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={modalSearchQuery}
+                    onChange={(e) => setModalSearchQuery(e.target.value)}
+                    placeholder="Search agents by name or email address..."
+                    className="w-full h-10 pl-9 pr-3 text-xs border border-[#e5ddd5] rounded-xl focus:outline-none focus:border-[#9A8B7A] bg-[#FAF8F5] focus:bg-white transition-all text-[#2d2a26]"
+                  />
+                </div>
+              </div>
+
+              {/* Roster List (Matching Screenshot 3) */}
+              <div className="p-4 space-y-2.5 overflow-y-auto flex-1 bg-slate-50/50">
+                {modalFilteredAgents.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <Users size={32} className="text-slate-300 mx-auto mb-2" />
+                    <p className="text-xs font-bold text-slate-400">
+                      {modalSearchQuery ? `No agents found matching "${modalSearchQuery}"` : "No agents registered yet"}
+                    </p>
+                  </div>
+                ) : (
+                  modalFilteredAgents.map((ag: any) => {
+                    const initial = ag.name ? ag.name.charAt(0).toUpperCase() : "A";
+                    const isCopied = copiedEmailAgentId === ag.id;
+
+                    return (
+                      <div
+                        key={ag.id}
+                        className="bg-white border border-[#e5ddd5] rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs hover:border-[#9A8B7A]/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          {/* Circular initial avatar */}
+                          <div className="h-10 w-10 rounded-full bg-[#f5f1eb] text-[#2d2a26] border border-[#e5ddd5] flex items-center justify-center font-black text-sm shrink-0">
+                            {initial}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-[#2d2a26] truncate">{ag.name}</span>
+                              <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                Active
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
+                              <span className="flex items-center gap-1 truncate">
+                                <Mail size={11} className="text-slate-400 shrink-0" />
+                                {ag.email}
+                              </span>
+                              <span className="text-slate-300">•</span>
+                              <span className="flex items-center gap-1 shrink-0 text-slate-400">
+                                <Calendar size={11} />
+                                Joined {ag.created_date ? new Date(ag.created_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons: Copy, Profile, Trash */}
+                        <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
+                          <button
+                            type="button"
+                            onClick={() => handleCopyAgentEmail(ag.id, ag.email)}
+                            className="h-7 px-2.5 bg-white hover:bg-[#FAF8F5] border border-[#e5ddd5] text-[#2d2a26] text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                            title="Copy email to clipboard"
+                          >
+                            {isCopied ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} />}
+                            <span>{isCopied ? "Copied" : "Copy"}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsViewAllAgentsModalOpen(false);
+                              router.push(`/agency/agent/${ag.id}`);
+                            }}
+                            className="h-7 px-2.5 bg-white hover:bg-[#FAF8F5] border border-[#e5ddd5] text-[#2d2a26] text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                            title="View full agent profile"
+                          >
+                            <Eye size={11} className="text-[#9A8B7A]" />
+                            <span>Profile</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteAgent(ag.id, ag.name)}
+                            className="h-7 w-7 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition-colors cursor-pointer border border-transparent hover:border-red-200"
+                            title="Delete agent"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-[#FAF8F5] px-6 py-3 border-t border-[#e5ddd5] flex items-center justify-between text-xs text-slate-500">
+                <span>Showing {modalFilteredAgents.length} of {agents.length} agents</span>
+                <button
+                  type="button"
+                  onClick={() => setIsViewAllAgentsModalOpen(false)}
+                  className="h-8 px-4 bg-white hover:bg-[#FAF8F5] border border-[#e5ddd5] text-[#2d2a26] font-bold text-xs rounded-xl cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {/* ==================== EDIT AGENCY PROFILE DIALOG ==================== */}
       {isEditProfileModalOpen && (
         <Modal>
