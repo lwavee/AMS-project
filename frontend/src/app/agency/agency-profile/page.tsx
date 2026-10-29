@@ -413,8 +413,10 @@ export default function AgencyProfilePage() {
       setAgentFormSuccess("Agent invitation prepared successfully!");
       setAddAgentForm({ name: "", email: "", phone: "", city: "", state: "" });
       setIsAddAgentModalOpen(false);
+      setAgentTab("agents");
       fetchInvitations();
       fetchAgents();
+      fetchMetrics();
       openInvitationEmailModal(invitationData);
     } catch (error: any) {
       setAgentFormError(error.message || "Failed to prepare invitation");

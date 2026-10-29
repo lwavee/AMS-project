@@ -703,7 +703,9 @@ ${agencyName}`;
       setAgentFormSuccess("Agent invitation prepared successfully!");
       setAddAgentForm({ name: "", email: "", phone: "", city: "", state: "" });
       setIsAddAgentModalOpen(false);
+      setAgentTab("agents");
       fetchInvitations();
+      fetchAgents();
 
       // Open Invitation Email Modal directly
       openInvitationEmailModal(invitationData);

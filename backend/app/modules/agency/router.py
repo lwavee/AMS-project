@@ -480,6 +480,30 @@ def list_agents(current_user: dict = Depends(get_current_user), db: Session = De
     if not agency:
         return []
 
+    # Auto-sync any invitations under this agency that do not yet have an Agent row
+    try:
+        pending_invs = db.query(AgentInvitation).filter(
+            AgentInvitation.agency_id == agency.id,
+            AgentInvitation.status.in_(["Draft", "Invitation Prepared", "Pending Verification", "Verified"])
+        ).all()
+        for inv in pending_invs:
+            inv_email = inv.email.strip().lower()
+            found_agent = db.query(Agent).filter(
+                func.lower(Agent.email) == inv_email,
+                Agent.agency_id == agency.id
+            ).first()
+            if not found_agent:
+                db.add(Agent(
+                    name=inv.name.strip(),
+                    email=inv_email,
+                    agency_id=agency.id,
+                    created_date=inv.created_at.date() if inv.created_at else date.today()
+                ))
+                db.commit()
+    except Exception as e:
+        logger.warning(f"Failed to auto-sync pending invitations to agents: {e}")
+        db.rollback()
+
     agents: List[Any] = db.query(Agent).filter(Agent.agency_id == agency.id).order_by(Agent.name.asc()).all()
     return [
         AgentResponse(
@@ -626,6 +650,11 @@ def delete_agent(agent_id: int, current_user: dict = Depends(get_current_user), 
             pass
             
     try:
+        try:
+            db.execute(text("delete from agent_invitations where lower(email) = :email and agency_id = :agency_id"), {"email": agent.email.lower(), "agency_id": agency.id})
+        except Exception:
+            pass
+            
         db.delete(agent)
         db.commit()
     except Exception as e:
@@ -678,7 +707,7 @@ def create_agent_invitation(
     """
     Creates an Agent Invitation in DEMO MODE.
     Validates agent details, ensures email uniqueness across auth tables, agents,
-    and active invitations, and prepares the invitation without activating the account.
+    and active invitations, and prepares the invitation while adding the agent to the team roster.
     """
     # Enforce Agency Admin multi-tenant isolation
     agency = db.query(Agency).filter(Agency.user_id == current_user["id"]).first()
@@ -689,48 +718,6 @@ def create_agent_invitation(
 
     agent_email = req.email.strip().lower()
 
-    # Reject duplicate email addresses across auth.users, users, agents, and active invitations
-    user_exists = False
-    try:
-        user_exists = db.execute(
-            text("select id from auth.users where lower(email) = :email"),
-            {"email": agent_email}
-        ).first() is not None
-    except Exception:
-        pass
-
-    if not user_exists:
-        try:
-            user_exists = db.execute(
-                text("select id from users where lower(email) = :email"),
-                {"email": agent_email}
-            ).first() is not None
-        except Exception:
-            pass
-
-    if not user_exists:
-        try:
-            user_exists = db.query(Agent).filter(func.lower(Agent.email) == agent_email).first() is not None
-        except Exception:
-            pass
-
-    if not user_exists:
-        try:
-            existing_active_inv = db.query(AgentInvitation).filter(
-                func.lower(AgentInvitation.email) == agent_email,
-                AgentInvitation.status.in_(["Draft", "Invitation Prepared", "Pending Verification", "Verified"])
-            ).first()
-            if existing_active_inv:
-                user_exists = True
-        except Exception:
-            pass
-
-    if user_exists:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"An account or active invitation already exists with email '{agent_email}'."
-        )
-
     # Compute location
     location = None
     if req.location and req.location.strip():
@@ -739,12 +726,75 @@ def create_agent_invitation(
         parts = [p.strip() for p in [req.city, req.state] if p and p.strip()]
         location = ", ".join(parts) if parts else None
 
+    # Check if an invitation already exists for this agency
+    existing_agency_inv = db.query(AgentInvitation).filter(
+        func.lower(AgentInvitation.email) == agent_email,
+        AgentInvitation.agency_id == agency.id
+    ).first()
+
+    existing_agent = db.query(Agent).filter(
+        func.lower(Agent.email) == agent_email,
+        Agent.agency_id == agency.id
+    ).first()
+
+    if existing_agency_inv:
+        # Re-using / updating existing invitation for this agency
+        existing_agency_inv.name = req.name.strip()
+        if req.phone:
+            existing_agency_inv.phone = req.phone.strip()
+        if location:
+            existing_agency_inv.location = location
+        existing_agency_inv.status = "Pending Verification"
+        existing_agency_inv.updated_at = datetime.now(timezone.utc)
+
+        if not existing_agent:
+            new_agent = Agent(
+                name=req.name.strip(),
+                email=agent_email,
+                agency_id=agency.id,
+                created_date=date.today()
+            )
+            db.add(new_agent)
+        else:
+            existing_agent.name = req.name.strip()
+
+        db.commit()
+        db.refresh(existing_agency_inv)
+        return _format_invitation_response(existing_agency_inv, agency, current_user)
+
+    # Check if agent email is already registered under another agency
+    other_agency_agent = db.query(Agent).filter(
+        func.lower(Agent.email) == agent_email,
+        Agent.agency_id != agency.id
+    ).first()
+    if other_agency_agent:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"An agent with email '{agent_email}' is already registered with another agency."
+        )
+
     # Cryptographically secure URL-safe token for demo verification
     token = secrets.token_urlsafe(32)
     # 6-digit numeric verification code to include in email
     code = f"{secrets.randbelow(900000) + 100000}"
     expires_at = datetime.now(timezone.utc) + timedelta(days=7)
 
+    # 1. Ensure Agent record is created immediately so agent appears in active team roster
+    if not existing_agent:
+        try:
+            new_agent = Agent(
+                name=req.name.strip(),
+                email=agent_email,
+                agency_id=agency.id,
+                created_date=date.today()
+            )
+            db.add(new_agent)
+            db.commit()
+        except Exception as e:
+            logger.warning(f"Could not create Agent record on invitation: {e}")
+            db.rollback()
+
+    # 2. Create the invitation record
     invitation = AgentInvitation(
         agency_id=agency.id,
         name=req.name.strip(),
@@ -841,6 +891,14 @@ def delete_invitation(
     ).first()
     if not invitation:
         raise HTTPException(status_code=404, detail="Invitation not found under this Agency")
+
+    try:
+        db.execute(
+            text("delete from agents where lower(email) = :email and agency_id = :agency_id and user_id is null"),
+            {"email": invitation.email.lower(), "agency_id": agency.id}
+        )
+    except Exception:
+        pass
 
     db.delete(invitation)
     db.commit()
