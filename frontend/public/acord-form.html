@@ -1446,10 +1446,28 @@
           if (el) el.innerText = insuredStateZip;
         }
 
-        const contactName = params.get('contactName');
-        const contactPhone = params.get('contactPhone');
-        const contactEmail = params.get('contactEmail');
-        const contactFax = params.get('contactFax');
+        let contactName = params.get('contactName');
+        let contactPhone = params.get('contactPhone') || '(310) 492-2007';
+        let contactEmail = params.get('contactEmail');
+        let contactFax = params.get('contactFax') || '(310) 525-5292';
+
+        try {
+          const localEmail = localStorage.getItem("email");
+          const localRole = localStorage.getItem("role");
+          const cachedProfile = sessionStorage.getItem("cached_agency_profile");
+          let profileName = localStorage.getItem("user_name");
+          let profileEmail = localEmail;
+          if (cachedProfile) {
+            const p = JSON.parse(cachedProfile);
+            if (p.name) profileName = p.name;
+            if (p.email) profileEmail = p.email;
+          }
+          if (contactName === "Capco Agent" || !contactName || localRole === "agent") {
+            if (profileName) contactName = profileName;
+            if (profileEmail) contactEmail = profileEmail;
+          }
+        } catch (e) {}
+
         if (contactName) {
           const el = document.getElementById('contact-name');
           if (el) el.innerText = contactName;
@@ -1518,14 +1536,43 @@
 
                 if (customer.contact_person) {
                   const contact = customer.contact_person;
+                  let resolvedName = contact.name;
+                  let resolvedEmail = contact.email;
+                  const resolvedPhone = contact.phone || "(310) 492-2007";
+                  const resolvedFax = contact.fax || "(310) 525-5292";
+
+                  try {
+                    const localEmail = localStorage.getItem("email");
+                    const localRole = localStorage.getItem("role");
+                    const cachedProfile = sessionStorage.getItem("cached_agency_profile");
+                    let profileName = localStorage.getItem("user_name");
+                    let profileEmail = localEmail;
+                    if (cachedProfile) {
+                      const p = JSON.parse(cachedProfile);
+                      if (p.name) profileName = p.name;
+                      if (p.email) profileEmail = p.email;
+                    }
+                    if (resolvedName === "Capco Agent" || !resolvedName || localRole === "agent") {
+                      if (profileName) resolvedName = profileName;
+                      if (profileEmail) resolvedEmail = profileEmail;
+                    }
+                  } catch (e) {}
+
+                  if (params.get('contactName') && params.get('contactName') !== 'Capco Agent') {
+                    resolvedName = params.get('contactName');
+                  }
+                  if (params.get('contactEmail') && params.get('contactEmail') !== 'agent@capco.com') {
+                    resolvedEmail = params.get('contactEmail');
+                  }
+
                   const nameEl = document.getElementById('contact-name');
                   const phoneEl = document.getElementById('contact-phone');
                   const emailEl = document.getElementById('contact-email');
                   const faxEl = document.getElementById('contact-fax');
-                  if (contact.name && nameEl) nameEl.innerText = contact.name;
-                  if (contact.phone && phoneEl) phoneEl.innerText = contact.phone;
-                  if (contact.email && emailEl) emailEl.innerText = contact.email;
-                  if (contact.fax && faxEl) faxEl.innerText = contact.fax;
+                  if (resolvedName && nameEl) nameEl.innerText = resolvedName;
+                  if (resolvedPhone && phoneEl) phoneEl.innerText = resolvedPhone;
+                  if (resolvedEmail && emailEl) emailEl.innerText = resolvedEmail;
+                  if (resolvedFax && faxEl) faxEl.innerText = resolvedFax;
                 }
               }
             }

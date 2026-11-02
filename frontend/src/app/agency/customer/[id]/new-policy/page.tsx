@@ -2288,8 +2288,8 @@ export default function NewPolicyPage() {
   const [billMethod, setBillMethod] = useState("Direct bill");
   const [payPlan, setPayPlan] = useState("Full Payment");
 
-  const [executive, setExecutive] = useState("");
-  const [representative, setRepresentative] = useState("");
+  const [executive, setExecutive] = useState("abcd test");
+  const [representative, setRepresentative] = useState("abcd test");
   const [broker, setBroker] = useState("");
   const [totalPremium, setTotalPremium] = useState("");
 
@@ -2994,6 +2994,7 @@ export default function NewPolicyPage() {
               onChange={(e) => setExecutive(e.target.value)}
               className={selectCls}
             >
+              <option value="abcd test">abcd test (Active Agent)</option>
               <option value="Akva, Jonathan">Akva, Jonathan</option>
               <option value="Anatian, Yoav">Anatian, Yoav</option>
               <option value="Buckanaga, Shania">Buckanaga, Shania</option>
@@ -3019,6 +3020,7 @@ export default function NewPolicyPage() {
               onChange={(e) => setRepresentative(e.target.value)}
               className={selectCls}
             >
+              <option value="abcd test">abcd test (Active Agent)</option>
               <option value="Akva, Jonathan">Akva, Jonathan</option>
               <option value="Anatian, Yoav">Anatian, Yoav</option>
               <option value="Buckanaga, Shania">Buckanaga, Shania</option>

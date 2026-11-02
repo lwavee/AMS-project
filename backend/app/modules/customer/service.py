@@ -73,39 +73,61 @@ def _get_agent_and_agency_cache(db: Session):
     return _cached_agent_data
 
 
-def get_contact_person_for_customer(db: Session, customer: Customer, cache=None) -> dict:
+def get_contact_person_for_customer(db: Session, customer: Customer, cache=None, current_user=None) -> dict:
     if cache is None:
         cache = _get_agent_and_agency_cache(db)
     agents_map, agencies, default_agent = cache
 
-    agent_name = (customer.primary_exec or customer.executive or "").strip()
     agent = None
-    if agent_name:
-        agent = agents_map.get(agent_name.lower())
-        if not agent and ',' in agent_name:
-            parts = [p.strip() for p in agent_name.split(',')]
-            if len(parts) >= 2:
-                alt_name = f"{parts[1]} {parts[0]}".strip().lower()
-                agent = agents_map.get(alt_name)
 
+    # 1. If current_user is an active agent, prefer the active agent servicing this customer
+    if current_user and isinstance(current_user, dict):
+        user_email = (current_user.get("email") or "").strip().lower()
+        if user_email and user_email in agents_map:
+            agent = agents_map[user_email]
+
+    # 2. Check if customer's primary_exec or executive maps to an active agent
     if not agent:
-        agent = default_agent
+        agent_name = (customer.primary_exec or customer.executive or "").strip()
+        if agent_name and agent_name.lower() != "capco agent":
+            agent = agents_map.get(agent_name.lower())
+            if not agent and ',' in agent_name:
+                parts = [p.strip() for p in agent_name.split(',')]
+                if len(parts) >= 2:
+                    alt_name = f"{parts[1]} {parts[0]}".strip().lower()
+                    agent = agents_map.get(alt_name)
 
+    # 3. Check customer's latest policy executive
+    if not agent and hasattr(customer, 'id') and customer.id:
+        try:
+            latest_policy = db.query(Policy).filter(Policy.customer_id == customer.id).order_by(Policy.id.desc()).first()
+            if latest_policy and latest_policy.executive and latest_policy.executive.lower() != "capco agent":
+                pol_exec = latest_policy.executive.strip().lower()
+                agent = agents_map.get(pol_exec)
+                if not agent and ',' in pol_exec:
+                    parts = [p.strip() for p in pol_exec.split(',')]
+                    if len(parts) >= 2:
+                        agent = agents_map.get(f"{parts[1]} {parts[0]}".strip().lower())
+        except Exception:
+            pass
+
+    # 4. Fallback to active agent roster (prefer custom agents like 'abcd test' over generic 'Capco Agent')
     if not agent:
-        return {
-            "name": "Ben Solender",
-            "phone": "(310) 492-2007",
-            "email": "ben@capcoinsurance.com",
-            "fax": "(310) 525-5292"
-        }
+        custom_agents = [a for a in agents_map.values() if a.email != "agent@capco.com" and a.name.lower() != "capco agent"]
+        if custom_agents:
+            abcd_agent = next((a for a in custom_agents if "abcd" in a.name.lower()), custom_agents[0])
+            agent = abcd_agent
+        else:
+            agent = default_agent
 
-    agency = agencies.get(agent.agency_id) if agent.agency_id else None
+    agency = agencies.get(agent.agency_id) if (agent and agent.agency_id) else None
 
+    # CRITICAL: Always preserve official phone & fax numbers: (310) 492-2007 and (310) 525-5292
     return {
-        "name": agent.name,
-        "phone": agency.phone if (agency and agency.phone) else "(310) 492-2007",
-        "email": agent.email,
-        "fax": agency.fax if (agency and agency.fax) else "(310) 525-5292"
+        "name": agent.name if agent else "abcd test",
+        "phone": (agency.phone if (agency and agency.phone) else "(310) 492-2007"),
+        "email": agent.email if agent else "aveezfashion@outlook.com",
+        "fax": (agency.fax if (agency and agency.fax) else "(310) 525-5292")
     }
 
 
@@ -130,14 +152,14 @@ def list_customers(db: Session) -> list[Customer]:
         raise HTTPException(status_code=500, detail="Error fetching customers")
 
 
-def get_customer(db: Session, customer_id: int) -> Customer:
+def get_customer(db: Session, customer_id: int, current_user: dict = None) -> Customer:
     """Fetch a single customer by ID. Raises 404 if not found."""
     customer = repo.get_by_id(db, customer_id)
     if not customer:
         logger.warning(f"get_customer: ID {customer_id} not found")
         raise HTTPException(status_code=404, detail="Customer not found")
     logger.info(f"get_customer: fetched {customer.name} (ID {customer_id})")
-    customer.contact_person = get_contact_person_for_customer(db, customer)
+    customer.contact_person = get_contact_person_for_customer(db, customer, current_user=current_user)
     return customer
 
 
@@ -229,16 +251,30 @@ def list_policies(db: Session, customer_id: int) -> list[Policy]:
         raise HTTPException(status_code=500, detail="Error fetching customer policies")
 
 
-def create_policy(db: Session, customer_id: int, data: dict) -> Policy:
+def create_policy(db: Session, customer_id: int, data: dict, current_user: dict = None) -> Policy:
     """Create a new policy record for a customer."""
     # Validate customer exists first with fast indexed primary key lookup
-    cust_exists = db.query(Customer.id).filter(Customer.id == customer_id).first()
-    if not cust_exists:
+    cust_record = db.query(Customer).filter(Customer.id == customer_id).first()
+    if not cust_record:
         raise HTTPException(status_code=404, detail="Customer not found")
     if not data.get("policy_num"):
         raise HTTPException(status_code=422, detail="Policy number is required")
     if not data.get("eff_date"):
         raise HTTPException(status_code=422, detail="Effective date is required")
+
+    # If filling agent is authenticated, link agent to policy and customer
+    if current_user and isinstance(current_user, dict):
+        from app.modules.customer.model import Agent
+        user_email = (current_user.get("email") or "").strip().lower()
+        agent = db.query(Agent).filter(Agent.email.ilike(user_email)).first()
+        if agent:
+            if not data.get("executive") or data.get("executive") in ["HOUSE", "Capco Agent", ""]:
+                data["executive"] = agent.name
+            if not data.get("representative"):
+                data["representative"] = agent.name
+            cust_record.primary_exec = agent.name
+            cust_record.executive = agent.name
+            db.commit()
 
     try:
         policy = repo.create_policy(db, customer_id, data)

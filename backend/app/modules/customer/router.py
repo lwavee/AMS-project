@@ -54,7 +54,7 @@ def get_customer(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    return customer_service.get_customer(db, customer_id)
+    return customer_service.get_customer(db, customer_id, current_user=current_user)
 
 
 @router.post("/", response_model=CustomerSchema, status_code=status.HTTP_201_CREATED)
@@ -107,7 +107,7 @@ def create_policy(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    return customer_service.create_policy(db, customer_id, policy.model_dump())
+    return customer_service.create_policy(db, customer_id, policy.model_dump(), current_user=current_user)
 
 
 @router.put("/{customer_id}/policies/{policy_id}", response_model=PolicySchema)

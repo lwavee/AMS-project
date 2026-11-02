@@ -433,6 +433,30 @@ function EmailOptionsContent() {
               insurerF: insrMapping.insurers[5]?.name || '',
             };
 
+            let resolvedContactName = customer?.contact_person?.name || '';
+            let resolvedContactEmail = customer?.contact_person?.email || '';
+            const resolvedContactPhone = customer?.contact_person?.phone || '(310) 492-2007';
+            const resolvedContactFax = customer?.contact_person?.fax || '(310) 525-5292';
+
+            if (typeof window !== "undefined") {
+              try {
+                const localEmail = localStorage.getItem("email");
+                const localRole = localStorage.getItem("role");
+                const cachedProfile = sessionStorage.getItem("cached_agency_profile");
+                let profileName = localStorage.getItem("user_name");
+                let profileEmail = localEmail;
+                if (cachedProfile) {
+                  const p = JSON.parse(cachedProfile);
+                  if (p.name) profileName = p.name;
+                  if (p.email) profileEmail = p.email;
+                }
+                if (resolvedContactName === "Capco Agent" || !resolvedContactName || localRole === "agent") {
+                  if (profileName) resolvedContactName = profileName;
+                  if (profileEmail) resolvedContactEmail = profileEmail;
+                }
+              } catch (e) {}
+            }
+
             const customerParams = {
               insuredName: customer?.name || '',
               insuredAddress: customer?.address || '',
@@ -440,10 +464,10 @@ function EmailOptionsContent() {
               insuredCity: customer?.city || '',
               insuredState: customer?.state || '',
               insuredZip: customer?.zip || '',
-              contactName: customer?.contact_person?.name || '',
-              contactPhone: customer?.contact_person?.phone || '',
-              contactEmail: customer?.contact_person?.email || '',
-              contactFax: customer?.contact_person?.fax || '',
+              contactName: resolvedContactName,
+              contactPhone: resolvedContactPhone,
+              contactEmail: resolvedContactEmail,
+              contactFax: resolvedContactFax,
               apiUrl: API_BASE_URL,
             };
 
