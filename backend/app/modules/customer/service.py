@@ -152,7 +152,7 @@ def list_customers(db: Session) -> list[Customer]:
         raise HTTPException(status_code=500, detail="Error fetching customers")
 
 
-def get_customer(db: Session, customer_id: int, current_user: dict = None) -> Customer:
+def get_customer(db: Session, customer_id: int, current_user: dict | None = None) -> Customer:
     """Fetch a single customer by ID. Raises 404 if not found."""
     customer = repo.get_by_id(db, customer_id)
     if not customer:
@@ -251,7 +251,7 @@ def list_policies(db: Session, customer_id: int) -> list[Policy]:
         raise HTTPException(status_code=500, detail="Error fetching customer policies")
 
 
-def create_policy(db: Session, customer_id: int, data: dict, current_user: dict = None) -> Policy:
+def create_policy(db: Session, customer_id: int, data: dict, current_user: dict | None = None) -> Policy:
     """Create a new policy record for a customer."""
     # Validate customer exists first with fast indexed primary key lookup
     cust_record = db.query(Customer).filter(Customer.id == customer_id).first()
