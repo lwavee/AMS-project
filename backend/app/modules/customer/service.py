@@ -6,6 +6,7 @@ Validates inputs, enforces rules, and delegates DB work to the repository.
 Routers call service functions — services call repository functions.
 """
 import logging
+import time
 import traceback
 from datetime import datetime
 from sqlalchemy.orm import Session
@@ -17,7 +18,33 @@ from app.modules.customer import repository as repo
 logger = logging.getLogger(__name__)
 
 
+# In-memory agent & agency cache: (expiry_timestamp, (agents_map, agencies, default_agent))
+_AGENT_CACHE_TTL = 60.0
+_cached_agent_data = None
+_cached_agent_data_exp = 0.0
+
+# In-memory customer list cache: (expiry_timestamp, list_of_customers)
+_CUSTOMER_CACHE_TTL = 15.0
+_cached_customer_list = None
+_cached_customer_list_exp = 0.0
+
+def invalidate_customer_cache():
+    global _cached_customer_list, _cached_customer_list_exp
+    _cached_customer_list = None
+    _cached_customer_list_exp = 0.0
+
+def invalidate_agent_cache():
+    global _cached_agent_data, _cached_agent_data_exp
+    _cached_agent_data = None
+    _cached_agent_data_exp = 0.0
+
+
 def _get_agent_and_agency_cache(db: Session):
+    global _cached_agent_data, _cached_agent_data_exp
+    now = time.time()
+    if _cached_agent_data is not None and now < _cached_agent_data_exp:
+        return _cached_agent_data
+
     from app.modules.customer.model import Agent, Agency
     try:
         agents = db.query(Agent).all()
@@ -41,7 +68,9 @@ def _get_agent_and_agency_cache(db: Session):
                 agents_map[f"{parts[0]} {parts[1]}".strip().lower()] = a
 
     default_agent = agents[0] if agents else None
-    return agents_map, agencies, default_agent
+    _cached_agent_data = (agents_map, agencies, default_agent)
+    _cached_agent_data_exp = now + _AGENT_CACHE_TTL
+    return _cached_agent_data
 
 
 def get_contact_person_for_customer(db: Session, customer: Customer, cache=None) -> dict:
@@ -82,12 +111,19 @@ def get_contact_person_for_customer(db: Session, customer: Customer, cache=None)
 
 def list_customers(db: Session) -> list[Customer]:
     """Fetch all customers. Pre-caches agents to eliminate N+1 roundtrips."""
+    global _cached_customer_list, _cached_customer_list_exp
+    now = time.time()
+    if _cached_customer_list is not None and now < _cached_customer_list_exp:
+        return _cached_customer_list
+
     try:
         customers = repo.get_all(db)
         logger.info(f"list_customers: found {len(customers)} records")
         cache = _get_agent_and_agency_cache(db)
         for customer in customers:
             customer.contact_person = get_contact_person_for_customer(db, customer, cache=cache)
+        _cached_customer_list = customers
+        _cached_customer_list_exp = now + _CUSTOMER_CACHE_TTL
         return customers
     except Exception as e:
         logger.error(f"list_customers failed: {e}")
@@ -118,6 +154,7 @@ def create_customer(db: Session, data: dict) -> Customer:
 
     try:
         customer = repo.create(db, data)
+        invalidate_customer_cache()
         logger.info(
             f"create_customer: created '{customer.name}' (ID {customer.id}) "
             f"at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
@@ -141,6 +178,7 @@ def update_customer(db: Session, customer_id: int, data: dict) -> Customer:
 
     try:
         updated = repo.update(db, customer, data)
+        invalidate_customer_cache()
         logger.info(
             f"update_customer: updated ID {customer_id} "
             f"| fields={list(data.keys())}"
@@ -166,6 +204,7 @@ def delete_customer(db: Session, customer_id: int) -> str:
     name = str(customer.name)
     try:
         repo.delete(db, customer)
+        invalidate_customer_cache()
         logger.info(
             f"delete_customer: deleted '{name}' (ID {customer_id})"
         )
@@ -192,8 +231,10 @@ def list_policies(db: Session, customer_id: int) -> list[Policy]:
 
 def create_policy(db: Session, customer_id: int, data: dict) -> Policy:
     """Create a new policy record for a customer."""
-    # Validate customer exists first
-    get_customer(db, customer_id)
+    # Validate customer exists first with fast indexed primary key lookup
+    cust_exists = db.query(Customer.id).filter(Customer.id == customer_id).first()
+    if not cust_exists:
+        raise HTTPException(status_code=404, detail="Customer not found")
     if not data.get("policy_num"):
         raise HTTPException(status_code=422, detail="Policy number is required")
     if not data.get("eff_date"):

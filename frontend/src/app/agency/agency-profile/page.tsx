@@ -125,6 +125,26 @@ export default function AgencyProfilePage() {
     const currentRole = role || "agency";
     setUserRole(currentRole);
 
+    // Instant Hydration from session cache
+    try {
+      const cachedProf = sessionStorage.getItem("cached_agency_profile");
+      if (cachedProf) {
+        const parsed = JSON.parse(cachedProf);
+        setProfile(parsed);
+        setIsLoading(false);
+      }
+      const cachedMetrics = sessionStorage.getItem("cached_agency_metrics");
+      if (cachedMetrics) {
+        const parsedM = JSON.parse(cachedMetrics);
+        if (parsedM.totalCustomers != null) setTotalCustomers(parsedM.totalCustomers);
+        if (parsedM.totalPolicies != null) setTotalPolicies(parsedM.totalPolicies);
+      }
+      const cachedAg = sessionStorage.getItem("cached_agency_agents");
+      if (cachedAg) {
+        setAgents(JSON.parse(cachedAg));
+      }
+    } catch {}
+
     fetchProfile();
     fetchMetrics();
     if (currentRole !== "agent") {
@@ -151,7 +171,9 @@ export default function AgencyProfilePage() {
   }, [profile?.email]);
 
   const fetchProfile = async () => {
-    setIsLoading(true);
+    if (!sessionStorage.getItem("cached_agency_profile")) {
+      setIsLoading(true);
+    }
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(`${API_BASE_URL}/api/agency/profile`, {
@@ -160,6 +182,9 @@ export default function AgencyProfilePage() {
       if (!res.ok) throw new Error("Failed to fetch profile");
       const data = await res.json();
       setProfile(data);
+      try {
+        sessionStorage.setItem("cached_agency_profile", JSON.stringify(data));
+      } catch {}
       if (data.role) setUserRole(data.role);
 
       setEditProfileForm({
@@ -217,6 +242,9 @@ export default function AgencyProfilePage() {
       if (!res.ok) return;
       const data = await res.json();
       setAgents(data);
+      try {
+        sessionStorage.setItem("cached_agency_agents", JSON.stringify(data));
+      } catch {}
     } catch (err) {
       console.error("Error fetching agents:", err);
     }

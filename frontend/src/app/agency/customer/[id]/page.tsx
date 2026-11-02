@@ -282,6 +282,14 @@ export default function CustomerProfilePage() {
 
   // ── Fetch Policies ──
   const loadPolicies = useCallback(async () => {
+    const cacheKey = `cached_policies_${customerId}`;
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        setPolicies(JSON.parse(cached));
+      }
+    } catch {}
+
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}/policies`, {
@@ -302,6 +310,9 @@ export default function CustomerProfilePage() {
           cost: p.cost || "$3,304.03",
         }));
         setPolicies(formatted);
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify(formatted));
+        } catch {}
       }
     } catch (e) {
       console.error("Error loading policies", e);

@@ -35,9 +35,9 @@ else:
         pool_size=20,
         max_overflow=10,
         pool_timeout=30,
-        pool_recycle=300,  # Recycles connection every 5 minutes to prevent stale PgBouncer sockets
+        pool_recycle=1800,  # 30-min recycle + keepalives preserves warm connections to Supabase PgBouncer
         connect_args={
-            "connect_timeout": 15,
+            "connect_timeout": 10,
             "keepalives": 1,
             "keepalives_idle": 30,
             "keepalives_interval": 10,
@@ -169,7 +169,7 @@ def get_db_status():
         },
         "backup": {
             "url": settings.BACKUP_DATABASE_URL.split("@")[-1] if settings.BACKUP_DATABASE_URL else None,
-            "status": "online" if backup_ok else "offline"
+            "status": "online" if backup_ok else ("not_configured" if not settings.BACKUP_DATABASE_URL else "offline")
         }
     }
 

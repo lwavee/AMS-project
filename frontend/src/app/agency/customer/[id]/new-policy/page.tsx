@@ -2500,27 +2500,21 @@ export default function NewPolicyPage() {
         : `/agency/customer/${customerId}`;
       const customerUrl = `/agency/customer/${customerId}`;
 
-      // 1. Open newly created policy in a new window (matching screenshot)
-      window.open(policyUrl, "_blank", "width=1320,height=860,resizable=yes,scrollbars=yes");
-
-      // 2. Update opener to customer details page if it exists
+      // If this was opened as a popup child window, update parent opener
+      let closedPopup = false;
       if (typeof window !== "undefined" && window.opener && !window.opener.closed) {
         try {
           window.opener.location.href = customerUrl;
           window.opener.focus();
-        } catch (e) { }
-        try {
           window.close();
+          closedPopup = true;
         } catch (e) { }
-      } else {
-        // If opened in full tab without opener, navigate current tab to customer page
-        router.push(customerUrl);
       }
 
-      // Fallback: If window.close() is blocked, navigate current tab to customer page
-      setTimeout(() => {
+      // If not a closable popup, seamlessly redirect current window to customer page
+      if (!closedPopup) {
         router.push(customerUrl);
-      }, 300);
+      }
     } catch (err: any) {
       setError(err.message || "Failed to save policy to database. Please try again.");
     } finally {
