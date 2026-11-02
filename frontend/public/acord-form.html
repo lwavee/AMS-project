@@ -1462,7 +1462,7 @@
             if (p.name) profileName = p.name;
             if (p.email) profileEmail = p.email;
           }
-          if (contactName === "Capco Agent" || !contactName || localRole === "agent") {
+          if (localRole === "agency" || localRole === "agent" || !contactName) {
             if (profileName) contactName = profileName;
             if (profileEmail) contactEmail = profileEmail;
           }
@@ -1552,16 +1552,16 @@
                       if (p.name) profileName = p.name;
                       if (p.email) profileEmail = p.email;
                     }
-                    if (resolvedName === "Capco Agent" || !resolvedName || localRole === "agent") {
+                    if (localRole === "agency" || localRole === "agent" || !resolvedName) {
                       if (profileName) resolvedName = profileName;
                       if (profileEmail) resolvedEmail = profileEmail;
                     }
                   } catch (e) {}
 
-                  if (params.get('contactName') && params.get('contactName') !== 'Capco Agent') {
+                  if (params.get('contactName')) {
                     resolvedName = params.get('contactName');
                   }
-                  if (params.get('contactEmail') && params.get('contactEmail') !== 'agent@capco.com') {
+                  if (params.get('contactEmail')) {
                     resolvedEmail = params.get('contactEmail');
                   }
 

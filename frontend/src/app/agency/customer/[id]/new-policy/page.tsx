@@ -2251,6 +2251,77 @@ export default function NewPolicyPage() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
+
+    const loadPersonnel = async () => {
+      let activeUserName = "";
+      const namesSet = new Set<string>();
+
+      try {
+        const cachedProfile = sessionStorage.getItem("cached_agency_profile");
+        if (cachedProfile) {
+          const p = JSON.parse(cachedProfile);
+          if (p.name) {
+            activeUserName = p.name;
+            namesSet.add(p.name);
+          }
+          if (p.agency_name) namesSet.add(p.agency_name);
+        }
+        const cachedAgents = sessionStorage.getItem("cached_agency_agents");
+        if (cachedAgents) {
+          const ags = JSON.parse(cachedAgents);
+          if (Array.isArray(ags)) {
+            ags.forEach((a: any) => { if (a.name) namesSet.add(a.name); });
+          }
+        }
+      } catch {}
+
+      try {
+        const token = localStorage.getItem("token");
+        if (token) {
+          if (!activeUserName) {
+            const pRes = await fetch(`${API_BASE_URL}/api/agency/profile`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (pRes.ok) {
+              const pData = await pRes.json();
+              if (pData.name) {
+                activeUserName = pData.name;
+                namesSet.add(pData.name);
+              }
+              if (pData.agency_name) namesSet.add(pData.agency_name);
+            }
+          }
+
+          const agRes = await fetch(`${API_BASE_URL}/api/agency/agents`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (agRes.ok) {
+            const agData = await agRes.json();
+            if (Array.isArray(agData)) {
+              agData.forEach((a: any) => { if (a.name) namesSet.add(a.name); });
+            }
+          }
+        }
+      } catch {}
+
+      [
+        "Akva, Jonathan", "Anatian, Yoav", "Buckanaga, Shania", "Cohen, Judah",
+        "CS, Certificates", "Drucker, Aaron", "Gamaty, Eidan", "Gamaty, Joseph",
+        "Gamaty, Michael", "Gamaty, Moshe", "Harel, Eli", "HOUSE", "Johnson, Chalia",
+        "Kraut, Michal", "Montoya, Keila", "Parungao, Joana", "Service, Customer",
+        "Short, Linda", "Solender, Ben", "Weiner, Jake"
+      ].forEach((n) => namesSet.add(n));
+
+      const list = Array.from(namesSet);
+      setPersonnelList(list);
+
+      if (activeUserName) {
+        setExecutive((prev) => prev || activeUserName);
+        setRepresentative((prev) => prev || activeUserName);
+      }
+    };
+
+    loadPersonnel();
   }, []);
 
   // Customer state loaded from API
@@ -2288,8 +2359,9 @@ export default function NewPolicyPage() {
   const [billMethod, setBillMethod] = useState("Direct bill");
   const [payPlan, setPayPlan] = useState("Full Payment");
 
-  const [executive, setExecutive] = useState("abcd test");
-  const [representative, setRepresentative] = useState("abcd test");
+  const [executive, setExecutive] = useState("");
+  const [representative, setRepresentative] = useState("");
+  const [personnelList, setPersonnelList] = useState<string[]>([]);
   const [broker, setBroker] = useState("");
   const [totalPremium, setTotalPremium] = useState("");
 
@@ -2994,23 +3066,19 @@ export default function NewPolicyPage() {
               onChange={(e) => setExecutive(e.target.value)}
               className={selectCls}
             >
-              <option value="abcd test">abcd test (Active Agent)</option>
-              <option value="Akva, Jonathan">Akva, Jonathan</option>
-              <option value="Anatian, Yoav">Anatian, Yoav</option>
-              <option value="Buckanaga, Shania">Buckanaga, Shania</option>
-              <option value="Cohen, Judah">Cohen, Judah</option>
-              <option value="Drucker, Aaron">Drucker, Aaron</option>
-              <option value="Gamaty, Eidan">Gamaty, Eidan</option>
-              <option value="Gamaty, Joseph">Gamaty, Joseph</option>
-              <option value="Gamaty, Michael">Gamaty, Michael</option>
-              <option value="Gamaty, Moshe">Gamaty, Moshe</option>
-              <option value="Harel, Eli">Harel, Eli</option>
-              <option value="HOUSE">HOUSE</option>
-              <option value="Kraut, Michal">Kraut, Michal</option>
-              <option value="Service, Customer">Service, Customer</option>
-              <option value="Short, Linda">Short, Linda</option>
-              <option value="Solender, Ben">Solender, Ben</option>
-              <option value="Weiner, Jake">Weiner, Jake</option>
+              {personnelList.length > 0 ? (
+                personnelList.map((name) => (
+                  <option key={name} value={name}>{name}</option>
+                ))
+              ) : (
+                <>
+                  <option value="Akva, Jonathan">Akva, Jonathan</option>
+                  <option value="Buckanaga, Shania">Buckanaga, Shania</option>
+                  <option value="Cohen, Judah">Cohen, Judah</option>
+                  <option value="HOUSE">HOUSE</option>
+                  <option value="Weiner, Jake">Weiner, Jake</option>
+                </>
+              )}
             </select>
           </FormRow>
 
@@ -3020,27 +3088,19 @@ export default function NewPolicyPage() {
               onChange={(e) => setRepresentative(e.target.value)}
               className={selectCls}
             >
-              <option value="abcd test">abcd test (Active Agent)</option>
-              <option value="Akva, Jonathan">Akva, Jonathan</option>
-              <option value="Anatian, Yoav">Anatian, Yoav</option>
-              <option value="Buckanaga, Shania">Buckanaga, Shania</option>
-              <option value="Cohen, Judah">Cohen, Judah</option>
-              <option value="CS, Certificates">CS, Certificates</option>
-              <option value="Drucker, Aaron">Drucker, Aaron</option>
-              <option value="Gamaty, Eidan">Gamaty, Eidan</option>
-              <option value="Gamaty, Joseph">Gamaty, Joseph</option>
-              <option value="Gamaty, Michael">Gamaty, Michael</option>
-              <option value="Gamaty, Moshe">Gamaty, Moshe</option>
-              <option value="Harel, Eli">Harel, Eli</option>
-              <option value="HOUSE">HOUSE</option>
-              <option value="Johnson, Chalia">Johnson, Chalia</option>
-              <option value="Kraut, Michal">Kraut, Michal</option>
-              <option value="Montoya, Keila">Montoya, Keila</option>
-              <option value="Parungao, Joana">Parungao, Joana</option>
-              <option value="Service, Customer">Service, Customer</option>
-              <option value="Short, Linda">Short, Linda</option>
-              <option value="Solender, Ben">Solender, Ben</option>
-              <option value="Weiner, Jake">Weiner, Jake</option>
+              {personnelList.length > 0 ? (
+                personnelList.map((name) => (
+                  <option key={name} value={name}>{name}</option>
+                ))
+              ) : (
+                <>
+                  <option value="Akva, Jonathan">Akva, Jonathan</option>
+                  <option value="Buckanaga, Shania">Buckanaga, Shania</option>
+                  <option value="Cohen, Judah">Cohen, Judah</option>
+                  <option value="HOUSE">HOUSE</option>
+                  <option value="Weiner, Jake">Weiner, Jake</option>
+                </>
+              )}
             </select>
           </FormRow>
 

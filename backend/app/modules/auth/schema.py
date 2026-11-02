@@ -11,6 +11,7 @@ class LoginResponse(BaseModel):
     access_token: str
     role: str
     email: str
+    name: Optional[str] = None
 
 
 class UserProfile(BaseModel):

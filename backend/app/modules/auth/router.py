@@ -119,8 +119,23 @@ async def login(req: LoginRequest, request: Request, db: Session = Depends(get_d
             "role": role,
             "exp": expire
         }
+        # Resolve user name from Agency or Agent table
+        resolved_name = None
+        try:
+            from app.modules.customer.model import Agency, Agent
+            if role == "agency":
+                ag = db.query(Agency).filter((Agency.user_id == str(user.id)) | (Agency.email.ilike(email))).first()
+                if ag:
+                    resolved_name = ag.name
+            elif role == "agent":
+                agent_rec = db.query(Agent).filter((Agent.user_id == str(user.id)) | (Agent.email.ilike(email))).first()
+                if agent_rec:
+                    resolved_name = agent_rec.name
+        except Exception:
+            pass
+
         access_token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-        return LoginResponse(access_token=access_token, role=role, email=email)
+        return LoginResponse(access_token=access_token, role=role, email=email, name=resolved_name)
 
     # 3. Authentication failed: Record failed attempt and return uniform error
     FAILED_LOGIN_ATTEMPTS[client_ip].append(time.time())

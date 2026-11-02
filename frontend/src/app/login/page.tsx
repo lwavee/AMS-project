@@ -83,6 +83,9 @@ export default function LoginPage() {
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("role", data.role);
       localStorage.setItem("email", data.email);
+      if (data.name) {
+        localStorage.setItem("user_name", data.name);
+      }
 
       // Redirect based on role
       if (data.role === "admin") {
@@ -149,6 +152,9 @@ export default function LoginPage() {
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("role", data.role);
       localStorage.setItem("email", data.email);
+      if (data.name) {
+        localStorage.setItem("user_name", data.name);
+      }
 
       // Redirect to agency dashboard
       router.push("/agency/dashboard");

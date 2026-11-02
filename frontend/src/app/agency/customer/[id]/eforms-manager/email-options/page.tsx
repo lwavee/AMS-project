@@ -450,7 +450,7 @@ function EmailOptionsContent() {
                   if (p.name) profileName = p.name;
                   if (p.email) profileEmail = p.email;
                 }
-                if (resolvedContactName === "Capco Agent" || !resolvedContactName || localRole === "agent") {
+                if (localRole === "agency" || localRole === "agent" || !resolvedContactName) {
                   if (profileName) resolvedContactName = profileName;
                   if (profileEmail) resolvedContactEmail = profileEmail;
                 }
