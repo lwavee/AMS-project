@@ -9,6 +9,9 @@ export default function NewBinderFormPage() {
   const params = useParams();
   const customerId = params?.id as string;
   const [customer, setCustomer] = useState<any>(null);
+  const [agencyName, setAgencyName] = useState("CapCo Insurance Agency");
+  const [agentsList, setAgentsList] = useState<{ id?: number; name: string; email?: string }[]>([]);
+  const [selectedSignature, setSelectedSignature] = useState("");
 
   useEffect(() => {
     document.title = `Certificate of Insurance - Linda Haddock - Policy #500242202700 Eff date 8/3/2025 to 8/3/2026`;
@@ -17,12 +20,27 @@ export default function NewBinderFormPage() {
       const token = localStorage.getItem("token");
       if (token && customerId) {
         try {
-          const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (res.ok) {
-            const data = await res.json();
-            setCustomer(data);
+          const [custRes, profRes, agRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/api/customers/${customerId}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }),
+            fetch(`${API_BASE_URL}/api/agency/profile`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }),
+            fetch(`${API_BASE_URL}/api/agency/agents`, {
+              headers: { Authorization: `Bearer ${token}` }
+            })
+          ]);
+          if (custRes.ok) setCustomer(await custRes.json());
+          if (profRes.ok) {
+            const pData = await profRes.json();
+            const rAg = pData.agency_name || (pData.role === "agency" ? pData.name : "");
+            if (rAg) setAgencyName(rAg);
+            if (pData.name) setSelectedSignature(pData.name);
+          }
+          if (agRes.ok) {
+            const ags = await agRes.json();
+            if (Array.isArray(ags)) setAgentsList(ags);
           }
         } catch (e) {}
       }
@@ -172,7 +190,17 @@ export default function NewBinderFormPage() {
                 <label className="flex items-center gap-2 text-[13px] font-semibold text-text-main w-32 cursor-pointer">
                   <input type="radio" name="signature" className="accent-primary w-4 h-4" defaultChecked /> Select from List:
                 </label>
-                <select className="flex-1 border border-border-main text-[13px] font-semibold text-text-muted p-2 rounded-xl bg-secondary/30 appearance-none cursor-not-allowed" disabled></select>
+                <select
+                  value={selectedSignature}
+                  onChange={(e) => setSelectedSignature(e.target.value)}
+                  className="flex-1 border border-border-main text-[13px] font-semibold text-text-main p-2 rounded-xl bg-bg-base focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none appearance-none cursor-pointer"
+                >
+                  <option value="">Select signature...</option>
+                  {agencyName && <option value={agencyName}>{agencyName}</option>}
+                  {agentsList.map((a: any) => (
+                    <option key={a.id || a.email || a.name} value={a.name}>{a.name}</option>
+                  ))}
+                </select>
               </div>
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-2 text-[13px] font-semibold text-text-main w-32 cursor-pointer">

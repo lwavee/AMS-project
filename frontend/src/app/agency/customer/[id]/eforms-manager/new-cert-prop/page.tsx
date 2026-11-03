@@ -49,6 +49,8 @@ export default function NewCertPropPage() {
   const [noteMessage, setNoteMessage] = useState("");
   const [printNote, setPrintNote] = useState(true);
   const [authRep, setAuthRep] = useState("");
+  const [agencyName, setAgencyName] = useState("CapCo Insurance Agency");
+  const [agentsList, setAgentsList] = useState<{ id?: number; name: string; email?: string }[]>([]);
 
   // Helper to format date as M/D/YYYY
   const formatDisplayDate = (d?: string | Date | null) => {
@@ -83,18 +85,29 @@ export default function NewCertPropPage() {
       const token = localStorage.getItem("token");
       if (!token || !customerId) return;
       try {
-        const [custRes, polRes] = await Promise.all([
+        const [custRes, polRes, profRes, agRes] = await Promise.all([
           fetch(`${API_BASE_URL}/api/customers/${customerId}`, { headers: { Authorization: `Bearer ${token}` } }),
           fetch(`${API_BASE_URL}/api/customers/${customerId}/policies`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/agency/profile`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/agency/agents`, { headers: { Authorization: `Bearer ${token}` } }),
         ]);
         if (custRes.ok) setCustomer(await custRes.json());
         if (polRes.ok) setPolicies(await polRes.json());
+        if (profRes.ok) {
+          const profData = await profRes.json();
+          const resolvedAgency = profData.agency_name || (profData.role === "agency" ? profData.name : "");
+          if (resolvedAgency) setAgencyName(resolvedAgency);
+          if (profData.name && !authRep) setAuthRep(profData.name);
+        }
+        if (agRes.ok) {
+          const agData = await agRes.json();
+          if (Array.isArray(agData)) setAgentsList(agData);
+        }
       } catch {}
     };
     fetchData();
   }, [customerId]);
 
-  const agencyName = "Gamaty Insurance Agency LLC";
 
   const handleCreate = async () => {
     try {
@@ -443,7 +456,17 @@ export default function NewCertPropPage() {
             <select value={authRep} onChange={e => setAuthRep(e.target.value)}
               className="w-full text-[13px] font-semibold text-text-main bg-bg-base border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 appearance-none cursor-pointer">
               <option value="">Select representative...</option>
-              <option value={agencyName}>{agencyName}</option>
+              {agencyName && <option value={agencyName}>{agencyName}</option>}
+              {agentsList.map((agent: any) => (
+                <option key={agent.id || agent.email || agent.name} value={agent.name}>
+                  {agent.name}
+                </option>
+              ))}
+              {authRep &&
+                authRep !== agencyName &&
+                !agentsList.some((a: any) => a.name === authRep) && (
+                  <option value={authRep}>{authRep}</option>
+                )}
             </select>
             <div className="flex gap-4 pt-1">
               <a href="#" className="text-[12px] font-bold text-primary hover:underline">Holder Detail</a>

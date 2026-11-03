@@ -2260,6 +2260,7 @@ export default function EFormsManagerPage() {
                     baLimitBodilyInjuryPerson: baLimits.bodilyInjuryPerson,
                     baLimitBodilyInjuryAccident: baLimits.bodilyInjuryAccident,
                     baLimitPropertyDamage: baLimits.propertyDamage,
+                    signature: activeCert?.form_data?.authorizedRepresentative || activeCert?.form_data?.signature || '',
                     overrides: JSON.stringify(overrides),
                   });
                   return <iframe key={params.toString()} src={`/acord-form.html?${params.toString()}`} className="w-full h-full border-none bg-white" />;
@@ -2305,6 +2306,7 @@ export default function EFormsManagerPage() {
                     baLimitBodilyInjuryPerson: baLimits.bodilyInjuryPerson,
                     baLimitBodilyInjuryAccident: baLimits.bodilyInjuryAccident,
                     baLimitPropertyDamage: baLimits.propertyDamage,
+                    signature: activeCert?.form_data?.authorizedRepresentative || activeCert?.form_data?.signature || '',
                     isEditing: isEditing ? 'true' : 'false',
                     overrides: JSON.stringify(overrides),
                   });

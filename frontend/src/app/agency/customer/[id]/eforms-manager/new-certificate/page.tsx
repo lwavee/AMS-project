@@ -20,6 +20,13 @@ export default function NewCertificateFormPage() {
   const [rowSelections, setRowSelections] = useState<{ [key: number]: string }>({});
   const [description, setDescription] = useState("");
 
+  // Authorized Representative Signature & Agency Team
+  const [authorizedRepresentative, setAuthorizedRepresentative] = useState("");
+  const [agencyName, setAgencyName] = useState("CapCo Insurance Agency");
+  const [agentsList, setAgentsList] = useState<{ id?: number; name: string; email?: string }[]>([]);
+  const [noteMessage, setNoteMessage] = useState("");
+  const [printNoteWithForm, setPrintNoteWithForm] = useState(true);
+
   // Helper to format date as M/D/YYYY
   const formatDisplayDate = (d?: string | Date | null) => {
     if (!d) {
@@ -47,26 +54,63 @@ export default function NewCertificateFormPage() {
   useEffect(() => {
     document.title = `Certificate of Insurance - Policy #EGL0013969 Eff date 2/3/2026 to 2/3/2027`;
     
-    // Fetch basic customer info to populate
+    // Fetch basic customer info and registered agency agents
     const fetchData = async () => {
       const token = localStorage.getItem("token");
       if (token && customerId) {
         try {
-          const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (res.ok) {
-            const data = await res.json();
+          // Pre-seed from sessionStorage for zero-delay loading
+          try {
+            const cachedProfile = sessionStorage.getItem("cached_agency_profile");
+            if (cachedProfile) {
+              const p = JSON.parse(cachedProfile);
+              if (p.agency_name || p.name) setAgencyName(p.agency_name || p.name);
+            }
+            const cachedAgents = sessionStorage.getItem("cached_agency_agents");
+            if (cachedAgents) {
+              const ags = JSON.parse(cachedAgents);
+              if (Array.isArray(ags) && ags.length > 0) setAgentsList(ags);
+            }
+          } catch {}
+
+          const [custRes, polRes, profRes, agRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/api/customers/${customerId}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }),
+            fetch(`${API_BASE_URL}/api/customers/${customerId}/policies`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }),
+            fetch(`${API_BASE_URL}/api/agency/profile`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }),
+            fetch(`${API_BASE_URL}/api/agency/agents`, {
+              headers: { Authorization: `Bearer ${token}` }
+            })
+          ]);
+
+          let activeUserName = "";
+
+          if (custRes.ok) {
+            const data = await custRes.json();
             setCustomer(data);
           }
-          const polRes = await fetch(`${API_BASE_URL}/api/customers/${customerId}/policies`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
           if (polRes.ok) {
             const polData = await polRes.json();
             setPolicies(polData);
           }
-          
+          if (profRes.ok) {
+            const profData = await profRes.json();
+            const resolvedAgency = profData.agency_name || (profData.role === "agency" ? profData.name : "");
+            if (resolvedAgency) setAgencyName(resolvedAgency);
+            activeUserName = profData.name || "";
+          }
+          if (agRes.ok) {
+            const agData = await agRes.json();
+            if (Array.isArray(agData)) {
+              setAgentsList(agData);
+            }
+          }
+
           if (isEdit) {
             const certRes = await fetch(`${API_BASE_URL}/api/customers/${customerId}/certificates/${certDbId}`, {
               headers: { Authorization: `Bearer ${token}` }
@@ -74,7 +118,6 @@ export default function NewCertificateFormPage() {
             if (certRes.ok) {
               const certData = await certRes.json();
               setDescription(certData.description || "");
-              // Use saved issueDate or master creation date
               if (certData.form_data?.issueDate) {
                 setIssueDate(formatDisplayDate(certData.form_data.issueDate));
               } else if (certData.created_date) {
@@ -83,10 +126,22 @@ export default function NewCertificateFormPage() {
               if (certData.form_data) {
                 if (certData.form_data.rowSelections) setRowSelections(certData.form_data.rowSelections);
                 if (certData.form_data.descriptionOfOperations) setDescriptionOfOperations(certData.form_data.descriptionOfOperations);
+                if (certData.form_data.authorizedRepresentative || certData.form_data.signature) {
+                  setAuthorizedRepresentative(certData.form_data.authorizedRepresentative || certData.form_data.signature);
+                }
+                if (certData.form_data.noteMessage) setNoteMessage(certData.form_data.noteMessage);
+                if (typeof certData.form_data.printNoteWithForm === "boolean") setPrintNoteWithForm(certData.form_data.printNoteWithForm);
               }
             }
+          } else {
+            // Default signature to the logged in user or first agent
+            if (activeUserName) {
+              setAuthorizedRepresentative(prev => prev || activeUserName);
+            }
           }
-        } catch (e) {}
+        } catch (e) {
+          console.error("Error fetching form data:", e);
+        }
       }
     };
     fetchData();
@@ -119,6 +174,10 @@ export default function NewCertificateFormPage() {
             rowSelections,
             descriptionOfOperations,
             issueDate,
+            authorizedRepresentative,
+            signature: authorizedRepresentative,
+            noteMessage,
+            printNoteWithForm,
           }
         })
       });
@@ -343,26 +402,44 @@ export default function NewCertificateFormPage() {
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Note/Message</h3>
                 <label className="flex items-center gap-2 text-[12px] font-semibold text-text-main cursor-pointer">
-                  <input type="checkbox" className="accent-primary w-3.5 h-3.5" defaultChecked /> Print note with form
+                  <input
+                    type="checkbox"
+                    className="accent-primary w-3.5 h-3.5"
+                    checked={printNoteWithForm}
+                    onChange={(e) => setPrintNoteWithForm(e.target.checked)}
+                  /> Print note with form
                 </label>
               </div>
-              <textarea className="flex-1 w-full border border-border-main bg-bg-base rounded-xl p-3 text-[13px] font-semibold text-text-main outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 resize-none"></textarea>
+              <textarea
+                value={noteMessage}
+                onChange={(e) => setNoteMessage(e.target.value)}
+                placeholder="Enter note or message..."
+                className="flex-1 w-full border border-border-main bg-bg-base rounded-xl p-3 text-[13px] font-semibold text-text-main outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 resize-none"
+              ></textarea>
             </div>
 
             {/* Authorized Rep */}
             <div className="bg-white border border-border-main p-5 rounded-2xl shadow-sm flex flex-col gap-2">
               <h3 className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Authorized Representative Signature</h3>
-              <select className="w-full text-[13px] font-semibold text-text-main bg-bg-base border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 appearance-none cursor-pointer">
-                <option>Select signature...</option>
-                <option>General Liability</option>
-                <option>Automobile</option>
-                <option>Cargo</option>
-                <option>Trailer Interchange</option>
-                <option>Work Comp/Emp Liability</option>
-                <option>Garage Liability</option>
-                <option>Garage Keepers Liability</option>
-                <option>Umbrella/Excess Liability</option>
-                <option>Other</option>
+              <select
+                value={authorizedRepresentative}
+                onChange={(e) => setAuthorizedRepresentative(e.target.value)}
+                className="w-full text-[13px] font-semibold text-text-main bg-bg-base border border-border-main rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 appearance-none cursor-pointer"
+              >
+                <option value="">Select signature...</option>
+                {agencyName && (
+                  <option value={agencyName}>{agencyName}</option>
+                )}
+                {agentsList.map((agent: any) => (
+                  <option key={agent.id || agent.email || agent.name} value={agent.name}>
+                    {agent.name}
+                  </option>
+                ))}
+                {authorizedRepresentative &&
+                  authorizedRepresentative !== agencyName &&
+                  !agentsList.some((a: any) => a.name === authorizedRepresentative) && (
+                    <option value={authorizedRepresentative}>{authorizedRepresentative}</option>
+                  )}
               </select>
               
               <div className="flex gap-4 mt-3">

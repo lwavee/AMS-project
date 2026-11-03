@@ -12,6 +12,9 @@ export default function NewEpiPage() {
   const params = useParams();
   const customerId = params?.id as string;
   const [customer, setCustomer] = useState<any>(null);
+  const [agencyName, setAgencyName] = useState("CapCo Insurance Agency");
+  const [agentsList, setAgentsList] = useState<{ id?: number; name: string; email?: string }[]>([]);
+  const [selectedSignature, setSelectedSignature] = useState("");
 
   useEffect(() => {
     document.title = `Evidence of Property`;
@@ -20,12 +23,27 @@ export default function NewEpiPage() {
       const token = localStorage.getItem("token");
       if (token && customerId) {
         try {
-          const res = await fetch(`${API_BASE_URL}/api/customers/${customerId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (res.ok) {
-            const data = await res.json();
-            setCustomer(data);
+          const [custRes, profRes, agRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/api/customers/${customerId}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }),
+            fetch(`${API_BASE_URL}/api/agency/profile`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }),
+            fetch(`${API_BASE_URL}/api/agency/agents`, {
+              headers: { Authorization: `Bearer ${token}` }
+            })
+          ]);
+          if (custRes.ok) setCustomer(await custRes.json());
+          if (profRes.ok) {
+            const pData = await profRes.json();
+            const rAg = pData.agency_name || (pData.role === "agency" ? pData.name : "");
+            if (rAg) setAgencyName(rAg);
+            if (pData.name) setSelectedSignature(pData.name);
+          }
+          if (agRes.ok) {
+            const ags = await agRes.json();
+            if (Array.isArray(ags)) setAgentsList(ags);
           }
         } catch (e) {}
       }
@@ -202,8 +220,16 @@ export default function NewEpiPage() {
                   Select from List:
                 </label>
                 <div className="relative flex-1">
-                  <select className="w-full h-8 px-3 text-xs font-semibold bg-bg-base border border-border-main rounded-lg outline-none focus:border-primary appearance-none cursor-pointer">
-                    <option></option>
+                  <select
+                    value={selectedSignature}
+                    onChange={(e) => setSelectedSignature(e.target.value)}
+                    className="w-full h-8 px-3 text-xs font-semibold bg-bg-base border border-border-main rounded-lg outline-none focus:border-primary appearance-none cursor-pointer"
+                  >
+                    <option value="">Select signature...</option>
+                    {agencyName && <option value={agencyName}>{agencyName}</option>}
+                    {agentsList.map((a: any) => (
+                      <option key={a.id || a.email || a.name} value={a.name}>{a.name}</option>
+                    ))}
                   </select>
                   <ChevronDown size={14} className="absolute right-2.5 top-2 text-text-muted pointer-events-none" />
                 </div>
