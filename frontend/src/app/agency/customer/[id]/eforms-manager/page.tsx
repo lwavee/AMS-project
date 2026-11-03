@@ -1335,7 +1335,7 @@ export default function EFormsManagerPage() {
   }
 
   // ── Error state ──
-  if (error || !customer) {
+  if (error && !customer) {
     return (
       <div className="flex flex-col h-screen bg-bg-base font-sans">
         <div className="bg-white border-b border-border-main h-12 px-4 flex items-center gap-3 shrink-0">
@@ -1352,6 +1352,12 @@ export default function EFormsManagerPage() {
             <AlertTriangle size={28} className="text-danger" />
             <p className="font-bold text-sm text-text-main">Failed to Load</p>
             <p className="text-xs text-slate-400">{error || "Customer not found."}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-2 px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 transition-all cursor-pointer shadow-sm shadow-primary/20"
+            >
+              Retry Connection
+            </button>
           </div>
         </div>
       </div>
