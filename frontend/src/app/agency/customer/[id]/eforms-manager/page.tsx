@@ -592,6 +592,8 @@ export default function EFormsManagerPage() {
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [createdCertificates, setCreatedCertificates] = useState<any[]>([]);
+  const [agentsList, setAgentsList] = useState<{ id?: number; name: string; email?: string }[]>([]);
+  const [agencyProfile, setAgencyProfile] = useState<any>(null);
 
   // ── Attachment Modal State ──
   const [attachmentModalOpen, setAttachmentModalOpen] = useState(false);
@@ -808,7 +810,18 @@ export default function EFormsManagerPage() {
         return;
       }
 
-      const [custRes, bundleRes, certRes, docRes] = await Promise.all([
+      // Pre-seed agents from sessionStorage
+      try {
+        const cachedAgents = sessionStorage.getItem("cached_agency_agents");
+        if (cachedAgents) {
+          const ags = JSON.parse(cachedAgents);
+          if (Array.isArray(ags) && ags.length > 0) setAgentsList(ags);
+        }
+        const cachedProf = sessionStorage.getItem("cached_agency_profile");
+        if (cachedProf) setAgencyProfile(JSON.parse(cachedProf));
+      } catch {}
+
+      const [custRes, bundleRes, certRes, docRes, agRes, profRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/customers/${customerId}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
@@ -821,7 +834,26 @@ export default function EFormsManagerPage() {
         fetch(`${API_BASE_URL}/api/customers/${customerId}/documents`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
+        fetch(`${API_BASE_URL}/api/agency/agents`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => null),
+        fetch(`${API_BASE_URL}/api/agency/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => null),
       ]);
+
+      if (agRes && agRes.ok) {
+        const agData = await agRes.json();
+        if (Array.isArray(agData)) {
+          setAgentsList(agData);
+          try { sessionStorage.setItem("cached_agency_agents", JSON.stringify(agData)); } catch {}
+        }
+      }
+      if (profRes && profRes.ok) {
+        const pData = await profRes.json();
+        setAgencyProfile(pData);
+        try { sessionStorage.setItem("cached_agency_profile", JSON.stringify(pData)); } catch {}
+      }
 
       if (custRes.status === 401) {
         router.push("/login");
@@ -2163,15 +2195,44 @@ export default function EFormsManagerPage() {
                   return { gl, auto, umb, wc, insurers: insurerList };
                 })();
 
-                let resolvedContactName = customer?.contact_person?.name || '';
-                let resolvedContactEmail = customer?.contact_person?.email || '';
+                // 1. Check if the certificate has an Authorized Representative Signature
+                const certRepName = (
+                  activeCert?.form_data?.authorizedRepresentative ||
+                  activeCert?.form_data?.signature ||
+                  activeCert?.form_data?.authRep ||
+                  ''
+                ).trim();
+
+                let resolvedContactName = '';
+                let resolvedContactEmail = '';
                 const resolvedContactPhone = customer?.contact_person?.phone || '(310) 492-2007';
                 const resolvedContactFax = customer?.contact_person?.fax || '(310) 525-5292';
 
-                if (typeof window !== "undefined") {
+                if (certRepName) {
+                  resolvedContactName = certRepName;
+                  // Look up agent by name in agentsList to get their matching email address
+                  const matchedAgent = agentsList.find(
+                    (a: any) => a.name && a.name.trim().toLowerCase() === certRepName.toLowerCase()
+                  );
+                  if (matchedAgent && matchedAgent.email) {
+                    resolvedContactEmail = matchedAgent.email;
+                  } else if (activeCert?.form_data?.contactEmail || activeCert?.form_data?.representativeEmail) {
+                    resolvedContactEmail = activeCert.form_data.contactEmail || activeCert.form_data.representativeEmail;
+                  } else if (agencyProfile && (certRepName.toLowerCase() === agencyProfile.name?.trim().toLowerCase() || certRepName.toLowerCase() === agencyProfile.agency_name?.trim().toLowerCase())) {
+                    resolvedContactEmail = agencyProfile.agency_email || agencyProfile.email || 'agency@capco.com';
+                  }
+                }
+
+                // 2. If no certificate-specific representative, fall back to customer's contact person
+                if (!resolvedContactName) {
+                  resolvedContactName = customer?.contact_person?.name || '';
+                  resolvedContactEmail = customer?.contact_person?.email || '';
+                }
+
+                // 3. Fallback to authenticated profile if still empty
+                if (!resolvedContactName && typeof window !== "undefined") {
                   try {
                     const localEmail = localStorage.getItem("email");
-                    const localRole = localStorage.getItem("role");
                     const cachedProfile = sessionStorage.getItem("cached_agency_profile");
                     let profileName = localStorage.getItem("user_name");
                     let profileEmail = localEmail;
@@ -2180,11 +2241,19 @@ export default function EFormsManagerPage() {
                       if (p.name) profileName = p.name;
                       if (p.email) profileEmail = p.email;
                     }
-                    if (localRole === "agency" || localRole === "agent" || !resolvedContactName) {
-                      if (profileName) resolvedContactName = profileName;
-                      if (profileEmail) resolvedContactEmail = profileEmail;
-                    }
+                    if (profileName) resolvedContactName = profileName;
+                    if (profileEmail) resolvedContactEmail = profileEmail;
                   } catch (e) {}
+                }
+
+                // 4. Ensure that if resolvedContactName matches any agent, the email is that agent's email
+                if (resolvedContactName) {
+                  const agentMatch = agentsList.find(
+                    (a: any) => a.name && a.name.trim().toLowerCase() === resolvedContactName.trim().toLowerCase()
+                  );
+                  if (agentMatch && agentMatch.email) {
+                    resolvedContactEmail = agentMatch.email;
+                  }
                 }
 
                 const commonCustomerParams = {

@@ -1468,6 +1468,20 @@
           }
         } catch (e) {}
 
+        // Check if contactName corresponds to a registered agent
+        try {
+          const cachedAgents = sessionStorage.getItem("cached_agency_agents");
+          if (cachedAgents && contactName) {
+            const ags = JSON.parse(cachedAgents);
+            if (Array.isArray(ags)) {
+              const matchedAgent = ags.find(a => a.name && a.name.trim().toLowerCase() === contactName.trim().toLowerCase());
+              if (matchedAgent && matchedAgent.email) {
+                contactEmail = matchedAgent.email;
+              }
+            }
+          }
+        } catch (e) {}
+
         if (contactName) {
           const el = document.getElementById('contact-name');
           if (el) el.innerText = contactName;
@@ -1534,36 +1548,26 @@
                   document.getElementById('insured-state-zip').innerText = stateZip.join(' ');
                 }
 
-                if (customer.contact_person) {
-                  const contact = customer.contact_person;
-                  let resolvedName = contact.name;
-                  let resolvedEmail = contact.email;
-                  const resolvedPhone = contact.phone || "(310) 492-2007";
-                  const resolvedFax = contact.fax || "(310) 525-5292";
+                if (customer.contact_person || params.get('contactName')) {
+                  const contact = customer.contact_person || {};
+                  let resolvedName = params.get('contactName') || contact.name || '';
+                  let resolvedEmail = params.get('contactEmail') || contact.email || '';
+                  const resolvedPhone = params.get('contactPhone') || contact.phone || "(310) 492-2007";
+                  const resolvedFax = params.get('contactFax') || contact.fax || "(310) 525-5292";
 
+                  // Check if resolvedName corresponds to a registered agent to print that agent's email
                   try {
-                    const localEmail = localStorage.getItem("email");
-                    const localRole = localStorage.getItem("role");
-                    const cachedProfile = sessionStorage.getItem("cached_agency_profile");
-                    let profileName = localStorage.getItem("user_name");
-                    let profileEmail = localEmail;
-                    if (cachedProfile) {
-                      const p = JSON.parse(cachedProfile);
-                      if (p.name) profileName = p.name;
-                      if (p.email) profileEmail = p.email;
-                    }
-                    if (localRole === "agency" || localRole === "agent" || !resolvedName) {
-                      if (profileName) resolvedName = profileName;
-                      if (profileEmail) resolvedEmail = profileEmail;
+                    const cachedAgents = sessionStorage.getItem("cached_agency_agents");
+                    if (cachedAgents) {
+                      const ags = JSON.parse(cachedAgents);
+                      if (Array.isArray(ags)) {
+                        const matchedAgent = ags.find(a => a.name && a.name.trim().toLowerCase() === resolvedName.trim().toLowerCase());
+                        if (matchedAgent && matchedAgent.email) {
+                          resolvedEmail = matchedAgent.email;
+                        }
+                      }
                     }
                   } catch (e) {}
-
-                  if (params.get('contactName')) {
-                    resolvedName = params.get('contactName');
-                  }
-                  if (params.get('contactEmail')) {
-                    resolvedEmail = params.get('contactEmail');
-                  }
 
                   const nameEl = document.getElementById('contact-name');
                   const phoneEl = document.getElementById('contact-phone');

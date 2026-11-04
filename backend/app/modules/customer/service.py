@@ -108,6 +108,22 @@ def get_contact_person_for_customer(db: Session, customer: Customer, cache=None,
             if not user_agency:
                 user_agency = default_agency
 
+            # Check if customer is assigned to a specific active agent
+            cust_exec = (customer.primary_exec or customer.executive or "").strip()
+            if cust_exec:
+                matched_agent = agents_map.get(cust_exec.lower())
+                if not matched_agent and ',' in cust_exec:
+                    parts = [p.strip() for p in cust_exec.split(',')]
+                    if len(parts) >= 2:
+                        matched_agent = agents_map.get(f"{parts[1]} {parts[0]}".strip().lower())
+                if matched_agent:
+                    return {
+                        "name": matched_agent.name,
+                        "email": matched_agent.email,
+                        "phone": user_agency.phone if (user_agency and user_agency.phone) else agency_phone,
+                        "fax": user_agency.fax if (user_agency and user_agency.fax) else agency_fax,
+                    }
+
             return {
                 "name": user_agency.name if user_agency else agency_name,
                 "email": user_agency.email if user_agency else agency_email,

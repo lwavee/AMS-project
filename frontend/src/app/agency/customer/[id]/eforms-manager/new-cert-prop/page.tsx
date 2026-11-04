@@ -50,6 +50,7 @@ export default function NewCertPropPage() {
   const [printNote, setPrintNote] = useState(true);
   const [authRep, setAuthRep] = useState("");
   const [agencyName, setAgencyName] = useState("CapCo Insurance Agency");
+  const [agencyEmail, setAgencyEmail] = useState("agency@capco.com");
   const [agentsList, setAgentsList] = useState<{ id?: number; name: string; email?: string }[]>([]);
 
   // Helper to format date as M/D/YYYY
@@ -97,6 +98,7 @@ export default function NewCertPropPage() {
           const profData = await profRes.json();
           const resolvedAgency = profData.agency_name || (profData.role === "agency" ? profData.name : "");
           if (resolvedAgency) setAgencyName(resolvedAgency);
+          if (profData.agency_email || profData.email) setAgencyEmail(profData.agency_email || profData.email);
           if (profData.name && !authRep) setAuthRep(profData.name);
         }
         if (agRes.ok) {
@@ -141,6 +143,10 @@ export default function NewCertPropPage() {
             noteMessage,
             printNote,
             authRep,
+            signature: authRep,
+            contactName: authRep,
+            contactEmail: agentsList.find((a: any) => a.name && a.name.trim().toLowerCase() === authRep.trim().toLowerCase())?.email || (authRep.trim().toLowerCase() === agencyName.trim().toLowerCase() ? agencyEmail : ""),
+            representativeEmail: agentsList.find((a: any) => a.name && a.name.trim().toLowerCase() === authRep.trim().toLowerCase())?.email || (authRep.trim().toLowerCase() === agencyName.trim().toLowerCase() ? agencyEmail : ""),
           },
         }),
       });

@@ -356,26 +356,25 @@ function PrintOptionsContent() {
               insurerF: insrMapping.insurers[5]?.name || '',
             };
 
-            let resolvedContactName = customer?.contact_person?.name || '';
-            let resolvedContactEmail = customer?.contact_person?.email || '';
+            // Resolve contact person from certificate Authorized Representative if present
+            const certRep = (activeCert?.form_data?.authorizedRepresentative || activeCert?.form_data?.signature || activeCert?.form_data?.authRep || '').trim();
+            let resolvedContactName = certRep || customer?.contact_person?.name || '';
+            let resolvedContactEmail = activeCert?.form_data?.contactEmail || activeCert?.form_data?.representativeEmail || customer?.contact_person?.email || '';
             const resolvedContactPhone = customer?.contact_person?.phone || '(310) 492-2007';
             const resolvedContactFax = customer?.contact_person?.fax || '(310) 525-5292';
 
-            if (typeof window !== "undefined") {
+            // Check cached agents to ensure agent email matches agent name
+            if (typeof window !== "undefined" && resolvedContactName) {
               try {
-                const localEmail = localStorage.getItem("email");
-                const localRole = localStorage.getItem("role");
-                const cachedProfile = sessionStorage.getItem("cached_agency_profile");
-                let profileName = localStorage.getItem("user_name");
-                let profileEmail = localEmail;
-                if (cachedProfile) {
-                  const p = JSON.parse(cachedProfile);
-                  if (p.name) profileName = p.name;
-                  if (p.email) profileEmail = p.email;
-                }
-                if (localRole === "agency" || localRole === "agent" || !resolvedContactName) {
-                  if (profileName) resolvedContactName = profileName;
-                  if (profileEmail) resolvedContactEmail = profileEmail;
+                const cachedAgents = sessionStorage.getItem("cached_agency_agents");
+                if (cachedAgents) {
+                  const ags = JSON.parse(cachedAgents);
+                  if (Array.isArray(ags)) {
+                    const found = ags.find((a: any) => a.name && a.name.trim().toLowerCase() === resolvedContactName.trim().toLowerCase());
+                    if (found && found.email) {
+                      resolvedContactEmail = found.email;
+                    }
+                  }
                 }
               } catch (e) {}
             }
