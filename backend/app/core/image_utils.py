@@ -8,8 +8,8 @@ def remove_signature_background(image_bytes: bytes) -> bytes:
     """
     img = Image.open(io.BytesIO(image_bytes)).convert("RGBA")
     
-    # Get RGBA pixel data
-    datas = img.getdata()
+    # Get RGBA pixel data as a list of tuples
+    datas: list[tuple[int, int, int, int]] = list(img.getdata())
     
     # Calculate luminance for each pixel
     # Standard ITU-R BT.601 formula: Y = 0.299 R + 0.587 G + 0.114 B
@@ -80,3 +80,4 @@ def remove_signature_background(image_bytes: bytes) -> bytes:
     out = io.BytesIO()
     img.save(out, format="PNG", optimize=True)
     return out.getvalue()
+
