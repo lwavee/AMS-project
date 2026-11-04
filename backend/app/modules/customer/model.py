@@ -240,6 +240,7 @@ class Agency(Base):
     zip: Any          = Column(String, nullable=True)
     phone: Any        = Column(String, nullable=True)
     fax: Any          = Column(String, nullable=True)
+    signature_url: Any = Column(String, nullable=True)
     created_date: Any = Column(Date, default=date.today)
 
     agents = relationship("Agent", back_populates="agency", cascade="all, delete-orphan")
@@ -254,6 +255,7 @@ class Agent(Base):
     email: Any        = Column(String, unique=True, index=True, nullable=False)
     agency_id: Any    = Column(Integer, ForeignKey("agencies.id", ondelete="CASCADE"), nullable=False, index=True)
     user_id: Any      = Column(String, unique=True, index=True, nullable=True)
+    signature_url: Any = Column(String, nullable=True)
     created_date: Any = Column(Date, default=date.today)
 
     agency = relationship("Agency", back_populates="agents")

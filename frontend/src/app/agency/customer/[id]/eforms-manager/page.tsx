@@ -592,7 +592,7 @@ export default function EFormsManagerPage() {
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [createdCertificates, setCreatedCertificates] = useState<any[]>([]);
-  const [agentsList, setAgentsList] = useState<{ id?: number; name: string; email?: string }[]>([]);
+  const [agentsList, setAgentsList] = useState<{ id?: number; name: string; email?: string; signature_url?: string }[]>([]);
   const [agencyProfile, setAgencyProfile] = useState<any>(null);
 
   // ── Attachment Modal State ──
@@ -2256,6 +2256,14 @@ export default function EFormsManagerPage() {
                   }
                 }
 
+                // Resolve signature image URL
+                const resolvedSignatureUrl = 
+                  activeCert?.form_data?.signatureUrl ||
+                  activeCert?.form_data?.signature_url ||
+                  agentsList.find((a: any) => a.name && a.name.trim().toLowerCase() === resolvedContactName.trim().toLowerCase())?.signature_url ||
+                  agencyProfile?.signature_url ||
+                  '';
+
                 const commonCustomerParams = {
                   insuredName: customer?.name || '',
                   insuredAddress: customer?.address || '',
@@ -2336,6 +2344,7 @@ export default function EFormsManagerPage() {
                     baLimitBodilyInjuryAccident: baLimits.bodilyInjuryAccident,
                     baLimitPropertyDamage: baLimits.propertyDamage,
                     signature: activeCert?.form_data?.authorizedRepresentative || activeCert?.form_data?.signature || '',
+                    signatureUrl: resolvedSignatureUrl,
                     overrides: JSON.stringify(overrides),
                   });
                   return <iframe key={params.toString()} src={`/acord-form.html?${params.toString()}`} className="w-full h-full border-none bg-white" />;
@@ -2382,6 +2391,7 @@ export default function EFormsManagerPage() {
                     baLimitBodilyInjuryAccident: baLimits.bodilyInjuryAccident,
                     baLimitPropertyDamage: baLimits.propertyDamage,
                     signature: activeCert?.form_data?.authorizedRepresentative || activeCert?.form_data?.signature || '',
+                    signatureUrl: resolvedSignatureUrl,
                     isEditing: isEditing ? 'true' : 'false',
                     overrides: JSON.stringify(overrides),
                   });

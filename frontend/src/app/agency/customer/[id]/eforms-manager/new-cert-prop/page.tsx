@@ -51,7 +51,7 @@ export default function NewCertPropPage() {
   const [authRep, setAuthRep] = useState("");
   const [agencyName, setAgencyName] = useState("CapCo Insurance Agency");
   const [agencyEmail, setAgencyEmail] = useState("agency@capco.com");
-  const [agentsList, setAgentsList] = useState<{ id?: number; name: string; email?: string }[]>([]);
+  const [agentsList, setAgentsList] = useState<{ id?: number; name: string; email?: string; signature_url?: string }[]>([]);
 
   // Helper to format date as M/D/YYYY
   const formatDisplayDate = (d?: string | Date | null) => {
@@ -147,6 +147,7 @@ export default function NewCertPropPage() {
             contactName: authRep,
             contactEmail: agentsList.find((a: any) => a.name && a.name.trim().toLowerCase() === authRep.trim().toLowerCase())?.email || (authRep.trim().toLowerCase() === agencyName.trim().toLowerCase() ? agencyEmail : ""),
             representativeEmail: agentsList.find((a: any) => a.name && a.name.trim().toLowerCase() === authRep.trim().toLowerCase())?.email || (authRep.trim().toLowerCase() === agencyName.trim().toLowerCase() ? agencyEmail : ""),
+            signatureUrl: agentsList.find((a: any) => a.name && a.name.trim().toLowerCase() === authRep.trim().toLowerCase())?.signature_url || "",
           },
         }),
       });

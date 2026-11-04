@@ -393,8 +393,15 @@ function PrintOptionsContent() {
               apiUrl: API_BASE_URL,
             };
 
+            const resolvedSignatureUrl = 
+              activeCert?.form_data?.signatureUrl ||
+              activeCert?.form_data?.signature_url ||
+              '';
+
             const limitsObj = {
               ...customerParams,
+              signature: resolvedContactName,
+              signatureUrl: resolvedSignatureUrl,
               glPolicyNo: localGlPolicyNo,
               glEffDate: localGlEffDate,
               glExpDate: localGlExpDate,

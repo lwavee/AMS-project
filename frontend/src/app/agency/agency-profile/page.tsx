@@ -40,6 +40,9 @@ import {
   ArrowLeft,
   LayoutDashboard,
   Eye,
+  PenTool,
+  Upload,
+  ImageIcon,
 } from "lucide-react";
 import { API_BASE_URL } from "../../../lib/config";
 
@@ -113,6 +116,146 @@ export default function AgencyProfilePage() {
   const [mailboxStatus, setMailboxStatus] = useState<MailboxStatus | null>(null);
   const [isConnectingMailbox, setIsConnectingMailbox] = useState(false);
   const [isDisconnectingMailbox, setIsDisconnectingMailbox] = useState(false);
+
+  // Signature Upload State
+  const [isUploadingSignature, setIsUploadingSignature] = useState(false);
+  const [isRemovingSignature, setIsRemovingSignature] = useState(false);
+  const [signatureTargetAgentId, setSignatureTargetAgentId] = useState<number | null>(null);
+
+  const handleSignatureUpload = async (e: React.ChangeEvent<HTMLInputElement>, targetAgentId?: number) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingSignature(true);
+    setSignatureTargetAgentId(targetAgentId || null);
+
+    try {
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("file", file);
+      if (targetAgentId) {
+        formData.append("agent_id", String(targetAgentId));
+      }
+
+      const res = await fetch(`${API_BASE_URL}/api/agency/signature/upload`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || "Failed to upload signature");
+      }
+
+      const data = await res.json();
+      showToast(data.message || "Signature uploaded & background removed successfully!", "success");
+
+      // Update local states
+      if (targetAgentId) {
+        setAgents((prev) =>
+          prev.map((a) => (a.id === targetAgentId ? { ...a, signature_url: data.signature_url } : a))
+        );
+      } else {
+        setProfile((prev: any) => (prev ? { ...prev, signature_url: data.signature_url } : prev));
+        try {
+          const cached = sessionStorage.getItem("cached_agency_profile");
+          if (cached) {
+            const cp = JSON.parse(cached);
+            cp.signature_url = data.signature_url;
+            sessionStorage.setItem("cached_agency_profile", JSON.stringify(cp));
+          }
+        } catch {}
+      }
+
+      // Update cached_agency_agents
+      try {
+        const cachedAgs = sessionStorage.getItem("cached_agency_agents");
+        if (cachedAgs) {
+          const ags = JSON.parse(cachedAgs);
+          if (Array.isArray(ags)) {
+            const matchId = targetAgentId || profile?.id;
+            const updated = ags.map((a) =>
+              a.id === matchId || a.email?.toLowerCase() === profile?.email?.toLowerCase()
+                ? { ...a, signature_url: data.signature_url }
+                : a
+            );
+            sessionStorage.setItem("cached_agency_agents", JSON.stringify(updated));
+          }
+        }
+      } catch {}
+    } catch (err: any) {
+      showToast(err.message || "Error processing signature", "error");
+    } finally {
+      setIsUploadingSignature(false);
+      setSignatureTargetAgentId(null);
+      e.target.value = "";
+    }
+  };
+
+  const handleRemoveSignature = async (targetAgentId?: number) => {
+    const confirmed = await confirmDialog("Are you sure you want to remove this signature?");
+    if (!confirmed) return;
+
+    setIsRemovingSignature(true);
+    try {
+      const token = localStorage.getItem("token");
+      const url = targetAgentId
+        ? `${API_BASE_URL}/api/agency/signature?agent_id=${targetAgentId}`
+        : `${API_BASE_URL}/api/agency/signature`;
+
+      const res = await fetch(url, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to remove signature");
+      }
+
+      showToast("Signature removed successfully", "success");
+
+      if (targetAgentId) {
+        setAgents((prev) =>
+          prev.map((a) => (a.id === targetAgentId ? { ...a, signature_url: null } : a))
+        );
+      } else {
+        setProfile((prev: any) => (prev ? { ...prev, signature_url: null } : prev));
+        try {
+          const cached = sessionStorage.getItem("cached_agency_profile");
+          if (cached) {
+            const cp = JSON.parse(cached);
+            cp.signature_url = null;
+            sessionStorage.setItem("cached_agency_profile", JSON.stringify(cp));
+          }
+        } catch {}
+      }
+
+      try {
+        const cachedAgs = sessionStorage.getItem("cached_agency_agents");
+        if (cachedAgs) {
+          const ags = JSON.parse(cachedAgs);
+          if (Array.isArray(ags)) {
+            const matchId = targetAgentId || profile?.id;
+            const updated = ags.map((a) =>
+              a.id === matchId || a.email?.toLowerCase() === profile?.email?.toLowerCase()
+                ? { ...a, signature_url: null }
+                : a
+            );
+            sessionStorage.setItem("cached_agency_agents", JSON.stringify(updated));
+          }
+        }
+      } catch {}
+    } catch (err: any) {
+      showToast(err.message || "Error removing signature", "error");
+    } finally {
+      setIsRemovingSignature(false);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -959,6 +1102,84 @@ ${agencyName}`;
                             </div>
                           </div>
                         )}
+
+                        {/* Official Signature (Authorized Representative) */}
+                        <div className="pt-2 border-t border-[#e5ddd5]/60">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                              <PenTool size={11} className="text-[#9A8B7A]" />
+                              OFFICIAL SIGNATURE (AUTHORIZED REP)
+                            </label>
+                            {profile.signature_url && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                Active • Transparent PNG
+                              </span>
+                            )}
+                          </div>
+
+                          {profile.signature_url ? (
+                            <div className="p-3 bg-[#FAF8F5] border border-[#e5ddd5] rounded-xl flex flex-col gap-2">
+                              <div className="h-16 w-full bg-white rounded-lg border border-[#e5ddd5]/70 flex items-center justify-center p-2 relative overflow-hidden bg-[radial-gradient(#d5cdc5_1px,transparent_1px)] [background-size:8px_8px]">
+                                <img
+                                  src={profile.signature_url}
+                                  alt="Agent Signature"
+                                  className="max-h-12 max-w-full object-contain"
+                                />
+                              </div>
+                              <div className="flex items-center justify-between pt-1">
+                                <label className="text-[11px] font-bold text-[#9A8B7A] hover:underline cursor-pointer flex items-center gap-1">
+                                  <Upload size={12} />
+                                  <span>{isUploadingSignature && !signatureTargetAgentId ? "Uploading..." : "Change Signature"}</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => handleSignatureUpload(e)}
+                                    disabled={isUploadingSignature}
+                                  />
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveSignature()}
+                                  disabled={isRemovingSignature}
+                                  className="text-[11px] font-bold text-red-600 hover:underline flex items-center gap-1 cursor-pointer border-none bg-transparent p-0"
+                                >
+                                  <Trash2 size={12} />
+                                  <span>{isRemovingSignature ? "Removing..." : "Remove"}</span>
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="relative">
+                              <label className={`w-full border-2 border-dashed border-[#e5ddd5] hover:border-[#9A8B7A] bg-[#FAF8F5] hover:bg-white rounded-xl p-3.5 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${isUploadingSignature && !signatureTargetAgentId ? "opacity-60 pointer-events-none" : ""}`}>
+                                <div className="h-8 w-8 rounded-full bg-[#9A8B7A]/15 text-[#9A8B7A] flex items-center justify-center mb-1">
+                                  {isUploadingSignature && !signatureTargetAgentId ? (
+                                    <Loader2 size={16} className="animate-spin" />
+                                  ) : (
+                                    <Upload size={15} />
+                                  )}
+                                </div>
+                                <span className="text-xs font-bold text-[#2d2a26]">
+                                  {isUploadingSignature && !signatureTargetAgentId
+                                    ? "Removing background & uploading..."
+                                    : "Upload Agent Signature"}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-semibold mt-0.5 max-w-[230px]">
+                                  {isUploadingSignature && !signatureTargetAgentId
+                                    ? "Saving to Backblaze as transparent PNG..."
+                                    : "Upload signature photo. Background is auto-removed for ACORD forms."}
+                                </span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => handleSignatureUpload(e)}
+                                  disabled={isUploadingSignature}
+                                />
+                              </label>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-10">
@@ -1198,6 +1419,69 @@ ${agencyName}`;
                             </div>
                           </div>
                         </div>
+
+                        {/* Agency Official Signature */}
+                        <div className="pt-2 border-t border-[#e5ddd5]/60">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                              <PenTool size={11} className="text-[#9A8B7A]" />
+                              OFFICIAL AGENCY SIGNATURE
+                            </label>
+                            {profile.signature_url && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                Active • Transparent PNG
+                              </span>
+                            )}
+                          </div>
+
+                          {profile.signature_url ? (
+                            <div className="p-3 bg-[#FAF8F5] border border-[#e5ddd5] rounded-xl flex flex-col gap-2">
+                              <div className="h-14 w-full bg-white rounded-lg border border-[#e5ddd5]/70 flex items-center justify-center p-2 relative overflow-hidden bg-[radial-gradient(#d5cdc5_1px,transparent_1px)] [background-size:8px_8px]">
+                                <img
+                                  src={profile.signature_url}
+                                  alt="Agency Signature"
+                                  className="max-h-10 max-w-full object-contain"
+                                />
+                              </div>
+                              <div className="flex items-center justify-between pt-1">
+                                <label className="text-[11px] font-bold text-[#9A8B7A] hover:underline cursor-pointer flex items-center gap-1">
+                                  <Upload size={12} />
+                                  <span>{isUploadingSignature && !signatureTargetAgentId ? "Uploading..." : "Change Signature"}</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => handleSignatureUpload(e)}
+                                    disabled={isUploadingSignature}
+                                  />
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveSignature()}
+                                  disabled={isRemovingSignature}
+                                  className="text-[11px] font-bold text-red-600 hover:underline flex items-center gap-1 cursor-pointer border-none bg-transparent p-0"
+                                >
+                                  <Trash2 size={12} />
+                                  <span>{isRemovingSignature ? "Removing..." : "Remove"}</span>
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <label className="w-full border border-dashed border-[#e5ddd5] hover:border-[#9A8B7A] bg-[#FAF8F5] hover:bg-white rounded-xl p-3 flex items-center justify-center gap-2 text-center cursor-pointer transition-all">
+                              <Upload size={13} className="text-[#9A8B7A]" />
+                              <span className="text-xs font-bold text-[#2d2a26]">
+                                {isUploadingSignature && !signatureTargetAgentId ? "Uploading..." : "Upload Agency Signature"}
+                              </span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => handleSignatureUpload(e)}
+                                disabled={isUploadingSignature}
+                              />
+                            </label>
+                          )}
+                        </div>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-10">
@@ -1350,10 +1634,11 @@ ${agencyName}`;
                             <table className="w-full text-left">
                               <thead>
                                 <tr className="bg-[#FAF8F5] border-b border-[#e5ddd5]">
-                                  <th className="w-[35%] px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Name</th>
-                                  <th className="w-[35%] px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Email Address</th>
-                                  <th className="w-[18%] px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Registered</th>
-                                  <th className="w-[12%] px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Action</th>
+                                  <th className="w-[28%] px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Name</th>
+                                  <th className="w-[30%] px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Email Address</th>
+                                  <th className="w-[18%] px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Signature</th>
+                                  <th className="w-[14%] px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Registered</th>
+                                  <th className="w-[10%] px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Action</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -1371,6 +1656,38 @@ ${agencyName}`;
                                     </td>
                                     <td className="text-xs font-semibold text-slate-600 truncate px-4 py-3">
                                       {agent.email}
+                                    </td>
+                                    <td className="text-center px-4 py-3">
+                                      {agent.signature_url ? (
+                                        <div className="inline-flex items-center gap-1.5 p-1 bg-white border border-[#e5ddd5] rounded-lg shadow-2xs">
+                                          <img
+                                            src={agent.signature_url}
+                                            alt={agent.name}
+                                            className="h-5 max-w-[65px] object-contain"
+                                            title="Signature on file"
+                                          />
+                                          <button
+                                            type="button"
+                                            onClick={() => handleRemoveSignature(agent.id)}
+                                            className="text-slate-400 hover:text-red-500 p-0.5 border-none bg-transparent cursor-pointer"
+                                            title="Remove signature"
+                                          >
+                                            <X size={10} />
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <label className="inline-flex items-center gap-1 text-[10px] font-bold text-[#9A8B7A] hover:text-[#8a6f4d] bg-[#9A8B7A]/10 hover:bg-[#9A8B7A]/20 px-2 py-1 rounded-lg cursor-pointer transition-colors">
+                                          <Upload size={10} />
+                                          <span>{isUploadingSignature && signatureTargetAgentId === agent.id ? "..." : "Upload"}</span>
+                                          <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(e) => handleSignatureUpload(e, agent.id)}
+                                            disabled={isUploadingSignature}
+                                          />
+                                        </label>
+                                      )}
                                     </td>
                                     <td className="text-xs font-medium text-slate-400 px-4 py-3">
                                       {formatDate(agent.created_date)}

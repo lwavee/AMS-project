@@ -961,6 +961,7 @@
         </div>
         <div class="signature-area">
           AUTHORIZED REPRESENTATIVE
+          <img id="authorized-representative-signature-img" src="" alt="Authorized Representative Signature" style="display: none; max-height: 38px; max-width: 175px; object-fit: contain; position: absolute; right: 28px; bottom: 2px; mix-blend-mode: multiply;" />
           <span id="authorized-representative-signature" class="signature-img" style="display: none; font-family: 'Brush Script MT', 'Dancing Script', cursive, sans-serif; font-size: 22px; font-weight: normal; position: absolute; right: 40px; bottom: 2px; color: #111;"></span>
         </div>
       </div>
@@ -1498,6 +1499,70 @@
           const el = document.getElementById('contact-fax');
           if (el) el.innerText = contactFax;
         }
+
+// ── Render Signature in AUTHORIZED REPRESENTATIVE box ──
+        function renderSignature() {
+          const sigImgEl = document.getElementById('authorized-representative-signature-img');
+          const sigTextEl = document.getElementById('authorized-representative-signature');
+
+          let sigUrl = params.get('signatureUrl');
+          const sigName = (params.get('signature') || params.get('contactName') || '').trim();
+
+          // If not passed explicitly in URL, look up in cached agents or profile
+          if (!sigUrl && sigName) {
+            try {
+              const cachedAgents = sessionStorage.getItem('cached_agency_agents');
+              if (cachedAgents) {
+                const ags = JSON.parse(cachedAgents);
+                if (Array.isArray(ags)) {
+                  const match = ags.find(a => a.name && a.name.trim().toLowerCase() === sigName.toLowerCase());
+                  if (match && match.signature_url) {
+                    sigUrl = match.signature_url;
+                  }
+                }
+              }
+            } catch (e) {}
+
+            if (!sigUrl) {
+              try {
+                const cachedProf = sessionStorage.getItem('cached_agency_profile');
+                if (cachedProf) {
+                  const prof = JSON.parse(cachedProf);
+                  if (prof.signature_url && (
+                    !sigName ||
+                    sigName.toLowerCase() === (prof.name || '').trim().toLowerCase() ||
+                    sigName.toLowerCase() === (prof.agency_name || '').trim().toLowerCase()
+                  )) {
+                    sigUrl = prof.signature_url;
+                  }
+                }
+              } catch (e) {}
+            }
+          }
+
+          if (sigUrl) {
+            if (sigImgEl) {
+              sigImgEl.src = sigUrl;
+              sigImgEl.style.display = 'block';
+            }
+            if (sigTextEl) {
+              sigTextEl.style.display = 'none';
+            }
+          } else if (sigName) {
+            if (sigImgEl) {
+              sigImgEl.style.display = 'none';
+            }
+            if (sigTextEl) {
+              sigTextEl.innerText = sigName;
+              sigTextEl.style.display = 'block';
+            }
+          } else {
+            if (sigImgEl) sigImgEl.style.display = 'none';
+            if (sigTextEl) sigTextEl.style.display = 'none';
+          }
+        }
+
+        renderSignature();
 
         // Insurers A-F from query params
         ['a', 'b', 'c', 'd', 'e', 'f'].forEach((letter) => {

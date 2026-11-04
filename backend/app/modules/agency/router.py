@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Form
+from app.core.b2 import upload_file_to_b2
+from app.core.image_utils import remove_signature_background
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text, func
@@ -42,6 +44,7 @@ class AgencyProfileResponse(BaseModel):
     mailbox_status: Optional[str] = "Not Connected"
     mailbox_email: Optional[str] = None
     mailbox_connected_at: Optional[datetime] = None
+    signature_url: Optional[str] = None
 
 class AgencyProfileUpdateRequest(BaseModel):
     name: str
@@ -318,7 +321,8 @@ def get_profile(current_user: dict = Depends(get_current_user), db: Session = De
             agency_email=agency.email if agency else None,
             mailbox_status=mb_status,
             mailbox_email=mailbox.email if mailbox else agent.email,
-            mailbox_connected_at=mailbox.connected_at if mailbox else None
+            mailbox_connected_at=mailbox.connected_at if mailbox else None,
+            signature_url=agent.signature_url
         )
 
     # 2. Otherwise Agency profile
@@ -363,7 +367,8 @@ def get_profile(current_user: dict = Depends(get_current_user), db: Session = De
         agency_email=agency_any.email,
         mailbox_status=mb_status,
         mailbox_email=mailbox.email if mailbox else agency_any.email,
-        mailbox_connected_at=mailbox.connected_at if mailbox else None
+        mailbox_connected_at=mailbox.connected_at if mailbox else None,
+        signature_url=agency_any.signature_url
     )
 
 @router.put("/profile", response_model=AgencyProfileResponse)
@@ -408,7 +413,8 @@ def update_profile(req: AgencyProfileUpdateRequest, current_user: dict = Depends
             agency_email=agency.email if agency else None,
             mailbox_status=mailbox.status if (mailbox and has_token) else "Not Connected",
             mailbox_email=mailbox.email if mailbox else agent.email,
-            mailbox_connected_at=mailbox.connected_at if mailbox else None
+            mailbox_connected_at=mailbox.connected_at if mailbox else None,
+            signature_url=agent.signature_url
         )
 
     # 2. Agency update
@@ -453,8 +459,171 @@ def update_profile(req: AgencyProfileUpdateRequest, current_user: dict = Depends
         agency_email=agency_any.email,
         mailbox_status=mailbox.status if (mailbox and has_token) else "Not Connected",
         mailbox_email=mailbox.email if mailbox else agency_any.email,
-        mailbox_connected_at=mailbox.connected_at if mailbox else None
+        mailbox_connected_at=mailbox.connected_at if mailbox else None,
+        signature_url=agency_any.signature_url
     )
+
+@router.post("/signature/upload")
+async def upload_signature(
+    file: UploadFile = File(...),
+    agent_id: Optional[int] = Form(None),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Uploaded file must be an image (PNG, JPG, JPEG, WEBP).")
+
+    raw_bytes = await file.read()
+    if not raw_bytes or len(raw_bytes) < 50:
+        raise HTTPException(status_code=400, detail="Invalid or empty image file.")
+
+    # 1. Process image: remove background, auto-crop, convert to transparent PNG
+    try:
+        processed_png = remove_signature_background(raw_bytes)
+    except Exception as e:
+        logger.error(f"Error removing background from signature: {e}")
+        raise HTTPException(status_code=400, detail=f"Failed to process signature image: {str(e)}")
+
+    # 2. Upload to Backblaze B2 (or fallback to local uploads)
+    filename = f"signatures/{uuid.uuid4().hex}_signature.png"
+    upload_result = upload_file_to_b2(processed_png, filename)
+    signature_url = upload_result.get("url")
+    if not signature_url:
+        raise HTTPException(status_code=500, detail="Failed to upload signature image to storage.")
+
+    # 3. Associate signature with target Agent or Agency
+    user_id = str(current_user.get("id")) if current_user.get("id") else None
+    user_email = (current_user.get("email") or "").strip().lower()
+    user_role = (current_user.get("role") or "").strip().lower()
+
+    target_agent = None
+    if agent_id:
+        target_agent = db.query(Agent).filter(Agent.id == agent_id).first()
+        if not target_agent:
+            raise HTTPException(status_code=404, detail="Agent not found.")
+    elif user_role == "agent" or (not user_role and user_email):
+        if user_id:
+            target_agent = db.query(Agent).filter(Agent.user_id == user_id).first()
+        if not target_agent and user_email:
+            target_agent = db.query(Agent).filter(func.lower(Agent.email) == user_email).first()
+
+    if target_agent:
+        target_agent.signature_url = signature_url
+        db.commit()
+        db.refresh(target_agent)
+        return {
+            "signature_url": signature_url,
+            "target": "agent",
+            "agent_id": target_agent.id,
+            "agent_name": target_agent.name,
+            "message": "Agent signature uploaded and background removed successfully."
+        }
+
+    # Agency profile fallback
+    agency = None
+    if user_id:
+        agency = db.query(Agency).filter(Agency.user_id == user_id).first()
+    if not agency and user_email:
+        agency = db.query(Agency).filter(func.lower(Agency.email) == user_email).first()
+    if not agency:
+        agency = db.query(Agency).first()
+
+    if agency:
+        agency.signature_url = signature_url
+        db.commit()
+        db.refresh(agency)
+        return {
+            "signature_url": signature_url,
+            "target": "agency",
+            "agency_id": agency.id,
+            "agency_name": agency.name,
+            "message": "Agency signature uploaded and background removed successfully."
+        }
+
+    raise HTTPException(status_code=404, detail="No agent or agency profile found to attach signature.")
+
+
+@router.delete("/signature")
+def delete_signature(
+    agent_id: Optional[int] = Query(None),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user_id = str(current_user.get("id")) if current_user.get("id") else None
+    user_email = (current_user.get("email") or "").strip().lower()
+    user_role = (current_user.get("role") or "").strip().lower()
+
+    if agent_id:
+        agent = db.query(Agent).filter(Agent.id == agent_id).first()
+        if agent:
+            agent.signature_url = None
+            db.commit()
+            return {"message": "Agent signature removed successfully."}
+
+    if user_role == "agent":
+        agent = None
+        if user_id:
+            agent = db.query(Agent).filter(Agent.user_id == user_id).first()
+        if not agent and user_email:
+            agent = db.query(Agent).filter(func.lower(Agent.email) == user_email).first()
+        if agent:
+            agent.signature_url = None
+            db.commit()
+            return {"message": "Signature removed successfully."}
+
+    # Agency
+    agency = None
+    if user_id:
+        agency = db.query(Agency).filter(Agency.user_id == user_id).first()
+    if not agency and user_email:
+        agency = db.query(Agency).filter(func.lower(Agency.email) == user_email).first()
+    if agency:
+        agency.signature_url = None
+        db.commit()
+        return {"message": "Agency signature removed successfully."}
+
+    return {"message": "Signature removed."}
+
+
+@router.post("/agents/{agent_id}/signature/upload")
+async def upload_agent_specific_signature(
+    agent_id: int,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Uploaded file must be an image (PNG, JPG, JPEG, WEBP).")
+
+    raw_bytes = await file.read()
+    if not raw_bytes or len(raw_bytes) < 50:
+        raise HTTPException(status_code=400, detail="Invalid or empty image file.")
+
+    agent = db.query(Agent).filter(Agent.id == agent_id).first()
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found.")
+
+    try:
+        processed_png = remove_signature_background(raw_bytes)
+    except Exception as e:
+        logger.error(f"Error processing signature: {e}")
+        raise HTTPException(status_code=400, detail=f"Failed to process signature: {str(e)}")
+
+    filename = f"signatures/{uuid.uuid4().hex}_signature.png"
+    upload_result = upload_file_to_b2(processed_png, filename)
+    signature_url = upload_result.get("url")
+    if not signature_url:
+        raise HTTPException(status_code=500, detail="Failed to upload signature image to storage.")
+
+    agent.signature_url = signature_url
+    db.commit()
+    db.refresh(agent)
+    return {
+        "signature_url": signature_url,
+        "agent_id": agent.id,
+        "agent_name": agent.name,
+        "message": "Agent signature updated successfully."
+    }
 
 @router.get("/agents", response_model=List[AgentResponse])
 def list_agents(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -510,7 +679,8 @@ def list_agents(current_user: dict = Depends(get_current_user), db: Session = De
             id=a.id,
             name=a.name,
             email=a.email,
-            created_date=a.created_date
+            created_date=a.created_date,
+            signature_url=a.signature_url
         ) for a in agents
     ]
 

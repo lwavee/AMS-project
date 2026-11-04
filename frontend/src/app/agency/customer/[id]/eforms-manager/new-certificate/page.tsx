@@ -24,7 +24,7 @@ export default function NewCertificateFormPage() {
   const [authorizedRepresentative, setAuthorizedRepresentative] = useState("");
   const [agencyName, setAgencyName] = useState("CapCo Insurance Agency");
   const [agencyEmail, setAgencyEmail] = useState("agency@capco.com");
-  const [agentsList, setAgentsList] = useState<{ id?: number; name: string; email?: string }[]>([]);
+  const [agentsList, setAgentsList] = useState<{ id?: number; name: string; email?: string; signature_url?: string }[]>([]);
   const [noteMessage, setNoteMessage] = useState("");
   const [printNoteWithForm, setPrintNoteWithForm] = useState(true);
 
@@ -172,6 +172,7 @@ export default function NewCertificateFormPage() {
       const repEmail = selectedAgent 
         ? selectedAgent.email 
         : (authorizedRepresentative.trim().toLowerCase() === agencyName.trim().toLowerCase() ? agencyEmail : "");
+      const repSigUrl = selectedAgent?.signature_url || "";
 
       const res = await fetch(url, {
         method,
@@ -191,6 +192,7 @@ export default function NewCertificateFormPage() {
             contactName: authorizedRepresentative,
             contactEmail: repEmail,
             representativeEmail: repEmail,
+            signatureUrl: repSigUrl,
             noteMessage,
             printNoteWithForm,
           }
@@ -456,6 +458,19 @@ export default function NewCertificateFormPage() {
                     <option value={authorizedRepresentative}>{authorizedRepresentative}</option>
                   )}
               </select>
+
+              {authorizedRepresentative && (() => {
+                const matched = agentsList.find((a: any) => a.name && a.name.trim().toLowerCase() === authorizedRepresentative.trim().toLowerCase());
+                const sigUrl = matched?.signature_url;
+                return sigUrl ? (
+                  <div className="mt-2 p-2 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <img src={sigUrl} alt="Signature Preview" className="h-7 max-w-[120px] object-contain" />
+                      <span className="text-[11px] font-bold text-emerald-800">Signature on File (will print on Certificate)</span>
+                    </div>
+                  </div>
+                ) : null;
+              })()}
               
               <div className="flex gap-4 mt-3">
                 <a href="#" className="text-[12px] font-bold text-primary hover:underline">Holder Detail</a>
