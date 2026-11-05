@@ -25,6 +25,17 @@ import re
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+def format_signature_url(url: Optional[str]) -> Optional[str]:
+    if not url:
+        return None
+    trimmed = str(url).strip()
+    if not trimmed:
+        return None
+    if trimmed.startswith("http://") or trimmed.startswith("https://") or trimmed.startswith("data:"):
+        return trimmed
+    backend_base = (settings.BACKEND_URL or "http://127.0.0.1:8000").rstrip("/")
+    return f"{backend_base}/{trimmed.lstrip('/')}"
+
 # Schema definitions
 class AgencyProfileResponse(BaseModel):
     id: int
@@ -322,7 +333,7 @@ def get_profile(current_user: dict = Depends(get_current_user), db: Session = De
             mailbox_status=mb_status,
             mailbox_email=mailbox.email if mailbox else agent.email,
             mailbox_connected_at=mailbox.connected_at if mailbox else None,
-            signature_url=agent.signature_url
+            signature_url=format_signature_url(agent.signature_url)
         )
 
     # 2. Otherwise Agency profile
@@ -368,7 +379,7 @@ def get_profile(current_user: dict = Depends(get_current_user), db: Session = De
         mailbox_status=mb_status,
         mailbox_email=mailbox.email if mailbox else agency_any.email,
         mailbox_connected_at=mailbox.connected_at if mailbox else None,
-        signature_url=agency_any.signature_url
+        signature_url=format_signature_url(agency_any.signature_url)
     )
 
 @router.put("/profile", response_model=AgencyProfileResponse)
@@ -414,7 +425,7 @@ def update_profile(req: AgencyProfileUpdateRequest, current_user: dict = Depends
             mailbox_status=mailbox.status if (mailbox and has_token) else "Not Connected",
             mailbox_email=mailbox.email if mailbox else agent.email,
             mailbox_connected_at=mailbox.connected_at if mailbox else None,
-            signature_url=agent.signature_url
+            signature_url=format_signature_url(agent.signature_url)
         )
 
     # 2. Agency update
@@ -460,7 +471,7 @@ def update_profile(req: AgencyProfileUpdateRequest, current_user: dict = Depends
         mailbox_status=mailbox.status if (mailbox and has_token) else "Not Connected",
         mailbox_email=mailbox.email if mailbox else agency_any.email,
         mailbox_connected_at=mailbox.connected_at if mailbox else None,
-        signature_url=agency_any.signature_url
+        signature_url=format_signature_url(agency_any.signature_url)
     )
 
 @router.post("/signature/upload")
@@ -512,7 +523,7 @@ async def upload_signature(
         db.commit()
         db.refresh(target_agent)
         return {
-            "signature_url": signature_url,
+            "signature_url": format_signature_url(signature_url),
             "target": "agent",
             "agent_id": target_agent.id,
             "agent_name": target_agent.name,
@@ -533,7 +544,7 @@ async def upload_signature(
         db.commit()
         db.refresh(agency)
         return {
-            "signature_url": signature_url,
+            "signature_url": format_signature_url(signature_url),
             "target": "agency",
             "agency_id": agency.id,
             "agency_name": agency.name,
@@ -619,7 +630,7 @@ async def upload_agent_specific_signature(
     db.commit()
     db.refresh(agent)
     return {
-        "signature_url": signature_url,
+        "signature_url": format_signature_url(signature_url),
         "agent_id": agent.id,
         "agent_name": agent.name,
         "message": "Agent signature updated successfully."
@@ -680,7 +691,7 @@ def list_agents(current_user: dict = Depends(get_current_user), db: Session = De
             name=a.name,
             email=a.email,
             created_date=a.created_date,
-            signature_url=a.signature_url
+            signature_url=format_signature_url(a.signature_url)
         ) for a in agents
     ]
 

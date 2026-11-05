@@ -1,7 +1,7 @@
 /* eslint-disable */
 "use client";
 import React, { useEffect, useState } from "react";
-import { API_BASE_URL } from "@/lib/config";
+import { API_BASE_URL, getSignatureImageUrl } from "@/lib/config";
 import { useParams } from "next/navigation";
 import { Save, ChevronDown } from "lucide-react";
 
@@ -147,7 +147,7 @@ export default function NewCertPropPage() {
             contactName: authRep,
             contactEmail: agentsList.find((a: any) => a.name && a.name.trim().toLowerCase() === authRep.trim().toLowerCase())?.email || (authRep.trim().toLowerCase() === agencyName.trim().toLowerCase() ? agencyEmail : ""),
             representativeEmail: agentsList.find((a: any) => a.name && a.name.trim().toLowerCase() === authRep.trim().toLowerCase())?.email || (authRep.trim().toLowerCase() === agencyName.trim().toLowerCase() ? agencyEmail : ""),
-            signatureUrl: agentsList.find((a: any) => a.name && a.name.trim().toLowerCase() === authRep.trim().toLowerCase())?.signature_url || "",
+            signatureUrl: getSignatureImageUrl(agentsList.find((a: any) => a.name && a.name.trim().toLowerCase() === authRep.trim().toLowerCase())?.signature_url || ""),
           },
         }),
       });
@@ -475,6 +475,20 @@ export default function NewCertPropPage() {
                   <option value={authRep}>{authRep}</option>
                 )}
             </select>
+
+            {authRep && (() => {
+              const matched = agentsList.find((a: any) => a.name && a.name.trim().toLowerCase() === authRep.trim().toLowerCase());
+              const sigUrl = getSignatureImageUrl(matched?.signature_url);
+              return sigUrl ? (
+                <div className="p-2 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <img src={sigUrl} alt="Signature Preview" className="h-7 max-w-[120px] object-contain" />
+                    <span className="text-[11px] font-bold text-emerald-800">Signature on File (will print on Certificate)</span>
+                  </div>
+                </div>
+              ) : null;
+            })()}
+
             <div className="flex gap-4 pt-1">
               <a href="#" className="text-[12px] font-bold text-primary hover:underline">Holder Detail</a>
               <a href="#" className="text-[12px] font-bold text-primary hover:underline">Copy Holder Detail</a>

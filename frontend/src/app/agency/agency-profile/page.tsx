@@ -44,7 +44,7 @@ import {
   Upload,
   ImageIcon,
 } from "lucide-react";
-import { API_BASE_URL } from "../../../lib/config";
+import { API_BASE_URL, getSignatureImageUrl } from "../../../lib/config";
 
 interface MailboxStatus {
   configured: boolean;
@@ -1121,7 +1121,7 @@ ${agencyName}`;
                             <div className="p-3 bg-[#FAF8F5] border border-[#e5ddd5] rounded-xl flex flex-col gap-2">
                               <div className="h-16 w-full bg-white rounded-lg border border-[#e5ddd5]/70 flex items-center justify-center p-2 relative overflow-hidden bg-[radial-gradient(#d5cdc5_1px,transparent_1px)] [background-size:8px_8px]">
                                 <img
-                                  src={profile.signature_url}
+                                  src={getSignatureImageUrl(profile.signature_url)}
                                   alt="Agent Signature"
                                   className="max-h-12 max-w-full object-contain"
                                 />
@@ -1438,7 +1438,7 @@ ${agencyName}`;
                             <div className="p-3 bg-[#FAF8F5] border border-[#e5ddd5] rounded-xl flex flex-col gap-2">
                               <div className="h-14 w-full bg-white rounded-lg border border-[#e5ddd5]/70 flex items-center justify-center p-2 relative overflow-hidden bg-[radial-gradient(#d5cdc5_1px,transparent_1px)] [background-size:8px_8px]">
                                 <img
-                                  src={profile.signature_url}
+                                  src={getSignatureImageUrl(profile.signature_url)}
                                   alt="Agency Signature"
                                   className="max-h-10 max-w-full object-contain"
                                 />
@@ -1661,7 +1661,7 @@ ${agencyName}`;
                                       {agent.signature_url ? (
                                         <div className="inline-flex items-center gap-1.5 p-1 bg-white border border-[#e5ddd5] rounded-lg shadow-2xs">
                                           <img
-                                            src={agent.signature_url}
+                                            src={getSignatureImageUrl(agent.signature_url)}
                                             alt={agent.name}
                                             className="h-5 max-w-[65px] object-contain"
                                             title="Signature on file"

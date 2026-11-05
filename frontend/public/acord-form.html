@@ -1541,8 +1541,20 @@
           }
 
           if (sigUrl) {
+            let finalSigUrl = sigUrl.trim();
+            if (!finalSigUrl.startsWith('http://') && !finalSigUrl.startsWith('https://') && !finalSigUrl.startsWith('data:')) {
+              const apiHost = params.get('apiUrl') || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://127.0.0.1:8000' : window.location.origin);
+              finalSigUrl = `${apiHost.replace(/\/+$/, '')}/${finalSigUrl.replace(/^\/+/, '')}`;
+            }
             if (sigImgEl) {
-              sigImgEl.src = sigUrl;
+              sigImgEl.onerror = function() {
+                sigImgEl.style.display = 'none';
+                if (sigName && sigTextEl) {
+                  sigTextEl.innerText = sigName;
+                  sigTextEl.style.display = 'block';
+                }
+              };
+              sigImgEl.src = finalSigUrl;
               sigImgEl.style.display = 'block';
             }
             if (sigTextEl) {

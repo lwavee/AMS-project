@@ -3,7 +3,7 @@
 
   import React, { useState, useEffect, useCallback, useRef } from "react";
   import { useRouter, useParams } from "next/navigation";
-  import { API_BASE_URL } from "../../../../../lib/config";
+  import { API_BASE_URL, getSignatureImageUrl } from "../../../../../lib/config";
 import { confirmDialog, showToast } from "@/components/ToastProvider";
   import Acord25Form from "../../../../../services/pdf/Acord25Form";
   import Header from "../../../../../components/Header";
@@ -2257,12 +2257,13 @@ export default function EFormsManagerPage() {
                 }
 
                 // Resolve signature image URL
-                const resolvedSignatureUrl = 
+                const rawSignatureUrl = 
                   activeCert?.form_data?.signatureUrl ||
                   activeCert?.form_data?.signature_url ||
                   agentsList.find((a: any) => a.name && a.name.trim().toLowerCase() === resolvedContactName.trim().toLowerCase())?.signature_url ||
                   agencyProfile?.signature_url ||
                   '';
+                const resolvedSignatureUrl = getSignatureImageUrl(rawSignatureUrl);
 
                 const commonCustomerParams = {
                   insuredName: customer?.name || '',

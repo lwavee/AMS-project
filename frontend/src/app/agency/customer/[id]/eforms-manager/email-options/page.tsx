@@ -1,7 +1,7 @@
 /* eslint-disable */
 "use client";
 import React, { useEffect, useState, useCallback, Suspense } from "react";
-import { API_BASE_URL } from "@/lib/config";
+import { API_BASE_URL, getSignatureImageUrl } from "@/lib/config";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { showToast } from "@/components/ToastProvider";
 import {
@@ -470,10 +470,11 @@ function EmailOptionsContent() {
               apiUrl: API_BASE_URL,
             };
 
-            const resolvedSignatureUrl = 
+            const resolvedSignatureUrl = getSignatureImageUrl(
               activeCert?.form_data?.signatureUrl ||
               activeCert?.form_data?.signature_url ||
-              '';
+              ''
+            );
 
             const limitsObj = {
               ...customerParams,

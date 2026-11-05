@@ -3,7 +3,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { API_BASE_URL } from "@/lib/config";
+import { API_BASE_URL, getSignatureImageUrl } from "@/lib/config";
 import { Save, Copy, Paperclip, Printer, Plus, Minus, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function NewCertificateFormPage() {
@@ -172,7 +172,7 @@ export default function NewCertificateFormPage() {
       const repEmail = selectedAgent 
         ? selectedAgent.email 
         : (authorizedRepresentative.trim().toLowerCase() === agencyName.trim().toLowerCase() ? agencyEmail : "");
-      const repSigUrl = selectedAgent?.signature_url || "";
+      const repSigUrl = getSignatureImageUrl(selectedAgent?.signature_url || "");
 
       const res = await fetch(url, {
         method,
@@ -461,7 +461,7 @@ export default function NewCertificateFormPage() {
 
               {authorizedRepresentative && (() => {
                 const matched = agentsList.find((a: any) => a.name && a.name.trim().toLowerCase() === authorizedRepresentative.trim().toLowerCase());
-                const sigUrl = matched?.signature_url;
+                const sigUrl = getSignatureImageUrl(matched?.signature_url);
                 return sigUrl ? (
                   <div className="mt-2 p-2 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between">
                     <div className="flex items-center gap-2">

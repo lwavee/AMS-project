@@ -1,6 +1,6 @@
 from app.database.connection import is_sqlite
 from fastapi import FastAPI, HTTPException
-from app.core.config import settings
+from app.core.config import settings, BASE_DIR
 from app.database.connection import test_connection, engine, Base
 from app.api.v1.router import api_router
 from app.modules.customer.model import Customer, Policy, Submission, Agency, Agent, AgentInvitation, MasterCertificate, CertificateHolder  # noqa: F401 — ensures tables are registered
@@ -254,8 +254,10 @@ app.add_middleware(
 app.include_router(api_router, prefix="/api")
 
 # Mount uploads directory for documents
-os.makedirs("uploads", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+# Ensures uploads directory exists in backend
+uploads_dir = os.path.join(str(BASE_DIR), "uploads")
+os.makedirs(uploads_dir, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):

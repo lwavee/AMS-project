@@ -23,8 +23,9 @@ import {
   Users,
   ChevronRight,
   Hash,
+  PenTool,
 } from "lucide-react";
-import { API_BASE_URL } from "../../../../lib/config";
+import { API_BASE_URL, getSignatureImageUrl } from "../../../../lib/config";
 
 export default function AgentProfilePage() {
   const router = useRouter();
@@ -316,6 +317,32 @@ export default function AgentProfilePage() {
                             <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md border border-primary/15">Agent</span>
                             <span className="text-[10px] font-bold text-success bg-success/10 px-2 py-0.5 rounded-md border border-success/15">Verified</span>
                           </div>
+                        </div>
+
+                        {/* Signature Preview */}
+                        <div className="pt-3 border-t border-border-main/60">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center justify-between mb-1.5">
+                            <span className="flex items-center gap-1.5">
+                              <PenTool size={9} />
+                              Official Signature
+                            </span>
+                            {agent.signature_url && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                Active • Transparent
+                              </span>
+                            )}
+                          </label>
+                          {agent.signature_url ? (
+                            <div className="h-14 w-full bg-[#FAF8F5] rounded-xl border border-border-main flex items-center justify-center p-2 relative overflow-hidden bg-[radial-gradient(#d5cdc5_1px,transparent_1px)] [background-size:8px_8px]">
+                              <img
+                                src={getSignatureImageUrl(agent.signature_url)}
+                                alt={agent.name}
+                                className="max-h-10 max-w-full object-contain"
+                              />
+                            </div>
+                          ) : (
+                            <p className="text-xs text-slate-400 italic">No signature on file</p>
+                          )}
                         </div>
                       </div>
                     </div>

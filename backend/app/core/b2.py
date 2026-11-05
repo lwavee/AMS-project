@@ -1,7 +1,14 @@
 import os
 import uuid
+from typing import Any, cast
 from b2sdk.v2 import InMemoryAccountInfo, B2Api
 from fastapi import HTTPException
+from dotenv import load_dotenv
+
+# Ensure environment variables are loaded from backend/.env
+env_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.env"))
+if os.path.exists(env_file):
+    load_dotenv(dotenv_path=env_file)
 
 _b2_api = None
 _b2_bucket_name = None
@@ -12,8 +19,8 @@ def get_b2_api():
     if _b2_api is not None:
         return _b2_api
 
-    info = InMemoryAccountInfo()
-    b2_api = B2Api(info)
+    info: Any = InMemoryAccountInfo()
+    b2_api = B2Api(cast(Any, info))  # type: ignore[arg-type]
     
     application_key_id = os.getenv("B2_KEY_ID")
     application_key = os.getenv("B2_APPLICATION_KEY")
@@ -54,12 +61,14 @@ def upload_file_to_b2(file_bytes: bytes, file_name: str) -> dict:
     
     # Fallback: Save to local uploads folder
     try:
-        # Create uploads directory if it doesn't exist
-        os.makedirs("uploads", exist_ok=True)
+        # Strip directory components to avoid nested path errors on local storage
+        clean_name = os.path.basename(file_name)
+        unique_name = f"{uuid.uuid4().hex}_{clean_name}"
+        from app.core.config import BASE_DIR
+        local_path = os.path.join(str(BASE_DIR), "uploads", unique_name)
         
-        # Avoid file name collisions by prepending a unique prefix
-        unique_name = f"{uuid.uuid4().hex}_{file_name}"
-        local_path = os.path.join("uploads", unique_name)
+        # Ensure uploads directory exists
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
         
         with open(local_path, "wb") as f:
             f.write(file_bytes)
