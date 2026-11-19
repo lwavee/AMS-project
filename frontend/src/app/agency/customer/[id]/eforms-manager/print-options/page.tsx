@@ -8,7 +8,7 @@ import {
   X, Printer, CheckSquare, Square, MinusSquare, PlusSquare, FileText, Loader2
 } from "lucide-react";
 import { PDFDocument } from "pdf-lib";
-import { toJpeg } from "html-to-image";
+import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
 interface TreeNode {
@@ -487,18 +487,20 @@ function PrintOptionsContent() {
     return items;
   };
 
-  const getPdfBufferFromIframe = async (url: string): Promise<ArrayBuffer> => {
+  const getPageImageFromIframe = async (url: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       const iframe = document.createElement("iframe");
       iframe.style.position = "fixed";
-      iframe.style.top = "0px";
-      iframe.style.left = "0px";
+      iframe.style.top = "0";
+      iframe.style.left = "0";
       iframe.style.width = "850px";
       iframe.style.height = "1100px";
+      iframe.style.border = "none";
+      iframe.style.opacity = "0.01";
       iframe.style.zIndex = "-99999";
-      iframe.style.opacity = "0";
       iframe.style.pointerEvents = "none";
-      iframe.src = url;
+      const separator = url.includes("?") ? "&" : "?";
+      iframe.src = `${url}${separator}_t=${Date.now()}`;
 
       let isFinished = false;
 
@@ -521,27 +523,40 @@ function PrintOptionsContent() {
             )
           );
 
+          if (doc.fonts) {
+            await doc.fonts.ready;
+          }
+
+          // Buffer for layout stabilization & image decodes
+          await new Promise((r) => setTimeout(r, 150));
+
           const targetEl = (doc.querySelector(".page") as HTMLElement) || doc.body;
-          const imgData = await toJpeg(targetEl, {
-            quality: 0.98,
-            pixelRatio: 2,
+
+          // Render via html2canvas directly:
+          // scale: 3 produces 2550 x 3300 px (300 DPI high-definition print quality)
+          // Uses live DOM rendering with real browser font metrics, bypassing SVG foreignObject font-stripping
+          const canvas = await html2canvas(targetEl, {
+            scale: 3,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: "#ffffff",
+            logging: false,
+            width: 850,
+            height: 1100,
+            windowWidth: 850,
+            windowHeight: 1100,
+            x: 0,
+            y: 0,
+            scrollX: 0,
+            scrollY: 0,
           });
 
-          const pdf = new jsPDF({
-            orientation: "portrait",
-            unit: "pt",
-            format: "letter",
-          });
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = pdf.internal.pageSize.getHeight();
-          pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
-
-          const pdfArrayBuffer = pdf.output("arraybuffer");
+          const imgData = canvas.toDataURL("image/png");
 
           if (document.body.contains(iframe)) {
             document.body.removeChild(iframe);
           }
-          resolve(pdfArrayBuffer);
+          resolve(imgData);
         } catch (err) {
           if (document.body.contains(iframe)) {
             document.body.removeChild(iframe);
@@ -566,6 +581,19 @@ function PrintOptionsContent() {
 
       document.body.appendChild(iframe);
     });
+  };
+
+  const getPdfBufferFromIframe = async (url: string): Promise<ArrayBuffer> => {
+    const imgData = await getPageImageFromIframe(url);
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "pt",
+      format: "letter",
+    });
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
+    return pdf.output("arraybuffer");
   };
 
   const fetchAttachmentBuffer = async (docId: string): Promise<{ buffer: ArrayBuffer, type: string }> => {
@@ -668,41 +696,109 @@ function PrintOptionsContent() {
     const items = getSelectedItems();
     console.log("handlePrint -> items:", items);
     
-    if (items.length === 0) { showToast("Please select at least one form to print.", "warning"); return; }
-    
-    // For native print, open all URLs in a single hidden iframe separated by page breaks
-    const printWindow = window.open("", "_blank", "width=850,height=1100");
-    if (!printWindow) { showToast("Popup blocked!", "error"); return; }
-    
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Print Forms</title>
-          <style>
-            body { margin: 0; padding: 0; }
-            iframe { width: 100%; height: 1100px; border: none; display: block; }
-            .page-break { page-break-after: always; }
-          </style>
-        </head>
-        <body>
-          ${items.map((item, idx) => `
-            <iframe src="${window.location.origin}${item.url}"></iframe>
-            ${idx < items.length - 1 ? '<div class="page-break"></div>' : ''}
-          `).join('')}
-          <script>
-            window.onload = () => {
-              setTimeout(() => {
-                window.print();
-                setTimeout(() => window.close(), 500);
-                // Also close the parent print-options window
-                window.opener?.close();
-              }, 3500); // give iframes plenty of time to load data
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+    if (items.length === 0) {
+      showToast("Please select at least one form to print.", "warning");
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // 1. Render all selected forms into high-quality page images
+      const pageImages: string[] = [];
+      for (const item of items) {
+        const imgData = await getPageImageFromIframe(item.url);
+        pageImages.push(imgData);
+      }
+
+      // 2. Remove any previous hidden print frame
+      const oldFrame = document.getElementById("ams-print-hidden-frame");
+      if (oldFrame) oldFrame.remove();
+
+      // 3. Create a hidden iframe for browser-native print without opening popup windows
+      const printIframe = document.createElement("iframe");
+      printIframe.id = "ams-print-hidden-frame";
+      printIframe.style.position = "fixed";
+      printIframe.style.top = "-9999px";
+      printIframe.style.left = "-9999px";
+      printIframe.style.width = "850px";
+      printIframe.style.height = "1100px";
+      printIframe.style.border = "none";
+      printIframe.style.opacity = "0";
+      printIframe.style.pointerEvents = "none";
+      document.body.appendChild(printIframe);
+
+      const printDoc = printIframe.contentWindow?.document;
+      if (!printDoc) {
+        throw new Error("Unable to access print frame");
+      }
+
+      printDoc.open();
+      printDoc.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Print Forms</title>
+            <style>
+              @page {
+                size: letter portrait;
+                margin: 0;
+              }
+              html, body {
+                margin: 0;
+                padding: 0;
+                background: #ffffff;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .page-wrapper {
+                width: 100vw;
+                height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                page-break-after: always;
+                break-after: page;
+                box-sizing: border-box;
+                padding: 0;
+                margin: 0;
+              }
+              .page-wrapper:last-child {
+                page-break-after: auto;
+                break-after: auto;
+              }
+              img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                display: block;
+              }
+            </style>
+          </head>
+          <body>
+            ${pageImages.map((img) => `<div class="page-wrapper"><img src="${img}" alt="Certificate Page" /></div>`).join("")}
+          </body>
+        </html>
+      `);
+      printDoc.close();
+
+      // Allow browser to render images inside iframe, then trigger print
+      setTimeout(() => {
+        try {
+          printIframe.contentWindow?.focus();
+          printIframe.contentWindow?.print();
+        } catch (e) {
+          console.error("Print execution error:", e);
+        } finally {
+          setIsProcessing(false);
+        }
+      }, 400);
+
+    } catch (err) {
+      console.error("Print error:", err);
+      setIsProcessing(false);
+      showToast("Error preparing forms for print. Check console for details.", "error");
+    }
   };
 
   const renderTree = (nodes: TreeNode[], depth = 0) => {

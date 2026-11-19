@@ -257,7 +257,14 @@ app.include_router(api_router, prefix="/api")
 # Ensures uploads directory exists in backend
 uploads_dir = os.path.join(str(BASE_DIR), "uploads")
 os.makedirs(uploads_dir, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+class CORSStaticFiles(StaticFiles):
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, HEAD, OPTIONS"
+        return response
+
+app.mount("/uploads", CORSStaticFiles(directory=uploads_dir), name="uploads")
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):

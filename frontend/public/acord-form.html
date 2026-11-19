@@ -9,20 +9,61 @@
     body {
       font-family: Arial, Helvetica, sans-serif;
       font-size: 10px;
+      line-height: 1.25;
       background-color: transparent;
       margin: 0;
       padding: 0;
       display: flex;
       justify-content: center;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     .page {
       background: white;
-      width: 100%;
+      width: 850px;
+      min-width: 850px;
       max-width: 850px;
-      padding: 14px 20px;
+      height: 1100px;
+      min-height: 1100px;
+      max-height: 1100px;
+      padding: 14px 20px 8px 20px;
+      margin: 0 auto;
       box-shadow: none;
       color: black;
+      box-sizing: border-box;
+      overflow: hidden;
+      position: relative;
+    }
+
+    @page {
+      size: letter portrait;
+      margin: 0;
+    }
+
+    @media print {
+      html, body {
+        width: 850px;
+        height: 1100px;
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .page {
+        width: 850px !important;
+        height: 1100px !important;
+        max-height: 1100px !important;
+        padding: 14px 20px 8px 20px !important;
+        margin: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        page-break-after: avoid;
+        page-break-inside: avoid;
+        break-after: avoid;
+        break-inside: avoid;
+      }
     }
 
     * {
@@ -31,7 +72,8 @@
 
     table {
       width: 100%;
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 0;
     }
 
     th,
@@ -116,9 +158,9 @@
     }
 
     .disclaimer-text {
-      padding-top: 2px;
-      padding-left: 8px;
-      padding-right: 25px;
+      padding: 3px 25px 4px 8px;
+      line-height: 1.25;
+      box-sizing: border-box;
     }
 
     .disclaimer hr {
@@ -165,32 +207,35 @@
 
     .contact-table {
       width: 100%;
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 0;
     }
 
     .contact-table td {
       border: 1px solid black;
-      padding: 0px 4px;
-      vertical-align: top;
-      line-height: 0.1;
+      padding: 2px 4px;
+      vertical-align: middle;
+      line-height: 1.25;
+      box-sizing: border-box;
     }
 
     .contact-table .label {
       font-size: 7px;
       font-weight: bold;
-      line-height: 1.1;
+      line-height: 1.15;
+      display: inline-block;
     }
 
     .insurer-table {
       width: 100%;
-      border-collapse: collapse;
-      flex: 1;
+      border-collapse: separate;
+      border-spacing: 0;
     }
 
     .insurer-table .label {
       font-weight: bold;
       text-align: end;
-      vertical-align: bottom;
+      vertical-align: middle;
     }
 
     .insurer-table th {
@@ -198,23 +243,33 @@
       font-weight: bold;
       background: #f7f6f6;
       text-align: center;
-      padding-top: 4px;
-      padding-bottom: 1px;
+      padding: 3px 4px;
+      line-height: 1.2;
+      box-sizing: border-box;
     }
 
     .insurer-table td {
-      height: 8px;
+      height: 15px;
       border: 1px solid black;
-      font-size: 7px;
+      font-size: 7.5px;
+      padding: 1px 4px;
+      vertical-align: middle;
+      line-height: 1.2;
+      box-sizing: border-box;
     }
 
     .coverages-header-row {
       display: flex;
-      border-top: 2px solid black;
+      align-items: center;
+      border: 2px solid black;
+      border-bottom: 1px solid black;
       background: #f7f6f6;
-      padding: 2px 4px;
+      padding: 3px 6px;
       font-weight: bold;
       font-size: 9px;
+      line-height: 1.2;
+      min-height: 18px;
+      box-sizing: border-box;
     }
 
     .coverages-header-row div {
@@ -223,74 +278,68 @@
 
     .coverages-disclaimer {
       border: 2px solid black;
+      border-top: none;
       border-bottom: none;
-      padding: 4px;
+      padding: 4px 6px;
       padding-right: 30px;
       font-size: 9px;
-      word-spacing: 1px;
-      line-height: 1.2;
+      word-spacing: 0.5px;
+      line-height: 1.25;
+      box-sizing: border-box;
     }
 
     .cov-table {
       border: 2px solid black;
+      border-spacing: 0;
     }
 
     .cov-table th {
       font-size: 8px;
       text-align: center;
       background: #f7f6f6;
-      vertical-align: bottom;
-      /* padding: 4px; */
+      vertical-align: middle;
+      padding: 3px 2px;
+      line-height: 1.2;
+      box-sizing: border-box;
     }
 
     .limits-table {
       width: 100%;
-      height: 100%;
-      border-collapse: collapse;
+      border-collapse: separate !important;
+      border-spacing: 0 !important;
+      border: none !important;
+      margin: 0;
+      padding: 0;
     }
 
     .limits-table td {
-      border-bottom: 1px solid black;
-      font-size: 7.5px;
-      padding: 0px 4px;
-      vertical-align: middle;
-      line-height: 1;
+      border: none !important;
+      border-bottom: 1px solid black !important;
+      padding: 0 4px !important;
+      font-size: 7.5px !important;
+      vertical-align: middle !important;
+      line-height: 1 !important;
+      box-sizing: border-box !important;
     }
 
     .limits-table tr:last-child td {
-      border-bottom: none;
+      border-bottom: none !important;
     }
 
     .limits-table .limit-desc {
-      border-right: 1px solid black;
-      width: 55%;
+      border-right: 1px solid black !important;
+      width: 58%;
     }
 
     .limits-table .limit-curr {
-      width: 10px;
-      padding-right: 2px;
+      width: 12px;
+      padding: 0 !important;
+      text-align: center;
     }
 
     .limits-table .limit-val {
-      text-align: right;
-    }
-
-    .limits-table {
-      width: 100%;
-      height: 100%;
-      border-collapse: collapse;
-    }
-
-    .limits-table td {
-      border-bottom: 1px solid black;
-      font-size: 7.5px;
-      padding: 0px 4px;
-      vertical-align: middle;
-      line-height: 1;
-    }
-
-    .limits-table tr:last-child td {
-      border-bottom: none;
+      text-align: right !important;
+      padding-right: 4px !important;
     }
 
 
@@ -314,96 +363,111 @@
       height: 12px;
       border: 1px solid black;
       text-align: center;
-      line-height: 10px;
+      line-height: 11px;
       margin-right: 4px;
       vertical-align: middle;
       background: white;
-    }
-
-    .checkbox.checked::after {
-      content: 'X';
-      font-size: 10px;
+      box-sizing: border-box;
+      font-size: 9px;
       font-weight: bold;
     }
 
     .desc-box {
       border: 2px solid black;
-      padding: 4px;
-      min-height: 80px;
-      margin-top: 5px;
-      font-size: 10px;
+      padding: 3px 6px;
+      min-height: 52px;
+      height: 55px;
+      margin-top: 4px;
+      font-size: 9px;
+      box-sizing: border-box;
+      overflow: hidden;
     }
 
     .footer-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       border: 2px solid black;
-      margin-top: 5px;
+      margin-top: 4px;
+      height: 110px;
+      min-height: 110px;
+      box-sizing: border-box;
     }
 
     .cert-holder {
       border-right: 1px solid black;
       padding: 4px;
-      height: 120px;
+      height: 100%;
     }
 
     .cancellation {
-      padding: 4px;
+      padding: 0;
+      margin: 0;
       display: flex;
       flex-direction: column;
+      height: 100%;
+      box-sizing: border-box;
+      background: #fff;
     }
 
     .cancellation-text {
-      font-size: 9px;
+      font-size: 8.5px;
       font-weight: bold;
-      margin-top: 10px;
-      text-align: justify;
-      line-height: 1.2;
+      padding: 8px 10px 6px 10px;
+      margin: 0;
+      text-align: left;
+      line-height: 1.35;
+      flex-shrink: 0;
     }
 
     .signature-area {
-      /* margin-top: auto; */
-      margin-left: -5px;
-      margin-right: -6px;
+      flex: 1;
+      height: 100%;
+      min-height: 60px;
       border-top: 1px solid black;
-      padding-top: 2px;
-      padding-left: 6px;
+      padding: 4px 6px;
       font-size: 8px;
       font-weight: bold;
       position: relative;
-    }
-
-    .signature-img {
-      font-family: cursive;
-      font-size: 24px;
-      font-weight: normal;
-      position: absolute;
-      right: 50px;
-      bottom: 5px;
-      color: #888;
-    }
-
-    .limits-table {
-      border: none !important;
-      width: 100%;
       margin: 0;
-      padding: 0;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
-    .limits-table td {
-      border: none;
-      border-bottom: 1px solid black;
-      padding: 2px;
-      font-size: 9px;
+    .signature-label {
+      font-size: 8px;
+      font-weight: bold;
+      letter-spacing: 0.3px;
+      line-height: 1;
     }
 
-    .limits-table td:last-child {
-      text-align: right;
+    #authorized-representative-signature-img {
+      display: none;
+      max-height: 42px;
+      max-width: 190px;
+      object-fit: contain;
+      position: absolute;
+      right: 35px;
+      bottom: 12px;
+      mix-blend-mode: multiply;
     }
 
-    .limits-table tr:last-child td {
-      border-bottom: none;
+    .signature-img,
+    #authorized-representative-signature {
+      display: none;
+      font-family: 'Segoe Script', 'Brush Script MT', 'Lucida Handwriting', 'Dancing Script', 'Caveat', cursive, sans-serif;
+      font-size: 22px;
+      font-weight: 600;
+      position: absolute;
+      right: 35px;
+      bottom: 12px;
+      color: #111;
+      line-height: 1;
+      white-space: nowrap;
     }
+
+
 
     .editable-field,
     [contenteditable="true"] {
@@ -440,7 +504,7 @@
   <div class="page">
     <div class="header">
       <div class="logo">
-        <img src="/logoacord.png" alt="ACORD Logo" style="height: 38px; width: auto; object-fit: contain;" />
+        <img class="logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA5AAAAE2CAYAAAAXln3+AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAICbSURBVHhe7d1ns3RHdfbxwThn44htTDDGBCFAEgIkgYSQyMEGTBGK8huXX/hT+Ju4yi8MNgVlA1VkEBJCSESRRTDgiDPO2c/Db4tLarbmHO1bOmFmz/Wv6po5k87s7tVrrWt17z0P+H/fZFNKKaWUUkoppdwL3/Gt21JKKaWUUkop5VgqIEsppZRSSimlLKICspRSSimllFLKIiogSymllFJKKaUsogKylFJKKaWUUsoiKiBLKaWUUkoppSyiArKUUkoppZRSyiIqIEsppZRSSimlLKICspRSSimllFLKIiogSymllFJKKaUsogKylFJKKaWUUsoiKiBLKaWUUkoppSyiArKUUkoppZRSyiIqIEsppZRSSimlLKICspRSSimllFLKIiogSymllFJKKaUsogKylFJKKaWUUsoiKiBLKaWUUkoppSyiArKUUkoppZRSyiIqIEsppZRSSimlLKICspRSSimllFLKIiogSymllFJKKaUsogKylFJKKaWUUsoiKiBLKaWUUkoppSyiArKUUkoppZRSyiIqIEsppZRSSimlLKICspRSSimllFLKIiogSymllFJKKaUsogKylFJKKaWUUsoiKiBLKaWUUkoppSyiArKUUkoppZRSyiIqIEsppZRSSimlLKICspRSSimllFLKIiogSymllFJKKaUsogKylFJKKaWUUsoiKiBLKaWUUkoppSyiArKUUkoppZRSyiIqIEsppZRSSimlLKICspRSSimllFLKIiogSymllFJKKaUsogKylFJKKaWUUsoiKiBLKaWUUkoppSyiArKUUkoppZRSyiIqIEsppZRSSimlLKICspRSSimllFLKIiogSymllFJKKaUsogKylFJKKaWUUsoiKiBLKaWUUkoppSyiArKUUkoppZRSyiIqIEsppZRSSimlLKICspRSSimllFLKIiogSymllFJKKaUsogKylFJKKaWUUsoiKiBLKaWUUkoppSyiArKUUkoppZRSyiIqIEsppZRSSimlLKICspRSSimllFLKIiogSymllFJKKaUsogKylFJKKaWUUsoiKiBLKaWUUkoppSyiArKUUkoppZRSyiIqIEsppZRSSimlLKICspRSSimllFLKIiogSymllFJKKaUsogKylFJKKaWUUsoiKiBLKaWUUkoppSyiArKUUkoppZRSyiIqIEsppZRSSimlLKICspRSSimllFLKIiogSymllFJKKaUsogKylFJKKaWUUsoiKiBLKaWUUkoppSyiArKUUkoppZRSyiIqIEsppZRSSimlLKICspRSSimllFLKIiogSymllFJKKaUsogKylFJKKaWUUsoiKiBLKaWUUkoppSyiArKUUkoppZRSyiIqIEsppZRSSimlLKICspRSSimllFLKIiogSymllFJKKaUsogKylFJKKaWUUsoiKiBLKaWUUkoppSyiArKUUkoppZRSyiIqIEsppZRSSimlLKICspRSSimllFLKIiogSymllFJKKaUsogKylFJKKaWUUsoiKiBLKaWUUkoppSyiArKUUkoppZRSyiIqIEsppZRSSimlLKICspRSSimllFLKIiogSymllFJKKaUsogKylFJKKaWUUsoiKiBLKaWUUkoppSyiArKUUkoppZRSyiIqIEsppZRSSimlLKICspRSSimllFLKIiogSymllFJKKaUsogKylFJKKaWUUsoiKiBLKaWUUkoppSziAf/vm3zrfimlnAr318084AEP+Na9sq+MNuD+vOXxMN5fymgn7s9bHh9vSymllHJhVECWUk4dbkb7v//7v7va//7v/04tSOgf+MAHbr7jO75jav4eb8t+Y/z/53/+Zxr7f/3Xf53aP//zP2/+8R//cfNP//RPm//4j//Y/Od//ufmv//7v6fGNmIref+ciMDYzHd+53dO7bu/+7un9gM/8AObH/7hH9780A/90F3te77ne+56XSmllFIunArIUsqpM4pGIkIjEv7rv/5rEgaEgCbpl9gTkrklDNyW/cb4G2/j/jd/8zebv/7rv9785V/+5eZP//RPN3/xF39xl5AkLCMmIzi1owTkKB6Jw+/7vu/b/OAP/uDUfuInfmLzcz/3c5uf/dmf3Tz4wQ/e/MzP/MwkKL/3e793em0ppZRSLpwKyHJBRABIAv/lX/5lav6eIzmTpGkSOrdlPWT1kB1I9McWkaBFLMZm3I7v1SIgxxWk8f53fdd3Tc19QjKrS2wstxEEXpfPKmdPwgnB9+///u9Ti58gDPPY3//932/+7u/+7i4h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pZRSSimllEVUQJZSSimllFJKWUQFZCmllFJKKaWURVRAllJKKaWUUkpZRAVkKaWUUkoppZRFVECWUkoppZRSSllEBWQppZRSSimllEVUQJZSSimllFJKWUQFZCmllFJKKaWURVRAllJKKaWUUkpZRAVkKaWUUkoppZRFVECWUkoppZRSSllEBWQppZRSSimllEVUQJZSSimllFJKWUQFZCmllFJKKaWURVRAllJKKaWUUkpZRAVkKaWUUkoppZRFVECWUkoppZRSSllEBWQppZRSSimllEVUQJZSSimllFJKWUQFZCmllFJKKaWURVRAllJKKaWUUkpZRAVkKaWUUkoppZRFVECWUkoppZRSSllEBWQppZRSSimllEVUQJZSSimllFJKWUQFZCmllFJKKaWURVRAllJKKaWUUkpZRAVkKaWUUkoppZRFVECWUkoppZRSSllEBWQppZRSSimllEVUQJZSSimllFJKWUQFZCmllFJKKaWURVRAllJKKaWUUkpZRAVkKaWUUkoppZRFVECWUkoppZRSSllEBWQppZRSSimllEVUQJZSSimllFJKWUQFZCmllFJKKaWURVRAllJKKaWUUkpZRAVkKaWUUkoppZRFVECWUkoppZRSSllEBWQppZRSSimllEVUQJZSSimllFJKWUQFZCmllFJKKaWURVRAllJKKaWUUkpZRAVkKaWUUkoppZRFVECWUkoppZRSSllEBWQppZRSSimllEVUQJZSSimllFJKWUQFZCmllFJKKaWURVRAllJKKaWUUkpZRAVkKaWUUkoppZQFbDb/H/diwN/2oRZdAAAAAElFTkSuQmCC" alt="ACORD Logo" style="height: 38px; width: auto; object-fit: contain;" />
       </div>
       <div class="title">CERTIFICATE OF LIABILITY INSURANCE</div>
       <div class="date-box">
@@ -465,11 +529,12 @@
       </div>
     </div>
 
-    <div class="top-grid">
-      <div class="left-col">
-        <div class="box producer producer-box">
-          <div class="box-label">PRODUCER</div>
-          <div style="padding-left: 5px;">
+    <table class="top-section-table" style="width: 100%; border: 2px solid black; border-bottom: none; border-collapse: separate; border-spacing: 0;">
+      <!-- Row 1: Producer & Contact Name -->
+      <tr style="height: 22px;">
+        <td rowspan="3" style="width: 50%; vertical-align: top; padding: 3px 6px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box;">
+          <div class="box-label" style="font-size: 7.5px; font-weight: bold; margin-bottom: 2px;">PRODUCER</div>
+          <div style="padding-left: 5px; line-height: 1.3; font-size: 8px;">
             <span id="producer-name">Gamaty Insurance Agency LLC</span><br>
             <span id="producer-address">5455 Wilshire Blvd</span><br>
             <span id="producer-address2">Suite 1816</span><br>
@@ -478,79 +543,109 @@
               <span id="producer-state-zip">CA 90036</span>
             </div>
           </div>
-        </div>
-        <div class="box insured no-border-bottom">
-          <div class="box-label">INSURED</div>
-          <div style="padding-left: 50px;">
-            <span id="insured-name"></span><br>
-            <span id="insured-address"></span><br><br>
-            <div style="display: flex; justify-content: space-between; padding-right: 30px;">
+        </td>
+        <td colspan="2" style="width: 50%; height: 22px; vertical-align: middle; padding: 1px 6px; border: none; border-bottom: 1px solid black; box-sizing: border-box;">
+          <div style="display: flex; align-items: center;">
+            <div style="font-size: 7.5px; font-weight: bold; line-height: 1.1; letter-spacing: 0.2px; white-space: nowrap; margin-right: 8px; color: #000;">
+              CONTACT<br>NAME:
+            </div>
+            <div style="font-size: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              <span id="contact-name"></span>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <!-- Row 2: Phone & Fax -->
+      <tr style="height: 22px;">
+        <td style="width: 32%; height: 22px; vertical-align: middle; padding: 1px 4px 1px 6px; border: none; border-bottom: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
+          <div style="display: flex; align-items: center;">
+            <div style="font-size: 7.5px; font-weight: bold; line-height: 1.1; letter-spacing: 0.2px; white-space: nowrap; margin-right: 6px; color: #000;">
+              PHONE<br>(A/C, No, Ext):
+            </div>
+            <div style="font-size: 8px; white-space: nowrap;">
+              <span id="contact-phone"></span>
+            </div>
+          </div>
+        </td>
+        <td style="width: 18%; height: 22px; vertical-align: middle; padding: 1px 4px; border: none; border-bottom: 1px solid black; box-sizing: border-box;">
+          <div style="display: flex; align-items: center;">
+            <div style="font-size: 7.5px; font-weight: bold; line-height: 1.1; letter-spacing: 0.2px; white-space: nowrap; margin-right: 4px; color: #000;">
+              FAX<br>(A/C, No):
+            </div>
+            <div style="font-size: 8px; white-space: nowrap;">
+              <span id="contact-fax"></span>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <!-- Row 3: Email -->
+      <tr style="height: 22px;">
+        <td colspan="2" style="width: 50%; height: 22px; vertical-align: middle; padding: 1px 6px; border: none; border-bottom: 1px solid black; box-sizing: border-box;">
+          <div style="display: flex; align-items: center;">
+            <div style="font-size: 7.5px; font-weight: bold; line-height: 1.1; letter-spacing: 0.2px; white-space: nowrap; margin-right: 8px; color: #000;">
+              E-MAIL<br>ADDRESS:
+            </div>
+            <div style="font-size: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              <span id="contact-email"></span>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <!-- Row 4: Insured & Insurers Header -->
+      <tr style="height: 18px;">
+        <td rowspan="7" style="width: 50%; vertical-align: top; padding: 4px 6px; border: none; border-right: 1px solid black; box-sizing: border-box;">
+          <div class="box-label" style="font-size: 7.5px; font-weight: bold; margin-bottom: 2px;">INSURED</div>
+          <div style="padding-left: 30px; line-height: 1.35;">
+            <span id="insured-name" style="font-weight: bold; font-size: 9px;"></span><br>
+            <span id="insured-address" style="font-size: 8.5px;"></span><br>
+            <div style="display: flex; justify-content: space-between; padding-right: 20px; font-size: 8.5px;">
               <span id="insured-city"></span>
               <span id="insured-state-zip"></span>
             </div>
           </div>
-        </div>
-      </div>
-      <div class="right-col">
-        <table class="contact-table no-border-top no-border-left no-border-right">
-          <tr>
-            <td colspan="2" class="no-border-top no-border-left no-border-right">
-              <span class="label">CONTACT<br>NAME:</span> &nbsp;&nbsp;&nbsp;&nbsp; <span id="contact-name"></span>
-            </td>
-          </tr>
-          <tr>
-            <td class="no-border-left" style="width: 50%;">
-              <span class="label">PHONE<br>(A/C, No, Ext):</span> <span id="contact-phone"></span>
-            </td>
-            <td class="no-border-right" style="width: 50%;">
-              <span class="label">FAX<br>(A/C, No):</span> <span id="contact-fax"></span>
-            </td>
-          </tr>
-          <tr>
-            <td colspan="2" class="no-border-left no-border-right">
-              <span class="label">E-MAIL<br>ADDRESS:</span> <span id="contact-email"></span>
-            </td>
-          </tr>
-        </table>
-        <table class="insurer-table no-border-left no-border-right no-border-bottom">
-          <tr>
-            <th class="no-border-left">INSURER(S) AFFORDING COVERAGE</th>
-            <th class="no-border-right center">NAIC #</th>
-          </tr>
-          <tr>
-            <td class="no-border-left"><span class="label">INSURER A :</span> <span id="insurer-a-name"></span></td>
-            <td class="no-border-right center" id="insurer-a-naic"></td>
-          </tr>
-          <tr>
-            <td class="no-border-left"><span class="label">INSURER B :</span> <span id="insurer-b-name"></span></td>
-            <td class="no-border-right center" id="insurer-b-naic"></td>
-          </tr>
-          <tr>
-            <td class="no-border-left"><span class="label">INSURER C :</span> <span id="insurer-c-name"></span></td>
-            <td class="no-border-right center" id="insurer-c-naic"></td>
-          </tr>
-          <tr>
-            <td class="no-border-left"><span class="label">INSURER D :</span> <span id="insurer-d-name"></span></td>
-            <td class="no-border-right center" id="insurer-d-naic"></td>
-          </tr>
-          <tr>
-            <td class="no-border-left"><span class="label">INSURER E :</span> <span id="insurer-e-name"></span></td>
-            <td class="no-border-right center" id="insurer-e-naic"></td>
-          </tr>
-          <tr>
-            <td class="no-border-left no-border-bottom"><span class="label">INSURER F :</span> <span
-                id="insurer-f-name"></span></td>
-            <td class="no-border-right no-border-bottom center" id="insurer-f-naic"></td>
-          </tr>
-        </table>
-      </div>
-    </div>
+        </td>
+        <td style="width: 38%; height: 18px; vertical-align: middle; padding: 0 4px; border: none; border-bottom: 1px solid black; border-right: 1px solid black; background: #f7f6f6; font-size: 8px; font-weight: bold; text-align: center; line-height: 1.2; box-sizing: border-box;">INSURER(S) AFFORDING COVERAGE</td>
+        <td style="width: 12%; height: 18px; vertical-align: middle; padding: 0 4px; border: none; border-bottom: 1px solid black; background: #f7f6f6; font-size: 8px; font-weight: bold; text-align: center; line-height: 1.2; box-sizing: border-box;">NAIC #</td>
+      </tr>
+      <!-- Row 5: Insurer A -->
+      <tr style="height: 18px;">
+        <td style="height: 18px; vertical-align: middle; padding: 0 6px; border: none; border-bottom: 1px solid black; border-right: 1px solid black; font-size: 8px; line-height: 1.2; box-sizing: border-box; white-space: nowrap; overflow: hidden;"><span style="font-weight: bold;">INSURER A :</span> <span id="insurer-a-name"></span></td>
+        <td style="height: 18px; vertical-align: middle; padding: 0 4px; border: none; border-bottom: 1px solid black; font-size: 8px; text-align: center; line-height: 1.2; box-sizing: border-box; white-space: nowrap;" id="insurer-a-naic"></td>
+      </tr>
+      <!-- Row 6: Insurer B -->
+      <tr style="height: 18px;">
+        <td style="height: 18px; vertical-align: middle; padding: 0 6px; border: none; border-bottom: 1px solid black; border-right: 1px solid black; font-size: 8px; line-height: 1.2; box-sizing: border-box; white-space: nowrap; overflow: hidden;"><span style="font-weight: bold;">INSURER B :</span> <span id="insurer-b-name"></span></td>
+        <td style="height: 18px; vertical-align: middle; padding: 0 4px; border: none; border-bottom: 1px solid black; font-size: 8px; text-align: center; line-height: 1.2; box-sizing: border-box; white-space: nowrap;" id="insurer-b-naic"></td>
+      </tr>
+      <!-- Row 7: Insurer C -->
+      <tr style="height: 18px;">
+        <td style="height: 18px; vertical-align: middle; padding: 0 6px; border: none; border-bottom: 1px solid black; border-right: 1px solid black; font-size: 8px; line-height: 1.2; box-sizing: border-box; white-space: nowrap; overflow: hidden;"><span style="font-weight: bold;">INSURER C :</span> <span id="insurer-c-name"></span></td>
+        <td style="height: 18px; vertical-align: middle; padding: 0 4px; border: none; border-bottom: 1px solid black; font-size: 8px; text-align: center; line-height: 1.2; box-sizing: border-box; white-space: nowrap;" id="insurer-c-naic"></td>
+      </tr>
+      <!-- Row 8: Insurer D -->
+      <tr style="height: 18px;">
+        <td style="height: 18px; vertical-align: middle; padding: 0 6px; border: none; border-bottom: 1px solid black; border-right: 1px solid black; font-size: 8px; line-height: 1.2; box-sizing: border-box; white-space: nowrap; overflow: hidden;"><span style="font-weight: bold;">INSURER D :</span> <span id="insurer-d-name"></span></td>
+        <td style="height: 18px; vertical-align: middle; padding: 0 4px; border: none; border-bottom: 1px solid black; font-size: 8px; text-align: center; line-height: 1.2; box-sizing: border-box; white-space: nowrap;" id="insurer-d-naic"></td>
+      </tr>
+      <!-- Row 9: Insurer E -->
+      <tr style="height: 18px;">
+        <td style="height: 18px; vertical-align: middle; padding: 0 6px; border: none; border-bottom: 1px solid black; border-right: 1px solid black; font-size: 8px; line-height: 1.2; box-sizing: border-box; white-space: nowrap; overflow: hidden;"><span style="font-weight: bold;">INSURER E :</span> <span id="insurer-e-name"></span></td>
+        <td style="height: 18px; vertical-align: middle; padding: 0 4px; border: none; border-bottom: 1px solid black; font-size: 8px; text-align: center; line-height: 1.2; box-sizing: border-box; white-space: nowrap;" id="insurer-e-naic"></td>
+      </tr>
+      <!-- Row 10: Insurer F -->
+      <tr style="height: 18px;">
+        <td style="height: 18px; vertical-align: middle; padding: 0 6px; border: none; border-right: 1px solid black; font-size: 8px; line-height: 1.2; box-sizing: border-box; white-space: nowrap; overflow: hidden;"><span style="font-weight: bold;">INSURER F :</span> <span id="insurer-f-name"></span></td>
+        <td style="height: 18px; vertical-align: middle; padding: 0 4px; border: none; font-size: 8px; text-align: center; line-height: 1.2; box-sizing: border-box; white-space: nowrap;" id="insurer-f-naic"></td>
+      </tr>
+    </table>
 
-    <div class="coverages-header-row">
-      <div style="flex: 1;">COVERAGES</div>
-      <div style="flex: 1;">CERTIFICATE NUMBER: <span style="font-weight:normal">CL2661008877</span></div>
-      <div style="flex: 1;">REVISION NUMBER:</div>
-    </div>
+    <table class="coverages-header-table" style="width: 100%; border: 2px solid black; border-bottom: 1px solid black; background: #f7f6f6; border-collapse: separate; border-spacing: 0;">
+      <tr style="height: 22px;">
+        <td style="width: 25%; font-weight: bold; font-size: 9px; padding: 2px 6px; border: none; vertical-align: middle; box-sizing: border-box; white-space: nowrap;">COVERAGES</td>
+        <td style="width: 45%; font-weight: bold; font-size: 9px; padding: 2px 6px; border: none; vertical-align: middle; box-sizing: border-box; white-space: nowrap;">CERTIFICATE NUMBER: <span id="cert-number" style="font-weight:normal">CL2661008877</span></td>
+        <td style="width: 30%; font-weight: bold; font-size: 9px; padding: 2px 6px; border: none; vertical-align: middle; box-sizing: border-box; white-space: nowrap;">REVISION NUMBER: <span id="revision-number" style="font-weight:normal"></span></td>
+      </tr>
+    </table>
     <div class="coverages-disclaimer">
       THIS IS TO CERTIFY THAT THE POLICIES OF INSURANCE LISTED BELOW HAVE BEEN ISSUED TO THE INSURED NAMED ABOVE FOR THE
       POLICY PERIOD INDICATED. NOTWITHSTANDING ANY REQUIREMENT, TERM OR CONDITION OF ANY CONTRACT OR OTHER DOCUMENT WITH
@@ -560,70 +655,71 @@
       POLICY LIMIT AMOUNTS IN EXCESS OF THOSE REQUESTED. <b>*Not Applicable In WY</b>
     </div>
 
-    <table class="cov-table no-border-top">
-      <tr>
-        <th style="width: 30px;">INSR<br>LTR</th>
-        <th>TYPE OF INSURANCE</th>
-        <th style="width: 35px;">ADDL<br>INSD</th>
-        <th style="width: 35px;">SUBR<br>WVD</th>
-        <th>POLICY NUMBER</th>
-        <th style="width: 65px;">POLICY EFF<br>(MM/DD/YYYY)</th>
-        <th style="width: 65px;">POLICY EXP<br>(MM/DD/YYYY)</th>
-        <th style="width: 220px;">LIMITS</th>
+    <table class="cov-table no-border-top" style="border-collapse: separate; border-spacing: 0; width: 100%;">
+      <tr style="height: 26px;">
+        <th style="width: 28px; height: 26px; vertical-align: middle; padding: 2px 1px; font-size: 7.5px; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">INSR<br>LTR</th>
+        <th style="width: 220px; height: 26px; vertical-align: middle; padding: 2px 4px; font-size: 7.5px; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">TYPE OF INSURANCE</th>
+        <th style="width: 32px; height: 26px; vertical-align: middle; padding: 2px 1px; font-size: 7.5px; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">ADDL<br>INSD</th>
+        <th style="width: 32px; height: 26px; vertical-align: middle; padding: 2px 1px; font-size: 7.5px; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">SUBR<br>WVD</th>
+        <th style="width: 94px; height: 26px; vertical-align: middle; padding: 2px 4px; font-size: 7.5px; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">POLICY NUMBER</th>
+        <th style="width: 72px; height: 26px; vertical-align: middle; padding: 2px 1px; font-size: 7.5px; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">POLICY EFF<br>(MM/DD/YYYY)</th>
+        <th style="width: 72px; height: 26px; vertical-align: middle; padding: 2px 1px; font-size: 7.5px; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">POLICY EXP<br>(MM/DD/YYYY)</th>
+        <th style="width: 260px; height: 26px; vertical-align: middle; padding: 2px 4px; font-size: 7.5px; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">LIMITS</th>
       </tr>
       <!-- Row 1 CGL -->
       <tr>
         <td id="gl-insr-ltr" class="center" style="vertical-align: middle; font-weight: bold;"></td>
         <td style="padding: 0; vertical-align: top;">
-          <div style="display: flex;">
-            <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
-              <div id="chk-gl-cgl" class="checkbox-editable"
-                style="height: 14px; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">
-                X</div>
-              <div
-                style="height: 14px; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box;">
-              </div>
-              <div
-                style="height: 14px; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box;">
-              </div>
-              <div
-                style="height: 14px; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box;">
-              </div>
-              <div style="height: 14px; box-sizing: border-box;"></div>
-            </div>
-            <div style="flex: 1; padding: 0 0 0 4px; display: flex; flex-direction: column;">
-              <div style="height: 14px; box-sizing: border-box; font-size: 8px; font-weight: bold; line-height: 14px;">
-                COMMERCIAL GENERAL LIABILITY</div>
-              <div style="height: 14px; box-sizing: border-box; display: flex; align-items: center; font-size: 7px;">
-                <div id="chk-gl-claims-made" class="checkbox checked checkbox-editable"
-                  style="margin-left: -4px; margin-top: -1px; border-left: none; width: 14px; height: 15px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;">
-                </div> <span style="margin-left: 2px;">CLAIMS-MADE</span>
-                <div id="chk-gl-occur" class="checkbox checkbox-editable" style="margin-left: 12px;"></div> <span style="margin-left: 2px;">OCCUR</span>
-              </div>
-              <div
-                style="height: 14px; box-sizing: border-box; border-bottom: 1px solid black; margin-left: 4px; margin-right: 6px;">
-              </div>
-              <div style="height: 14px; box-sizing: border-box;"></div>
-              <div style="height: 14px; box-sizing: border-box;"></div>
-            </div>
-          </div>
+          <table style="width: 100%; border-collapse: separate; border-spacing: 0; border: none; margin: 0; padding: 0;">
+            <tr style="height: 17px;">
+              <td style="width: 14px; height: 17px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; text-align: center; vertical-align: middle; box-sizing: border-box;">
+                <div id="chk-gl-cgl" class="checkbox-editable" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">X</div>
+              </td>
+              <td style="height: 17px; border: none; padding: 0 4px; font-size: 8px; font-weight: bold; vertical-align: middle; line-height: 17px; box-sizing: border-box; white-space: nowrap;">
+                COMMERCIAL GENERAL LIABILITY
+              </td>
+            </tr>
+            <tr style="height: 17px;">
+              <td style="width: 14px; height: 17px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; box-sizing: border-box;"></td>
+              <td style="height: 17px; border: none; padding: 0 4px; vertical-align: middle; font-size: 7px; line-height: 17px; box-sizing: border-box; white-space: nowrap;">
+                <div style="display: flex; align-items: center; height: 100%;">
+                  <div id="chk-gl-claims-made" class="checkbox checked checkbox-editable" style="width: 12px; height: 12px; border: 1px solid black; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; margin-right: 3px;">X</div>
+                  <span>CLAIMS-MADE</span>
+                  <div id="chk-gl-occur" class="checkbox checkbox-editable" style="width: 12px; height: 12px; border: 1px solid black; display: inline-flex; align-items: center; justify-content: center; margin-left: 12px; margin-right: 3px;"></div>
+                  <span>OCCUR</span>
+                </div>
+              </td>
+            </tr>
+            <tr style="height: 17px;">
+              <td style="width: 14px; height: 17px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; box-sizing: border-box;"></td>
+              <td style="height: 17px; border: none; border-bottom: 1px solid black; padding: 0 4px; box-sizing: border-box;"></td>
+            </tr>
+            <tr style="height: 17px;">
+              <td style="width: 14px; height: 17px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; box-sizing: border-box;"></td>
+              <td style="height: 17px; border: none; padding: 0; box-sizing: border-box;"></td>
+            </tr>
+            <tr style="height: 17px;">
+              <td style="width: 14px; height: 17px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; box-sizing: border-box;"></td>
+              <td style="height: 17px; border: none; padding: 0; box-sizing: border-box;"></td>
+            </tr>
+          </table>
           <div style="padding: 2px 4px 2px 2px; font-size: 7px; line-height: 1.2;">
             <div style="margin-bottom: 2px;">GEN'L AGGREGATE LIMIT APPLIES PER:</div>
-            <div style="display: flex; align-items: center;">
+            <div style="display: flex; align-items: center; margin-bottom: 2px;">
               <div id="chk-gl-policy" class="checkbox-editable"
-                style="width: 14px; height: 14px; border: 1px solid black; border-left: none; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; margin-left: -2px;">
+                style="width: 13px; height: 13px; border: 1px solid black; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; background: white;">
                 X</div>
-              <span style="margin-left: 4px;">POLICY</span>
-              <div id="chk-gl-project" class="checkbox checkbox-editable" style="margin-left: 8px;"></div>
-              <span style="margin-left: 2px; font-size: 6px; line-height: 1;">PRO-<br>JECT</span>
-              <div id="chk-gl-loc" class="checkbox checkbox-editable" style="margin-left: 8px;"></div>
-              <span style="margin-left: 2px;">LOC</span>
+              <span style="margin-left: 3px; font-size: 7px;">POLICY</span>
+              <div id="chk-gl-project" class="checkbox-editable"
+                style="width: 13px; height: 13px; border: 1px solid black; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; margin-left: 6px; background: white;"></div>
+              <span style="margin-left: 3px; font-size: 7px;">PROJECT</span>
+              <div id="chk-gl-loc" class="checkbox-editable"
+                style="width: 13px; height: 13px; border: 1px solid black; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; margin-left: 6px; background: white;"></div>
+              <span style="margin-left: 3px; font-size: 7px;">LOC</span>
             </div>
             <div style="display: flex; align-items: center;">
-              <div
-                style="width: 14px; height: 14px; border: 1px solid black; border-top: none; border-left: none; box-sizing: border-box; margin-left: -2px;">
-              </div>
-              <span style="margin-left: 4px;">OTHER:</span>
+              <div style="width: 13px; height: 13px; border: 1px solid black; box-sizing: border-box; background: white;"></div>
+              <span style="margin-left: 3px; font-size: 7px;">OTHER:</span>
             </div>
           </div>
         </td>
@@ -632,41 +728,41 @@
         <td id="gl-policy-number" class="center" style="vertical-align: middle;"></td>
         <td id="gl-eff-date" class="center" style="vertical-align: middle;"></td>
         <td id="gl-exp-date" class="center" style="vertical-align: middle;"></td>
-        <td style="padding: 0;">
+        <td style="padding: 0; vertical-align: top;">
           <table class="limits-table">
-            <tr>
+            <tr style="height: 17px;">
               <td class="limit-desc">EACH OCCURRENCE</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="gl-each-occurrence">1,000,000</td>
             </tr>
-            <tr>
-              <td class="limit-desc">DAMAGE TO RENTED<br>PREMISES (Ea occurrence)</td>
+            <tr style="height: 23px;">
+              <td class="limit-desc" style="font-size: 6.5px; line-height: 1.1;">DAMAGE TO RENTED<br>PREMISES (Ea occurrence)</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="gl-damage-rented">50,000</td>
             </tr>
-            <tr>
+            <tr style="height: 17px;">
               <td class="limit-desc">MED EXP (Any one person)</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="gl-med-exp">5,000</td>
             </tr>
-            <tr>
-              <td class="limit-desc">PERSONAL & ADV INJURY</td>
+            <tr style="height: 17px;">
+              <td class="limit-desc">PERSONAL &amp; ADV INJURY</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="gl-personal-adv">1,000,000</td>
             </tr>
-            <tr>
+            <tr style="height: 17px;">
               <td class="limit-desc">GENERAL AGGREGATE</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="gl-general-agg">2,000,000</td>
             </tr>
-            <tr>
+            <tr style="height: 17px;">
               <td class="limit-desc">PRODUCTS - COMP/OP AGG</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="gl-products-comp">2,000,000</td>
             </tr>
-            <tr>
+            <tr style="height: 17px;">
               <td class="limit-desc" id="gl-extra-desc">&nbsp;</td>
-              <td class="limit-curr">$</td>
+              <td class="limit-curr"></td>
               <td class="limit-val" id="gl-extra-limit"></td>
             </tr>
           </table>
@@ -676,98 +772,84 @@
       <tr>
         <td id="auto-insr-ltr" class="center" style="vertical-align: middle; font-weight: bold;"></td>
         <td style="padding: 0; vertical-align: top;">
-          <div style="display: flex; flex-direction: column; height: 100%;">
-            <div style="padding: 2px 4px 0 4px; font-size: 8px; font-weight: bold; line-height: 12px;">
-              AUTOMOBILE LIABILITY
-            </div>
-            <div style="display: flex; flex: 1;">
-              <!-- Left column -->
-              <div style="flex: 1; display: flex;">
-                <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
-                  <div id="chk-auto-any" class="checkbox-editable"
-                    style="height: 14px; border-bottom: 1px solid black; border-top: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
-                  </div>
-                  <div id="chk-auto-owned" class="checkbox-editable"
-                    style="height: 14px; border-bottom: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
-                  </div>
-                  <div id="chk-auto-hired" class="checkbox-editable"
-                    style="height: 14px; border-bottom: 1px solid black; border-right: 1px solid black; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">
-                    X</div>
-                  <div id="chk-auto-hired-other" class="checkbox-editable"
-                    style="height: 14px; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box;">
-                  </div>
-                  <div style="flex: 1; box-sizing: border-box;"></div>
-                </div>
-                <div style="flex: 1; padding: 0 0 0 4px; display: flex; flex-direction: column; font-size: 7px;">
-                  <div style="height: 14px; box-sizing: border-box; display: flex; align-items: center;">ANY AUTO</div>
-                  <div
-                    style="height: 14px; box-sizing: border-box; display: flex; align-items: center; line-height: 1;">
-                    OWNED<br>AUTOS ONLY</div>
-                  <div
-                    style="height: 14px; box-sizing: border-box; display: flex; align-items: center; line-height: 1;">
-                    HIRED<br>AUTOS ONLY</div>
-                  <div style="flex: 1; box-sizing: border-box;"></div>
-                </div>
-              </div>
-              <!-- Right column -->
-              <div style="flex: 1; display: flex;">
-                <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
-                  <div style="height: 14px; box-sizing: border-box;"></div>
-                  <div id="chk-auto-scheduled" class="checkbox-editable"
-                    style="height: 14px; border: 1px solid black; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">
-                    X</div>
-                  <div id="chk-auto-non-owned" class="checkbox-editable"
-                    style="height: 14px; border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">
-                    X</div>
-                  <div id="chk-auto-non-owned-other" class="checkbox-editable"
-                    style="height: 14px; border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box;">
-                  </div>
-                  <div style="flex: 1; box-sizing: border-box;"></div>
-                </div>
-                <div style="flex: 1; padding: 0 0 0 4px; display: flex; flex-direction: column; font-size: 7px;">
-                  <div style="height: 14px; box-sizing: border-box;"></div>
-                  <div
-                    style="height: 14px; box-sizing: border-box; display: flex; align-items: center; line-height: 1;">
-                    SCHEDULED<br>AUTOS</div>
-                  <div
-                    style="height: 14px; box-sizing: border-box; display: flex; align-items: center; line-height: 1;">
-                    NON-OWNED<br>AUTOS ONLY</div>
-                  <div
-                    style="height: 14px; box-sizing: border-box; display: flex; align-items: center; line-height: 1;">
-                  </div>
-                  <div
-                    style="height: 14px; box-sizing: border-box; display: flex; align-items: center; line-height: 1;">
-                  </div>
-                  <div style="flex: 1; box-sizing: border-box;"></div>
-                </div>
-              </div>
-            </div>
+          <div style="padding: 2px 4px 1px 4px; font-size: 8px; font-weight: bold; line-height: 1.2;">
+            AUTOMOBILE LIABILITY
           </div>
+          <table style="width: 100%; border-collapse: separate; border-spacing: 0; border: none; margin: 0; padding: 0;">
+            <tr style="height: 16px;">
+              <td style="width: 14px; height: 16px; border: none; border-top: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; text-align: center; vertical-align: middle; box-sizing: border-box;">
+                <div id="chk-auto-any" class="checkbox-editable" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold;"></div>
+              </td>
+              <td style="height: 16px; border: none; border-top: 1px solid black; border-bottom: 1px solid black; padding: 0 4px; font-size: 7px; vertical-align: middle; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">
+                ANY AUTO
+              </td>
+              <td style="width: 14px; height: 16px; border: none; border-top: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; text-align: center; vertical-align: middle; box-sizing: border-box;">
+                <div id="chk-auto-scheduled" class="checkbox-editable" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold;">X</div>
+              </td>
+              <td style="height: 16px; border: none; border-top: 1px solid black; border-bottom: 1px solid black; padding: 0 4px; font-size: 7px; vertical-align: middle; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">
+                SCHEDULED AUTOS
+              </td>
+            </tr>
+            <tr style="height: 16px;">
+              <td style="width: 14px; height: 16px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; text-align: center; vertical-align: middle; box-sizing: border-box;">
+                <div id="chk-auto-owned" class="checkbox-editable" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold;"></div>
+              </td>
+              <td style="height: 16px; border: none; border-bottom: 1px solid black; padding: 0 4px; font-size: 7px; vertical-align: middle; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">
+                OWNED AUTOS ONLY
+              </td>
+              <td style="width: 14px; height: 16px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; text-align: center; vertical-align: middle; box-sizing: border-box;">
+                <div id="chk-auto-non-owned" class="checkbox-editable" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold;">X</div>
+              </td>
+              <td style="height: 16px; border: none; border-bottom: 1px solid black; padding: 0 4px; font-size: 7px; vertical-align: middle; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">
+                NON-OWNED AUTOS ONLY
+              </td>
+            </tr>
+            <tr style="height: 16px;">
+              <td style="width: 14px; height: 16px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; text-align: center; vertical-align: middle; box-sizing: border-box;">
+                <div id="chk-auto-hired" class="checkbox-editable" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold;">X</div>
+              </td>
+              <td style="height: 16px; border: none; border-bottom: 1px solid black; padding: 0 4px; font-size: 7px; vertical-align: middle; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">
+                HIRED AUTOS ONLY
+              </td>
+              <td style="width: 14px; height: 16px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; text-align: center; vertical-align: middle; box-sizing: border-box;">
+                <div id="chk-auto-non-owned-other" class="checkbox-editable" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold;"></div>
+              </td>
+              <td style="height: 16px; border: none; border-bottom: 1px solid black; padding: 0 4px; font-size: 7px; vertical-align: middle; line-height: 1.1; box-sizing: border-box; white-space: nowrap;"></td>
+            </tr>
+            <tr style="height: 16px;">
+              <td style="width: 14px; height: 16px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; text-align: center; vertical-align: middle; box-sizing: border-box;">
+                <div id="chk-auto-hired-other" class="checkbox-editable" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold;"></div>
+              </td>
+              <td style="height: 16px; border: none; border-bottom: 1px solid black; padding: 0 4px; font-size: 7px; vertical-align: middle; line-height: 1.1; box-sizing: border-box; white-space: nowrap;"></td>
+              <td style="width: 14px; height: 16px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; text-align: center; vertical-align: middle; box-sizing: border-box;"></td>
+              <td style="height: 16px; border: none; border-bottom: 1px solid black; padding: 0 4px; font-size: 7px; vertical-align: middle; line-height: 1.1; box-sizing: border-box; white-space: nowrap;"></td>
+            </tr>
+          </table>
         </td>
         <td id="auto-ai" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
         <td id="auto-ws" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
         <td id="auto-policy-number" class="center" style="vertical-align: middle;"></td>
         <td id="auto-eff-date" class="center" style="vertical-align: middle;"></td>
         <td id="auto-exp-date" class="center" style="vertical-align: middle;"></td>
-        <td style="padding: 0;">
+        <td style="padding: 0; vertical-align: top;">
           <table class="limits-table">
-            <tr>
-              <td class="limit-desc">COMBINED SINGLE LIMIT<br>(Ea accident)</td>
+            <tr style="height: 23px;">
+              <td class="limit-desc" style="font-size: 6.5px; line-height: 1.1;">COMBINED SINGLE LIMIT<br>(Ea accident)</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="auto-combined-single">1,000,000</td>
             </tr>
-            <tr>
+            <tr style="height: 17px;">
               <td class="limit-desc">BODILY INJURY (Per person)</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="auto-bodily-injury-person"></td>
             </tr>
-            <tr>
+            <tr style="height: 17px;">
               <td class="limit-desc">BODILY INJURY (Per accident)</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="auto-bodily-injury-accident"></td>
             </tr>
-            <tr>
-              <td class="limit-desc">PROPERTY DAMAGE<br>(Per accident)</td>
+            <tr style="height: 23px;">
+              <td class="limit-desc" style="font-size: 6.5px; line-height: 1.1;">PROPERTY DAMAGE<br>(Per accident)</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="auto-property-damage"></td>
             </tr>
@@ -832,20 +914,20 @@
         <td id="umb-policy-number" class="center" style="vertical-align: middle;"></td>
         <td id="umb-eff-date" class="center" style="vertical-align: middle;"></td>
         <td id="umb-exp-date" class="center" style="vertical-align: middle;"></td>
-        <td style="padding: 0;">
+        <td style="padding: 0; vertical-align: top;">
           <table class="limits-table">
-            <tr>
+            <tr style="height: 18px;">
               <td class="limit-desc">EACH OCCURRENCE</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="umb-each-occurrence">5,000,000</td>
             </tr>
-            <tr>
+            <tr style="height: 18px;">
               <td class="limit-desc">AGGREGATE</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="umb-aggregate">5,000,000</td>
             </tr>
-            <tr>
-              <td class="limit-desc">&nbsp;</td>
+            <tr style="height: 18px;">
+              <td class="limit-desc" id="umb-extra-desc">&nbsp;</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="umb-extra-limit"></td>
             </tr>
@@ -878,38 +960,37 @@
         <td id="wc-policy-number" class="center" style="vertical-align: middle;"></td>
         <td id="wc-eff-date" class="center" style="vertical-align: middle;"></td>
         <td id="wc-exp-date" class="center" style="vertical-align: middle;"></td>
-        <td style="padding: 0;">
+        <td style="padding: 0; vertical-align: top;">
           <table class="limits-table">
-            <tr>
-              <td class="limit-desc" style="padding: 0;">
-                <div style="display: flex; height: 14px;">
+            <tr style="height: 18px;">
+              <td class="limit-desc" style="padding: 0 !important;">
+                <div style="display: flex; height: 100%; align-items: center;">
                   <div id="chk-wc-per-statute" class="checkbox-editable"
-                    style="width: 14px; border-right: 1px solid black; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; box-sizing: border-box;">
+                    style="width: 14px; height: 18px; border-right: 1px solid black; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; box-sizing: border-box;">
                     X</div>
-                  <div
-                    style="padding-left: 2px; font-size: 7px; display: flex; align-items: center; line-height: 1; margin-right: 8px;">
+                  <div style="padding-left: 2px; font-size: 7px; line-height: 1; margin-right: 8px;">
                     PER<br>STATUTE</div>
                   <div id="chk-wc-other" class="checkbox-editable"
-                    style="width: 14px; border-left: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
+                    style="width: 14px; height: 18px; border-left: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
                   </div>
-                  <div style="padding-left: 2px; font-size: 7px; display: flex; align-items: center; line-height: 1;">
+                  <div style="padding-left: 2px; font-size: 7px; line-height: 1;">
                     OTH-<br>ER</div>
                 </div>
               </td>
-              <td class="limit-curr" style="background: transparent;"></td>
-              <td class="limit-val" style="background: transparent;"></td>
+              <td class="limit-curr"></td>
+              <td class="limit-val"></td>
             </tr>
-            <tr>
+            <tr style="height: 18px;">
               <td class="limit-desc">E.L. EACH ACCIDENT</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="wc-each-accident">1,000,000</td>
             </tr>
-            <tr>
+            <tr style="height: 18px;">
               <td class="limit-desc">E.L. DISEASE - EA EMPLOYEE</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="wc-disease-ea-emp">1,000,000</td>
             </tr>
-            <tr>
+            <tr style="height: 18px;">
               <td class="limit-desc">E.L. DISEASE - POLICY LIMIT</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="wc-disease-pol">1,000,000</td>
@@ -918,7 +999,7 @@
         </td>
       </tr>
       <!-- Blank Row -->
-      <tr style="height: 45px;">
+      <tr style="height: 18px;">
         <td id="extra-insr-ltr"></td>
         <td id="extra-type-ins"></td>
         <td id="extra-ai" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
@@ -937,41 +1018,44 @@
         conditions )</div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; margin-top: 5px;">
-      <div class="box-label" style="font-size: 9px; padding-left: 2px;">CERTIFICATE HOLDER</div>
-      <div class="box-label" style="font-size: 9px; padding-left: 4px;">CANCELLATION</div>
-    </div>
-    <div class="footer-grid" style="margin-top: 0;">
-      <div class="cert-holder">
-        <div style="padding-left: 50px; margin-top: 25px;" id="cert-holder-details">
-          Oakridge Homeowners Association<br>
-          3401 SW 51st Court<br><br><br>
-          <div style="display: flex; justify-content: space-between; padding-right: 100px;">
-            <span>Hollywood</span>
-            <span>FL 33312</span>
+    <table class="footer-table" style="width: 100%; border: 2px solid black; margin-top: 4px; border-collapse: separate; border-spacing: 0;">
+      <tr>
+        <!-- Certificate Holder Column -->
+        <td style="width: 50%; vertical-align: top; padding: 4px; border: none; border-right: 1px solid black; height: 110px; box-sizing: border-box;">
+          <div class="box-label" style="font-size: 8.5px; font-weight: bold;">CERTIFICATE HOLDER</div>
+          <div style="padding-left: 30px; margin-top: 8px; font-size: 8.5px; line-height: 1.3;" id="cert-holder-details">
+            Oakridge Homeowners Association<br>
+            3401 SW 51st Court<br><br>
+            <div style="display: flex; justify-content: space-between; padding-right: 60px;">
+              <span>Hollywood</span>
+              <span>FL 33312</span>
+            </div>
           </div>
-        </div>
-      </div>
-      <div class="cancellation">
-        <div class="cancellation-text"
-          style="margin-top: 15px; margin-left: 10px; margin-right: 10px; margin-bottom: 10px; text-align: left; line-height: 1.4;">
-          SHOULD ANY OF THE ABOVE DESCRIBED POLICIES BE CANCELLED BEFORE<br>
-          THE EXPIRATION DATE THEREOF, NOTICE WILL BE DELIVERED IN<br>
-          ACCORDANCE WITH THE POLICY PROVISIONS.
-        </div>
-        <div class="signature-area">
-          AUTHORIZED REPRESENTATIVE
-          <img id="authorized-representative-signature-img" src="" alt="Authorized Representative Signature" style="display: none; max-height: 38px; max-width: 175px; object-fit: contain; position: absolute; right: 28px; bottom: 2px; mix-blend-mode: multiply;" />
-          <span id="authorized-representative-signature" class="signature-img" style="display: none; font-family: 'Brush Script MT', 'Dancing Script', cursive, sans-serif; font-size: 22px; font-weight: normal; position: absolute; right: 40px; bottom: 2px; color: #111;"></span>
-        </div>
-      </div>
-    </div>
+        </td>
+        <!-- Cancellation & Signature Column -->
+        <td style="width: 50%; vertical-align: top; padding: 0; border: none; height: 110px; box-sizing: border-box;">
+          <div style="padding: 3px 6px; border-bottom: 1px solid black; height: 48px; box-sizing: border-box;">
+            <div class="box-label" style="font-size: 8px; font-weight: bold; margin-bottom: 1px;">CANCELLATION</div>
+            <div style="font-size: 7.5px; font-weight: bold; line-height: 1.25; letter-spacing: 0.2px;">
+              SHOULD ANY OF THE ABOVE DESCRIBED POLICIES BE CANCELLED BEFORE<br>
+              THE EXPIRATION DATE THEREOF, NOTICE WILL BE DELIVERED IN<br>
+              ACCORDANCE WITH THE POLICY PROVISIONS.
+            </div>
+          </div>
+          <div style="height: 62px; padding: 3px 6px; position: relative; box-sizing: border-box;">
+            <div class="signature-label" style="font-size: 8px; font-weight: bold;">AUTHORIZED REPRESENTATIVE</div>
+            <img id="authorized-representative-signature-img" alt="Authorized Representative Signature" style="display: none; max-height: 40px; max-width: 185px; object-fit: contain; position: absolute; right: 30px; bottom: 8px;" />
+            <span id="authorized-representative-signature" class="signature-img" style="display: none; position: absolute; right: 30px; bottom: 8px;"></span>
+          </div>
+        </td>
+      </tr>
+    </table>
 
-    <div style="display: flex; justify-content: space-between; font-size: 9px; font-weight: bold; margin-top: 5px;">
+    <div style="display: flex; justify-content: space-between; font-size: 8.5px; font-weight: bold; margin-top: 4px;">
       <div>ACORD 25 (2025/12)</div>
       <div>&copy; 1988-2025 ACORD CORPORATION. All rights reserved.</div>
     </div>
-    <div style="text-align: center; font-size: 9px; font-weight: bold; margin-top: 2px;">
+    <div style="text-align: center; font-size: 8px; font-weight: bold; margin-top: 2px;">
       The ACORD name and logo are registered marks of ACORD
     </div>
 
@@ -1306,12 +1390,17 @@
 
         Object.entries(mappings).forEach(([id, val]) => {
           const el = document.getElementById(id);
-          if (el && val) {
-            // Strip out the '$ ' prefix if it's there so the HTML formatting remains clean, 
-            // as the '$' is already in the left column.
-            el.innerText = val.replace('$ ', '');
-          } else if (el) {
-            el.innerText = ''; // Clear default hardcoded value if no limit is available
+          if (el) {
+            const tr = el.closest('tr');
+            const currEl = tr ? tr.querySelector('.limit-curr') : null;
+            if (val && String(val).trim()) {
+              const cleanVal = String(val).replace(/^\$\s*/, '').trim();
+              el.innerText = cleanVal;
+              if (currEl) currEl.innerText = '$';
+            } else {
+              el.innerText = '';
+              if (currEl) currEl.innerText = '';
+            }
           }
         });
       } catch (e) {
@@ -1542,20 +1631,44 @@
 
           if (sigUrl) {
             let finalSigUrl = sigUrl.trim();
-            if (!finalSigUrl.startsWith('http://') && !finalSigUrl.startsWith('https://') && !finalSigUrl.startsWith('data:')) {
+            if (finalSigUrl.includes('/uploads/')) {
+              // Use same-origin relative path to prevent canvas tainting during PDF export
+              finalSigUrl = '/uploads/' + finalSigUrl.split('/uploads/')[1];
+            } else if (!finalSigUrl.startsWith('http://') && !finalSigUrl.startsWith('https://') && !finalSigUrl.startsWith('data:')) {
               const apiHost = params.get('apiUrl') || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://127.0.0.1:8000' : window.location.origin);
               finalSigUrl = `${apiHost.replace(/\/+$/, '')}/${finalSigUrl.replace(/^\/+/, '')}`;
             }
             if (sigImgEl) {
-              sigImgEl.onerror = function() {
-                sigImgEl.style.display = 'none';
-                if (sigName && sigTextEl) {
-                  sigTextEl.innerText = sigName;
-                  sigTextEl.style.display = 'block';
-                }
-              };
-              sigImgEl.src = finalSigUrl;
-              sigImgEl.style.display = 'block';
+              if (finalSigUrl.startsWith('data:')) {
+                sigImgEl.src = finalSigUrl;
+                sigImgEl.style.display = 'block';
+              } else {
+                const tempImg = new Image();
+                tempImg.crossOrigin = 'anonymous';
+                tempImg.onload = function() {
+                  try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = tempImg.naturalWidth;
+                    canvas.height = tempImg.naturalHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(tempImg, 0, 0);
+                    sigImgEl.src = canvas.toDataURL('image/png');
+                    sigImgEl.style.display = 'block';
+                  } catch (e) {
+                    sigImgEl.src = finalSigUrl;
+                    sigImgEl.style.display = 'block';
+                  }
+                };
+                tempImg.onerror = function() {
+                  sigImgEl.style.display = 'none';
+                  sigImgEl.removeAttribute('src');
+                  if (sigName && sigTextEl) {
+                    sigTextEl.innerText = sigName;
+                    sigTextEl.style.display = 'block';
+                  }
+                };
+                tempImg.src = finalSigUrl;
+              }
             }
             if (sigTextEl) {
               sigTextEl.style.display = 'none';
@@ -1563,13 +1676,17 @@
           } else if (sigName) {
             if (sigImgEl) {
               sigImgEl.style.display = 'none';
+              sigImgEl.removeAttribute('src');
             }
             if (sigTextEl) {
               sigTextEl.innerText = sigName;
               sigTextEl.style.display = 'block';
             }
           } else {
-            if (sigImgEl) sigImgEl.style.display = 'none';
+            if (sigImgEl) {
+              sigImgEl.style.display = 'none';
+              sigImgEl.removeAttribute('src');
+            }
             if (sigTextEl) sigTextEl.style.display = 'none';
           }
         }

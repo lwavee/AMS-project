@@ -1,88 +1,219 @@
 import io
-from PIL import Image
+import math
+from PIL import Image, ImageFilter, ImageChops
 
 def remove_signature_background(image_bytes: bytes) -> bytes:
     """
-    Automatically removes paper/background from a handwritten signature image,
-    converts it to a clean transparent PNG, sharpens the ink, and auto-crops margins.
-    Uses Pillow's in-place PixelAccess with type-safe tuple unpacking.
+    State-of-the-art signature background removal:
+    - Eliminates harsh shadows, smartphone shadows, room lighting gradients, and paper texture.
+    - Uses dual-confirmation filtering: Division Illumination Normalization + Multi-Scale Black Top-Hat.
+    - Soft polynomial antialiasing preserves natural pen stroke taper and fluidity.
+    - Automatically detects and enriches Blue vs. Black ink for crisp executive appearance.
+    - Removes dust speckles, paper grain, and photographic outer border artifacts.
+    - Crops tightly to ink bounding box with balanced padding.
+    - Returns optimized transparent PNG bytes.
+    - Uses pure Pillow and Python standard library (no scipy/numpy external dependencies required).
     """
-    img = Image.open(io.BytesIO(image_bytes)).convert("RGBA")
-    w, h = img.size
-    pixels = img.load()
-    if pixels is None:
-        raise ValueError("Could not access image pixel data.")
+    if not image_bytes:
+        raise ValueError("Empty image bytes provided.")
 
-    # Sample pixels to determine adaptive paper background luminance
-    step = max(1, int(((w * h) // 1500) ** 0.5))
-    samples: list[int] = []
-    for y in range(0, h, step):
-        for x in range(0, w, step):
-            px = pixels[x, y]
-            if isinstance(px, tuple) and len(px) >= 4:
-                r, g, b, a = px[0], px[1], px[2], px[3]
-                if a > 0:
-                    samples.append(int(0.299 * r + 0.587 * g + 0.114 * b))
+    try:
+        orig_img = Image.open(io.BytesIO(image_bytes))
+    except Exception as e:
+        raise ValueError(f"Could not open image: {e}")
 
-    samples.sort()
-    # 90th percentile represents dominant paper background
-    paper_lum = max(samples[int(len(samples) * 0.90)] if samples else 220, 180)
-    # Ink luminance: below this is guaranteed pure ink
-    ink_lum = max(40, int(paper_lum * 0.55))
+    # 1. If already transparent, preserve transparency and auto-crop
+    if orig_img.mode in ("RGBA", "LA") or (orig_img.mode == "P" and "transparency" in orig_img.info):
+        rgba = orig_img.convert("RGBA")
+        alpha_hist = rgba.getchannel("A").histogram()
+        total_px = rgba.width * rgba.height
+        if total_px > 0 and (sum(alpha_hist[:15]) / total_px) > 0.40:
+            bbox = rgba.getbbox()
+            if bbox:
+                pad = 10
+                crop_box = (
+                    max(0, bbox[0] - pad),
+                    max(0, bbox[1] - pad),
+                    min(rgba.width, bbox[2] + pad),
+                    min(rgba.height, bbox[3] + pad)
+                )
+                rgba = rgba.crop(crop_box)
+            out = io.BytesIO()
+            rgba.save(out, format="PNG", optimize=True)
+            return out.getvalue()
 
-    for y in range(h):
+    # 2. Normalize resolution for fast, consistent processing
+    w, h = orig_img.size
+    max_dim = 1400
+    img = orig_img.convert("RGB")
+    if max(w, h) > max_dim:
+        scale = max_dim / max(w, h)
+        w = max(10, int(w * scale))
+        h = max(10, int(h * scale))
+        img = img.resize((w, h), Image.Resampling.LANCZOS)
+    else:
+        w, h = img.size
+
+    lum = img.convert("L")
+
+    # 3. Illumination Normalization (Flatten lighting gradients & shadows)
+    k_bg = max(15, int(min(w, h) * 0.10))
+    if k_bg % 2 == 0:
+        k_bg += 1
+    bg = lum.filter(ImageFilter.MaxFilter(k_bg)).filter(ImageFilter.GaussianBlur(max(2.0, k_bg / 4.0)))
+
+    # 4. Multi-Scale Black Top-Hat Transform
+    # Fine scale for thin pen strokes
+    r_fine = max(5, int(min(w, h) * 0.018))
+    if r_fine % 2 == 0:
+        r_fine += 1
+    th_fine = ImageChops.subtract(lum.filter(ImageFilter.MaxFilter(r_fine)).filter(ImageFilter.MinFilter(r_fine)), lum)
+
+    # Medium scale for thicker markers / pens
+    r_med = max(13, int(min(w, h) * 0.045))
+    if r_med % 2 == 0:
+        r_med += 1
+    th_med = ImageChops.subtract(lum.filter(ImageFilter.MaxFilter(r_med)).filter(ImageFilter.MinFilter(r_med)), lum)
+
+    tophat = ImageChops.lighter(th_fine, th_med)
+
+    # 5. Fast dual-signal calculation & color analysis
+    lum_bytes = lum.tobytes()
+    bg_bytes = bg.tobytes()
+    th_bytes = tophat.tobytes()
+    rgb_bytes = img.tobytes()
+
+    alpha = bytearray(w * h)
+    blue_count = 0
+    ink_count = 0
+
+    for i in range(w * h):
+        th = th_bytes[i]
+        if th <= 2:
+            continue
+
+        l = lum_bytes[i]
+        b = bg_bytes[i]
+        norm = (l / max(b, 1)) * 255.0
+        direct = max(0.0, 230.0 - norm)
+        sig = math.sqrt(th * direct)
+
+        if sig < 12.0:
+            continue
+        elif sig >= 38.0:
+            a = 255
+        else:
+            t = (sig - 12.0) / 26.0
+            a = int(255.0 * (t ** 1.15))
+
+        alpha[i] = a
+
+        if a > 75:
+            ink_count += 1
+            idx3 = i * 3
+            r_val = rgb_bytes[idx3]
+            g_val = rgb_bytes[idx3 + 1]
+            b_val = rgb_bytes[idx3 + 2]
+            if b_val > r_val + 12 and b_val > g_val + 12:
+                blue_count += 1
+
+    is_blue = (blue_count > ink_count * 0.40) if ink_count > 0 else False
+
+    # 6. Suppress large border artifacts (shadow edges touching outer photographic frame)
+    visited = bytearray(w * h)
+    for y in (0, h - 1):
         for x in range(w):
-            px = pixels[x, y]
-            if not isinstance(px, tuple) or len(px) < 4:
-                continue
+            idx = y * w + x
+            if alpha[idx] > 20 and not visited[idx]:
+                q = [idx]
+                visited[idx] = 1
+                comp = [idx]
+                min_x = max_x = x
+                min_y = max_y = y
+                while q:
+                    curr = q.pop()
+                    cy, cx = divmod(curr, w)
+                    for ny, nx in ((cy - 1, cx), (cy + 1, cx), (cy, cx - 1), (cy, cx + 1)):
+                        if 0 <= ny < h and 0 <= nx < w:
+                            nidx = ny * w + nx
+                            if alpha[nidx] > 20 and not visited[nidx]:
+                                visited[nidx] = 1
+                                q.append(nidx)
+                                comp.append(nidx)
+                                if nx < min_x: min_x = nx
+                                if nx > max_x: max_x = nx
+                                if ny < min_y: min_y = ny
+                                if ny > max_y: max_y = ny
+                span_w = (max_x - min_x) / w
+                span_h = (max_y - min_y) / h
+                if len(comp) > (w * h * 0.05) or span_w > 0.45 or span_h > 0.45:
+                    for c_idx in comp:
+                        alpha[c_idx] = 0
 
-            r, g, b, a = px[0], px[1], px[2], px[3]
-            if a == 0:
-                continue
+    for x in (0, w - 1):
+        for y in range(h):
+            idx = y * w + x
+            if alpha[idx] > 20 and not visited[idx]:
+                q = [idx]
+                visited[idx] = 1
+                comp = [idx]
+                min_x = max_x = x
+                min_y = max_y = y
+                while q:
+                    curr = q.pop()
+                    cy, cx = divmod(curr, w)
+                    for ny, nx in ((cy - 1, cx), (cy + 1, cx), (cy, cx - 1), (cy, cx + 1)):
+                        if 0 <= ny < h and 0 <= nx < w:
+                            nidx = ny * w + nx
+                            if alpha[nidx] > 20 and not visited[nidx]:
+                                visited[nidx] = 1
+                                q.append(nidx)
+                                comp.append(nidx)
+                                if nx < min_x: min_x = nx
+                                if nx > max_x: max_x = nx
+                                if ny < min_y: min_y = ny
+                                if ny > max_y: max_y = ny
+                span_w = (max_x - min_x) / w
+                span_h = (max_y - min_y) / h
+                if len(comp) > (w * h * 0.05) or span_w > 0.45 or span_h > 0.45:
+                    for c_idx in comp:
+                        alpha[c_idx] = 0
 
-            lum = int(0.299 * r + 0.587 * g + 0.114 * b)
-            if lum >= paper_lum:
-                # Background paper: pure transparent
-                pixels[x, y] = (255, 255, 255, 0)
-            elif lum <= ink_lum:
-                # Deep ink: fully opaque, preserve blue/black tone and sharpen
-                is_blue = (b > r + 15) and (b > g + 15)
-                if is_blue:
-                    pixels[x, y] = (min(r, 30), min(g, 40), max(b, 100), 255)
-                else:
-                    pixels[x, y] = (min(r, 25), min(g, 25), min(b, 30), 255)
-            else:
-                # Smooth antialiased gradient for natural ink stroke edges
-                ratio = (paper_lum - lum) / (paper_lum - ink_lum)
-                alpha = int(255 * (ratio ** 1.3))
-                is_blue = (b > r + 15) and (b > g + 15)
-                if is_blue:
-                    pixels[x, y] = (
-                        int(r * (1 - 0.7 * ratio)),
-                        int(g * (1 - 0.7 * ratio)),
-                        max(int(b * (1 - 0.3 * ratio)), 80),
-                        alpha
-                    )
-                else:
-                    pixels[x, y] = (
-                        int(r * (1 - 0.75 * ratio)),
-                        int(g * (1 - 0.75 * ratio)),
-                        int(b * (1 - 0.75 * ratio)),
-                        alpha
-                    )
+    # 7. Build RGBA output with executive color enrichment
+    out_rgba = bytearray(w * h * 4)
+    for i in range(w * h):
+        a = alpha[i]
+        if a == 0:
+            continue
+        idx4 = i * 4
+        idx3 = i * 3
+        r_val = rgb_bytes[idx3]
+        g_val = rgb_bytes[idx3 + 1]
+        b_val = rgb_bytes[idx3 + 2]
+        if is_blue:
+            out_rgba[idx4] = min(35, max(12, int(r_val * 0.25)))
+            out_rgba[idx4 + 1] = min(60, max(25, int(g_val * 0.35)))
+            out_rgba[idx4 + 2] = min(190, max(100, int(b_val * 0.85 + 35)))
+        else:
+            out_rgba[idx4] = min(24, max(10, int(r_val * 0.18)))
+            out_rgba[idx4 + 1] = min(24, max(10, int(g_val * 0.18)))
+            out_rgba[idx4 + 2] = min(32, max(14, int(b_val * 0.22)))
+        out_rgba[idx4 + 3] = a
 
-    # Auto-crop bounding box around the ink with padding
-    bbox = img.getbbox()
+    res_img = Image.frombytes("RGBA", (w, h), bytes(out_rgba))
+
+    # 8. Auto-crop tightly
+    bbox = res_img.getbbox()
     if bbox:
-        pad = 8
+        pad = 10
         crop_box = (
             max(0, bbox[0] - pad),
             max(0, bbox[1] - pad),
             min(w, bbox[2] + pad),
             min(h, bbox[3] + pad)
         )
-        img = img.crop(crop_box)
+        res_img = res_img.crop(crop_box)
 
     out = io.BytesIO()
-    img.save(out, format="PNG", optimize=True)
+    res_img.save(out, format="PNG", optimize=True)
     return out.getvalue()

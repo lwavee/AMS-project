@@ -9,7 +9,7 @@ import {
   Loader2, Download, Eye, Paperclip, Check, AlertCircle
 } from "lucide-react";
 import { PDFDocument } from "pdf-lib";
-import { toJpeg } from "html-to-image";
+import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
 interface TreeNode {
@@ -568,14 +568,16 @@ function EmailOptionsContent() {
     return new Promise((resolve, reject) => {
       const iframe = document.createElement("iframe");
       iframe.style.position = "fixed";
-      iframe.style.top = "0px";
-      iframe.style.left = "0px";
+      iframe.style.top = "0";
+      iframe.style.left = "0";
       iframe.style.width = "850px";
       iframe.style.height = "1100px";
+      iframe.style.border = "none";
+      iframe.style.opacity = "0.01";
       iframe.style.zIndex = "-99999";
-      iframe.style.opacity = "0";
       iframe.style.pointerEvents = "none";
-      iframe.src = url;
+      const separator = url.includes("?") ? "&" : "?";
+      iframe.src = `${url}${separator}_t=${Date.now()}`;
 
       let isFinished = false;
 
@@ -598,11 +600,36 @@ function EmailOptionsContent() {
             )
           );
 
+          if (doc.fonts) {
+            await doc.fonts.ready;
+          }
+
+          // Buffer for layout stabilization & image decodes
+          await new Promise((r) => setTimeout(r, 150));
+
           const targetEl = (doc.querySelector(".page") as HTMLElement) || doc.body;
-          const imgData = await toJpeg(targetEl, {
-            quality: 0.98,
-            pixelRatio: 2,
+
+          // Render via html2canvas directly:
+          // scale: 3 produces 2550 x 3300 px (300 DPI high-definition print quality)
+          // Uses live DOM rendering with real browser font metrics, bypassing SVG foreignObject font-stripping
+          const canvas = await html2canvas(targetEl, {
+            scale: 3,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: "#ffffff",
+            logging: false,
+            width: 850,
+            height: 1100,
+            windowWidth: 850,
+            windowHeight: 1100,
+            x: 0,
+            y: 0,
+            scrollX: 0,
+            scrollY: 0,
           });
+
+          const imgData = canvas.toDataURL("image/png");
+
           const pdf = new jsPDF({
             orientation: "portrait",
             unit: "pt",
@@ -610,7 +637,7 @@ function EmailOptionsContent() {
           });
           const pdfWidth = pdf.internal.pageSize.getWidth();
           const pdfHeight = pdf.internal.pageSize.getHeight();
-          pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
+          pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
 
           const pdfArrayBuffer = pdf.output("arraybuffer");
 
