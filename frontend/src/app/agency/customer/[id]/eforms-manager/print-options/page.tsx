@@ -8,7 +8,7 @@ import {
   X, Printer, CheckSquare, Square, MinusSquare, PlusSquare, FileText, Loader2
 } from "lucide-react";
 import { PDFDocument } from "pdf-lib";
-import html2canvas from "html2canvas";
+import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
 
 interface TreeNode {
@@ -532,26 +532,12 @@ function PrintOptionsContent() {
 
           const targetEl = (doc.querySelector(".page") as HTMLElement) || doc.body;
 
-          // Render via html2canvas directly:
-          // scale: 3 produces 2550 x 3300 px (300 DPI high-definition print quality)
-          // Uses live DOM rendering with real browser font metrics, bypassing SVG foreignObject font-stripping
-          const canvas = await html2canvas(targetEl, {
-            scale: 3,
-            useCORS: true,
-            allowTaint: true,
+          const imgData = await toPng(targetEl, {
+            pixelRatio: 3,
             backgroundColor: "#ffffff",
-            logging: false,
-            width: 850,
-            height: 1100,
-            windowWidth: 850,
-            windowHeight: 1100,
-            x: 0,
-            y: 0,
-            scrollX: 0,
-            scrollY: 0,
+            skipFonts: true,
+            style: { margin: "0" },
           });
-
-          const imgData = canvas.toDataURL("image/png");
 
           if (document.body.contains(iframe)) {
             document.body.removeChild(iframe);
@@ -592,7 +578,9 @@ function PrintOptionsContent() {
     });
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
-    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
+    const { width, height } = pdf.getImageProperties(imgData);
+    const scale = Math.min(pdfWidth / width, pdfHeight / height);
+    pdf.addImage(imgData, "PNG", (pdfWidth - width * scale) / 2, 0, width * scale, height * scale, undefined, "FAST");
     return pdf.output("arraybuffer");
   };
 
@@ -609,7 +597,7 @@ function PrintOptionsContent() {
   };
 
   const processItemIntoPdf = async (item: any, targetPdf: PDFDocument, includeAttachments: boolean) => {
-    // 1. Convert form iframe directly to PDF ArrayBuffer via client-side html2canvas & jsPDF
+    // 1. Render the certificate iframe to a PDF ArrayBuffer.
     const formPdfBuffer = await getPdfBufferFromIframe(item.url);
     
     // 2. Load Form PDF and copy pages

@@ -22,30 +22,19 @@ def remove_signature_background(image_bytes: bytes) -> bytes:
     except Exception as e:
         raise ValueError(f"Could not open image: {e}")
 
-    # 1. If already transparent, preserve transparency and auto-crop
+    # 1. Normalize input image into RGB by compositing over pure white canvas.
+    # This ensures that photos with shadows, scans with gray/cloudy backgrounds,
+    # or images with partial transparency borders have all paper background cleanly detected and removed.
     if orig_img.mode in ("RGBA", "LA") or (orig_img.mode == "P" and "transparency" in orig_img.info):
         rgba = orig_img.convert("RGBA")
-        alpha_hist = rgba.getchannel("A").histogram()
-        total_px = rgba.width * rgba.height
-        if total_px > 0 and (sum(alpha_hist[:15]) / total_px) > 0.40:
-            bbox = rgba.getbbox()
-            if bbox:
-                pad = 10
-                crop_box = (
-                    max(0, bbox[0] - pad),
-                    max(0, bbox[1] - pad),
-                    min(rgba.width, bbox[2] + pad),
-                    min(rgba.height, bbox[3] + pad)
-                )
-                rgba = rgba.crop(crop_box)
-            out = io.BytesIO()
-            rgba.save(out, format="PNG", optimize=True)
-            return out.getvalue()
+        white_bg = Image.new("RGBA", rgba.size, (255, 255, 255, 255))
+        img = Image.alpha_composite(white_bg, rgba).convert("RGB")
+    else:
+        img = orig_img.convert("RGB")
 
     # 2. Normalize resolution for fast, consistent processing
-    w, h = orig_img.size
+    w, h = img.size
     max_dim = 1400
-    img = orig_img.convert("RGB")
     if max(w, h) > max_dim:
         scale = max_dim / max(w, h)
         w = max(10, int(w * scale))

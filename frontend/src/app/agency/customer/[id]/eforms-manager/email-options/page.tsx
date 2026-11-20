@@ -9,7 +9,7 @@ import {
   Loader2, Download, Eye, Paperclip, Check, AlertCircle
 } from "lucide-react";
 import { PDFDocument } from "pdf-lib";
-import html2canvas from "html2canvas";
+import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
 
 interface TreeNode {
@@ -609,26 +609,12 @@ function EmailOptionsContent() {
 
           const targetEl = (doc.querySelector(".page") as HTMLElement) || doc.body;
 
-          // Render via html2canvas directly:
-          // scale: 3 produces 2550 x 3300 px (300 DPI high-definition print quality)
-          // Uses live DOM rendering with real browser font metrics, bypassing SVG foreignObject font-stripping
-          const canvas = await html2canvas(targetEl, {
-            scale: 3,
-            useCORS: true,
-            allowTaint: true,
+          const imgData = await toPng(targetEl, {
+            pixelRatio: 3,
             backgroundColor: "#ffffff",
-            logging: false,
-            width: 850,
-            height: 1100,
-            windowWidth: 850,
-            windowHeight: 1100,
-            x: 0,
-            y: 0,
-            scrollX: 0,
-            scrollY: 0,
+            skipFonts: true,
+            style: { margin: "0" },
           });
-
-          const imgData = canvas.toDataURL("image/png");
 
           const pdf = new jsPDF({
             orientation: "portrait",
@@ -637,7 +623,9 @@ function EmailOptionsContent() {
           });
           const pdfWidth = pdf.internal.pageSize.getWidth();
           const pdfHeight = pdf.internal.pageSize.getHeight();
-          pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
+          const { width, height } = pdf.getImageProperties(imgData);
+          const scale = Math.min(pdfWidth / width, pdfHeight / height);
+          pdf.addImage(imgData, "PNG", (pdfWidth - width * scale) / 2, 0, width * scale, height * scale, undefined, "FAST");
 
           const pdfArrayBuffer = pdf.output("arraybuffer");
 

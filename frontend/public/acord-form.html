@@ -6,468 +6,200 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ACORD Certificate of Liability Insurance</title>
   <style>
+    * { box-sizing: border-box; }
+
     body {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 10px;
-      line-height: 1.25;
-      background-color: transparent;
       margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+      font: 10px/1.15 Arial, Helvetica, sans-serif;
+      color: #000;
     }
 
     .page {
-      background: white;
       width: 850px;
-      min-width: 850px;
-      max-width: 850px;
-      height: 1100px;
       min-height: 1100px;
-      max-height: 1100px;
-      padding: 14px 20px 8px 20px;
+      padding: 24px 24px 19px;
       margin: 0 auto;
-      box-shadow: none;
-      color: black;
-      box-sizing: border-box;
-      overflow: hidden;
-      position: relative;
+      background: #fff;
     }
 
-    @page {
-      size: letter portrait;
-      margin: 0;
-    }
+    @page { size: letter portrait; margin: 0; }
 
     @media print {
-      html, body {
-        width: 850px;
-        height: 1100px;
-        margin: 0;
-        padding: 0;
-        background: transparent;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-      .page {
-        width: 850px !important;
-        height: 1100px !important;
-        max-height: 1100px !important;
-        padding: 14px 20px 8px 20px !important;
-        margin: 0 !important;
-        border: none !important;
-        box-shadow: none !important;
-        page-break-after: avoid;
-        page-break-inside: avoid;
-        break-after: avoid;
-        break-inside: avoid;
-      }
-    }
-
-    * {
-      box-sizing: border-box;
+      .page { margin: 0; zoom: .96; }
     }
 
     table {
       width: 100%;
+      table-layout: fixed;
       border-collapse: separate;
       border-spacing: 0;
     }
 
-    th,
-    td {
-      border: 1px solid black;
-      padding: 2px 4px;
-      vertical-align: top;
-    }
-
-    .no-border {
-      border: none !important;
-    }
-
-    .no-border-bottom {
-      border-bottom: none !important;
-    }
-
-    .no-border-top {
-      border-top: none !important;
-    }
-
-    .no-border-left {
-      border-left: none !important;
-    }
-
-    .no-border-right {
-      border-right: none !important;
-    }
+    td, th { overflow-wrap: anywhere; }
 
     .header {
+      position: relative;
       display: flex;
-      justify-content: space-between;
       align-items: flex-end;
-      margin-bottom: 8px;
-      height: 50px;
+      justify-content: space-between;
+      min-height: 42px;
     }
 
-    .logo {
-      margin-bottom: -5px;
-    }
-
+    .header > :first-child { position: absolute; left: 12px; bottom: 10px; }
+    .logo { display: block; width: 124px !important; height: auto !important; }
     .title {
+      position: absolute;
+      inset: auto 121px 6px 103px;
+      text-align: center;
       font-size: 20px;
       font-weight: bold;
-      text-align: center;
-      flex-grow: 1;
-      padding-bottom: 2px;
-      letter-spacing: 0.5px;
     }
 
     .date-box {
-      border: 2px solid black;
+      margin-left: auto;
+      width: 121px;
+      height: 34px;
+      border: 2px solid #000;
+      border-bottom: 0;
       text-align: center;
-      width: 120px;
-      /* font-weight: bold; */
-      font-size: 11px;
-      margin-bottom: -2px;
+      padding: 3px 0;
     }
 
-    .date-box .date-title {
-      font-size: 10px;
-      /* border-bottom: 1px solid black; */
-      padding: 2px;
-      font-weight: normal;
-      background: #f7f6f6;
-    }
+    .date-title { font-size: 8px; font-weight: bold; margin-bottom: 5px; }
 
-    .date-box .date-value {
-      padding: 2px;
-    }
-
-    .disclaimer {
-      border-top: 2px solid black;
-      border-left: 2px solid black;
-      border-right: 2px solid black;
-      /* padding: 2px; */
-      font-size: 11px;
-      /* text-align: justify; */
-      /* margin-bottom: 5px; */
-      line-height: 1.2;
-      font-weight: bold;
-    }
-
+    .disclaimer { border: 2px solid #000; border-bottom: 0; }
     .disclaimer-text {
-      padding: 3px 25px 4px 8px;
-      line-height: 1.25;
-      box-sizing: border-box;
+      min-height: 40px;
+      padding: 2px 14px;
+      font-size: 11px;
+      line-height: 13px;
+      font-weight: bold;
     }
+    .disclaimer-text:first-child { min-height: 56px; }
+    .disclaimer hr { border: 0; border-top: 1.5px solid #000; margin: 0; }
 
-    .disclaimer hr {
-      border: none;
-      border-top: 1.5px solid black;
-      margin: 2px -2px;
-    }
-
-    .top-grid {
+    .parties {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      border: 2px solid black;
-      border-bottom: none;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      border: 2px solid #000;
     }
+    .party-addresses { border-right: 1px solid #000; }
+    .party-addresses > div { min-height: 82px; padding: 3px 5px; }
+    .party-addresses > div + div { border-top: 1px solid #000; }
+    .party-details { line-height: 16.5px; }
+    .insured-details { padding-left: 71px; }
+    .city-line { display: flex; justify-content: space-between; gap: 8px; padding-right: 34px; }
+    .box-label { font-size: 8px; font-weight: bold; margin-bottom: 3px; }
 
-    .right-col {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
-
-    .box {
-      /* border-bottom: 1px solid black; */
-      padding: 2px 4px;
-    }
-
-    /* .box.producer {
-      height: 100px;
-    }
-
-    .box.insured {
-      height: 100px;
-    } */
-
-    .producer-box {
-      line-height: 1.5;
-    }
-
-    .box-label {
-      font-size: 8px;
-      font-weight: bold;
-      margin-bottom: 2px;
-    }
-
-    .contact-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-    }
-
-    .contact-table td {
-      border: 1px solid black;
-      padding: 2px 4px;
-      vertical-align: middle;
-      line-height: 1.25;
-      box-sizing: border-box;
-    }
-
-    .contact-table .label {
-      font-size: 7px;
-      font-weight: bold;
-      line-height: 1.15;
-      display: inline-block;
-    }
-
-    .insurer-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-    }
-
-    .insurer-table .label {
-      font-weight: bold;
-      text-align: end;
+    .party-tables td, .party-tables th {
+      height: 16.67px;
+      padding: 0 5px;
+      border-bottom: 1px solid #000;
       vertical-align: middle;
     }
+    .party-tables th, .party-tables b { font-size: 8px; line-height: 8px; }
+    .party-tables b { display: inline-block; vertical-align: middle; }
+    .contact-value { margin-left: 8px; vertical-align: middle; }
+    .party-tables .fax, .party-tables .naic { border-left: 1px solid #000; }
+    .naic { text-align: center; }
+    .insurers tr:last-child td { border-bottom: 0; }
 
-    .insurer-table th {
-      font-size: 8px;
-      font-weight: bold;
-      background: #f7f6f6;
-      text-align: center;
-      padding: 3px 4px;
-      line-height: 1.2;
-      box-sizing: border-box;
-    }
-
-    .insurer-table td {
-      height: 15px;
-      border: 1px solid black;
-      font-size: 7.5px;
-      padding: 1px 4px;
-      vertical-align: middle;
-      line-height: 1.2;
-      box-sizing: border-box;
-    }
-
-    .coverages-header-row {
-      display: flex;
-      align-items: center;
-      border: 2px solid black;
-      border-bottom: 1px solid black;
-      background: #f7f6f6;
-      padding: 3px 6px;
-      font-weight: bold;
-      font-size: 9px;
-      line-height: 1.2;
-      min-height: 18px;
-      box-sizing: border-box;
-    }
-
-    .coverages-header-row div {
-      margin-right: 20px;
-    }
-
+    .coverages-header-table { height: 15px; font-size: 11px; font-weight: bold; }
+    .coverages-header-table td { padding: 0 5px; }
+    .coverages-header-table span { font-weight: normal; margin-left: 8px; }
     .coverages-disclaimer {
-      border: 2px solid black;
-      border-top: none;
-      border-bottom: none;
-      padding: 4px 6px;
-      padding-right: 30px;
+      border: 2px solid #000;
+      border-bottom-width: 1px;
+      min-height: 68px;
+      padding: 4px 5px;
       font-size: 9px;
-      word-spacing: 0.5px;
-      line-height: 1.25;
-      box-sizing: border-box;
+      line-height: 11.4px;
     }
 
-    .cov-table {
-      border: 2px solid black;
-      border-spacing: 0;
-    }
-
-    .cov-table th {
-      font-size: 8px;
-      text-align: center;
-      background: #f7f6f6;
+    .cov-table { border: 2px solid #000; border-top: 0; border-bottom: 0; }
+    .cov-table > tbody > tr > :is(th, td) {
+      border-right: 1px solid #000;
+      border-bottom: 1px solid #000;
       vertical-align: middle;
-      padding: 3px 2px;
-      line-height: 1.2;
-      box-sizing: border-box;
+      padding: 0 4px;
     }
-
-    .limits-table {
-      width: 100%;
-      border-collapse: separate !important;
-      border-spacing: 0 !important;
-      border: none !important;
-      margin: 0;
-      padding: 0;
-    }
-
+    .cov-table > tbody > tr > :last-child { border-right: 0; }
+    .cov-table > tbody > tr:first-child { height: 16.67px; }
+    .cov-table > tbody > tr > th { padding: 0 1px; font-size: 8px; line-height: 8px; white-space: nowrap; }
+    .cov-table > tbody > tr > .coverage-type,
+    .cov-table > tbody > tr > .coverage-limits { padding: 0; vertical-align: top; }
+    .cov-table > tbody > tr > [id$="-policy-number"] { text-align: left; padding-left: 6px; }
+    .center { text-align: center; }
     .limits-table td {
-      border: none !important;
-      border-bottom: 1px solid black !important;
-      padding: 0 4px !important;
-      font-size: 7.5px !important;
-      vertical-align: middle !important;
-      line-height: 1 !important;
-      box-sizing: border-box !important;
-    }
-
-    .limits-table tr:last-child td {
-      border-bottom: none !important;
-    }
-
-    .limits-table .limit-desc {
-      border-right: 1px solid black !important;
-      width: 58%;
-    }
-
-    .limits-table .limit-curr {
-      width: 12px;
-      padding: 0 !important;
-      text-align: center;
-    }
-
-    .limits-table .limit-val {
-      text-align: right !important;
-      padding-right: 4px !important;
-    }
-
-
-
-    .cov-table td {
-      font-size: 9px;
-      padding: 2px 4px;
-    }
-
-    .center {
-      text-align: center;
-    }
-
-    .bold {
-      font-weight: bold;
-    }
-
-    .checkbox {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border: 1px solid black;
-      text-align: center;
-      line-height: 11px;
-      margin-right: 4px;
+      height: 16.67px;
+      padding: 0 4px;
+      border-bottom: 1px solid #000;
       vertical-align: middle;
-      background: white;
-      box-sizing: border-box;
-      font-size: 9px;
+      font-size: 8px;
+      line-height: 8px;
+    }
+    .limits-table tr:last-child td { border-bottom: 0; }
+    .limits-table .limit-desc { border-right: 1px solid #000; width: 53.5%; }
+    .limits-table .limit-curr { width: 14px; }
+    .limits-table .limit-val { text-align: right; font-size: 10px; line-height: 11px; }
+
+    .coverage-type { font-size: 8px; line-height: 8px; }
+    .type-row { display: flex; align-items: center; min-height: 16.5px; gap: 4px; }
+    .type-row > span { min-width: 0; }
+    .type-row > b { margin-left: 4px; }
+    .check {
+      flex: 0 0 20px;
+      width: 20px;
+      height: 16.5px;
+      border: 1px solid #000;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: middle;
+      font-size: 14px;
+      line-height: 1;
       font-weight: bold;
     }
+    .type-row + .type-row > .check:first-child,
+    .auto-options > .type-row > .check { border-top: 0; }
+    .write-in { align-self: stretch; flex: 1; border-bottom: 1px solid #000; margin-right: 5px; }
+    .aggregate-label { margin: 5px 4px 1px; }
+    .auto-options, .umbrella-options { display: grid; grid-template-columns: 1fr 1fr; }
+    .umbrella-options { grid-template-columns: 56% 44%; }
+    .wc-type { position: relative; min-height: 66px; padding: 2px; }
+    .wc-type p { margin: 3px 25px 0 0; }
+    .wc-yn { position: absolute; right: 4px; top: 15px; text-align: center; }
+    .statute { display: flex; align-items: center; gap: 4px; padding-left: 12px; white-space: nowrap; }
+    .cov-table > tbody > tr > .wc-na { padding: 0; white-space: nowrap; }
+    .extra-coverage { height: 50px; }
+    .extra-limits { background: linear-gradient(to right, transparent 53.3%, #000 53.3%, #000 53.7%, transparent 53.7%); }
 
-    .desc-box {
-      border: 2px solid black;
-      padding: 3px 6px;
-      min-height: 52px;
-      height: 55px;
-      margin-top: 4px;
-      font-size: 9px;
-      box-sizing: border-box;
-      overflow: hidden;
-    }
+    .desc-box { border: 2px solid #000; border-top: 0; min-height: 99px; padding: 3px 5px; }
+    #desc-ops-text { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 5px; }
 
-    .footer-grid {
+    .footer-headings {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      border: 2px solid black;
-      margin-top: 4px;
-      height: 110px;
-      min-height: 110px;
-      box-sizing: border-box;
-    }
-
-    .cert-holder {
-      border-right: 1px solid black;
-      padding: 4px;
-      height: 100%;
-    }
-
-    .cancellation {
-      padding: 0;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      box-sizing: border-box;
-      background: #fff;
-    }
-
-    .cancellation-text {
-      font-size: 8.5px;
+      font-size: 11px;
       font-weight: bold;
-      padding: 8px 10px 6px 10px;
-      margin: 0;
-      text-align: left;
-      line-height: 1.35;
-      flex-shrink: 0;
+      margin-top: 3px;
     }
-
-    .signature-area {
-      flex: 1;
-      height: 100%;
-      min-height: 60px;
-      border-top: 1px solid black;
-      padding: 4px 6px;
-      font-size: 8px;
-      font-weight: bold;
-      position: relative;
-      margin: 0;
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .signature-label {
-      font-size: 8px;
-      font-weight: bold;
-      letter-spacing: 0.3px;
-      line-height: 1;
-    }
-
+    .footer-headings > div { padding-left: 6px; }
+    .footer-table { border: 2px solid #000; }
+    .footer-table td { width: 50%; padding: 0; vertical-align: top; }
+    .footer-table td:first-child { border-right: 1.5px solid #000; }
+    #cert-holder-details { padding: 23px 12px 8px 50px; line-height: 12px; white-space: pre-line; overflow-wrap: anywhere; }
+    .cancellation-text { min-height: 66px; padding: 15px 14px 8px; border-bottom: 1.5px solid #000; font-size: 9.5px; font-weight: bold; }
+    .signature-area { min-height: 48px; padding: 3px 5px; }
     #authorized-representative-signature-img {
-      display: none;
-      max-height: 42px;
-      max-width: 190px;
+      width: 140px;
+      height: 30px;
+      margin: 0 auto;
       object-fit: contain;
-      position: absolute;
-      right: 35px;
-      bottom: 12px;
-      mix-blend-mode: multiply;
     }
-
-    .signature-img,
-    #authorized-representative-signature {
-      display: none;
-      font-family: 'Segoe Script', 'Brush Script MT', 'Lucida Handwriting', 'Dancing Script', 'Caveat', cursive, sans-serif;
-      font-size: 22px;
-      font-weight: 600;
-      position: absolute;
-      right: 35px;
-      bottom: 12px;
-      color: #111;
-      line-height: 1;
-      white-space: nowrap;
-    }
-
-
+    #authorized-representative-signature { text-align: center; font: italic 17px Georgia, serif; }
+    .footer-credits { display: flex; justify-content: space-between; padding: 2px 6px 0; font-size: 10.5px; font-weight: bold; }
+    .footer-trademark { text-align: center; margin-top: 5px; font-size: 11px; font-weight: bold; }
 
     .editable-field,
     [contenteditable="true"] {
@@ -529,121 +261,55 @@
       </div>
     </div>
 
-    <table class="top-section-table" style="width: 100%; border: 2px solid black; border-bottom: none; border-collapse: separate; border-spacing: 0;">
-      <!-- Row 1: Producer & Contact Name -->
-      <tr style="height: 22px;">
-        <td rowspan="3" style="width: 50%; vertical-align: top; padding: 3px 6px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box;">
-          <div class="box-label" style="font-size: 7.5px; font-weight: bold; margin-bottom: 2px;">PRODUCER</div>
-          <div style="padding-left: 5px; line-height: 1.3; font-size: 8px;">
-            <span id="producer-name">Gamaty Insurance Agency LLC</span><br>
-            <span id="producer-address">5455 Wilshire Blvd</span><br>
-            <span id="producer-address2">Suite 1816</span><br>
-            <div style="display: flex; justify-content: space-between; padding-right: 30px;">
-              <span id="producer-city">Los Angeles</span>
-              <span id="producer-state-zip">CA 90036</span>
-            </div>
+    <div class="parties">
+      <div class="party-addresses">
+        <div>
+          <div class="box-label">PRODUCER</div>
+          <div class="party-details">
+            <div id="producer-name">Gamaty Insurance Agency LLC</div>
+            <div id="producer-address">5455 Wilshire Blvd</div>
+            <div id="producer-address2">Suite 1816</div>
+            <div class="city-line"><span id="producer-city">Los Angeles</span><span id="producer-state-zip">CA 90036</span></div>
           </div>
-        </td>
-        <td colspan="2" style="width: 50%; height: 22px; vertical-align: middle; padding: 1px 6px; border: none; border-bottom: 1px solid black; box-sizing: border-box;">
-          <div style="display: flex; align-items: center;">
-            <div style="font-size: 7.5px; font-weight: bold; line-height: 1.1; letter-spacing: 0.2px; white-space: nowrap; margin-right: 8px; color: #000;">
-              CONTACT<br>NAME:
-            </div>
-            <div style="font-size: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-              <span id="contact-name"></span>
-            </div>
+        </div>
+        <div>
+          <div class="box-label">INSURED</div>
+          <div class="party-details insured-details">
+            <div id="insured-name"></div>
+            <div id="insured-address"></div>
+            <div class="city-line"><span id="insured-city"></span><span id="insured-state-zip"></span></div>
           </div>
-        </td>
-      </tr>
-      <!-- Row 2: Phone & Fax -->
-      <tr style="height: 22px;">
-        <td style="width: 32%; height: 22px; vertical-align: middle; padding: 1px 4px 1px 6px; border: none; border-bottom: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
-          <div style="display: flex; align-items: center;">
-            <div style="font-size: 7.5px; font-weight: bold; line-height: 1.1; letter-spacing: 0.2px; white-space: nowrap; margin-right: 6px; color: #000;">
-              PHONE<br>(A/C, No, Ext):
-            </div>
-            <div style="font-size: 8px; white-space: nowrap;">
-              <span id="contact-phone"></span>
-            </div>
-          </div>
-        </td>
-        <td style="width: 18%; height: 22px; vertical-align: middle; padding: 1px 4px; border: none; border-bottom: 1px solid black; box-sizing: border-box;">
-          <div style="display: flex; align-items: center;">
-            <div style="font-size: 7.5px; font-weight: bold; line-height: 1.1; letter-spacing: 0.2px; white-space: nowrap; margin-right: 4px; color: #000;">
-              FAX<br>(A/C, No):
-            </div>
-            <div style="font-size: 8px; white-space: nowrap;">
-              <span id="contact-fax"></span>
-            </div>
-          </div>
-        </td>
-      </tr>
-      <!-- Row 3: Email -->
-      <tr style="height: 22px;">
-        <td colspan="2" style="width: 50%; height: 22px; vertical-align: middle; padding: 1px 6px; border: none; border-bottom: 1px solid black; box-sizing: border-box;">
-          <div style="display: flex; align-items: center;">
-            <div style="font-size: 7.5px; font-weight: bold; line-height: 1.1; letter-spacing: 0.2px; white-space: nowrap; margin-right: 8px; color: #000;">
-              E-MAIL<br>ADDRESS:
-            </div>
-            <div style="font-size: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-              <span id="contact-email"></span>
-            </div>
-          </div>
-        </td>
-      </tr>
-      <!-- Row 4: Insured & Insurers Header -->
-      <tr style="height: 18px;">
-        <td rowspan="7" style="width: 50%; vertical-align: top; padding: 4px 6px; border: none; border-right: 1px solid black; box-sizing: border-box;">
-          <div class="box-label" style="font-size: 7.5px; font-weight: bold; margin-bottom: 2px;">INSURED</div>
-          <div style="padding-left: 30px; line-height: 1.35;">
-            <span id="insured-name" style="font-weight: bold; font-size: 9px;"></span><br>
-            <span id="insured-address" style="font-size: 8.5px;"></span><br>
-            <div style="display: flex; justify-content: space-between; padding-right: 20px; font-size: 8.5px;">
-              <span id="insured-city"></span>
-              <span id="insured-state-zip"></span>
-            </div>
-          </div>
-        </td>
-        <td style="width: 38%; height: 18px; vertical-align: middle; padding: 0 4px; border: none; border-bottom: 1px solid black; border-right: 1px solid black; background: #f7f6f6; font-size: 8px; font-weight: bold; text-align: center; line-height: 1.2; box-sizing: border-box;">INSURER(S) AFFORDING COVERAGE</td>
-        <td style="width: 12%; height: 18px; vertical-align: middle; padding: 0 4px; border: none; border-bottom: 1px solid black; background: #f7f6f6; font-size: 8px; font-weight: bold; text-align: center; line-height: 1.2; box-sizing: border-box;">NAIC #</td>
-      </tr>
-      <!-- Row 5: Insurer A -->
-      <tr style="height: 18px;">
-        <td style="height: 18px; vertical-align: middle; padding: 0 6px; border: none; border-bottom: 1px solid black; border-right: 1px solid black; font-size: 8px; line-height: 1.2; box-sizing: border-box; white-space: nowrap; overflow: hidden;"><span style="font-weight: bold;">INSURER A :</span> <span id="insurer-a-name"></span></td>
-        <td style="height: 18px; vertical-align: middle; padding: 0 4px; border: none; border-bottom: 1px solid black; font-size: 8px; text-align: center; line-height: 1.2; box-sizing: border-box; white-space: nowrap;" id="insurer-a-naic"></td>
-      </tr>
-      <!-- Row 6: Insurer B -->
-      <tr style="height: 18px;">
-        <td style="height: 18px; vertical-align: middle; padding: 0 6px; border: none; border-bottom: 1px solid black; border-right: 1px solid black; font-size: 8px; line-height: 1.2; box-sizing: border-box; white-space: nowrap; overflow: hidden;"><span style="font-weight: bold;">INSURER B :</span> <span id="insurer-b-name"></span></td>
-        <td style="height: 18px; vertical-align: middle; padding: 0 4px; border: none; border-bottom: 1px solid black; font-size: 8px; text-align: center; line-height: 1.2; box-sizing: border-box; white-space: nowrap;" id="insurer-b-naic"></td>
-      </tr>
-      <!-- Row 7: Insurer C -->
-      <tr style="height: 18px;">
-        <td style="height: 18px; vertical-align: middle; padding: 0 6px; border: none; border-bottom: 1px solid black; border-right: 1px solid black; font-size: 8px; line-height: 1.2; box-sizing: border-box; white-space: nowrap; overflow: hidden;"><span style="font-weight: bold;">INSURER C :</span> <span id="insurer-c-name"></span></td>
-        <td style="height: 18px; vertical-align: middle; padding: 0 4px; border: none; border-bottom: 1px solid black; font-size: 8px; text-align: center; line-height: 1.2; box-sizing: border-box; white-space: nowrap;" id="insurer-c-naic"></td>
-      </tr>
-      <!-- Row 8: Insurer D -->
-      <tr style="height: 18px;">
-        <td style="height: 18px; vertical-align: middle; padding: 0 6px; border: none; border-bottom: 1px solid black; border-right: 1px solid black; font-size: 8px; line-height: 1.2; box-sizing: border-box; white-space: nowrap; overflow: hidden;"><span style="font-weight: bold;">INSURER D :</span> <span id="insurer-d-name"></span></td>
-        <td style="height: 18px; vertical-align: middle; padding: 0 4px; border: none; border-bottom: 1px solid black; font-size: 8px; text-align: center; line-height: 1.2; box-sizing: border-box; white-space: nowrap;" id="insurer-d-naic"></td>
-      </tr>
-      <!-- Row 9: Insurer E -->
-      <tr style="height: 18px;">
-        <td style="height: 18px; vertical-align: middle; padding: 0 6px; border: none; border-bottom: 1px solid black; border-right: 1px solid black; font-size: 8px; line-height: 1.2; box-sizing: border-box; white-space: nowrap; overflow: hidden;"><span style="font-weight: bold;">INSURER E :</span> <span id="insurer-e-name"></span></td>
-        <td style="height: 18px; vertical-align: middle; padding: 0 4px; border: none; border-bottom: 1px solid black; font-size: 8px; text-align: center; line-height: 1.2; box-sizing: border-box; white-space: nowrap;" id="insurer-e-naic"></td>
-      </tr>
-      <!-- Row 10: Insurer F -->
-      <tr style="height: 18px;">
-        <td style="height: 18px; vertical-align: middle; padding: 0 6px; border: none; border-right: 1px solid black; font-size: 8px; line-height: 1.2; box-sizing: border-box; white-space: nowrap; overflow: hidden;"><span style="font-weight: bold;">INSURER F :</span> <span id="insurer-f-name"></span></td>
-        <td style="height: 18px; vertical-align: middle; padding: 0 4px; border: none; font-size: 8px; text-align: center; line-height: 1.2; box-sizing: border-box; white-space: nowrap;" id="insurer-f-naic"></td>
-      </tr>
-    </table>
+        </div>
+      </div>
+      <div class="party-tables">
+        <table aria-label="Producer contact">
+          <colgroup><col style="width: 61.5%"><col></colgroup>
+          <tr><td colspan="2"><b>CONTACT<br>NAME:</b><span class="contact-value" id="contact-name"></span></td></tr>
+          <tr>
+            <td><b>PHONE<br>(A/C, No, Ext):</b><span class="contact-value" id="contact-phone"></span></td>
+            <td class="fax"><b>FAX<br>(A/C, No):</b><span class="contact-value" id="contact-fax"></span></td>
+          </tr>
+          <tr><td colspan="2"><b>E-MAIL<br>ADDRESS:</b><span class="contact-value" id="contact-email"></span></td></tr>
+        </table>
+        <table class="insurers">
+          <colgroup><col style="width: 81.5%"><col></colgroup>
+          <tr><th scope="col">INSURER(S) AFFORDING COVERAGE</th><th scope="col" class="naic">NAIC #</th></tr>
+          <tr><td><b>INSURER A :</b> <span id="insurer-a-name"></span></td><td class="naic" id="insurer-a-naic"></td></tr>
+          <tr><td><b>INSURER B :</b> <span id="insurer-b-name"></span></td><td class="naic" id="insurer-b-naic"></td></tr>
+          <tr><td><b>INSURER C :</b> <span id="insurer-c-name"></span></td><td class="naic" id="insurer-c-naic"></td></tr>
+          <tr><td><b>INSURER D :</b> <span id="insurer-d-name"></span></td><td class="naic" id="insurer-d-naic"></td></tr>
+          <tr><td><b>INSURER E :</b> <span id="insurer-e-name"></span></td><td class="naic" id="insurer-e-naic"></td></tr>
+          <tr><td><b>INSURER F :</b> <span id="insurer-f-name"></span></td><td class="naic" id="insurer-f-naic"></td></tr>
+        </table>
+      </div>
+    </div>
 
-    <table class="coverages-header-table" style="width: 100%; border: 2px solid black; border-bottom: 1px solid black; background: #f7f6f6; border-collapse: separate; border-spacing: 0;">
-      <tr style="height: 22px;">
-        <td style="width: 25%; font-weight: bold; font-size: 9px; padding: 2px 6px; border: none; vertical-align: middle; box-sizing: border-box; white-space: nowrap;">COVERAGES</td>
-        <td style="width: 45%; font-weight: bold; font-size: 9px; padding: 2px 6px; border: none; vertical-align: middle; box-sizing: border-box; white-space: nowrap;">CERTIFICATE NUMBER: <span id="cert-number" style="font-weight:normal">CL2661008877</span></td>
-        <td style="width: 30%; font-weight: bold; font-size: 9px; padding: 2px 6px; border: none; vertical-align: middle; box-sizing: border-box; white-space: nowrap;">REVISION NUMBER: <span id="revision-number" style="font-weight:normal"></span></td>
+    <table class="coverages-header-table">
+      <colgroup><col style="width: 24%"><col style="width: 46%"><col></colgroup>
+      <tr>
+        <td>COVERAGES</td>
+        <td>CERTIFICATE NUMBER: <span id="cert-number">CL2661008877</span></td>
+        <td>REVISION NUMBER: <span id="revision-number"></span></td>
       </tr>
     </table>
     <div class="coverages-disclaimer">
@@ -655,278 +321,153 @@
       POLICY LIMIT AMOUNTS IN EXCESS OF THOSE REQUESTED. <b>*Not Applicable In WY</b>
     </div>
 
-    <table class="cov-table no-border-top" style="border-collapse: separate; border-spacing: 0; width: 100%;">
-      <tr style="height: 26px;">
-        <th style="width: 28px; height: 26px; vertical-align: middle; padding: 2px 1px; font-size: 7.5px; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">INSR<br>LTR</th>
-        <th style="width: 220px; height: 26px; vertical-align: middle; padding: 2px 4px; font-size: 7.5px; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">TYPE OF INSURANCE</th>
-        <th style="width: 32px; height: 26px; vertical-align: middle; padding: 2px 1px; font-size: 7.5px; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">ADDL<br>INSD</th>
-        <th style="width: 32px; height: 26px; vertical-align: middle; padding: 2px 1px; font-size: 7.5px; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">SUBR<br>WVD</th>
-        <th style="width: 94px; height: 26px; vertical-align: middle; padding: 2px 4px; font-size: 7.5px; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">POLICY NUMBER</th>
-        <th style="width: 72px; height: 26px; vertical-align: middle; padding: 2px 1px; font-size: 7.5px; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">POLICY EFF<br>(MM/DD/YYYY)</th>
-        <th style="width: 72px; height: 26px; vertical-align: middle; padding: 2px 1px; font-size: 7.5px; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">POLICY EXP<br>(MM/DD/YYYY)</th>
-        <th style="width: 260px; height: 26px; vertical-align: middle; padding: 2px 4px; font-size: 7.5px; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">LIMITS</th>
-      </tr>
-      <!-- Row 1 CGL -->
+    <table class="cov-table">
+      <colgroup>
+        <col style="width: 3.125%"><col style="width: 24.4%">
+        <col style="width: 3.15%"><col style="width: 3.1%">
+        <col style="width: 20.6%"><col style="width: 8.1%"><col style="width: 8.1%"><col>
+      </colgroup>
       <tr>
-        <td id="gl-insr-ltr" class="center" style="vertical-align: middle; font-weight: bold;"></td>
-        <td style="padding: 0; vertical-align: top;">
-          <table style="width: 100%; border-collapse: separate; border-spacing: 0; border: none; margin: 0; padding: 0;">
-            <tr style="height: 17px;">
-              <td style="width: 14px; height: 17px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; text-align: center; vertical-align: middle; box-sizing: border-box;">
-                <div id="chk-gl-cgl" class="checkbox-editable" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">X</div>
-              </td>
-              <td style="height: 17px; border: none; padding: 0 4px; font-size: 8px; font-weight: bold; vertical-align: middle; line-height: 17px; box-sizing: border-box; white-space: nowrap;">
-                COMMERCIAL GENERAL LIABILITY
-              </td>
-            </tr>
-            <tr style="height: 17px;">
-              <td style="width: 14px; height: 17px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; box-sizing: border-box;"></td>
-              <td style="height: 17px; border: none; padding: 0 4px; vertical-align: middle; font-size: 7px; line-height: 17px; box-sizing: border-box; white-space: nowrap;">
-                <div style="display: flex; align-items: center; height: 100%;">
-                  <div id="chk-gl-claims-made" class="checkbox checked checkbox-editable" style="width: 12px; height: 12px; border: 1px solid black; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; margin-right: 3px;">X</div>
-                  <span>CLAIMS-MADE</span>
-                  <div id="chk-gl-occur" class="checkbox checkbox-editable" style="width: 12px; height: 12px; border: 1px solid black; display: inline-flex; align-items: center; justify-content: center; margin-left: 12px; margin-right: 3px;"></div>
-                  <span>OCCUR</span>
-                </div>
-              </td>
-            </tr>
-            <tr style="height: 17px;">
-              <td style="width: 14px; height: 17px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; box-sizing: border-box;"></td>
-              <td style="height: 17px; border: none; border-bottom: 1px solid black; padding: 0 4px; box-sizing: border-box;"></td>
-            </tr>
-            <tr style="height: 17px;">
-              <td style="width: 14px; height: 17px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; box-sizing: border-box;"></td>
-              <td style="height: 17px; border: none; padding: 0; box-sizing: border-box;"></td>
-            </tr>
-            <tr style="height: 17px;">
-              <td style="width: 14px; height: 17px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; box-sizing: border-box;"></td>
-              <td style="height: 17px; border: none; padding: 0; box-sizing: border-box;"></td>
-            </tr>
-          </table>
-          <div style="padding: 2px 4px 2px 2px; font-size: 7px; line-height: 1.2;">
-            <div style="margin-bottom: 2px;">GEN'L AGGREGATE LIMIT APPLIES PER:</div>
-            <div style="display: flex; align-items: center; margin-bottom: 2px;">
-              <div id="chk-gl-policy" class="checkbox-editable"
-                style="width: 13px; height: 13px; border: 1px solid black; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; background: white;">
-                X</div>
-              <span style="margin-left: 3px; font-size: 7px;">POLICY</span>
-              <div id="chk-gl-project" class="checkbox-editable"
-                style="width: 13px; height: 13px; border: 1px solid black; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; margin-left: 6px; background: white;"></div>
-              <span style="margin-left: 3px; font-size: 7px;">PROJECT</span>
-              <div id="chk-gl-loc" class="checkbox-editable"
-                style="width: 13px; height: 13px; border: 1px solid black; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; margin-left: 6px; background: white;"></div>
-              <span style="margin-left: 3px; font-size: 7px;">LOC</span>
-            </div>
-            <div style="display: flex; align-items: center;">
-              <div style="width: 13px; height: 13px; border: 1px solid black; box-sizing: border-box; background: white;"></div>
-              <span style="margin-left: 3px; font-size: 7px;">OTHER:</span>
-            </div>
-          </div>
+        <th scope="col">INSR<br>LTR</th>
+        <th scope="col">TYPE OF INSURANCE</th>
+        <th scope="col">ADDL<br>INSD</th>
+        <th scope="col">SUBR<br>WVD</th>
+        <th scope="col">POLICY NUMBER</th>
+        <th scope="col">POLICY EFF<br>(MM/DD/YYYY)</th>
+        <th scope="col">POLICY EXP<br>(MM/DD/YYYY)</th>
+        <th scope="col">LIMITS</th>
+      </tr>
+      <tr>
+        <td class="center" id="gl-insr-ltr"></td>
+        <td class="coverage-type">
+          <div class="type-row"><span id="chk-gl-cgl" class="check checkbox-editable">X</span><strong>COMMERCIAL GENERAL LIABILITY</strong></div>
+          <div class="type-row"><span id="chk-gl-claims-made" class="check checkbox-editable"></span><span>CLAIMS-MADE</span><span id="chk-gl-occur" class="check checkbox-editable">X</span><span>OCCUR</span></div>
+          <div class="type-row"><span class="check" aria-hidden="true"></span><span class="write-in"></span></div>
+          <div class="type-row"><span class="check" aria-hidden="true"></span><span class="write-in"></span></div>
+          <div class="aggregate-label">GEN'L AGGREGATE LIMIT APPLIES PER:</div>
+          <div class="type-row"><span id="chk-gl-policy" class="check checkbox-editable">X</span><span>POLICY</span><span id="chk-gl-project" class="check checkbox-editable"></span><span>PRO-<br>JECT</span><span id="chk-gl-loc" class="check checkbox-editable"></span><span>LOC</span></div>
+          <div class="type-row"><span class="check" aria-hidden="true"></span><span>OTHER:</span></div>
         </td>
-        <td id="gl-ai" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
-        <td id="gl-ws" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
-        <td id="gl-policy-number" class="center" style="vertical-align: middle;"></td>
-        <td id="gl-eff-date" class="center" style="vertical-align: middle;"></td>
-        <td id="gl-exp-date" class="center" style="vertical-align: middle;"></td>
-        <td style="padding: 0; vertical-align: top;">
+        <td class="center" id="gl-ai"></td>
+        <td class="center" id="gl-ws"></td>
+        <td class="center" id="gl-policy-number"></td>
+        <td class="center" id="gl-eff-date"></td>
+        <td class="center" id="gl-exp-date"></td>
+        <td class="coverage-limits">
           <table class="limits-table">
-            <tr style="height: 17px;">
+            <tr>
               <td class="limit-desc">EACH OCCURRENCE</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="gl-each-occurrence">1,000,000</td>
             </tr>
-            <tr style="height: 23px;">
-              <td class="limit-desc" style="font-size: 6.5px; line-height: 1.1;">DAMAGE TO RENTED<br>PREMISES (Ea occurrence)</td>
+            <tr>
+              <td class="limit-desc">DAMAGE TO RENTED<br>PREMISES (Ea occurrence)</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="gl-damage-rented">50,000</td>
             </tr>
-            <tr style="height: 17px;">
+            <tr>
               <td class="limit-desc">MED EXP (Any one person)</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="gl-med-exp">5,000</td>
             </tr>
-            <tr style="height: 17px;">
+            <tr>
               <td class="limit-desc">PERSONAL &amp; ADV INJURY</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="gl-personal-adv">1,000,000</td>
             </tr>
-            <tr style="height: 17px;">
+            <tr>
               <td class="limit-desc">GENERAL AGGREGATE</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="gl-general-agg">2,000,000</td>
             </tr>
-            <tr style="height: 17px;">
+            <tr>
               <td class="limit-desc">PRODUCTS - COMP/OP AGG</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="gl-products-comp">2,000,000</td>
             </tr>
-            <tr style="height: 17px;">
+            <tr>
               <td class="limit-desc" id="gl-extra-desc">&nbsp;</td>
-              <td class="limit-curr"></td>
+              <td class="limit-curr">$</td>
               <td class="limit-val" id="gl-extra-limit"></td>
             </tr>
           </table>
         </td>
       </tr>
-      <!-- Row 2 Auto -->
       <tr>
-        <td id="auto-insr-ltr" class="center" style="vertical-align: middle; font-weight: bold;"></td>
-        <td style="padding: 0; vertical-align: top;">
-          <div style="padding: 2px 4px 1px 4px; font-size: 8px; font-weight: bold; line-height: 1.2;">
-            AUTOMOBILE LIABILITY
+        <td class="center" id="auto-insr-ltr"></td>
+        <td class="coverage-type">
+          <div class="type-row"><b>AUTOMOBILE LIABILITY</b></div>
+          <div class="auto-options">
+          <div class="type-row"><span id="chk-auto-any" class="check checkbox-editable"></span><span>ANY AUTO</span></div>
+          <div class="type-row"></div>
+          <div class="type-row"><span id="chk-auto-owned" class="check checkbox-editable"></span><span>OWNED<br>AUTOS ONLY</span></div>
+          <div class="type-row"><span id="chk-auto-scheduled" class="check checkbox-editable">X</span><span>SCHEDULED<br>AUTOS</span></div>
+          <div class="type-row"><span id="chk-auto-hired" class="check checkbox-editable"></span><span>HIRED<br>AUTOS ONLY</span></div>
+          <div class="type-row"><span id="chk-auto-non-owned" class="check checkbox-editable"></span><span>NON-OWNED<br>AUTOS ONLY</span></div>
+          <div class="type-row"><span id="chk-auto-hired-other" class="check checkbox-editable"></span><span></span></div>
+          <div class="type-row"><span id="chk-auto-non-owned-other" class="check checkbox-editable"></span><span></span></div>
           </div>
-          <table style="width: 100%; border-collapse: separate; border-spacing: 0; border: none; margin: 0; padding: 0;">
-            <tr style="height: 16px;">
-              <td style="width: 14px; height: 16px; border: none; border-top: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; text-align: center; vertical-align: middle; box-sizing: border-box;">
-                <div id="chk-auto-any" class="checkbox-editable" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold;"></div>
-              </td>
-              <td style="height: 16px; border: none; border-top: 1px solid black; border-bottom: 1px solid black; padding: 0 4px; font-size: 7px; vertical-align: middle; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">
-                ANY AUTO
-              </td>
-              <td style="width: 14px; height: 16px; border: none; border-top: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; text-align: center; vertical-align: middle; box-sizing: border-box;">
-                <div id="chk-auto-scheduled" class="checkbox-editable" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold;">X</div>
-              </td>
-              <td style="height: 16px; border: none; border-top: 1px solid black; border-bottom: 1px solid black; padding: 0 4px; font-size: 7px; vertical-align: middle; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">
-                SCHEDULED AUTOS
-              </td>
-            </tr>
-            <tr style="height: 16px;">
-              <td style="width: 14px; height: 16px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; text-align: center; vertical-align: middle; box-sizing: border-box;">
-                <div id="chk-auto-owned" class="checkbox-editable" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold;"></div>
-              </td>
-              <td style="height: 16px; border: none; border-bottom: 1px solid black; padding: 0 4px; font-size: 7px; vertical-align: middle; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">
-                OWNED AUTOS ONLY
-              </td>
-              <td style="width: 14px; height: 16px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; text-align: center; vertical-align: middle; box-sizing: border-box;">
-                <div id="chk-auto-non-owned" class="checkbox-editable" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold;">X</div>
-              </td>
-              <td style="height: 16px; border: none; border-bottom: 1px solid black; padding: 0 4px; font-size: 7px; vertical-align: middle; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">
-                NON-OWNED AUTOS ONLY
-              </td>
-            </tr>
-            <tr style="height: 16px;">
-              <td style="width: 14px; height: 16px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; text-align: center; vertical-align: middle; box-sizing: border-box;">
-                <div id="chk-auto-hired" class="checkbox-editable" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold;">X</div>
-              </td>
-              <td style="height: 16px; border: none; border-bottom: 1px solid black; padding: 0 4px; font-size: 7px; vertical-align: middle; line-height: 1.1; box-sizing: border-box; white-space: nowrap;">
-                HIRED AUTOS ONLY
-              </td>
-              <td style="width: 14px; height: 16px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; text-align: center; vertical-align: middle; box-sizing: border-box;">
-                <div id="chk-auto-non-owned-other" class="checkbox-editable" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold;"></div>
-              </td>
-              <td style="height: 16px; border: none; border-bottom: 1px solid black; padding: 0 4px; font-size: 7px; vertical-align: middle; line-height: 1.1; box-sizing: border-box; white-space: nowrap;"></td>
-            </tr>
-            <tr style="height: 16px;">
-              <td style="width: 14px; height: 16px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; text-align: center; vertical-align: middle; box-sizing: border-box;">
-                <div id="chk-auto-hired-other" class="checkbox-editable" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold;"></div>
-              </td>
-              <td style="height: 16px; border: none; border-bottom: 1px solid black; padding: 0 4px; font-size: 7px; vertical-align: middle; line-height: 1.1; box-sizing: border-box; white-space: nowrap;"></td>
-              <td style="width: 14px; height: 16px; border: none; border-right: 1px solid black; border-bottom: 1px solid black; padding: 0; text-align: center; vertical-align: middle; box-sizing: border-box;"></td>
-              <td style="height: 16px; border: none; border-bottom: 1px solid black; padding: 0 4px; font-size: 7px; vertical-align: middle; line-height: 1.1; box-sizing: border-box; white-space: nowrap;"></td>
-            </tr>
-          </table>
         </td>
-        <td id="auto-ai" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
-        <td id="auto-ws" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
-        <td id="auto-policy-number" class="center" style="vertical-align: middle;"></td>
-        <td id="auto-eff-date" class="center" style="vertical-align: middle;"></td>
-        <td id="auto-exp-date" class="center" style="vertical-align: middle;"></td>
-        <td style="padding: 0; vertical-align: top;">
+        <td class="center" id="auto-ai"></td>
+        <td class="center" id="auto-ws"></td>
+        <td class="center" id="auto-policy-number"></td>
+        <td class="center" id="auto-eff-date"></td>
+        <td class="center" id="auto-exp-date"></td>
+        <td class="coverage-limits">
           <table class="limits-table">
-            <tr style="height: 23px;">
-              <td class="limit-desc" style="font-size: 6.5px; line-height: 1.1;">COMBINED SINGLE LIMIT<br>(Ea accident)</td>
+            <tr>
+              <td class="limit-desc">COMBINED SINGLE LIMIT<br>(Ea accident)</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val" id="auto-combined-single">1,000,000</td>
+              <td class="limit-val" id="auto-combined-single">500,000</td>
             </tr>
-            <tr style="height: 17px;">
+            <tr>
               <td class="limit-desc">BODILY INJURY (Per person)</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="auto-bodily-injury-person"></td>
             </tr>
-            <tr style="height: 17px;">
+            <tr>
               <td class="limit-desc">BODILY INJURY (Per accident)</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="auto-bodily-injury-accident"></td>
             </tr>
-            <tr style="height: 23px;">
-              <td class="limit-desc" style="font-size: 6.5px; line-height: 1.1;">PROPERTY DAMAGE<br>(Per accident)</td>
+            <tr>
+              <td class="limit-desc">PROPERTY DAMAGE<br>(Per accident)</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="auto-property-damage"></td>
             </tr>
+            <tr><td class="limit-desc"></td><td class="limit-curr">$</td><td class="limit-val"></td></tr>
           </table>
         </td>
       </tr>
-      <!-- Row 3 Umbrella -->
       <tr>
-        <td id="umb-insr-ltr" class="center" style="vertical-align: middle; font-weight: bold;"></td>
-        <td style="padding: 0; vertical-align: top;">
-          <div style="display: flex; flex-direction: column; height: 100%;">
-            <div style="display: flex; border-bottom: 1px solid black;">
-              <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
-                <div id="chk-umb-occur" class="checkbox-editable"
-                  style="height: 14px; border-bottom: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
-                </div>
-                <div id="chk-umb-claims-made" class="checkbox-editable" style="height: 14px; border-right: 1px solid black; box-sizing: border-box;"></div>
-              </div>
-              <div style="padding: 0 0 0 4px; display: flex; flex-direction: column; font-size: 7px; width: 65px;">
-                <div
-                  style="height: 14px; box-sizing: border-box; display: flex; font-weight: bold; align-items: center;">
-                  UMBRELLA LIAB</div>
-                <div
-                  style="height: 14px; box-sizing: border-box; display: flex; font-weight: bold; align-items: center;">
-                  EXCESS LIAB</div>
-              </div>
-              <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
-                <div id="chk-umb-liab" class="checkbox-editable"
-                  style="height: 14px; border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black; box-sizing: border-box;">
-                </div>
-                <div id="chk-excess-liab" class="checkbox-editable"
-                  style="height: 14px; border-left: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
-                </div>
-              </div>
-              <div style="flex: 1; padding: 0 0 0 4px; display: flex; flex-direction: column; font-size: 7px;">
-                <div style="height: 14px; box-sizing: border-box; display: flex; align-items: center;">OCCUR</div>
-                <div style="height: 14px; box-sizing: border-box; display: flex; align-items: center;">CLAIMS-MADE</div>
-              </div>
-            </div>
-            <div style="display: flex; flex: 1;">
-              <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
-                <div style="height: 14px; border-right: 1px solid black; box-sizing: border-box;"></div>
-                <div style="flex: 1;"></div>
-              </div>
-              <div style="padding: 0 0 0 4px; display: flex; flex-direction: column; font-size: 7px; width: 30px;">
-                <div style="height: 14px; box-sizing: border-box; display: flex; align-items: center;">DED</div>
-                <div style="flex: 1;"></div>
-              </div>
-              <div style="display: flex; flex-direction: column; width: 14px; box-sizing: border-box;">
-                <div
-                  style="height: 14px; border-left: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
-                </div>
-              </div>
-              <div style="flex: 1; padding: 0 0 0 4px; display: flex; flex-direction: column; font-size: 7px;">
-                <div style="height: 14px; box-sizing: border-box; display: flex; align-items: center;">RETENTION $</div>
-              </div>
-            </div>
+        <td class="center" id="umb-insr-ltr"></td>
+        <td class="coverage-type">
+          <div class="umbrella-options">
+          <div class="type-row"><span id="chk-umb-liab" class="check checkbox-editable"></span><strong>UMBRELLA LIAB</strong></div>
+          <div class="type-row"><span id="chk-umb-occur" class="check checkbox-editable"></span><span>OCCUR</span></div>
+          <div class="type-row"><span id="chk-excess-liab" class="check checkbox-editable"></span><strong>EXCESS LIAB</strong></div>
+          <div class="type-row"><span id="chk-umb-claims-made" class="check checkbox-editable"></span><span>CLAIMS-MADE</span></div>
           </div>
+          <div class="type-row"><span class="check" aria-hidden="true"></span><span>DED</span><span class="check" aria-hidden="true"></span><span>RETENTION $</span></div>
         </td>
-        <td id="umbrella-ai" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
-        <td id="umbrella-ws" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
-        <td id="umb-policy-number" class="center" style="vertical-align: middle;"></td>
-        <td id="umb-eff-date" class="center" style="vertical-align: middle;"></td>
-        <td id="umb-exp-date" class="center" style="vertical-align: middle;"></td>
-        <td style="padding: 0; vertical-align: top;">
+        <td class="center" id="umbrella-ai"></td>
+        <td class="center" id="umbrella-ws"></td>
+        <td class="center" id="umb-policy-number"></td>
+        <td class="center" id="umb-eff-date"></td>
+        <td class="center" id="umb-exp-date"></td>
+        <td class="coverage-limits">
           <table class="limits-table">
-            <tr style="height: 18px;">
+            <tr>
               <td class="limit-desc">EACH OCCURRENCE</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val" id="umb-each-occurrence">5,000,000</td>
+              <td class="limit-val" id="umb-each-occurrence"></td>
             </tr>
-            <tr style="height: 18px;">
+            <tr>
               <td class="limit-desc">AGGREGATE</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val" id="umb-aggregate">5,000,000</td>
+              <td class="limit-val" id="umb-aggregate"></td>
             </tr>
-            <tr style="height: 18px;">
+            <tr>
               <td class="limit-desc" id="umb-extra-desc">&nbsp;</td>
               <td class="limit-curr">$</td>
               <td class="limit-val" id="umb-extra-limit"></td>
@@ -934,80 +475,54 @@
           </table>
         </td>
       </tr>
-      <!-- Row 4 Workers Comp -->
       <tr>
-        <td id="wc-insr-ltr" class="center" style="vertical-align: middle; font-weight: bold;"></td>
-        <td style="padding: 2px 4px; font-size: 7px; line-height: 1.1; vertical-align: top;">
+        <td class="center" id="wc-insr-ltr"></td>
+        <td class="coverage-type">
+          <div class="wc-type">
           <strong>WORKERS COMPENSATION<br>AND EMPLOYERS' LIABILITY</strong>
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 1px;">
-            <div>
-              ANY PROPRIETOR/PARTNER/EXECUTIVE<br>
-              OFFICER/MEMBER EXCLUDED?<br>
-              <strong>(Mandatory in NH)</strong>
-            </div>
-            <div style="display: flex; flex-direction: column; align-items: center; margin-right: 4px;">
-              <div style="font-weight: bold; font-size: 7px;">Y / N</div>
-              <div id="chk-wc-yn" class="checkbox-editable" style="width: 14px; height: 14px; border: 1px solid black; box-sizing: border-box;"></div>
-            </div>
-          </div>
-          <div style="margin-top: 1px;">
-            If yes, describe under<br>
-            DESCRIPTION OF OPERATIONS below
+          <div class="wc-yn"><b>Y / N</b><br><span id="chk-wc-yn" class="check checkbox-editable"></span></div>
+          <p>ANY PROPRIETOR/PARTNER/EXECUTIVE<br>OFFICER/MEMBER EXCLUDED?<br><b>(Mandatory in NH)</b><br>If yes, describe under<br>DESCRIPTION OF OPERATIONS below</p>
           </div>
         </td>
-        <td></td>
-        <td id="wc-ws" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
-        <td id="wc-policy-number" class="center" style="vertical-align: middle;"></td>
-        <td id="wc-eff-date" class="center" style="vertical-align: middle;"></td>
-        <td id="wc-exp-date" class="center" style="vertical-align: middle;"></td>
-        <td style="padding: 0; vertical-align: top;">
+        <td class="center wc-na"><b>N / A</b></td>
+        <td class="center" id="wc-ws"></td>
+        <td class="center" id="wc-policy-number"></td>
+        <td class="center" id="wc-eff-date"></td>
+        <td class="center" id="wc-exp-date"></td>
+        <td class="coverage-limits">
           <table class="limits-table">
-            <tr style="height: 18px;">
-              <td class="limit-desc" style="padding: 0 !important;">
-                <div style="display: flex; height: 100%; align-items: center;">
-                  <div id="chk-wc-per-statute" class="checkbox-editable"
-                    style="width: 14px; height: 18px; border-right: 1px solid black; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; box-sizing: border-box;">
-                    X</div>
-                  <div style="padding-left: 2px; font-size: 7px; line-height: 1; margin-right: 8px;">
-                    PER<br>STATUTE</div>
-                  <div id="chk-wc-other" class="checkbox-editable"
-                    style="width: 14px; height: 18px; border-left: 1px solid black; border-right: 1px solid black; box-sizing: border-box;">
-                  </div>
-                  <div style="padding-left: 2px; font-size: 7px; line-height: 1;">
-                    OTH-<br>ER</div>
-                </div>
-              </td>
+            <tr>
+              <td class="limit-desc"><div class="statute"><span id="chk-wc-per-statute" class="check checkbox-editable"></span><span>PER<br>STATUTE</span><span id="chk-wc-other" class="check checkbox-editable"></span><span>OTH-<br>ER</span></div></td>
               <td class="limit-curr"></td>
               <td class="limit-val"></td>
             </tr>
-            <tr style="height: 18px;">
+            <tr>
               <td class="limit-desc">E.L. EACH ACCIDENT</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val" id="wc-each-accident">1,000,000</td>
+              <td class="limit-val" id="wc-each-accident"></td>
             </tr>
-            <tr style="height: 18px;">
+            <tr>
               <td class="limit-desc">E.L. DISEASE - EA EMPLOYEE</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val" id="wc-disease-ea-emp">1,000,000</td>
+              <td class="limit-val" id="wc-disease-ea-emp"></td>
             </tr>
-            <tr style="height: 18px;">
+            <tr>
               <td class="limit-desc">E.L. DISEASE - POLICY LIMIT</td>
               <td class="limit-curr">$</td>
-              <td class="limit-val" id="wc-disease-pol">1,000,000</td>
+              <td class="limit-val" id="wc-disease-pol"></td>
             </tr>
           </table>
         </td>
       </tr>
-      <!-- Blank Row -->
-      <tr style="height: 18px;">
-        <td id="extra-insr-ltr"></td>
+      <tr class="extra-coverage">
+        <td class="center" id="extra-insr-ltr"></td>
         <td id="extra-type-ins"></td>
-        <td id="extra-ai" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
-        <td id="extra-ws" class="center" style="vertical-align: middle; font-weight: bold; font-size: 10px;"></td>
-        <td id="extra-policy-number" class="center" style="vertical-align: middle;"></td>
-        <td id="extra-eff-date" class="center" style="vertical-align: middle;"></td>
-        <td id="extra-exp-date" class="center" style="vertical-align: middle;"></td>
-        <td id="extra-limits" style="padding: 0; vertical-align: top;"></td>
+        <td class="center" id="extra-ai"></td>
+        <td class="center" id="extra-ws"></td>
+        <td class="center" id="extra-policy-number"></td>
+        <td class="center" id="extra-eff-date"></td>
+        <td class="center" id="extra-exp-date"></td>
+        <td class="extra-limits" id="extra-limits"></td>
       </tr>
     </table>
 
@@ -1018,46 +533,36 @@
         conditions )</div>
     </div>
 
-    <table class="footer-table" style="width: 100%; border: 2px solid black; margin-top: 4px; border-collapse: separate; border-spacing: 0;">
+    <div class="footer-headings"><div>CERTIFICATE HOLDER</div><div>CANCELLATION</div></div>
+    <table class="footer-table">
       <tr>
-        <!-- Certificate Holder Column -->
-        <td style="width: 50%; vertical-align: top; padding: 4px; border: none; border-right: 1px solid black; height: 110px; box-sizing: border-box;">
-          <div class="box-label" style="font-size: 8.5px; font-weight: bold;">CERTIFICATE HOLDER</div>
-          <div style="padding-left: 30px; margin-top: 8px; font-size: 8.5px; line-height: 1.3;" id="cert-holder-details">
+        <td>
+          <div id="cert-holder-details">
             Oakridge Homeowners Association<br>
             3401 SW 51st Court<br><br>
-            <div style="display: flex; justify-content: space-between; padding-right: 60px;">
-              <span>Hollywood</span>
-              <span>FL 33312</span>
-            </div>
+            Hollywood FL 33312
           </div>
         </td>
-        <!-- Cancellation & Signature Column -->
-        <td style="width: 50%; vertical-align: top; padding: 0; border: none; height: 110px; box-sizing: border-box;">
-          <div style="padding: 3px 6px; border-bottom: 1px solid black; height: 48px; box-sizing: border-box;">
-            <div class="box-label" style="font-size: 8px; font-weight: bold; margin-bottom: 1px;">CANCELLATION</div>
-            <div style="font-size: 7.5px; font-weight: bold; line-height: 1.25; letter-spacing: 0.2px;">
-              SHOULD ANY OF THE ABOVE DESCRIBED POLICIES BE CANCELLED BEFORE<br>
-              THE EXPIRATION DATE THEREOF, NOTICE WILL BE DELIVERED IN<br>
-              ACCORDANCE WITH THE POLICY PROVISIONS.
-            </div>
+        <td>
+          <div class="cancellation-text">
+            SHOULD ANY OF THE ABOVE DESCRIBED POLICIES BE CANCELLED BEFORE
+            THE EXPIRATION DATE THEREOF, NOTICE WILL BE DELIVERED IN
+            ACCORDANCE WITH THE POLICY PROVISIONS.
           </div>
-          <div style="height: 62px; padding: 3px 6px; position: relative; box-sizing: border-box;">
-            <div class="signature-label" style="font-size: 8px; font-weight: bold;">AUTHORIZED REPRESENTATIVE</div>
-            <img id="authorized-representative-signature-img" alt="Authorized Representative Signature" style="display: none; max-height: 40px; max-width: 185px; object-fit: contain; position: absolute; right: 30px; bottom: 8px;" />
-            <span id="authorized-representative-signature" class="signature-img" style="display: none; position: absolute; right: 30px; bottom: 8px;"></span>
+          <div class="signature-area">
+            <div class="box-label">AUTHORIZED REPRESENTATIVE</div>
+            <img id="authorized-representative-signature-img" alt="Authorized Representative Signature" style="display: none;">
+            <span id="authorized-representative-signature" style="display: none;"></span>
           </div>
         </td>
       </tr>
     </table>
 
-    <div style="display: flex; justify-content: space-between; font-size: 8.5px; font-weight: bold; margin-top: 4px;">
+    <div class="footer-credits">
       <div>ACORD 25 (2025/12)</div>
       <div>&copy; 1988-2025 ACORD CORPORATION. All rights reserved.</div>
     </div>
-    <div style="text-align: center; font-size: 8px; font-weight: bold; margin-top: 2px;">
-      The ACORD name and logo are registered marks of ACORD
-    </div>
+    <div class="footer-trademark">The ACORD name and logo are registered marks of ACORD</div>
 
   </div>
   <script>
@@ -1391,15 +896,13 @@
         Object.entries(mappings).forEach(([id, val]) => {
           const el = document.getElementById(id);
           if (el) {
-            const tr = el.closest('tr');
-            const currEl = tr ? tr.querySelector('.limit-curr') : null;
             if (val && String(val).trim()) {
               const cleanVal = String(val).replace(/^\$\s*/, '').trim();
-              el.innerText = cleanVal;
-              if (currEl) currEl.innerText = '$';
+              el.innerText = el.classList.contains('limit-val') && /^\d+(\.\d+)?$/.test(cleanVal)
+                ? cleanVal.replace(/^\d+/, digits => digits.replace(/\B(?=(\d{3})+$)/g, ','))
+                : cleanVal;
             } else {
               el.innerText = '';
-              if (currEl) currEl.innerText = '';
             }
           }
         });
@@ -1421,21 +924,11 @@
       const holderEl = document.getElementById('cert-holder-details');
       if (holderEl) {
         if (holderName) {
-          let addrHtml = `<strong>${holderName}</strong><br>`;
-          if (holderAddress) addrHtml += `${holderAddress}<br>`;
-          if (holderAddress2) addrHtml += `${holderAddress2}<br>`;
-          addrHtml += `<div style="display: flex; justify-content: space-between; padding-right: 30px; margin-top: 10px;">
-            <span>${holderCity}</span>
-            <span>${holderState} ${holderZip}</span>
-          </div>`;
-          holderEl.innerHTML = addrHtml;
+          const region = [holderState, holderZip].filter(Boolean).join(' ');
+          const locality = [holderCity, region].filter(Boolean).join(', ');
+          holderEl.textContent = [holderName, holderAddress, holderAddress2, locality].filter(Boolean).join('\n');
         } else {
-          // Master certificate preview: clear details in holder box
-          holderEl.innerHTML = `
-            <div style="color: #bbb; font-style: italic; padding-top: 20px;">
-              
-            </div>
-          `;
+          holderEl.textContent = '';
         }
       }
 
